@@ -28,6 +28,14 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
     [VSIX SHA-256](assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt)
 
+-   :material-monitor: **NEXUS Studio — Windows x64 desktop IDE**
+
+    Standalone desktop editor with a project explorer, `.nx` editor, compiler selection, Build/Run buttons, and output terminal. Install the NEXUS compiler separately and select it inside Studio.
+
+    [Download NEXUS Studio Windows EXE](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe){ .md-button }
+
+    [Studio installer SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256)
+
 -   :material-laptop: **Linux and macOS compiler builds**
 
     Linux x86-64 and macOS Apple Silicon/Intel archives are built by the tagged-release workflow. They become downloadable when a version-tag release has completed successfully; check the official Releases page for currently published assets.
