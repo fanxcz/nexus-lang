@@ -1,63 +1,21 @@
 # Game Template
 
-2D game starter template.
+The current `game` template copies the checked-in `examples/templates/game.nx` source into `src/main.nx`. It is a single-file graphical survivor mini-game, not a multi-file engine framework. The separate `examples/neon_survivor.nx` file is another example and is not the source selected for this template by the current source-tree lookup.
 
-## Create
+## Create and run
 
 ```bash
 nexus new MyGame --template game
 cd MyGame
+nexus check
 nexus build
 nexus run
 ```
 
-## Structure
+## Included behavior
 
-```
-MyGame/
-├── nexus.toml
-├── src/
-│   ├── main.nx       # Entry point
-│   ├── player.nx     # Player logic
-│   ├── enemy.nx      # Enemy logic
-│   └── game.nx       # Game state
-├── assets/
-│   ├── sprites/
-│   ├── audio/
-│   └── fonts/
-└── tests/
-```
+The template source creates a native graphics window and implements a start/pause/game-over loop, movement, enemies, projectiles, health/score/wave state and drawing using the built-in `gfx_*` API. Its state is deliberately explicit in one source file because `nexus new` copies a template file instead of generating a multi-module project.
 
-## Features Included
+## Extend it
 
-- Player movement (WASD/Arrow keys)
-- Basic enemy AI
-- Collision detection
-- Score system
-- Game over / restart
-- Sound effects
-- Particle effects (explosions)
-
-## Customization
-
-```nx
-// src/game.nx - Modify constants
-const PLAYER_SPEED = 300.0
-const ENEMY_SPEED = 150.0
-const ENEMY_SPAWN_RATE = 2.0  // per second
-const MAX_ENEMIES = 10
-```
-
-## Adding Assets
-
-```bash
-# Add sprite
-nexus assets add assets/sprites/player.png
-
-# Add sound
-nexus assets add assets/audio/jump.wav
-
-# Use in code
-let player_tex = gfx_load_texture("assets/sprites/player.png")
-let jump_sfx = audio_load_sound("assets/audio/jump.wav")
-```
+Open `src/main.nx` and edit the game loop, movement/arena limits, enemy positions, projectile logic, collision checks and drawing. The runtime includes 2D primitives, keyboard/mouse state and simple collision/ECS helpers. It does not provide a general physics world, pathfinding, networking or a complete AI system.

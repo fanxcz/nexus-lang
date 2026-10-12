@@ -131,6 +131,18 @@ nexus run
 
 Consult the template and current documentation for its supported features.
 
+## Downloadable applications
+
+**NEXUS Studio (Windows x64)** is a standalone desktop editor with a project explorer, `.nx` editor, compiler selection, and Build/Run controls. It does not bundle the NEXUS compiler; install NEXUS separately, then select `nexus.cmd` in Studio.
+
+- [Download NEXUS Studio Windows installer](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe)
+- [Verify Studio installer SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256)
+
+**NEXUS Paint (Windows x64)** is a native raster drawing app written in NEXUS. Use the portable ZIP from the [Downloads page](https://fanxcz.github.io/nexus-lang/downloads/) when Pages is enabled; it contains the EXE, runtime DLLs and editable NEXUS source. The executable and checksum are also versioned in this repository:
+
+- [Download NEXUS Paint EXE](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe)
+- [Verify Paint EXE SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
+- [View Paint source](examples/nexus_paint.nx)
 ## Build from source
 
 ### Requirements
@@ -171,7 +183,7 @@ Issues, bug reports, documentation improvements, tests, and focused pull request
 
 - [Open an issue](https://github.com/fanxcz/nexus-lang/issues)
 - [Pull requests](https://github.com/fanxcz/nexus-lang/pulls)
-- [Contributing guide](https://github.com/fanxcz/nexus-lang/blob/main/.github/project-tools/repository-files/CONTRIBUTING.md)
+- [Contributing guide](CONTRIBUTING.md)
 - [Development roadmap](https://fanxcz.github.io/nexus-lang/development/roadmap/)
 
 ## License

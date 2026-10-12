@@ -1,119 +1,37 @@
 # Game Examples
 
-Complete games and game frameworks.
+The repository includes several games/prototypes. They range from terminal simulations to small native graphical demonstrations; none should be interpreted as a production or multiplayer engine unless the source actually implements that scope.
 
 ## Neon Survivor
 
-`examples/neon_survivor.nx` — Twin-stick survivor game.
+`examples/neon_survivor.nx` is the game template source. It has a start screen, arena movement, mouse aiming/shooting, basic enemies, projectile slots, score/wave/health state, pause and game-over flow.
 
-**Features:**
-- Wave-based enemies
-- Particle effects
-- Score/wave system
-- Health bar
-- Pause menu
-- Game over screen
-- Sound effects
-
-**Run:**
 ```bash
-nexus run --example neon_survivor
+nexus check examples/neon_survivor.nx
+nexus run examples/neon_survivor.nx
 ```
 
-## Nexus Arena
+## Terminal Arena
 
-`examples/nexus_arena.nx` — Multiplayer-ready arena shooter.
+`examples/nexus_arena.nx` is a text-mode turn-based hero-versus-boss simulation with HP/mana/levels, actions, rounds and score/rank values. It is a terminal program, not a real-time multiplayer arena shooter.
 
-**Features:**
-- Multiple players (local)
-- Projectile physics
-- Power-ups
-- Map system
-- Score tracking
+```bash
+nexus run examples/nexus_arena.nx
+```
 
-## Nexus Paint
+## Terminal movement game
 
-`examples/nexus_paint.nx` — Full raster editor.
+`examples/terminal_game.nx` draws a simple `@` player in a terminal grid, accepts WASD movement and Q to quit, and updates a counter. It depends on terminal input behavior, which can vary between shells/hosts.
 
-**Features:**
-- 1024x720 canvas
-- 6 tools (pencil, eraser, line, rect, fill, spray)
-- 16-color palette
-- Brush size 1-50
-- Undo/redo history
-- BMP save/load
+## Small graphical game
 
-## Terminal Game
+`examples/native_graphics_game.nx` demonstrates 2D movement, a mouse-controlled target, score display and basic primitive drawing. See [Graphics Examples](graphics.md).
 
-`examples/terminal_game.nx` — Text-based game.
+## Other application demos
 
-**Features:**
-- Pure text rendering
-- Turn-based combat
-- ASCII graphics
-- Inventory system
+- `examples/nexus_focus.nx`: graphical focus/break timer with mouse buttons, sound tone and a small session-count file.
+- `examples/nexus_editor.nx`: experimental 2D scene/box editor built on the current ECS, UI and snapshot helpers.
+- `examples/nexus_studio.nx`: terminal-menu demo with calculator, guessing-game and mini-battle routines.
+- `examples/nexus_paint.nx`: native raster painting tool; documented under [Paint Template](../templates/paint.md).
 
-## Nexus Editor
-
-`examples/nexus_editor.nx` — Code editor.
-
-**Features:**
-- Syntax highlighting
-- Line numbers
-- Find/replace
-- Multiple tabs
-- LSP integration
-
-## Nexus Studio
-
-`examples/nexus_studio.nx` — Game development IDE.
-
-**Features:**
-- Project management
-- Scene editor
-- Asset browser
-- Code editor
-- Build/run integration
-
-## Nexus V1 Full Stack
-
-`examples/nexus_v1_full_stack.nx` — Complete demo.
-
-**Features:**
-- HTTP server
-- SQLite database
-- 2D graphics
-- JSON API
-- WebSocket (planned)
-
-## Ultimate Showcase
-
-`examples/ultimate_showcase.nx` — All features demo.
-
-**Features:**
-- ECS with 1000+ entities
-- Particle systems
-- 3D rendering
-- Audio
-- UI
-- Physics
-- Scenes
-
-## V080 Game Framework
-
-`examples/v080_game_framework.nx` — Legacy framework demo.
-
-**Features:**
-- ECS architecture
-- Scene management
-- Resource loading
-- Input handling
-
-## V080 Runtime Showcase
-
-`examples/v080_runtime_showcase.nx` — Legacy runtime demo.
-
-**Features:**
-- All v0.8 runtime APIs
-- Graphics, audio, input
-- Memory, file system
+These examples are meant to show what the compiler/runtime currently supports. Check source and backend requirements before relying on a capability in your own application.

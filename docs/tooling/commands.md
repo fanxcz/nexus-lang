@@ -97,7 +97,7 @@ The current package manager supports local vendoring and creation of a local `.n
 
 ## Language server
 
-Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The current server provides initialization, diagnostics, and basic completion. Go-to-definition is not implemented yet and returns no location.
+Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The current server provides initialization, diagnostics, basic completion and limited go-to-definition among declarations in documents that are already open. It does not index unopened workspace files.
 
 ## Diagnostics
 

@@ -229,6 +229,15 @@ if (NEXUS_BUILD_TESTS)
   target_link_libraries(nexus_runtime_memory_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
   add_test(NAME nexus_runtime_memory_test COMMAND nexus_runtime_memory_test)
 
+  add_executable(nexus_runtime_args_test
+      tests/runtime_args_test.cpp
+      src/runtime/runtime.cpp
+  )
+  target_compile_features(nexus_runtime_args_test PRIVATE cxx_std_20)
+  target_link_libraries(nexus_runtime_args_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
+  add_test(NAME nexus_runtime_args_test
+      COMMAND nexus_runtime_args_test alpha "beta gamma" omega)
+
   add_test(NAME nexus_tests COMMAND nexus_tests)
   add_test(NAME nexus_version_smoke COMMAND $<TARGET_FILE:nexus> --version)
   set_tests_properties(nexus_version_smoke PROPERTIES PASS_REGULAR_EXPRESSION "Nexus ${PROJECT_VERSION}")
@@ -253,6 +262,11 @@ if (NEXUS_BUILD_TESTS)
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
           -P ${CMAKE_SOURCE_DIR}/tests/project_smoke.cmake)
+  add_test(NAME nexus_examples_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+          -P ${CMAKE_SOURCE_DIR}/tests/examples_smoke.cmake)
   add_test(NAME nexus_paint_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>

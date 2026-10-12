@@ -1,179 +1,86 @@
 # Functions
 
-Functions are first-class citizens in NEXUS.
+The current compiler supports named functions with typed parameters and an optional return type. A function without an explicit return type returns `void`; non-void functions must use an explicit `return` on every control-flow path.
 
-## Basic Syntax
+## Define and call a function
 
 ```nx
-fn add(a: i32, b: i32) -> i32 {
-    a + b  // Implicit return (last expression)
+fn add(a: i64, b: i64) -> i64 {
+    return a + b
 }
 
-fn greet(name: str) {
-    print("Hello, {name}!")
+fn main() {
+    print(add(40, 2))
 }
 ```
 
-## Parameters
+Functions can call other functions and can be recursive. Function names are unique in a program; declaring a second function with the same name is an error. The current compiler does not provide overloads.
+
+## Parameters and return values
+
+Parameters use `name: type` syntax. Supported scalar types include `i64`, `f64`, `bool` and `string`; types can also be user-defined structs/enums, fixed arrays and pointers.
 
 ```nx
-// By value (copy)
-fn by_value(x: i32) { ... }
-
-// By immutable reference
-fn by_ref(x: &i32) { ... }
-
-// By mutable reference
-fn by_mut_ref(x: &mut i32) { *x += 1 }
-
-// Multiple parameters
-fn draw_rect(x: f32, y: f32, w: f32, h: f32, color: u32) { ... }
-```
-
-## Return Values
-
-```nx
-// Single return
-fn square(x: i32) -> i32 { x * x }
-
-// Multiple returns (tuple)
-fn divmod(a: i32, b: i32) -> (i32, i32) {
-    (a / b, a % b)
+fn area(width: f64, height: f64) -> f64 {
+    return width * height
 }
 
-let (q, r) = divmod(10, 3)  // q=3, r=1
-
-// Early return
-fn find(items: []i32, target: i32) -> Option<usize> {
-    for i in 0..items.len() {
-        if items[i] == target { return Some(i) }
+fn describe(enabled: bool) -> string {
+    if enabled {
+        return "enabled"
+    } else {
+        return "disabled"
     }
-    None
 }
 ```
 
-## Methods (Associated Functions)
+Use an explicit return type and `return` rather than relying on Rust-style implicit tail-expression returns.
+
+## Struct data
+
+The parser supports structs as named fields and permits field access/assignment:
 
 ```nx
-struct Vec2 {
-    x: f32,
-    y: f32,
+struct Point {
+    x: f64
+    y: f64
 }
 
-impl Vec2 {
-    // Constructor (associated function)
-    fn new(x: f32, y: f32) -> Self {
-        Self { x, y }
-    }
-    
-    // Method (takes &self)
-    fn length(&self) -> f32 {
-        (self.x * self.x + self.y * self.y).sqrt()
-    }
-    
-    // Mutable method
-    fn normalize(&mut self) {
-        let len = self.length()
-        if len > 0.0 {
-            self.x /= len
-            self.y /= len
-        }
-    }
-    
-    // Static method
-    fn zero() -> Self { Self { x: 0.0, y: 0.0 } }
-}
-
-let v = Vec2::new(3.0, 4.0)
-v.normalize()
-```
-
-## Generic Functions
-
-```nx
-fn identity<T>(x: T) -> T { x }
-
-fn max<T: Ord>(a: T, b: T) -> T {
-    if a > b { a } else { b }
-}
-
-// Multiple type parameters
-fn pair<A, B>(a: A, b: B) -> (A, B) { (a, b) }
-```
-
-## Function Pointers
-
-```nx
-// Type alias
-type Callback = fn(i32) -> i32
-
-// Usage
-fn apply(f: Callback, x: i32) -> i32 { f(x) }
-
-let double = |x: i32| -> i32 { x * 2 }
-apply(double, 5)  // 10
-```
-
-## Closures (Planned)
-
-```nx
-// Capturing environment (future)
-let mut count = 0
-let counter = || { count += 1; count }
-```
-
-## Defer
-
-```nx
-fn read_file(path: str) -> Result<str, Error> {
-    let file = fs_open(path)?
-    defer fs_close(file)  // Runs on scope exit (success or error)
-    
-    let content = fs_read_all(file)?
-    Ok(content)
+fn move_x(point: Point, amount: f64) -> Point {
+    return Point { x: point.x + amount, y: point.y }
 }
 ```
 
-## Variadic (FFI only)
+The current language does not support Rust-style `impl` blocks or methods such as `Point::new`. Put helper functions at top level and pass the struct explicitly.
+
+## Pointers
+
+Pointer types use the `*Type` syntax, and the language supports address-of and dereference expressions in its current pointer subset:
 
 ```nx
-extern "C" {
-    fn printf(format: *const i8, ...) -> i32
+fn read_value(value: *i64) -> i64 {
+    return *value
+}
+
+fn main() {
+    let count: i64 = 7
+    let ptr: *i64 = &count
+    print(read_value(ptr))
 }
 ```
 
-## Inline
+Pointers are low-level; only pass valid addresses of compatible values and avoid retaining addresses beyond the lifetime of their storage. Pointer support is not a borrow checker.
+
+## External functions
+
+The parser supports external function declarations using an `extern` string marker:
 
 ```nx
-#[inline]
-fn small_fn(x: i32) -> i32 { x + 1 }
-
-#[inline(always)]
-fn hot_path(x: i32) -> i32 { x * 2 }
+extern "C" fn external_function(value: i64) -> i64
 ```
 
-## Attributes
+An external declaration describes a symbol; linking and ABI correctness still depend on the selected backend/toolchain and the actual library. The compiler's current grammar does not provide a variadic declaration syntax or a complete type-safe FFI layer.
 
-```nx
-#[no_mangle]
-fn exported_function() { ... }
+## Features not supported by the current parser
 
-#[export_name = "my_name"]
-fn with_custom_name() { ... }
-
-#[cold]
-fn error_path() { ... }
-```
-
-## Main Function
-
-```nx
-// Standard entry point
-fn main() { ... }
-
-// With args (future)
-fn main(args: []str) -> i32 { 0 }
-
-// Async main (future)
-// async fn main() { ... }
-```
+Generics, function-pointer/closure values, capture closures, `defer`, `impl` methods, attributes such as `#[inline]`, trait bounds and async functions are not supported language features in this compiler version. Some may appear in roadmap notes or older drafts; do not use them in code intended to pass `nexus check`.

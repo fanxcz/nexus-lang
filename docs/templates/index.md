@@ -1,26 +1,33 @@
 # Project Templates
 
-Starter templates for different project types.
+`nexus new` and `nexus init` seed a project with one checked-in template. The command creates `nexus.toml`, standard asset folders, `scenes/main.nxs`, `README.md`, `.gitignore` and `src/main.nx`. It copies one source file; it does not generate a multi-file framework.
 
-## Available Templates
+## Templates accepted by the current CLI
 
-| Template | Command | Description |
-|----------|---------|-------------|
-| `app` | `nexus new --template app` | Basic application |
-| `game` | `nexus new --template game` | 2D game starter |
-| `paint` | `nexus new --template paint` | Nexus Paint |
-| `cli` | `nexus new --template cli` | CLI application |
-| `library` | `nexus new --template library` | Library package |
-| `editor` | `nexus new --template editor` | Code editor |
-| `server` | `nexus new --template server` | HTTP server |
-| `3d` | `nexus new --template 3d` | 3D graphics |
+| Template | Command | Current starting point |
+|---|---|---|
+| [CLI](cli.md) | `nexus new MyCli --template cli` | Console input and greeting |
+| [App](app.md) | `nexus new MyApp --template app` | Native window and 2D primitives |
+| [Game](game.md) | `nexus new MyGame --template game` | Single-file graphical survivor game |
+| [3D](3d.md) | `nexus new My3D --template 3d` | Grid and coloured cubes |
+| [Paint](paint.md) | `nexus new MyPaint --template paint` | Raster canvas and BMP tools |
+| [Server](server.md) | `nexus new MyServer --template server` | HTTP GET client demo, not a server |
+| [Library](library.md) | `nexus new MyLibrary --template library` | Single-file `add` function example |
 
-## Usage
+An experimental scene-editor source exists at `examples/templates/editor.nx`, but `editor` is **not** accepted by `nexus new --template`. See [Editor source](editor.md) for a manual way to try it.
+
+## Create a project
 
 ```bash
-# Create project from template
-nexus new MyProject --template game
-
-# List all templates
-nexus new --list
+nexus new MyProject --template app
+cd MyProject
+nexus check
+nexus build
+nexus run
 ```
+
+To initialize the current directory, use `nexus init --template app`.
+
+## Limitations
+
+Templates are starter files, not complete frameworks. Features such as HTTP listeners, a source-code IDE, advanced physics, scene graphs or asset pipelines are not included unless the source actually implements them. See each template source under `examples/templates/`.

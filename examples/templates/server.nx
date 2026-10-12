@@ -1,6 +1,10 @@
 import std.net
 
 fn main() {
-    let body = get("https://example.com")
+    let body = http_get_text("https://example.com/")
+    if body == "" {
+        print("The request returned an empty body or failed")
+        return
+    }
     print(body)
 }

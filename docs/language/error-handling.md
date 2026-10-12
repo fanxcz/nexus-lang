@@ -1,177 +1,45 @@
-# Error Handling
+# Error Handling (Current Scope)
 
-NEXUS uses **Result/Option types** for error handling - no exceptions.
+The current compiler does not implement `Result<T, E>`, `Option<T>`, the `?` propagation operator, `panic!`, `unwrap` helpers or custom error-enum handling. Older versions of this page described planned features as if they were implemented; those examples will not pass `nexus check`.
 
-## Option Type
+## Check sentinel return values
 
-```nx
-enum Option<T> {
-    Some(T),
-    None,
-}
-
-// Usage
-let opt: Option<i32> = Some(42)
-let empty: Option<i32> = None
-
-// Pattern matching
-match opt {
-    Some(v) => print("Value: {v}"),
-    None => print("No value"),
-}
-
-// Helper methods
-opt.is_some()      // bool
-opt.is_none()      // bool
-opt.unwrap()       // T (panics if None)
-opt.unwrap_or(0)   // T (default if None)
-opt.expect("msg")  // T (panic with message if None)
-```
-
-## Result Type
+Most low-level runtime wrappers return a plain value. Each wrapper defines its own failure convention, so inspect the relevant API instead of expecting a universal error type.
 
 ```nx
-enum Result<T, E> {
-    Ok(T),
-    Err(E),
-}
+fn main() {
+    let text = file_read("settings.json")
+    if text == "" {
+        print("The file is missing, unreadable, or empty")
+        return
+    }
 
-// Usage
-fn divide(a: f64, b: f64) -> Result<f64, str> {
-    if b == 0.0 { Err("Division by zero") }
-    else { Ok(a / b) }
-}
+    let rc = file_write("copy.txt", text)
+    if rc != 0 {
+        print("Could not write the file; code: " + str_i64(rc))
+        return
+    }
 
-match divide(10.0, 2.0) {
-    Ok(result) => print("Result: {result}"),
-    Err(e) => print("Error: {e}"),
+    print("File copied")
 }
 ```
 
-## The `?` Operator
+An empty string from `file_read` is ambiguous: it can mean an error or a legitimately empty file. `file_exists(path)` can help in simple cases, but it does not eliminate every possible I/O race or permission error.
 
-```nx
-fn read_config() -> Result<Config, Error> {
-    let content = fs_read_to_string("config.json")?  // Returns Err on failure
-    let config = json_parse(content)?                 // Returns Err on failure
-    Ok(config)
-}
+## Check graphics, files, HTTP and SQLite
 
-// Equivalent to:
-fn read_config() -> Result<Config, Error> {
-    let content = match fs_read_to_string("config.json") {
-        Ok(c) => c,
-        Err(e) => return Err(e),
-    };
-    let config = match json_parse(content) {
-        Ok(c) => c,
-        Err(e) => return Err(e),
-    };
-    Ok(config)
-}
-```
+| API | Typical failure signal |
+|---|---|
+| `gfx_init(width, height, title)` | Returns `false`; retrieve the diagnostic with `gfx_error()` |
+| `gfx_texture_load(path)` / `gfx_canvas_load_bmp(path)` | Returns ID 0 on failure |
+| `file_read(path)` / `fs_read(path)` | Empty string on failure (also possible for an empty file) |
+| `file_write(path, text)` / `fs_write(path, text)` | Integer status; 0 means success for these wrappers |
+| `http_get(url)` / `http_get_text(url)` | Empty string when the request fails or the response body is empty |
+| `db_open(path)` | Handle 0 on failure |
+| `db_exec(handle, sql)` | SQLite result code; 0 means success |
 
-## Error Types
+## Use explicit control flow
 
-```nx
-// String errors (simple)
-type StrError = str
+Use `if`, early `return`, and meaningful error messages to handle failure. The compiler does not have exception-catch syntax, `defer`, `Result` / `Option`, or error propagation with `?`.
 
-// Structured errors
-enum IoError {
-    NotFound(str),
-    PermissionDenied(str),
-    InvalidData(str),
-    Other(str),
-}
-
-enum ParseError {
-    InvalidFormat(str),
-    UnexpectedEof,
-    NumberTooLarge,
-}
-```
-
-## Result Helpers
-
-```nx
-let result: Result<i32, str> = Ok(42)
-
-// Map success value
-result.map(|x| x * 2)           // Ok(84)
-
-// Map error
-result.map_err(|e| e.to_uppercase())
-
-// Chain operations
-result.and_then(|x| Ok(x + 1))  // Ok(43)
-
-// Unwrap with default
-result.unwrap_or(0)             // 42
-result.unwrap_or_else(|| 0)     // 42 (lazy)
-
-// Convert to Option
-result.ok()                     // Some(42)
-result.err()                    // None
-```
-
-## Panic vs Result
-
-| Situation | Use |
-|-----------|-----|
-| Programming bug (invariant violation) | `panic!` / `unreachable!` |
-| Expected runtime failure | `Result` |
-| Optional value | `Option` |
-| FFI boundary | `Result` or sentinel values |
-
-```nx
-// Panic - bug in code
-fn get_first(items: []i32) -> i32 {
-    if items.is_empty() { panic!("empty slice") }
-    items[0]
-}
-
-// Result - expected failure
-fn try_get_first(items: []i32) -> Option<i32> {
-    if items.is_empty() { None }
-    else { Some(items[0]) }
-}
-```
-
-## Custom Error Types
-
-```nx
-enum GameError {
-    InvalidMove(str),
-    NotYourTurn,
-    GameOver,
-    Io(IoError),  // Wrap other errors
-}
-
-fn make_move(game: &mut Game, mv: Move) -> Result<(), GameError> {
-    if game.is_over() { return Err(GameError::GameOver) }
-    if !game.is_valid(mv) { return Err(GameError::InvalidMove("...")) }
-    // ...
-    Ok(())
-}
-```
-
-## Error Stack Traces (Debug)
-
-```nx
-// In debug builds, errors capture stack trace
-let result = risky_operation()
-if let Err(e) = result {
-    eprint("Error: {e}")
-    eprint("Stack: {e.stack_trace()}")  // Debug only
-}
-```
-
-## Best Practices
-
-1. **Use `Result` for fallible operations** - I/O, parsing, validation
-2. **Use `Option` for nullable values** - lookup, optional config
-3. **Propagate with `?`** - clean, readable error chains
-4. **Define domain-specific errors** - `GameError`, `NetworkError`
-5. **Don't use panic for control flow** - only for bugs
-6. **Document error variants** - what each means and when it occurs
+If an API is important to your application, write a narrow wrapper that checks its documented sentinel value and returns a value/status that your own program consistently interprets. Be careful not to invent a rich error guarantee around a runtime function that only returns a string or integer.

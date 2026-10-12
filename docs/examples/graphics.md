@@ -1,81 +1,42 @@
 # Graphics Examples
 
-Graphics and rendering demos.
+These examples use the built-in `gfx_*` API. The current names are `gfx_poll`, `gfx_begin`, `gfx_end`, `gfx_clear`, `gfx_rect`, `gfx_circle`, `gfx_line` and `gfx_text`; older names such as `gfx_begin_frame`, `gfx_delta_time` and `gfx_draw_rect` are not part of the current runtime.
 
-## Native App
+## Minimal native app
 
-`examples/native_app.nx` — Minimal application template.
+Source: `examples/native_app.nx`.
 
-```nx
-gfx_init(800, 600, "App")
-while !gfx_should_close() {
-    gfx_begin_frame()
-    gfx_clear(0x1a1a2e)
-    gfx_end_frame()
-}
+```bash
+nexus check examples/native_app.nx
+nexus run examples/native_app.nx
 ```
 
-## Native Graphics Game
+## 2D game demo
 
-`examples/native_graphics_game.nx` — 2D game with sprites, input, collision.
+Source: `examples/native_graphics_game.nx`. It demonstrates WASD movement, a mouse-controlled target, frame-delta movement, simple score tracking, circles, a line and text.
 
-**Features:**
-- Player sprite
-- Enemy AI
-- Collision detection
-- Score display
-- Background rendering
+```bash
+nexus check examples/native_graphics_game.nx
+nexus run examples/native_graphics_game.nx
+```
 
-## Native 3D
+## 3D cubes and grid
 
-`examples/native_3d.nx` — 3D rendering with OpenGL.
+Source: `examples/native_3d.nx`. It uses `gfx3d_begin`, `gfx3d_grid`, `gfx3d_cube` and `gfx3d_end`. The current runtime does not expose a general shader/material system through this public API.
 
-**Features:**
-- Rotating cube
-- Camera controls (WASD + mouse)
-- Basic lighting
-- Texture mapping
-- Wireframe toggle
+```bash
+nexus check examples/native_3d.nx
+nexus run examples/native_3d.nx
+```
 
-## Model Demo
+## Model loading
 
-`examples/model_demo.nx` — 3D model loading.
+Source: `examples/model_demo.nx`. It loads `examples/assets/cube.obj` with `gfx3d_model_load`, then draws and unloads the model. This is an example of the current experimental model loader, not evidence of general glTF/PBR/animation support.
 
-**Features:**
-- OBJ loader
-- Multiple meshes
-- Material support
-- Animation (future)
+## Particles and canvas
 
-## Particles Demo
+- `examples/particles_demo.nx` demonstrates the current basic 2D particle create/update/draw APIs.
+- `examples/nexus_paint.nx` demonstrates a larger raster-canvas app with BMP save/load and undo/redo.
+- `examples/nexus_focus.nx` demonstrates a practical small native desktop utility.
 
-`examples/particles_demo.nx` — Particle system showcase.
-
-**Effects:**
-- Fire
-- Smoke
-- Explosion
-- Magic sparkles
-- Rain
-- Snow
-
-## V080 Runtime Showcase
-
-`examples/v080_runtime_showcase.nx` — Legacy graphics demo.
-
-**Features:**
-- Sprite rendering
-- Text rendering
-- Primitive shapes
-- Color blending
-
-## Ultimate Showcase
-
-`examples/ultimate_showcase.nx` — All graphics features.
-
-**Features:**
-- 2D sprites
-- 3D meshes
-- Particles
-- Post-processing (future)
-- UI overlay
+The built-in runtime and platform packaging determine which optional graphics libraries must be present. Keep the repository root as the working directory for examples which load files under `examples/assets/`.

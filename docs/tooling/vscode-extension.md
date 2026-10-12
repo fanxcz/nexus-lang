@@ -23,7 +23,7 @@ npm install
 npx --yes @vscode/vsce package
 ```
 
-This creates `fanxcz.nexus-language-1.1.0.vsix` in the extension directory. You need Node.js/npm and network access for this one-time dependency download. The resulting VSIX includes its runtime dependency; it does not bundle the NEXUS compiler.
+This creates `nexus-language-1.1.0.vsix` in the extension directory. You need Node.js/npm and network access for this one-time dependency download. The resulting VSIX includes its runtime dependency; it does not bundle the NEXUS compiler.
 
 ## 3. Install in VS Code
 

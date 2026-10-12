@@ -107,6 +107,8 @@ nav:
       - std.db: std/db.md
       - std.memory: std/memory.md
       - std.crypto: std/crypto.md
+      - std.os: std/os.md
+      - std.string: std/string.md
   - Runtime:
       - Overview: runtime/index.md
       - Runtime Overview: runtime/overview.md

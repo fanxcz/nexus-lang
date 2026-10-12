@@ -1,172 +1,81 @@
 # Type System
 
-NEXUS has a strong, static type system with type inference.
+The current compiler has a small static type system with inference for initialized bindings. Supported built-in types are `i64`, `f64`, `bool`, `string` and `void`; `int` / `isize` / `usize` are currently aliases of the compiler's integer type, and `float` aliases its floating-point type. User-defined structs and unit enums, pointers and fixed-size arrays are also supported.
 
-## Primitive Types
+## Built-in types
 
-| Type | Size | Range / Values |
-|------|------|----------------|
-| `bool` | 1 byte | `true`, `false` |
-| `i8` | 1 byte | -128 to 127 |
-| `u8` | 1 byte | 0 to 255 |
-| `i16` | 2 bytes | -32,768 to 32,767 |
-| `u16` | 2 bytes | 0 to 65,535 |
-| `i32` | 4 bytes | -2³¹ to 2³¹-1 |
-| `u32` | 4 bytes | 0 to 2³²-1 |
-| `i64` | 8 bytes | -2⁶³ to 2⁶³-1 |
-| `u64` | 8 bytes | 0 to 2⁶⁴-1 |
-| `isize` | pointer | Platform-dependent |
-| `usize` | pointer | Platform-dependent |
-| `f32` | 4 bytes | IEEE 754 single |
-| `f64` | 8 bytes | IEEE 754 double |
-| `char` | 4 bytes | Unicode scalar value |
-| `str` | fat ptr | UTF-8 string slice |
+| Type | Meaning |
+|---|---|
+| `i64` | Signed 64-bit integer |
+| `f64` | 64-bit floating-point number |
+| `bool` | `true` or `false` |
+| `string` | String value |
+| `void` | No return value |
+| `*T` | Pointer to a value of type `T` |
+| `[T; N]` | Fixed-size array of `N` values of type `T` |
 
-## Type Aliases
+Types such as `i8`, `u8`, `i16`, `i32`, `u32`, `u64`, `char`, `str`, `Option<T>` and `Result<T, E>` are not implemented as built-in types by the current parser.
+
+## Inference and annotations
 
 ```nx
-type Byte = u8
-type Size = usize
-type Result<T, E> = enum { Ok(T), Err(E) }
+let count = 42
+let name = "NEXUS"
+let enabled = true
+
+let mut total: i64 = 0
+total = total + count
 ```
 
-## Pointer Types
+Bindings are immutable by default. Use `let mut` when the value needs reassignment. A `const` binding is also supported for values declared in the supported contexts.
+
+## Fixed arrays
 
 ```nx
-// Raw pointers (unsafe)
-let ptr: *i32 = mem_alloc(4)
-let mut_ptr: *mut i32 = mem_alloc(4)
-
-// References (borrowed, safe)
-let ref: &i32 = &value
-let mut_ref: &mut i32 = &mut value
+let values: [i64; 3] = [10, 20, 30]
+let mut scores = [4, 8, 12]
+scores[1] = 25
+print(values[0])
+print(scores[1])
 ```
 
-## Array & Slice Types
+Array types require a compile-time length, and the array literal must contain at least one element. The semantic checker verifies array element types and constant out-of-range indices; runtime handling of variable indices depends on the active backend.
+
+Slices and dynamically sized generic vectors are not currently supported by this type system.
+
+## Structs and unit enums
 
 ```nx
-// Fixed-size array
-let arr: [i32; 5] = [1, 2, 3, 4, 5]
-
-// Slice (fat pointer: ptr + len)
-let slice: []i32 = &arr[1..3]
-```
-
-## Struct Types
-
-```nx
-struct Vec2 {
-    x: f32,
-    y: f32,
-}
-
 struct Player {
-    name: str,
-    health: i32,
-    pos: Vec2,
+    health: i64
+    speed: f64
+}
+
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+fn main() {
+    let player = Player { health: 100, speed: 3.5 }
+    let selected = Color::Green
+    print(player.health)
 }
 ```
 
-## Enum Types (Tagged Unions)
+Struct fields and enum variants are statically checked. Enums currently contain named unit variants only; payload variants and tagged-union pattern matching are not supported by the parser.
+
+## Pointers
 
 ```nx
-enum Option<T> {
-    Some(T),
-    None,
-}
-
-enum Result<T, E> {
-    Ok(T),
-    Err(E),
-}
-
-enum Event {
-    KeyPress(char),
-    MouseClick { x: i32, y: i32 },
-    Quit,
-}
+let mut value: i64 = 7
+let ptr: *i64 = &value
+let copy = *ptr
 ```
 
-## Function Types
+Pointers allow low-level access to values. The current type system does not provide safe references, lifetimes, ownership checking or `*mut T` syntax.
 
-```nx
-// Function pointer
-let callback: fn(i32) -> i32 = |x| x * 2
+## Limits
 
-// Closure (future)
-// let closure = |x| x + captured_var
-```
-
-## Type Inference
-
-```nx
-// Explicit
-let x: i32 = 42
-
-// Inferred
-let x = 42        // i32 (default integer)
-let y = 3.14      // f64 (default float)
-let z = "hello"   // str
-let arr = [1,2,3] // [i32; 3]
-```
-
-## Type Casting
-
-```nx
-// Safe casts (widening)
-let a: i32 = 42
-let b: i64 = a as i64
-let c: f64 = a as f64
-
-// Unsafe casts (narrowing, pointer)
-let d: i32 = b as i32  // May truncate
-let ptr = a as *i32    // Integer to pointer
-```
-
-## Generics (Partial)
-
-```nx
-// Type parameters
-struct Vec<T> {
-    ptr: *T,
-    len: usize,
-    cap: usize,
-}
-
-fn push<T>(vec: &mut Vec<T>, value: T) { ... }
-
-// Constraints (future)
-// fn sort<T: Ord>(slice: &mut [T]) { ... }
-```
-
-## Size & Alignment
-
-```nx
-sizeof(i32)      // 4
-alignof(i32)     // 4
-sizeof(Vec2)     // 8
-alignof(Vec2)    // 4
-offsetof(Vec2, y) // 4
-```
-
-## Zero Values
-
-```nx
-let a: i32 = 0        // or i32::zero()
-let b: f64 = 0.0
-let c: bool = false
-let d: *i32 = null
-let e: &i32 = null    // References can be null (unsafe)
-let f: []i32 = []     // Empty slice
-```
-
-## Type Operators
-
-```nx
-// Type of expression
-typeof(42)           // i32
-typeof(3.14)         // f64
-
-// Type equality
-typeid(i32) == typeid(i32)  // true
-```
+Generic type parameters, tuple/slice types, function types, trait bounds, type aliases, type-level operators such as `sizeof`/ `alignof`, null pointer literals, and closure typing are not supported by the current type parser. Use the concrete types and operations demonstrated in the [syntax guide](syntax.md) and the repository's regression programs.

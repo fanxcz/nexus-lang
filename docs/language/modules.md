@@ -1,170 +1,48 @@
-# Modules & Imports
+# Imports and Source Modules
 
-NEXUS uses a file-based module system similar to Rust.
+The current implementation uses imports to combine source files. It does not implement Rust-style `module` declarations, `export`, selective imports, aliases, wildcard imports or directory-based `mod.nx` re-exports.
 
-## Module Declaration
+## Import standard-library helpers
 
-```nx
-// math.nx - defines module "math"
-module math {
-    export const PI: f64 = 3.14159265359
-    
-    export fn sin(x: f64) -> f64 { ... }
-    export fn cos(x: f64) -> f64 { ... }
-    
-    export struct Vec2 {
-        x: f32,
-        y: f32,
-    }
-}
-```
-
-## Module Files
-
-```
-src/
-├── main.nx           // Root module
-├── math.nx           // math module
-├── game/
-│   ├── mod.nx        // game module
-│   ├── player.nx     // game::player submodule
-│   └── enemy.nx      // game::enemy submodule
-└── utils.nx          // utils module
-```
-
-### `mod.nx` - Re-exports
+A dotted import such as `import std.io` loads the source file `stdlib/io.nx` and adds the functions defined there to the current program:
 
 ```nx
-// game/mod.nx
-module game {
-    export module player
-    export module enemy
-    
-    export fn run() { ... }
-}
-```
-
-## Importing
-
-```nx
-// Import entire module
-import math
-import game
-
-// Use items
-math::sin(0.0)
-game::run()
-
-// Import with alias
-import math as m
-m::sin(0.0)
-
-// Selective import
-import math { sin, cos, Vec2 }
-sin(0.0)  // Direct use
-
-// Import all (use sparingly)
-import math::*
-```
-
-## Visibility
-
-```nx
-module mylib {
-    // Public - visible to importers
-    export fn public_api() { ... }
-    export struct PublicStruct { ... }
-    
-    // Private - only within this module
-    fn internal_helper() { ... }
-    struct InternalStruct { ... }
-    
-    // Pub(crate) - visible within package (future)
-    // pub(crate) fn crate_visible() { ... }
-}
-```
-
-## Standard Library
-
-```nx
-// Stdlib modules always available
 import std.io
 import std.fs
-import std.net
-import std.json
-import std.db
-import std.memory
-import std.crypto
-```
 
-## Package Dependencies
-
-```nx
-// nexus.toml
-[dependencies]
-my-lib = { path = "vendor/my-lib" }
-
-// Usage
-import my_lib
-my_lib::do_something()
-```
-
-## Module Resolution Order
-
-1. **Standard library** (`std.*`)
-2. **Local modules** (same package)
-3. **Dependencies** (`vendor/*`)
-
-## Circular Imports
-
-Not allowed. Design modules as DAG.
-
-```nx
-// ❌ Error: circular dependency
-// a.nx: import b
-// b.nx: import a
-```
-
-## Conditional Modules
-
-```nx
-#[cfg(target = "x86_64-windows")]
-module platform {
-    export fn windows_api() { ... }
-}
-
-#[cfg(target = "x86_64-linux")]
-module platform {
-    export fn linux_api() { ... }
+fn main() {
+    let name = read_line("Name: ")
+    fs_write("name.txt", name)
+    print("Saved name")
 }
 ```
 
-## Best Practices
+Use the names declared by the imported module—for example `read_line`, `fs_read`, `fs_write`. These wrappers are plain functions, not namespaces that require calls like `fs.read_to_string(...)`.
 
-1. **One module per file** (or directory with `mod.nx`)
-2. **Use `export` explicitly** - default is private
-3. **Group related items** in submodules
-4. **Re-export in `mod.nx`** for clean public API
-5. **Avoid deep nesting** - max 3 levels
-6. **Use aliases** for conflicting names
+## Import a project file
 
-## Example Package Structure
+Imports can use a source path string relative to the importing file:
 
+```nx
+import "utility.nx"
+
+fn main() {
+    print(double(21))
+}
 ```
-my-engine/
-├── nexus.toml
-├── src/
-│   ├── lib.nx              // Root: export all public API
-│   ├── math/
-│   │   ├── mod.nx          // export module vec, export module mat
-│   │   ├── vec.nx          // Vec2, Vec3
-│   │   └── mat.nx          // Mat4
-│   ├── render/
-│   │   ├── mod.nx          // export Sprite, export Texture
-│   │   ├── sprite.nx
-│   │   └── texture.nx
-│   └── ecs/
-│       ├── mod.nx          // export World, export Entity
-│       ├── world.nx
-│       └── components.nx
-```
+
+The repository's `examples/imports.nx` demonstrates this file-based form. The compiler resolves a local source file and combines its functions, structs and enums with the importing source. Standard imports beginning with `std.` are resolved against the installed/portable `stdlib/` directory.
+
+## Module-resolution notes
+
+- Use a file path in a quoted import for local files, for example `import "modules/math.nx"`.
+- Use `import std.NAME` for an actual file in the standard library, such as `stdlib/fs.nx` or `stdlib/crypto.nx`.
+- Imported source is compiled as part of the program; there is no separate compilation unit/visibility layer.
+- Circular imports and complex dependency graph behavior should not be assumed to work like Rust/Cargo modules.
+- Package commands support local vendoring and archive creation; they do not provide a hosted registry with semver dependency resolution.
+
+## What is not implemented
+
+These patterns from older drafts are not supported by the current parser: `module math { ... }`, `export fn ...`, `import math as m`, `import math { add }`, `import math::*`, directory re-exports via `mod.nx`, and conditional modules via `#[cfg]`.
+
+See [Standard Library](../std/index.md), [CLI commands](../tooling/commands.md), and [Examples](../examples/overview.md).

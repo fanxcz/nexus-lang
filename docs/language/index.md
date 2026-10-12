@@ -1,77 +1,77 @@
 # Language Reference
 
-Complete reference for the NEXUS programming language.
+This reference documents the language syntax currently implemented by the NEXUS compiler. The language is under active development; planned features are separated from supported syntax rather than presented as working examples.
 
 ## In This Section
 
 | Topic | Description |
-|-------|-------------|
-| [Overview](overview.md) | Language overview and basics |
-| [Syntax](syntax.md) | Detailed syntax reference |
-| [Types](types.md) | Type system |
-| [Functions](functions.md) | Functions and methods |
-| [Control Flow](control-flow.md) | If, loops, match |
-| [Modules & Imports](modules.md) | Module system |
-| [Error Handling](error-handling.md) | Result, Option, error propagation |
-| [FFI](ffi.md) | Foreign Function Interface |
+|---|---|
+| [Overview](overview.md) | Language concepts and compiler backends |
+| [Syntax](syntax.md) | Valid source syntax and a first program |
+| [Types](types.md) | Built-in types, structs, enums, arrays and pointers |
+| [Functions](functions.md) | Named functions, parameters and returns |
+| [Control Flow](control-flow.md) | Conditions, loops and statement-form match |
+| [Imports](modules.md) | Standard-library and file-based imports |
+| [Error Handling](error-handling.md) | Sentinel values and explicit checks |
+| [FFI](ffi.md) | Experimental external function declarations |
 
-## Quick Reference
+## Quick reference
 
-### Variables
+### Bindings
 
 ```nx
-let x = 42              // Immutable
-mut x = 42              // Mutable
-let x: i32 = 42         // With type annotation
+let value = 42
+let name = "NEXUS"
+let mut count: i64 = 0
+count = count + 1
+const limit: i64 = 100
 ```
+
+Bindings are immutable by default; use `let mut` for values that are reassigned.
 
 ### Functions
 
 ```nx
-fn add(a: i32, b: i32) -> i32 {
-    a + b
+fn add(a: i64, b: i64) -> i64 {
+    return a + b
 }
 
 fn main() {
-    let result = add(1, 2)
+    print(add(40, 2))
 }
 ```
 
-### Control Flow
+A non-void function requires an explicit return on every path the compiler can prove.
+
+### Control flow
 
 ```nx
-if condition { } else { }
+if value > 10 {
+    print(value)
+} else {
+    print(0)
+}
 
-while condition { }
-
-for item in items { }
-
-match value {
-    Pattern => expr,
-    _ => default,
+for i in 0..3 {
+    print(i)
 }
 ```
 
-### Types
+### User-defined data
 
 ```nx
-struct Point { x: f32, y: f32 }
+struct Point {
+    x: f64
+    y: f64
+}
 
-enum Option<T> {
-    Some(T),
-    None,
+enum Color {
+    Red,
+    Green,
+    Blue
 }
 ```
 
-### Modules
+## Language limits
 
-```nx
-// math.nx
-module math {
-    export fn add(a: i32, b: i32) -> i32 { a + b }
-}
-
-// main.nx
-import math
-math::add(1, 2)
-```
+The current parser does not implement generics, traits, closures, methods/impl blocks, `defer`, `Result`/`Option`, the `?` operator, async/await, Rust-style module/export declarations, attributes, variadic FFI, slices or general-purpose function types. See the linked pages for the types of examples that are supported today.

@@ -1,46 +1,12 @@
-# std.io
+# `std.io`
 
-Input/output operations.
+The current `stdlib/io.nx` file provides three prompted input helpers. Printing is available through the language's built-in `print` function.
 
 ## Functions
 
-```nx
-import std.io
-
-// Print to stdout (no newline)
-print("Hello")
-print("Value: {x}")
-
-// Print to stdout with newline
-println("Hello")
-println("Value: {x}")
-
-// Print to stderr
-eprint("Error: ")
-eprintln("Failed!")
-
-// Formatted printing
-println("{} {}", "hello", 42)
-println("{name} is {age}", name="Alice", age=30)
-
-// Read line from stdin
-let line = io.read_line()?
-
-// Parse input as type
-let num: i32 = io.parse_input()?
-
-// Flush stdout
-io.flush()
-```
-
-## Types
-
-```nx
-// Standard streams
-io.stdout()  // *File
-io.stderr()  // *File
-io.stdin()   // *File
-```
+- `read_line(prompt: string) -> string`
+- `read_i64(prompt: string) -> i64`
+- `read_f64(prompt: string) -> f64`
 
 ## Example
 
@@ -48,12 +14,15 @@ io.stdin()   // *File
 import std.io
 
 fn main() {
-    println("Enter your name:")
-    let name = io.read_line()?
-    println("Hello, {name}!")
-    
-    println("Enter a number:")
-    let num: i32 = io.parse_input()?
-    println("You entered: {num}")
+    let name = read_line("Name: ")
+    print("Hello, " + name)
+
+    let age = read_i64("Age: ")
+    print("Next year: " + str_i64(age + 1))
+
+    let ratio = read_f64("Ratio: ")
+    print("Ratio: " + str_f64(ratio))
 }
 ```
+
+These helpers return plain values, not a `Result`; do not expect structured parse errors or a retry policy from the wrapper. The module does not currently expose `println`, `eprint`, stream objects, formatting macros or `flush` wrappers.
