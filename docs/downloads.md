@@ -36,6 +36,18 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
     [Studio installer SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256)
 
+-   :material-palette: **NEXUS Paint — native drawing app for Windows x64**
+
+    A desktop raster editor written in the NEXUS language. It includes a brush, eraser, line and rectangle tools, fill, colour palette, adjustable brush size, undo/redo and BMP save/load. The portable ZIP is recommended because it bundles the SDL runtime DLLs and editable .nx source.
+
+    [Download NEXUS Paint portable ZIP](assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button .md-button--primary }
+
+    [Download EXE only (requires DLLs from the ZIP)](assets/downloads/NEXUS-Paint-Windows-x64.exe)
+
+    [EXE SHA-256](assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt) · [ZIP SHA-256](assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
+
+    [View the NEXUS source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
+
 -   :material-laptop: **Linux and macOS compiler builds**
 
     Linux x86-64 and macOS Apple Silicon/Intel archives are built by the tagged-release workflow. They become downloadable when a version-tag release has completed successfully; check the official Releases page for currently published assets.

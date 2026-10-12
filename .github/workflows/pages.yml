@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -277,6 +277,58 @@ jobs:
             $env:PATH = $oldPath
           }
 
+      - name: Build and smoke-test NEXUS Paint Windows application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $portable = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable'
+          $paintDir = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64'
+          if (Test-Path -LiteralPath $paintDir) { Remove-Item -LiteralPath $paintDir -Recurse -Force }
+          New-Item -ItemType Directory -Path $paintDir -Force | Out-Null
+
+          $source = Join-Path $paintDir 'NEXUS-Paint.nx'
+          Copy-Item 'examples/nexus_paint.nx' -Destination $source -Force
+          $launcher = Join-Path $portable 'nexus.cmd'
+          & $launcher 'build' $source
+          if ($LASTEXITCODE -ne 0) { throw "NEXUS Paint compilation failed with exit code $LASTEXITCODE." }
+
+          $exe = Join-Path $paintDir 'NEXUS-Paint.exe'
+          if (-not (Test-Path -LiteralPath $exe)) { throw 'NEXUS Paint compiler reported success but produced no EXE.' }
+          foreach ($dll in @('SDL2.dll','SDL2_image.dll','SDL2_ttf.dll','SDL2_mixer.dll','sqlite3.dll')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $paintDir $dll))) {
+              throw "NEXUS Paint package is missing runtime DLL: $dll"
+            }
+          }
+
+          @'
+          NEXUS Paint - Windows x64
+          =========================
+          This desktop raster drawing application is written in the NEXUS language.
+          Launch NEXUS-Paint.exe. Keep the runtime DLLs in this same folder.
+          The ZIP contains the executable, editable NEXUS source, runtime DLLs and this note.
+          Source: https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx
+          '@ | Set-Content -LiteralPath (Join-Path $paintDir 'README-WINDOWS.txt') -Encoding UTF8
+
+          # Smoke-test application startup; the app stays in its SDL event loop until closed.
+          $paintProcess = Start-Process -FilePath $exe -WorkingDirectory $paintDir -PassThru
+          Start-Sleep -Seconds 3
+          $paintProcess.Refresh()
+          if ($paintProcess.HasExited) {
+            throw "NEXUS Paint exited during startup (exit code $($paintProcess.ExitCode))."
+          }
+          Stop-Process -Id $paintProcess.Id -Force
+          Start-Sleep -Milliseconds 250
+
+          $exeOut = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe'
+          Copy-Item -LiteralPath $exe -Destination $exeOut -Force
+          $zipOut = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.zip'
+          if (Test-Path -LiteralPath $zipOut) { Remove-Item -LiteralPath $zipOut -Force }
+          Compress-Archive -Path (Join-Path $paintDir '*') -DestinationPath $zipOut -CompressionLevel Optimal
+          $hash = (Get-FileHash -LiteralPath $exeOut -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  NEXUS-Paint-Windows-x64.exe" | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Encoding ASCII
+          Write-Host "Built and smoke-tested NEXUS Paint: $exeOut"
+          Write-Host "Portable ZIP: $zipOut"
+
       - name: Build graphical setup installer
         shell: pwsh
         run: |
@@ -361,15 +413,55 @@ jobs:
             Remove-Item -LiteralPath $startMenuShortcut -Recurse -Force -ErrorAction SilentlyContinue
           }
 
-      - name: Upload Windows installer and portable package
+      - name: Upload Windows installer, portable compiler and NEXUS Paint
         uses: actions/upload-artifact@v4
         with:
-          name: NEXUS_Windows_Portable
+          name: NEXUS_Windows_Packages
           path: |
             ${{ runner.temp }}/NEXUS_Windows_Portable.zip
             ${{ runner.temp }}/NEXUS-Setup-1.1.0.exe
+            ${{ runner.temp }}/NEXUS-Paint-Windows-x64.exe
+            ${{ runner.temp }}/NEXUS-Paint-Windows-x64.zip
           if-no-files-found: error
           retention-days: 7
+
+      - name: Commit NEXUS Paint EXE and checksum to repository
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $downloadDir = Join-Path $env:GITHUB_WORKSPACE '.github/project-tools/downloads'
+          New-Item -ItemType Directory -Path $downloadDir -Force | Out-Null
+          Copy-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe') -Destination (Join-Path $downloadDir 'NEXUS-Paint-Windows-x64.exe') -Force
+          Copy-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Destination (Join-Path $downloadDir 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Force
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f '.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
+          if ($LASTEXITCODE -ne 0) { throw 'git add -f failed for the NEXUS Paint EXE.' }
+          git add '.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
+          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Paint SHA-256 file.' }
+
+          git diff --cached --quiet
+          $diffExitCode = $LASTEXITCODE
+          if ($diffExitCode -eq 0) {
+            Write-Host 'The repository already contains the current NEXUS Paint EXE; no commit is needed.'
+            exit 0
+          }
+          if ($diffExitCode -ne 1) { throw "git diff --cached failed with exit code $diffExitCode." }
+          git commit -m 'Add built NEXUS Paint Windows EXE'
+          if ($LASTEXITCODE -ne 0) { throw 'git commit failed for the NEXUS Paint EXE.' }
+
+          $branch = $env:GITHUB_REF_NAME
+          $refspec = "+refs/heads/{0}:refs/remotes/origin/{0}" -f $branch
+          git fetch origin $refspec
+          if ($LASTEXITCODE -ne 0) { throw "git fetch failed for branch $branch." }
+          git rebase "origin/$branch"
+          if ($LASTEXITCODE -ne 0) {
+            git rebase --abort
+            throw "Could not rebase the NEXUS Paint EXE commit on the latest $branch."
+          }
+          git push origin "HEAD:$branch"
+          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $branch." }
 
   build:
     name: Build documentation website
@@ -384,7 +476,7 @@ jobs:
       - name: Download freshly built Windows package
         uses: actions/download-artifact@v4
         with:
-          name: NEXUS_Windows_Portable
+          name: NEXUS_Windows_Packages
           path: docs/assets/downloads
 
       - name: Package VS Code extension
@@ -401,6 +493,8 @@ jobs:
           sha256sum docs/assets/downloads/NEXUS_Windows_Portable.zip | awk '{print $1}' > docs/assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt
           sha256sum docs/assets/downloads/NEXUS-Setup-1.1.0.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Setup-1.1.0.exe.sha256.txt
           sha256sum docs/assets/downloads/NEXUS-Language-1.1.0.vsix | awk '{print $1}' > docs/assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt
+          sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt
+          sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.zip | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt
 
       - name: Setup Python
         uses: actions/setup-python@v5
