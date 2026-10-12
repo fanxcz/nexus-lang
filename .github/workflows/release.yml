@@ -112,7 +112,7 @@ jobs:
           The built-in direct machine-code backend supports its documented
           x86-64 Linux/Windows subset. macOS uses the bundled LLVM/Zig path.
           Optional graphics/audio integration may still use platform libraries.
-          See README.md and https://fanxcz.github.io/nexus/ for documentation.
+          See README.md and https://fanxcz.github.io/nexus-lang/ for documentation.
           EOF
 
           mkdir -p dist
@@ -178,7 +178,7 @@ jobs:
           The archive includes a pinned Zig C++ compiler/linker and bin\clang++.cmd,
           so the LLVM fallback does not require an installed LLVM or Visual Studio SDK.
           Optional graphics/audio integration may still use platform runtime libraries.
-          See README.md and https://fanxcz.github.io/nexus/.
+          See README.md and https://fanxcz.github.io/nexus-lang/.
           '@ | Set-Content -LiteralPath (Join-Path $package 'INSTALL.txt') -Encoding UTF8
 
           New-Item -ItemType Directory -Path dist -Force | Out-Null
