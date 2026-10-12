@@ -1,73 +1,83 @@
 # Downloads
 
-Download the Windows portable bundle to compile and run native NEXUS programs without installing LLVM, Clang, Visual Studio Build Tools, or a separate Windows SDK. The ZIP includes the NEXUS compiler, a pinned Zig-based C++ compiler/linker, runtime DLLs for graphics/audio/database functionality, standard modules, templates, and launchers.
+Choose the official NEXUS package for your system. The Windows x64 package is assembled and tested by GitHub Actions from this repository. Downloads are published to GitHub Pages only when the packaging and documentation workflow succeeds.
 
 <div class="grid cards" markdown>
 
--   :material-microsoft-windows: **NEXUS for Windows 10/11 x64**
+-   :material-microsoft-windows: **NEXUS Setup for Windows 10/11 x64**
 
-    Portable folder with a bundled native backend and runtime dependencies.
+    Recommended for most Windows users. Installs NEXUS for the current user, offers Start menu and desktop shortcuts, and can add the launcher to the user PATH. No administrator rights are required.
 
-    [Download Windows ZIP](assets/downloads/NEXUS_Windows_Portable.zip){ .md-button .md-button--primary }
+    [Download NEXUS-Setup-1.1.0.exe](assets/downloads/NEXUS-Setup-1.1.0.exe){ .md-button .md-button--primary }
 
-    [SHA-256 checksum](assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt)
+    [Installer SHA-256](assets/downloads/NEXUS-Setup-1.1.0.exe.sha256.txt)
+
+-   :material-archive: **Portable Windows x64 package**
+
+    Includes the compiler launcher and executable, bundled Zig-based C++ toolchain, runtime DLLs, standard library, templates, examples, and helper scripts. Extract to a permanent folder before running it.
+
+    [Download Windows ZIP](assets/downloads/NEXUS_Windows_Portable.zip){ .md-button }
+
+    [ZIP SHA-256](assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt)
 
 -   :material-code-tags: **NEXUS language extension for VS Code**
 
-    Syntax highlighting, snippets, diagnostics and completion for `.nx` source files. Install it from the extension archive in VS Code.
+    Syntax highlighting, snippets, diagnostics, and completion for `.nx` source files.
 
-    [Download VSIX](assets/downloads/NEXUS-Language-1.1.0.vsix){ .md-button .md-button--primary }
+    [Download VSIX](assets/downloads/NEXUS-Language-1.1.0.vsix){ .md-button }
 
-    [SHA-256 checksum](assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt)
+    [VSIX SHA-256](assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt)
 
 -   :material-laptop: **Linux and macOS compiler builds**
 
-    The release workflow is ready to package the compiler, standard modules, templates, examples, and pinned Zig C++ compiler/linker. Its first downloadable archives appear here after a version tag is published.
+    Separate archives are planned for Linux x86-64 and macOS Apple Silicon/Intel. Do not assume these are available until they appear as assets in a successful official release.
 
-    Planned archives cover Linux x86-64, macOS Apple Silicon, macOS Intel, and Windows x64. The direct machine-code backend is currently limited to x86-64 Linux and Windows; macOS uses the bundled C++/LLVM path.
+    [Browse GitHub Releases](https://github.com/fanxcz/nexus-lang/releases){ .md-button }
 
-    [Browse GitHub Releases](https://github.com/fanxcz/nexus/releases){ .md-button .md-button--primary }
+-   :material-source-repository: **Source code**
 
--   :material-source-repository: **Full source**
+    Compiler, standard library, runtime, tests, examples, templates, and documentation.
 
-    C++20 compiler source, runtime, standard modules, tests, examples, templates, and documentation.
-
-    [Open GitHub repository](https://github.com/fanxcz/nexus){ .md-button }
+    [Open the repository](https://github.com/fanxcz/nexus-lang){ .md-button }
 
 </div>
 
-## Windows installation
+## Install on Windows
 
-1. Download and extract the ZIP to a permanent folder, for example `C:\\NEXUS`. Do not run it from inside the ZIP viewer.
-2. Double-click `Install-NEXUS.bat`. It verifies the bundled native toolchain and adds the NEXUS folder to your user `PATH` without administrator rights.
-3. Close and reopen PowerShell/CMD/Windows Terminal, then use `nexus --version`, `nexus doctor`, `nexus "C:\\path\\to\\hello.nx"`, or `nexus build "C:\\path\\to\\hello.nx"` from any folder.
-4. Alternatively, drag a `.nx` file onto `Run-NEXUS.bat` to compile and run it, or onto `Build-NEXUS.bat` to create an `.exe` beside the source.
+1. Download `NEXUS-Setup-1.1.0.exe` from this page after the artifact is available.
+2. Run the installer and follow the prompts. It installs under `%LOCALAPPDATA%\\Programs\\NEXUS` by default.
+3. Select the optional shortcuts and PATH integration you want.
+4. Close and reopen PowerShell, then verify:
 
-## What is bundled
+```powershell
+nexus --version
+nexus doctor
+nexus self-test
+```
 
-- NEXUS command-line compiler executable.
-- Zig C++ compiler/linker and its required libraries.
-- SDL2, SDL2_image, SDL2_ttf, SDL2_mixer and SQLite runtime DLLs.
-- NEXUS standard library, project templates, example program and launch scripts.
+If the command is not found, first open a new terminal. You can test the installed launcher directly:
 
-No additional compiler, linker, graphics runtime or database DLL installation is required for the supported Windows x64 portable workflow. Windows itself provides the operating-system APIs required to launch native programs.
+```powershell
+& "$env:LOCALAPPDATA\\Programs\\NEXUS\\nexus.cmd" --version
+```
 
-## Build from source
+The installer is not code-signed. Only run it if you downloaded it from this repository's official GitHub Pages output or GitHub Actions artifact and are comfortable with the unsigned-app warning Windows may display.
 
-Building the NEXUS compiler from its C++ source is a separate developer workflow and still requires a C++20 toolchain, CMake, Ninja, and the optional SDL2 development packages. Those are build-time prerequisites for contributors, not runtime installation requirements for users of the portable ZIP.
+## Portable installation
+
+1. Extract the ZIP to a permanent writable folder, for example `C:\\NEXUS`.
+2. Double-click `Install-NEXUS.bat` if you want to add that folder to your user PATH.
+3. Open a new terminal and run `nexus --version`, `nexus doctor`, or `nexus self-test`.
+
+The portable package is designed to avoid requiring a separately installed LLVM/Clang toolchain for its bundled Windows workflow. Feature availability still depends on the selected compiler backend and target.
 
 ## Integrity
 
-The SHA-256 file lets you verify that your ZIP matches the package published with this source version. After downloading, calculate the hash in PowerShell:
+Use PowerShell to calculate the checksum of a downloaded file:
 
 ```powershell
+Get-FileHash .\\NEXUS-Setup-1.1.0.exe -Algorithm SHA256
 Get-FileHash .\\NEXUS_Windows_Portable.zip -Algorithm SHA256
 ```
 
-Compare the `Hash` value with the checksum file.
-
-## Platform note
-
-The website's Windows portable ZIP is the currently available ready-to-use package. The release workflow produces separate compiler archives for Linux x86-64, macOS Apple Silicon, macOS Intel, and Windows x64 after a version tag is published. Each archive bundles a matching Zig-based C++ toolchain.
-
-The direct machine-code backend currently emits x86-64 Windows and Linux binaries for its documented language subset. The bundled Zig wrapper supplies the broader LLVM compilation path on all released platforms. Optional graphics/audio integrations may still depend on platform runtime libraries.
+Compare each hash with the matching `.sha256.txt` file published alongside the download.
