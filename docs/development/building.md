@@ -16,7 +16,7 @@ Complete guide to building NEXUS compiler and runtime from source.
 
 ```bash
 # Clone
-git clone https://github.com/fanxcz/nexus-lang-lang.git
+git clone https://github.com/fanxcz/nexus-lang.git
 cd nexus
 
 # Configure (uses CMakePresets.json)
