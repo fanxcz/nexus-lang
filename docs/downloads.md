@@ -30,7 +30,7 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
 -   :material-laptop: **Linux and macOS compiler builds**
 
-    Separate archives are planned for Linux x86-64 and macOS Apple Silicon/Intel. Do not assume these are available until they appear as assets in a successful official release.
+    Linux x86-64 and macOS Apple Silicon/Intel archives are built by the tagged-release workflow. They become downloadable when a version-tag release has completed successfully; check the official Releases page for currently published assets.
 
     [Browse GitHub Releases](https://github.com/fanxcz/nexus-lang/releases){ .md-button }
 
