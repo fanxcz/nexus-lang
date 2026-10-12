@@ -20,6 +20,6 @@ Harassment, discriminatory language, intimidation, personal attacks, deliberate 
 
 Project maintainers may edit or remove violating content, close discussions, or restrict participation when needed to protect the community.
 
-To report a concern, contact the repository owner through the contact options on the [GitHub profile](https://github.com/fanxcz). For security vulnerabilities, use the private reporting flow described in [SECURITY.md](SECURITY.md) rather than a public issue.
+To report a concern, contact the repository owner through the contact options on the [GitHub profile](https://github.com/fanxcz). For security vulnerabilities, use the private reporting flow described in [SECURITY.md](https://github.com/fanxcz/nexus-lang/blob/main/SECURITY.md) rather than a public issue.
 
 This code applies to project spaces, including issues, pull requests, discussions and other official NEXUS community spaces.
