@@ -8,15 +8,15 @@ Complete guide to building NEXUS compiler and runtime from source.
 |------|---------|-------------|---------|
 | CMake | 3.20 | 3.25+ | `apt install cmake` / `choco install cmake` / `brew install cmake` |
 | Ninja | 1.10 | 1.11+ | `apt install ninja-build` / `choco install ninja` / `brew install ninja` |
-| Clang/LLVM | 15 | 18+ | `apt install clang-18 lld-18` / `choco install llvm` / `brew install llvm` |
+| Clang/LLVM | 18 | 18+ | `apt install clang-18 lld-18` / `choco install llvm` / `brew install llvm` |
 | SDL2 dev | 2.28 | 2.30+ | `apt install libsdl2-dev` / `vcpkg install sdl2` / `brew install sdl2` |
-| C++20 compiler | Clang 15 / GCC 11 / MSVC 19.30 | Clang 18 / GCC 13 / MSVC 19.40 | See above |
+| C++20 compiler | Clang 18 / GCC 11 / MSVC 19.30 | Clang 18 / GCC 13 / MSVC 19.40 | See above |
 
 ## Quick Build
 
 ```bash
 # Clone
-git clone https://github.com/fanxcz/nexus.git
+git clone https://github.com/fanxcz/nexus-lang-lang.git
 cd nexus
 
 # Configure (uses CMakePresets.json)
@@ -182,7 +182,7 @@ brew install sdl2 sdl2_image sdl2_mixer sdl2_ttf
 ### "C++20 not supported"
 
 Upgrade compiler:
-- Clang ≥ 15
+- Clang ≥ 18
 - GCC ≥ 11
 - MSVC ≥ 19.30 (VS 2022 17.3+)
 
