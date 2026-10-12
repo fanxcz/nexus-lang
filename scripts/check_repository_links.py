@@ -103,6 +103,30 @@ def repo_url_path(url: str) -> tuple[bool, str] | None:
     candidate = ROOT / path
     return (candidate.is_file() or candidate.is_dir(), path)
 
+def strip_markdown_code(content: str) -> str:
+    # Code samples often contain C++ lambda syntax like [](const X&){} that
+    # resembles a Markdown link. Ignore code when parsing navigation links;
+    # bare URL extraction below still sees all text in the original file.
+    lines = content.splitlines()
+    output: list[str] = []
+    fence = None
+    tick = chr(96)
+    for line in lines:
+        stripped = line.lstrip()
+        marker = tick * 3 if stripped.startswith(tick * 3) else ("~~~" if stripped.startswith("~~~") else None)
+        if fence is None and marker:
+            fence = marker
+            output.append("")
+            continue
+        if fence is not None:
+            output.append("")
+            if stripped.startswith(fence):
+                fence = None
+            continue
+        output.append(line)
+    text = "\n".join(output)
+    return re.sub(tick + r"+[^" + tick + r"\n]*" + tick + r"+", "", text)
+
 def main() -> int:
     files = source_files()
     errors: list[str] = []
@@ -115,13 +139,22 @@ def main() -> int:
             continue
         rel = source.relative_to(ROOT)
         targets: list[tuple[str, int]] = []
-        for pattern in (MD_LINK, MD_REF, HTML_ATTR, CSS_URL):
-            for match in pattern.finditer(content):
+        suffix = source.suffix.lower()
+        parse_content = strip_markdown_code(content) if suffix in {".md", ".mdx", ".rst", ".txt"} else content
+        patterns = []
+        if suffix in {".md", ".mdx", ".rst", ".txt"}:
+            patterns.extend((MD_LINK, MD_REF))
+        if suffix in {".md", ".mdx", ".html", ".htm", ".svg"}:
+            patterns.append(HTML_ATTR)
+        if suffix in {".html", ".htm", ".css", ".scss", ".svg"}:
+            patterns.append(CSS_URL)
+        for pattern in patterns:
+            for match in pattern.finditer(parse_content):
                 target = next((group for group in match.groups() if group is not None), "").strip()
                 if target:
-                    targets.append((target, content.count("\n", 0, match.start()) + 1))
+                    targets.append((target, parse_content.count("\n", 0, match.start()) + 1))
         for raw in BARE_URL.findall(content):
-            url = raw.rstrip(".,;:!?)]}")
+            url = raw.rstrip(".,;:!?)]}{")
             urls += 1
             own = repo_url_path(url)
             if own and not own[0]:
