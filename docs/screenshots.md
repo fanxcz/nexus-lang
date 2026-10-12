@@ -10,4 +10,4 @@ The current source archive does not contain verified application screenshots. Ra
 - **3D demo** — native 3D rendering example.
 - **Terminal game** — text-based game example.
 
-Open the source files in the [`examples/` directory](https://github.com/fanxcz/nexus/tree/main/examples). Screenshots will be linked here after captures from real runs are added to the repository.
+Open the source files in the [`examples/` directory](https://github.com/fanxcz/nexus-lang/tree/main/examples). Screenshots will be linked here after captures from real runs are added to the repository.
