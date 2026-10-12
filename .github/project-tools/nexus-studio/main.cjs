@@ -207,6 +207,7 @@ app.whenReady().then(async () => {
     });
     if (result.canceled || !result.filePaths[0]) return null;
     const chosen = path.resolve(result.filePaths[0]);
+    await assertProjectPath(chosen);
     if (!isInside(projectRoot, chosen)) throw new Error('Исходный файл должен находиться внутри открытого проекта.');
     return path.relative(projectRoot, chosen).split(path.sep).join('/');
   });
