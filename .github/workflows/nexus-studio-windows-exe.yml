@@ -61,8 +61,12 @@ jobs:
 
           # The job already runs inside .github/project-tools/nexus-studio.
           # Stage a relative path and fail loudly if any Git operation fails.
-          git add 'downloads/NEXUS-Studio-Windows-x64.exe' 'downloads/NEXUS-Studio-Windows-x64.exe.sha256'
-          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Studio EXE or SHA-256 file.' }
+          # The repository .gitignore excludes executable files globally;
+          # force-add this intentionally versioned release asset, then add its hash.
+          git add -f 'downloads/NEXUS-Studio-Windows-x64.exe'
+          if ($LASTEXITCODE -ne 0) { throw 'git add -f failed for the NEXUS Studio EXE.' }
+          git add 'downloads/NEXUS-Studio-Windows-x64.exe.sha256'
+          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Studio SHA-256 file.' }
 
           git diff --cached --quiet
           $diffExitCode = $LASTEXITCODE
