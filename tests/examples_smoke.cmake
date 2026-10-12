@@ -5,27 +5,18 @@ if(NOT DEFINED NEXUS_SOURCE_DIR)
   message(FATAL_ERROR "NEXUS_SOURCE_DIR is required")
 endif()
 
-# Check every standalone example and source template, not just examples
-# explicitly used by existing tests. This prevents stale snippets from quietly
-# remaining in the repository after compiler syntax/runtime API changes.
-set(EXAMPLE_RELATIVE_PATHS
-  examples/hello.nx
-  examples/imports.nx
-  examples/interactive_cli.nx
-  examples/terminal_game.nx
-  examples/nexus_arena.nx
-  examples/nexus_focus.nx
-  examples/nexus_paint.nx
-  examples/native_app.nx
-  examples/native_graphics_game.nx
-  examples/native_3d.nx
-  examples/model_demo.nx
-  examples/particles_demo.nx
-  examples/audio_demo.nx
-)
-foreach(RELATIVE_SOURCE IN LISTS EXAMPLE_RELATIVE_PATHS)
-  set(SOURCE_FILE "${NEXUS_SOURCE_DIR}/${RELATIVE_SOURCE}")
+# Compile-check every current standalone example. The v080_* samples are
+# explicitly legacy snapshots from an older compiler/runtime API; do not
+# silently treat them as current examples.
+file(GLOB EXAMPLE_SOURCES "${NEXUS_SOURCE_DIR}/examples/*.nx")
+list(SORT EXAMPLE_SOURCES)
+foreach(SOURCE_FILE IN LISTS EXAMPLE_SOURCES)
   get_filename_component(SOURCE_NAME "${SOURCE_FILE}" NAME)
+  if(SOURCE_NAME MATCHES "^v080_")
+    message(STATUS "SKIP legacy example ${SOURCE_NAME}")
+    continue()
+  endif()
+
   execute_process(
     COMMAND "${NEXUS_BIN}" check "${SOURCE_FILE}"
     RESULT_VARIABLE rc
@@ -38,7 +29,7 @@ foreach(RELATIVE_SOURCE IN LISTS EXAMPLE_RELATIVE_PATHS)
   message(STATUS "PASS example ${SOURCE_NAME}")
 endforeach()
 
-# Check every checked-in template source, including editor.nx (which is an
+# Check every checked-in source template, including editor.nx (which is an
 # example but is not accepted by nexus new --template).
 file(GLOB TEMPLATE_SOURCES "${NEXUS_SOURCE_DIR}/examples/templates/*.nx")
 list(SORT TEMPLATE_SOURCES)
@@ -56,8 +47,7 @@ foreach(SOURCE_FILE IN LISTS TEMPLATE_SOURCES)
   message(STATUS "PASS template source ${SOURCE_NAME}")
 endforeach()
 
-# Also validate project generation itself for every template the current CLI
-# advertises. The editor source exists but is deliberately not a CLI template.
+# Also validate project generation for every template the current CLI accepts.
 set(TEMPLATE_ROOT "${CMAKE_BINARY_DIR}/template-check-smoke")
 file(REMOVE_RECURSE "${TEMPLATE_ROOT}")
 file(MAKE_DIRECTORY "${TEMPLATE_ROOT}")
@@ -85,4 +75,4 @@ foreach(TEMPLATE_NAME IN ITEMS cli app game 3d paint server library)
   message(STATUS "PASS generated template ${TEMPLATE_NAME}")
 endforeach()
 
-message(STATUS "NEXUS examples and template smoke tests: PASS")
+message(STATUS "NEXUS example and template smoke tests: PASS")
