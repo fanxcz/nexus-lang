@@ -79,5 +79,17 @@ jobs:
           git commit -m 'Add built NEXUS Studio Windows EXE'
           if ($LASTEXITCODE -ne 0) { throw 'git commit failed for the built NEXUS Studio EXE.' }
 
-          git push origin "HEAD:$env:GITHUB_REF_NAME"
-          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $env:GITHUB_REF_NAME." }
+          # The binary build takes several minutes; docs or code may land on main
+          # while it runs. Rebase this asset-only commit on the latest branch first.
+          $branch = $env:GITHUB_REF_NAME
+          git fetch origin "+refs/heads/$branch:refs/remotes/origin/$branch"
+          if ($LASTEXITCODE -ne 0) { throw "git fetch failed for branch $branch." }
+
+          git rebase "origin/$branch"
+          if ($LASTEXITCODE -ne 0) {
+            git rebase --abort
+            throw "Could not rebase the generated EXE commit on the latest $branch."
+          }
+
+          git push origin "HEAD:$branch"
+          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $branch." }
