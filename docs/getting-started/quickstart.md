@@ -1,142 +1,113 @@
 # Quick Start
 
-Create your first NEXUS project in under a minute.
+This guide uses the command-line workflow and runtime API included with NEXUS 1.1.0. Start with a small console program, then try a native graphical app.
 
-## 1. Create a Project
+## 1. Check the compiler
+
+Open a terminal and run:
 
 ```bash
-# Interactive project creation
-nexus new MyGame --template game
-
-# Or specify all options
-nexus new MyApp --template app --name "My Application" --author "Your Name"
+nexus --version
+nexus doctor
 ```
 
-## 2. Project Structure
+On Windows, use PowerShell or Windows Terminal. If `nexus` is not found, follow the [installation guide](installation.md).
 
-```
-MyGame/
-├── nexus.toml          # Project configuration
-├── src/
-│   └── main.nx         # Entry point
-├── assets/             # Game assets (images, sounds, fonts)
-├── vendor/             # Local packages (gitignored)
-├── nexus.lock          # Package lockfile (gitignored)
-└── build/              # Build output (gitignored)
-```
+## 2. Create and run a command-line project
 
-## 3. Project Configuration (`nexus.toml`)
-
-```toml
-[package]
-name = "my-game"
-version = "1.0.0"
-edition = "2026"
-description = "A cool NEXUS game"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
-repository = "https://github.com/you/my-game"
-
-[build]
-entry = "src/main.nx"
-optimization = "speed"      # "speed" | "size" | "debug"
-debug_symbols = true
-target_cpu = "native"       # or "x86-64-v3", "arm64", etc.
-
-[targets]
-default = "x86_64-linux"
-# Cross-compilation targets:
-# windows = "x86_64-windows"
-# macos = "x86_64-macos"
-# linux_arm = "aarch64-linux"
-
-[dependencies]
-# Local packages (vendored in vendor/)
-# my-lib = { path = "vendor/my-lib" }
-
-[dev-dependencies]
-# Test-only dependencies
+```bash
+nexus new HelloNexus --template cli
+cd HelloNexus
+nexus check
+nexus build
+nexus run
 ```
 
-## 4. Write Code (`src/main.nx`)
+NEXUS creates a project directory with a manifest and source file. Run commands from that project directory so the compiler can find its settings.
+
+A small NEXUS program looks like this:
 
 ```nx
-import std.io
-import std.memory
-import runtime.gfx
-import runtime.input
-
 fn main() {
-    // Initialize graphics
-    gfx_init(800, 600, "My First NEXUS Game")
-    defer gfx_quit()
-
-    // Game state
-    let player_x = 400.0
-    let player_y = 300.0
-    let speed = 300.0  // pixels per second
-
-    // Main loop
-    while !gfx_should_close() {
-        let dt = gfx_delta_time()
-
-        // Input handling
-        if input_key_down(KEY_LEFT)  { player_x -= speed * dt }
-        if input_key_down(KEY_RIGHT) { player_x += speed * dt }
-        if input_key_down(KEY_UP)    { player_y -= speed * dt }
-        if input_key_down(KEY_DOWN)  { player_y += speed * dt }
-
-        // Render
-        gfx_begin_frame()
-        gfx_clear(0x1a1a2e)
-        
-        // Draw player (white square)
-        gfx_draw_rect(player_x - 16, player_y - 16, 32, 32, 0xffffff)
-        
-        gfx_draw_text(10, 10, "Arrow keys to move", 0x888888)
-        gfx_end_frame()
-    }
+    print("Hello from NEXUS!")
 }
 ```
 
-## 5. Build and Run
+## 3. Create a native graphical app
+
+NEXUS includes an app template using the runtime's graphics API. Create it in a separate directory:
 
 ```bash
-cd MyGame
-
-# Debug build (default)
+nexus new MyApp --template app
+cd MyApp
+nexus check
 nexus build
 nexus run
-
-# Release build
-nexus build --release
-nexus run --release
 ```
 
-## 6. Common Commands
+The template is a complete working example. Its core loop uses graphics functions present in the repository:
+
+```nx
+fn main() {
+    let ok = gfx_init(1000, 640, "NEXUS App")
+    if !ok {
+        print("Graphics backend unavailable: " + gfx_error())
+        return
+    }
+
+    while !gfx_should_close() {
+        gfx_poll()
+        if gfx_key_down("ESC") {
+            break
+        }
+
+        gfx_begin()
+        gfx_clear(0.035, 0.045, 0.08, 1.0)
+        gfx_rect(40.0, 40.0, 920.0, 110.0, 0.07, 0.12, 0.22, 1.0)
+        gfx_text(70.0, 70.0, 3.0, "NEXUS APP", 0.55, 0.9, 1.0, 1.0)
+        gfx_text(70.0, 120.0, 1.5, "ESC closes the window", 0.8, 0.84, 0.95, 1.0)
+        gfx_end()
+    }
+
+    gfx_shutdown()
+}
+```
+
+This example is based on `examples/templates/app.nx`. Graphics require the runtime dependencies supplied by the Windows portable package or installed for your platform/build.
+
+## 4. Explore other templates
+
+| Template | Use it for |
+|---|---|
+| `cli` | Command-line utilities |
+| `app` | Windowed native applications |
+| `game` | 2D game starting point |
+| `3d` | 3D graphics starting point |
+| `paint` | Raster-canvas drawing application |
+| `editor` | Editor-style application |
+| `server` | Server experiments |
+| `library` | Reusable source package |
+
+For example, `nexus new MyPaint --template paint` creates a Paint application scaffold. See [Templates](../templates/index.md) and [Examples](../examples/overview.md) for details.
+
+## 5. Useful commands
 
 | Command | Description |
-|---------|-------------|
-| `nexus new <name> --template <t>` | Create new project |
-| `nexus init` | Initialize project in current directory |
-| `nexus build` | Build project (debug) |
-| `nexus build --release` | Build optimized release |
-| `nexus run` | Build and run |
-| `nexus check` | Type-check without building |
-| `nexus clean` | Clean build artifacts |
-| `nexus fmt` | Format source code |
-| `nexus lint` | Lint source code |
-| `nexus doc` | Generate documentation |
-| `nexus test` | Run tests |
-| `nexus pkg add <path>` | Add local package |
-| `nexus pkg build` | Build all packages |
-| `nexus editor` | Open built-in code editor |
-| `nexus lsp` | Start Language Server |
+|---|---|
+| `nexus check` | Check the current project or a source file |
+| `nexus build` | Build the current project |
+| `nexus build --release` | Build an optimized project |
+| `nexus run` | Build and run the current project |
+| `nexus doctor` | Diagnose the compiler/runtime setup |
+| `nexus self-test` | Compile and run the compiler's small self-test |
+| `nexus explain-backend src/main.nx` | Explain which backend will be used |
 
-## Next Steps
+Use `nexus <command> --help` for command-specific options. The built-in native backend supports a defined x86-64 Linux/Windows subset; other programs may require the LLVM/Clang path. See [Backend selection](../tooling/backend-explainer.md).
 
-- Read the [Language Reference](../language/overview.md)
-- Explore [Standard Library](../std/overview.md)
-- Learn [Runtime API](../runtime/overview.md)
-- Check out [Examples](../examples/overview.md)
-- Try the [Paint Template](../templates/paint.md)
+## Next steps
+
+- Read the [Language Reference](../language/overview.md).
+- Explore the [Standard Library](../std/overview.md).
+- Learn the [Runtime API](../runtime/overview.md).
+- Browse [Examples](../examples/overview.md).
+- Read [Building from Source](../development/building.md).
