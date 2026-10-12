@@ -507,6 +507,27 @@ jobs:
           sha256sum docs/assets/downloads/NEXUS-Language-1.1.0.vsix | awk '{print $1}' > docs/assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt
           sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt
           sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.zip | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt
+      
+      - name: Validate links across README and documentation
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --include-fragments
+            --timeout 30
+            --max-retries 2
+            --max-concurrency 8
+            README.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            SECURITY.md
+            docs
+            .github/project-tools/nexus-studio/README.md
+            .github/project-tools/vscode-extension/README.md
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
