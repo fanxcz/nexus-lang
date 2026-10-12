@@ -40,6 +40,8 @@ The PATH helper changes only the current user's PATH and does not require admini
 Use the project release artifacts when published for your architecture. The native machine-code emitter is currently focused on x86-64 Windows/Linux. macOS builds use the configured Clang toolchain as required by the program and target.
 
 ## Building from Source
+The compiler's `CMakeLists.txt` minimum is 3.20, but the checked-in `CMakePresets.json` uses schema version 6, which requires CMake 3.25+. If you have CMake 3.20–3.24, use explicit configure/build commands (`cmake -S . -B build -G Ninja -DNEXUS_BUILD_TESTS=ON` and `cmake --build build`) instead of `--preset` commands.
+
 
 ### Prerequisites
 
