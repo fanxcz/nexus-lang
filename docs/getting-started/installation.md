@@ -2,7 +2,7 @@
 
 ## Pre-built Binaries
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/fanxcz/nexus-lang/releases).
+Windows builds are assembled by the [Downloads workflow](../downloads.md). Linux and macOS archives are published to [GitHub Releases](https://github.com/fanxcz/nexus-lang/releases) when a version tag is built successfully. If no tagged release is listed yet, use the source-build instructions below or the latest successful CI artifact while it is available.
 
 ### Linux (x86_64)
 
@@ -12,7 +12,7 @@ Portable and native compiler artifacts are provided through project releases whe
 
 Download the [NEXUS Windows portable ZIP](../downloads.md) and extract the entire archive to a folder such as `C:\\NEXUS`. The bundle is designed to include the NEXUS compiler, its pinned fallback toolchain and target files, the NEXUS standard library, templates, runtime assets, and SQLite support.
 
-For normal use with the supported packaged workflows, you should not need to separately install LLVM, CMake, Ninja, Visual Studio Build Tools, or the Windows SDK. Run `Check-NEXUS-Toolchain.bat` to verify the included backend can compile and launch a native program, then use the terminal commands below. Keep the `bin`, `toolchain`, `runtime`, `stdlib`, and `project-templates` folders together.
+For normal use with the supported self-contained Windows package, you should not need to separately install LLVM/Clang or Visual Studio C++ Build Tools. The compiler's built-in native backend handles its documented x86-64 subset; other programs use the bundled Zig-backed C++ toolchain. Building NEXUS itself from source still requires a C++20 toolchain and CMake. Run `Check-NEXUS-Toolchain.bat` to verify the included backend can compile and launch a native program, then use the terminal commands below. Keep the `bin`, `toolchain`, `runtime`, `stdlib`, and `project-templates` folders together.
 
 To add NEXUS to your user PATH:
 
@@ -90,7 +90,7 @@ brew install cmake ninja llvm sdl2 sdl2_image sdl2_mixer sdl2_ttf
 
 ```bash
 git clone https://github.com/fanxcz/nexus-lang.git
-cd nexus
+cd nexus-lang
 
 cmake --preset=release
 cmake --build --preset=release
