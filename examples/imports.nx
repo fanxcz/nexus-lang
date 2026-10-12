@@ -1,4 +1,5 @@
-import "mods/../utility.nx"
+import "utility.nx"
+
 fn main() {
     print(double(21))
 }
