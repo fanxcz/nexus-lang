@@ -32,7 +32,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Build Windows installer
-        run: npx electron-builder --win nsis
+        run: npx electron-builder --win nsis --publish never
 
       - name: Prepare EXE for repository
         shell: pwsh
