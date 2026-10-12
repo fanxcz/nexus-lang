@@ -1,0 +1,3 @@
+fn db_open(path: string) -> i64 { return sqlite_open(path) }
+fn db_exec(db: i64, sql: string) -> i64 { return sqlite_exec(db, sql) }
+fn db_close(db: i64) { sqlite_close(db) }

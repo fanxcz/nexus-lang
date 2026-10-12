@@ -1,0 +1,21 @@
+fn fib(n: i64) -> i64 {
+    if n < 2 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+fn is_even(n: i64) -> bool {
+    return n % 2 == 0
+}
+
+fn pick(a: i64, b: i64, c: i64, d: i64, e: i64, f: i64) -> i64 {
+    return a + b + c + d + e + f
+}
+
+fn main() {
+    print(fib(10))
+    print(is_even(42))
+    print(is_even(7))
+    print(pick(1, 2, 3, 4, 5, 6))
+}

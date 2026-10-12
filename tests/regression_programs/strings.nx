@@ -1,0 +1,7 @@
+fn main() {
+    let name = "Nexus"
+    print("Hello, " + name)
+    print(name == "Nexus")
+    print(name != "Other")
+    print(str_i64(42))
+}

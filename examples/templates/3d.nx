@@ -1,0 +1,15 @@
+fn main() {
+    let ok = gfx_init(1280, 720, "NEXUS 3D")
+    if !ok { print("Graphics backend unavailable: " + gfx_error()); return }
+    while !gfx_should_close() {
+        gfx_poll()
+        if gfx_key_down("ESC") { break }
+        gfx3d_begin(70.0, 0.1, 1000.0, 0.0, 2.8, 9.0, 24.0, 0.0, 0.0)
+        gfx_clear(0.015, 0.02, 0.045, 1.0)
+        gfx3d_grid(20, 1.0, 0.12, 0.18, 0.3, 1.0)
+        gfx3d_cube(0.0, 1.2, 0.0, 2.0, 2.0, 2.0, 0.15, 0.75, 1.0, 1.0)
+        gfx3d_cube(3.5, 0.7, -2.5, 1.4, 1.4, 1.4, 1.0, 0.25, 0.2, 1.0)
+        gfx3d_end()
+    }
+    gfx_shutdown()
+}

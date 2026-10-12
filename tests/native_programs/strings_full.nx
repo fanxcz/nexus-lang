@@ -1,0 +1,21 @@
+fn greet(name: string) -> string {
+    return "Hello, " + name + "!"
+}
+
+fn main() {
+    let empty = ""
+    print(empty)
+    print("a" + "b" + "c")
+    print(greet("Nexus"))
+    let x = "foo"
+    let y = "foo"
+    let z = "bar"
+    print(x == y)
+    print(x != y)
+    print(x == z)
+    print(x != z)
+    print(str_i64(-12345))
+    print(str_i64(0))
+    let n = 20 + 22
+    print("answer: " + str_i64(n))
+}

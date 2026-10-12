@@ -1,0 +1,6 @@
+fn main() {
+    print("Hello from Nexus!")
+    let x = 40
+    let y = 2
+    print(x + y)
+}

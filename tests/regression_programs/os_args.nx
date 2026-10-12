@@ -1,0 +1,17 @@
+fn main() {
+    // os.args_count and os.args_get tests
+    // Note: actual argument values depend on test runner
+    let argc = os.args_count()
+    print("argc = " + str_i64(argc))
+    
+    let mut i: i64 = 0
+    while i < argc {
+        let arg = os.args_get(i)
+        print("argv[" + str_i64(i) + "] = " + arg)
+        i = i + 1
+    }
+    
+    // Test out of bounds
+    print("os.args_get(999) = '" + os.args_get(999) + "'")
+    print("os.args_get(-1) = '" + os.args_get(-1) + "'")
+}

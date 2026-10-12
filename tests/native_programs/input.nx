@@ -1,0 +1,5 @@
+fn main() {
+    let name = input("Your name: ")
+    print("Hello, " + name + "!")
+    print(name == "Alice")
+}

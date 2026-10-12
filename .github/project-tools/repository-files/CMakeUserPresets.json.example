@@ -1,0 +1,40 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "my-clang",
+      "inherits": "default",
+      "description": "Custom Clang path (edit paths for your system)",
+      "cacheVariables": {
+        "NEXUS_C_COMPILER": "C:/Program Files/LLVM/bin/clang.exe",
+        "NEXUS_CXX_COMPILER": "C:/Program Files/LLVM/bin/clang++.exe",
+        "NEXUS_LINKER": "C:/Program Files/LLVM/bin/lld.exe"
+      }
+    },
+    {
+      "name": "my-gcc",
+      "inherits": "default",
+      "description": "Use GCC instead of Clang",
+      "cacheVariables": {
+        "NEXUS_C_COMPILER": "gcc",
+        "NEXUS_CXX_COMPILER": "g++",
+        "NEXUS_LINKER": "mold"
+      }
+    },
+    {
+      "name": "msvc-native",
+      "inherits": "default",
+      "description": "Use native MSVC (Visual Studio)",
+      "cacheVariables": {
+        "NEXUS_C_COMPILER": "cl",
+        "NEXUS_CXX_COMPILER": "cl",
+        "NEXUS_USE_CLANG": "OFF"
+      }
+    }
+  ]
+}

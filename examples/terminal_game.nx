@@ -1,0 +1,33 @@
+fn main() {
+    screen_set_title("NEXUS Terminal Game")
+    screen_begin()
+    let mut x: i64 = 10
+    let mut y: i64 = 8
+    let mut score: i64 = 0
+    let mut running = true
+    while running {
+        screen_clear()
+        screen_put(0, 0, "NEXUS TERMINAL GAME")
+        screen_put(0, 1, "WASD move | Q quit")
+        screen_put(x, y, "@")
+        screen_put(0, 22, "Score: " + str_i64(score))
+        screen_present()
+        if key_pressed() {
+            let key = read_key()
+            if key == 119 { y = y - 1 }
+            else if key == 115 { y = y + 1 }
+            else if key == 97 { x = x - 1 }
+            else if key == 100 { x = x + 1 }
+            else if key == 113 { running = false }
+            if x < 1 { x = 1 }
+            if y < 2 { y = 2 }
+            if x > screen_width() - 2 { x = screen_width() - 2 }
+            if y > screen_height() - 3 { y = screen_height() - 3 }
+            score = score + 1
+        }
+        sleep(35)
+    }
+    screen_end()
+    print("Game over")
+    print(score)
+}

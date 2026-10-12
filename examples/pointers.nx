@@ -1,0 +1,7 @@
+fn main() {
+    let mut x = 10
+    let p = &x
+    print(*p)
+    x = 42
+    print(*p)
+}

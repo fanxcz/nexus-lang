@@ -1,0 +1,224 @@
+name: Publish NEXUS compiler releases
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: linux-x86_64
+            zig_platform: linux
+            zig_arch: x86_64
+          - os: windows-latest
+            asset: windows-x86_64
+            zig_platform: windows
+            zig_arch: x86_64
+          - os: macos-latest
+            asset: macos-aarch64
+            zig_platform: macos
+            zig_arch: aarch64
+          - os: macos-15-intel
+            asset: macos-x86_64
+            zig_platform: macos
+            zig_arch: x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux toolchain
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang lld
+
+      - name: Install Windows toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install ninja llvm -y --no-progress
+
+      - name: Install macOS toolchain
+        if: runner.os == 'macOS'
+        run: brew install ninja llvm
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DNEXUS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package Linux/macOS archive with bundled Zig toolchain
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          asset="${{ matrix.asset }}"
+          zig_version='0.14.1'
+          zig_platform="${{ matrix.zig_platform }}"
+          zig_arch="${{ matrix.zig_arch }}"
+          package="${RUNNER_TEMP}/NEXUS-${tag}-${asset}"
+          zig_name="zig-${zig_arch}-${zig_platform}-${zig_version}"
+          zig_archive="${RUNNER_TEMP}/${zig_name}.tar.xz"
+          zig_extract="${RUNNER_TEMP}/zig-extract"
+          mkdir -p "$package/bin" "$package/toolchain" "$package/runtime" "$package/stdlib" "$package/project-templates" "$package/examples" "$zig_extract"
+
+          curl --fail --location --retry 3 "https://ziglang.org/download/${zig_version}/${zig_name}.tar.xz" --output "$zig_archive"
+          tar -xf "$zig_archive" -C "$zig_extract"
+          zig_root="$zig_extract/${zig_name}"
+          test -x "$zig_root/zig"
+          test -d "$zig_root/lib"
+          install -m 755 "$zig_root/zig" "$package/toolchain/zig"
+          cp -R "$zig_root/lib" "$package/toolchain/lib"
+          for license in LICENSE README.md; do
+            if [ -f "$zig_root/$license" ]; then cp "$zig_root/$license" "$package/toolchain/"; fi
+          done
+
+          cat > "$package/bin/clang++" <<'SH'
+          #!/bin/sh
+          set -eu
+          here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+          exec "$here/../toolchain/zig" c++ "$@"
+          SH
+          chmod 755 "$package/bin/clang++"
+
+          install -m 755 build/nexus "$package/bin/nexus"
+          install -m 644 src/runtime/runtime.cpp "$package/runtime/runtime.cpp"
+          cp -R stdlib/. "$package/stdlib/"
+          cp -R examples/templates/. "$package/project-templates/"
+          cp -R examples/. "$package/examples/"
+          readme_file=".github/project-tools/repository-files/README.md"
+          [ -f "$readme_file" ] || readme_file="README.md"
+          third_party_file=".github/project-tools/repository-files/THIRD_PARTY_NOTICES.md"
+          [ -f "$third_party_file" ] || third_party_file="THIRD_PARTY_NOTICES.md"
+          cp LICENSE "$readme_file" "$third_party_file" "$package/"
+          cat > "$package/INSTALL.txt" <<'EOF'
+          NEXUS compiler bundle
+          ---------------------
+          Run bin/nexus --version to verify the compiler.
+          The archive includes a pinned Zig C++ compiler/linker and wrapper in
+          bin/clang++, so the LLVM fallback does not need a separately installed
+          Clang/LLVM compiler or C++ SDK.
+          The built-in direct machine-code backend supports its documented
+          x86-64 Linux/Windows subset. macOS uses the bundled LLVM/Zig path.
+          Optional graphics/audio integration may still use platform libraries.
+          See README.md and https://fanxcz.github.io/nexus/ for documentation.
+          EOF
+
+          mkdir -p dist
+          archive="dist/NEXUS-${tag}-${asset}.tar.gz"
+          tar -czf "$archive" -C "$RUNNER_TEMP" "$(basename "$package")"
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "$archive" > "$archive.sha256"
+          else
+            shasum -a 256 "$archive" | awk '{print $1 "  " $2}' > "$archive.sha256"
+          fi
+
+      - name: Package Windows archive with bundled Zig toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = $env:GITHUB_REF_NAME
+          $asset = '${{ matrix.asset }}'
+          $zigVersion = '0.14.1'
+          $package = Join-Path $env:RUNNER_TEMP "NEXUS-$tag-$asset"
+          $zip = Join-Path $env:RUNNER_TEMP "zig-windows-$zigVersion.zip"
+          $extract = Join-Path $env:RUNNER_TEMP "zig-windows"
+          foreach ($dir in @('bin','toolchain','runtime','stdlib','project-templates','examples')) {
+            New-Item -ItemType Directory -Path (Join-Path $package $dir) -Force | Out-Null
+          }
+
+          Invoke-WebRequest "https://ziglang.org/download/$zigVersion/zig-x86_64-windows-$zigVersion.zip" -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $zigRoot = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
+          if (-not $zigRoot) { throw 'Official Zig archive directory missing.' }
+          foreach ($required in @('zig.exe','lib')) {
+            $source = Join-Path $zigRoot.FullName $required
+            if (-not (Test-Path -LiteralPath $source)) { throw "Bundled Zig component missing: $required" }
+            Copy-Item -LiteralPath $source -Destination (Join-Path $package 'toolchain') -Recurse -Force
+          }
+          foreach ($license in @('LICENSE','README.md')) {
+            $source = Join-Path $zigRoot.FullName $license
+            if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $package 'toolchain') -Force }
+          }
+          if (-not (Test-Path 'build/nexus.exe')) { throw 'Compiler executable missing.' }
+          Copy-Item 'build/nexus.exe' (Join-Path $package 'bin/nexus.exe') -Force
+          Copy-Item 'src/runtime/runtime.cpp' (Join-Path $package 'runtime/runtime.cpp') -Force
+          Copy-Item 'stdlib/*' (Join-Path $package 'stdlib') -Recurse -Force
+          Copy-Item 'examples/templates/*' (Join-Path $package 'project-templates') -Recurse -Force
+          Copy-Item 'examples/*' (Join-Path $package 'examples') -Recurse -Force
+          $readmeFile = '.github/project-tools/repository-files/README.md'
+          if (-not (Test-Path $readmeFile)) { $readmeFile = 'README.md' }
+          $noticesFile = '.github/project-tools/repository-files/THIRD_PARTY_NOTICES.md'
+          if (-not (Test-Path $noticesFile)) { $noticesFile = 'THIRD_PARTY_NOTICES.md' }
+          Copy-Item 'LICENSE',$readmeFile,$noticesFile $package -Force
+
+          @'
+          @echo off
+          setlocal
+          "%~dp0..\toolchain\zig.exe" c++ %*
+          exit /b %ERRORLEVEL%
+          '@ | Set-Content -LiteralPath (Join-Path $package 'bin/clang++.cmd') -Encoding ASCII
+
+          @'
+          NEXUS compiler bundle
+          ---------------------
+          Run bin\nexus.exe --version to verify the compiler.
+          The archive includes a pinned Zig C++ compiler/linker and bin\clang++.cmd,
+          so the LLVM fallback does not require an installed LLVM or Visual Studio SDK.
+          Optional graphics/audio integration may still use platform runtime libraries.
+          See README.md and https://fanxcz.github.io/nexus/.
+          '@ | Set-Content -LiteralPath (Join-Path $package 'INSTALL.txt') -Encoding UTF8
+
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          $archive = Join-Path 'dist' "NEXUS-$tag-$asset.zip"
+          Compress-Archive -Path $package -DestinationPath $archive -Force
+          $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $(Split-Path -Leaf $archive)" | Set-Content -LiteralPath "$archive.sha256" -Encoding ASCII
+
+      - name: Upload platform archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-${{ matrix.asset }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all platform archives
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release and attach archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/*)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No platform archives were produced." >&2
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" "${files[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "NEXUS $GITHUB_REF_NAME" \
+            --generate-notes

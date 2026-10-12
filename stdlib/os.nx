@@ -1,0 +1,3 @@
+// Operating system interface
+fn args_count() -> i64 { return os.args_count() }
+fn args_get(index: i64) -> string { return os.args_get(index) }

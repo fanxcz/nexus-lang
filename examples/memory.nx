@@ -1,0 +1,15 @@
+fn main() {
+    // usize/isize are native-sized integer aliases in the current runtime.
+    let size: usize = 64
+    let address = mem_alloc(size)
+
+    if address == 0 {
+        print("allocation failed")
+        return
+    }
+
+    mem_set(address, 65, size)
+    print("allocated 64 bytes")
+    mem_free(address)
+    print("memory released")
+}

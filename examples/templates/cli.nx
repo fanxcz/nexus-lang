@@ -1,0 +1,5 @@
+fn main() {
+    print("NEXUS application")
+    let name = input("Your name: ")
+    print("Hello, " + name)
+}

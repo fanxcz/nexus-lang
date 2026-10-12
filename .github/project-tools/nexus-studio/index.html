@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NEXUS Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">NEXUS <span>Studio</span></div>
+    <div class="toolbar">
+      <button id="openProject" title="Open a project folder (Ctrl+O)">Open folder</button>
+      <button id="newFile" title="Create a source file (Ctrl+N)">New file</button>
+      <button id="saveFile" title="Save the current file (Ctrl+S)">Save</button>
+      <span class="toolbar-separator"></span>
+      <button id="selectCompiler" title="Select the installed NEXUS compiler">Compiler…</button>
+      <button id="buildFile" class="primary" title="Compile the current .nx file (F7)">Build</button>
+      <button id="runFile" class="run" title="Compile and run the current .nx file (F5)">Run</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="section-heading"><span>EXPLORER</span><button id="refreshTree" title="Refresh file list">Refresh</button></div>
+      <div class="project-name"><span>▾</span><span id="projectName">No folder opened</span></div>
+      <div id="fileTree" class="file-tree"><div class="empty-state">Open a project folder to see its files.</div></div>
+    </aside>
+
+    <main class="main">
+      <div class="tabs">
+        <div id="activeTab" class="tab"><span class="file-glyph">◇</span><span id="tabName">Welcome</span><span id="dirtyMark"></span></div>
+        <div class="tab-spacer"></div>
+        <div id="saveStatus" class="save-status">Ready</div>
+      </div>
+
+      <section id="welcome" class="welcome">
+        <h1>NEXUS Studio</h1>
+        <p>A simple editor for NEXUS projects.</p>
+        <div class="welcome-actions">
+          <button id="welcomeOpen">Open project folder</button>
+          <button id="welcomeNew">Create a .nx file</button>
+        </div>
+        <div class="welcome-help">
+          <div><kbd>Ctrl+O</kbd><span>Open folder</span></div>
+          <div><kbd>Ctrl+N</kbd><span>New file</span></div>
+          <div><kbd>Ctrl+S</kbd><span>Save</span></div>
+          <div><kbd>F7</kbd><span>Build</span></div>
+          <div><kbd>F5</kbd><span>Run</span></div>
+        </div>
+        <p class="welcome-note">Select the NEXUS compiler once. Its path is saved for the next launch.</p>
+      </section>
+
+      <section id="editorWrap" class="editor-wrap hidden"><div id="editor"></div></section>
+
+      <section class="terminal-panel">
+        <div class="terminal-head">
+          <span class="terminal-title">OUTPUT / TERMINAL</span>
+          <div class="terminal-tools">
+            <button id="clearTerminal" title="Clear output">Clear</button>
+            <button id="stopTerminal" title="Stop the running command">Stop</button>
+            <button id="toggleTerminal" title="Collapse or expand terminal">Hide</button>
+          </div>
+        </div>
+        <div id="terminalOutput" class="terminal-output"><div class="terminal-note">Open a project, then use Build or Run. Shell commands can also be entered below.</div></div>
+        <form id="terminalForm" class="terminal-input-row">
+          <span class="prompt">&gt;</span>
+          <input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Terminal command…">
+          <button class="terminal-submit" type="submit">Enter</button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <div><span class="status-indicator"></span><span id="statusProject">No project open</span></div>
+    <div><span id="compilerStatus">Compiler not selected</span><span id="statusLang">NEXUS</span><span>UTF-8</span><span id="statusPlatform">Desktop</span></div>
+  </footer>
+
+  <script src="./node_modules/ace-builds/src/ace.js"></script>
+  <script src="./node_modules/ace-builds/src/mode-c_cpp.js"></script>
+  <script src="./node_modules/ace-builds/src/theme-tomorrow_night.js"></script>
+  <script src="./renderer/nexus-mode.js"></script>
+  <script src="./renderer.js"></script>
+</body>
+</html>

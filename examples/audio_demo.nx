@@ -1,0 +1,19 @@
+fn main() {
+    print("NEXUS AUDIO ENGINE")
+    print("Audio runtime available: " + str_i64(gfx_audio_available()))
+
+    let sound = gfx_sound_load("examples/assets/beep.wav")
+    if sound == 0 {
+        print("AUDIO ERROR: " + gfx_audio_error())
+        return
+    }
+
+    gfx_sound_volume(1.0)
+    gfx_sound_play(sound, false)
+    print("Playing PCM WAV...")
+    sleep(400)
+    print("Queued audio active: " + str_bool(gfx_sound_playing()))
+    gfx_sound_stop()
+    gfx_sound_unload(sound)
+    print("AUDIO OK")
+}

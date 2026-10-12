@@ -1,0 +1,170 @@
+site_name: NEXUS Programming Language
+site_description: NEXUS is an open-source native programming language and runtime for applications, creative tools, and games.
+site_author: fanxcz
+site_url: https://fanxcz.github.io/nexus/
+repo_url: https://github.com/fanxcz/nexus
+repo_name: fanxcz/nexus
+
+docs_dir: ../../../docs
+site_dir: ../../../site
+edit_uri: edit/main/docs/
+
+# MkDocs excludes the top-level docs/templates directory by default.
+# Re-include it because the template guides are linked in the navigation.
+exclude_docs: |
+  !/templates/
+
+copyright: Copyright &copy; 2026 fanxcz
+
+theme:
+  name: material
+  language: en
+  logo: assets/images/nexus-mark.svg
+  favicon: assets/images/nexus-mark.svg
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+      enable_git_follow: false
+  - git-authors
+  - minify:
+      minify_html: true
+
+extra_css:
+  - assets/stylesheets/nexus.css
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.details
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+      baselevel: 2
+
+nav:
+  - Home: index.md
+  - Downloads: downloads.md
+  - Screenshots: screenshots.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Project Structure: getting-started/project-structure.md
+  - Language Reference:
+      - Overview: language/overview.md
+      - Syntax: language/syntax.md
+      - Types: language/types.md
+      - Functions: language/functions.md
+      - Control Flow: language/control-flow.md
+      - Modules & Imports: language/modules.md
+      - Error Handling: language/error-handling.md
+      - FFI: language/ffi.md
+  - Standard Library:
+      - Overview: std/overview.md
+      - std.io: std/io.md
+      - std.fs: std/fs.md
+      - std.net: std/net.md
+      - std.json: std/json.md
+      - std.db: std/db.md
+      - std.memory: std/memory.md
+      - std.crypto: std/crypto.md
+  - Runtime:
+      - Overview: runtime/overview.md
+      - Memory: runtime/memory.md
+      - Graphics 2D: runtime/graphics-2d.md
+      - Graphics 3D: runtime/graphics-3d.md
+      - Audio: runtime/audio.md
+      - Input: runtime/input.md
+      - ECS: runtime/ecs.md
+      - Scenes: runtime/scenes.md
+      - Physics: runtime/physics.md
+      - Particles: runtime/particles.md
+      - UI: runtime/ui.md
+  - Tooling:
+      - Commands: tooling/commands.md
+      - Native backend: tooling/native-backend.md
+      - Backend selection: tooling/backend-explainer.md
+      - Formatter: tooling/fmt.md
+      - Linter: tooling/lint.md
+      - Documentation Generator: tooling/doc.md
+      - Benchmarking: tooling/bench.md
+      - LSP: tooling/lsp.md
+      - Editor: tooling/editor.md
+      - VS Code Extension: tooling/vscode-extension.md
+  - Package Manager:
+      - Overview: packages/overview.md
+      - Creating Packages: packages/creating.md
+      - Using Packages: packages/using.md
+      - Publishing: packages/publishing.md
+  - Templates:
+      - App: templates/app.md
+      - Game: templates/game.md
+      - Paint: templates/paint.md
+      - CLI: templates/cli.md
+      - Library: templates/library.md
+      - Editor: templates/editor.md
+      - Server: templates/server.md
+      - 3D: templates/3d.md
+  - Examples:
+      - Overview: examples/overview.md
+      - Games: examples/games.md
+      - Graphics: examples/graphics.md
+      - Audio: examples/audio.md
+  - Build System:
+      - Overview: build/index.md
+      - CMake Integration: build/cmake.md
+      - Cross-compilation: build/cross-compilation.md
+      - Targets: build/targets.md
+  - Architecture:
+      - Repository Layout: architecture/repository-layout.md
+      - Compiler Pipeline: architecture/compiler-pipeline.md
+      - Runtime Design: architecture/runtime-design.md
+      - Memory Model: architecture/memory-model.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Building from Source: development/building.md
+      - Testing: development/testing.md
+      - Debugging: development/debugging.md
+      - Roadmap: development/roadmap.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/fanxcz/nexus
+  version:
+    provider: mike

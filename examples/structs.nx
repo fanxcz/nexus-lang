@@ -1,0 +1,13 @@
+struct Player {
+    id: i64
+    health: i64
+    speed: f64
+}
+
+fn main() {
+    let mut player = Player { id: 7, health: 100, speed: 4.5 }
+    player.health = player.health - 25
+    print(player.id)
+    print(player.health)
+    print(player.speed)
+}

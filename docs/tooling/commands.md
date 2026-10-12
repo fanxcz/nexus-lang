@@ -1,0 +1,118 @@
+# Tooling Commands
+
+The CLI reference below matches the commands implemented by NEXUS 1.1.0. Options that are not listed here should not be assumed to exist; unsupported options produce an error.
+
+## Project workflow
+
+| Command | Purpose |
+|---|---|
+| `nexus new <project> [--template NAME]` | Create a project in a new directory |
+| `nexus init [--template NAME]` | Initialize the current directory |
+| `nexus info` | Print the current project's manifest settings |
+| `nexus assets` | List files in known asset and scene directories |
+| `nexus clean` | Remove the project's `build/` directory |
+| `nexus doctor [--json]` | Report runtime, standard library, template and compiler availability |
+| `nexus self-test` | Compile and run a tiny program, preferring the built-in backend where supported |
+| `nexus editor [--gui]` | Generate VS Code workspace files, or run the built-in editor with `--gui` |
+
+Supported project templates: `cli`, `app`, `game`, `3d`, `paint`, `server`, and `library`.
+
+## Build and run
+
+```bash
+# Create, build, and run a project
+nexus new HelloNexus --template cli
+cd HelloNexus
+nexus check
+nexus build --release
+nexus run --release
+
+# Compile one source file
+nexus build src/main.nx -o hello --backend auto
+
+# Ask which backend will be selected
+nexus explain-backend src/main.nx
+nexus explain-backend src/main.nx --target x86_64-linux
+
+# Print supported target names
+nexus targets
+```
+
+The built-in machine-code backend avoids external compiler tools for its supported x86-64 Windows/Linux subset. The LLVM fallback is required for programs outside that subset and for targets supported through the configured Clang toolchain. Listing a target does not mean the built-in backend can emit it.
+
+Supported build flags:
+
+- `nexus build [file.nx] [-o OUTPUT] [--target TRIPLE] [--backend auto|native|llvm] [--emit-ir] [--release]`
+- `nexus run [file.nx] [--target TRIPLE] [--backend auto|native|llvm] [--release]`
+- `nexus export [--target TRIPLE] [--backend auto|native|llvm] [-o OUTPUT]`
+
+## Code quality
+
+```bash
+# Format the current project entry (or one file)
+nexus fmt
+nexus fmt src/main.nx
+
+# Check without changing the file; exits nonzero if changes are needed
+nexus fmt --check src/main.nx
+
+# Parse and run semantic checks
+nexus check src/main.nx
+nexus lint src/main.nx
+
+# Generate API documentation from the project's entry file
+nexus doc
+```
+
+The formatter's `--check` mode never writes to the file. The current formatter is deliberately modest; it is not yet a full syntax-aware pretty-printer and the CLI does not recursively format every file in a project. `lint` performs the current line-level checks and semantic analysis; it does not accept a configurable rule set or JSON output option.
+
+## Testing and profiling
+
+```bash
+# Project test programs are read from tests/programs/
+nexus test
+
+# Compile and run a self-contained built-in-backend check
+nexus self-test
+
+# Run a source program repeatedly (default: five runs)
+nexus bench src/main.nx --runs 10
+```
+
+`nexus test` builds and runs each `.nx` file beneath the project's `tests/programs/` directory. It reports no tests when that directory is absent. For compiler development, use the repository's CMake/CTest suite as documented in [Building from Source](../development/building.md).
+
+## Package commands
+
+```bash
+nexus pkg init
+nexus pkg add ../my-library
+nexus pkg list
+nexus pkg remove my-library
+nexus pkg update
+nexus pkg build
+nexus pkg publish
+```
+
+The current package manager supports local vendoring and creation of a local `.nxpkg` archive. `publish` does not upload to a hosted package registry. Dependency resolution and lockfile handling remain a roadmap area.
+
+## Language server
+
+Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The current server provides initialization, diagnostics, and basic completion. Go-to-definition is not implemented yet and returns no location.
+
+## Diagnostics
+
+```bash
+nexus doctor
+nexus doctor --json
+```
+
+The JSON form is intended for scripts. It emits booleans describing detected compiler, runtime, standard library, templates, and project availability. A missing LLVM compiler is not by itself fatal because supported source programs can use the built-in backend.
+
+## General
+
+```bash
+nexus --help
+nexus --version
+```
+
+See the [NEXUS Roadmap](../development/roadmap.md) for planned improvements and completion criteria.

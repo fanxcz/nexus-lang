@@ -1,0 +1,9 @@
+fn main() {
+    print("literal line")
+    print(true)
+    print(false)
+    let flag = 2 > 1
+    print(flag)
+    let n = 40 + 2
+    print(n)
+}

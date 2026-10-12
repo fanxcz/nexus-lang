@@ -1,0 +1,4 @@
+// String manipulation functions
+fn len(s: string) -> i64 { return string.len(s) }
+fn byte_at(s: string, index: i64) -> i64 { return string.byte_at(s, index) }
+fn byte_len(s: string) -> i64 { return string.len(s) }

@@ -1,0 +1,31 @@
+fn main() {
+    let mut skipped: i64 = 0
+    let mut total: i64 = 0
+    let mut i: i64 = 0
+    while i < 20 {
+        i = i + 1
+        if i % 2 == 0 {
+            skipped = skipped + 1
+            continue
+        }
+        if i > 15 {
+            break
+        }
+        total = total + i
+    }
+    print(total)
+    print(skipped)
+    let mut j: i64 = 0
+    let mut pairs: i64 = 0
+    while j < 5 {
+        let mut k: i64 = 0
+        while k < 5 {
+            if j == k {
+                pairs = pairs + 1
+            }
+            k = k + 1
+        }
+        j = j + 1
+    }
+    print(pairs)
+}

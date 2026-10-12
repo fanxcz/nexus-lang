@@ -1,0 +1,42 @@
+name: NEXUS Studio desktop builds
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/project-tools/nexus-studio/**'
+      - '.github/workflows/nexus-studio.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            command: npm run dist:win
+          - os: ubuntu-latest
+            command: npm run dist:linux
+          - os: macos-latest
+            command: npm run dist:mac
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: .github/project-tools/nexus-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: npm install --no-audit --no-fund
+      - run: ${{ matrix.command }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-studio-${{ runner.os }}
+          path: .github/project-tools/nexus-studio/release/*
+          if-no-files-found: error
+          retention-days: 14

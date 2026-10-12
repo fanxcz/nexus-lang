@@ -1,0 +1,78 @@
+{
+  "name": "nexus-studio",
+  "version": "0.2.0",
+  "description": "A simple cross-platform IDE for the NEXUS programming language",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:mac": "electron-builder --mac dmg zip",
+    "dist": "electron-builder",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check renderer.js && node --check renderer/nexus-mode.js"
+  },
+  "dependencies": {
+    "ace-builds": "^1.39.1"
+  },
+  "devDependencies": {
+    "electron": "^35.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "dev.fanxcz.nexusstudio",
+    "productName": "NEXUS Studio",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "index.html",
+      "renderer.js",
+      "styles.css",
+      "renderer/**/*",
+      "node_modules/ace-builds/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "NEXUS-Studio-${version}-Windows-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "category": "Development",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "artifactName": "NEXUS-Studio-${version}-Linux-${arch}.${ext}",
+      "maintainer": "NEXUS Project <noreply@github.com>",
+      "syncDesktopName": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools",
+      "artifactName": "NEXUS-Studio-${version}-macOS-${arch}.${ext}"
+    }
+  },
+  "author": {
+    "name": "NEXUS Project",
+    "email": "noreply@github.com",
+    "url": "https://github.com/fanxcz/nexus"
+  },
+  "homepage": "https://github.com/fanxcz/nexus",
+  "license": "MIT",
+  "desktopName": "nexus-studio"
+}

@@ -1,0 +1,52 @@
+fn main() {
+    let ok = gfx_init(960, 540, "NEXUS Game")
+    if !ok {
+        print("Graphics backend unavailable: " + gfx_error())
+        return
+    }
+
+    let mut playerX: f64 = 460.0
+    let mut playerY: f64 = 250.0
+    let mut score: i64 = 0
+    let mut enemyX: f64 = 720.0
+    let mut enemyY: f64 = 250.0
+
+    while !gfx_should_close() {
+        gfx_poll()
+        let dt = gfx_dt()
+        let speed = 240.0 * dt
+
+        if gfx_key_down("W") { playerY = playerY - speed }
+        if gfx_key_down("S") { playerY = playerY + speed }
+        if gfx_key_down("A") { playerX = playerX - speed }
+        if gfx_key_down("D") { playerX = playerX + speed }
+        if gfx_key_down("ESC") { break }
+
+        let mx = gfx_mouse_x()
+        let my = gfx_mouse_y()
+        if gfx_mouse_down(1) { enemyX = mx; enemyY = my; score = score + 1 }
+
+        if playerX < 20.0 { playerX = 20.0 }
+        if playerY < 20.0 { playerY = 20.0 }
+        if playerX > 920.0 { playerX = 920.0 }
+        if playerY > 500.0 { playerY = 500.0 }
+
+        gfx_begin()
+        gfx_clear(0.03, 0.04, 0.08, 1.0)
+        gfx_rect(0.0, 0.0, 960.0, 64.0, 0.06, 0.08, 0.15, 1.0)
+        gfx_text(24.0, 20.0, 2.0, "NEXUS GAME", 0.5, 0.85, 1.0, 1.0)
+        gfx_text(240.0, 22.0, 1.5, "WASD MOVE   LEFT MOUSE TELEPORT ENEMY   ESC QUIT", 0.85, 0.85, 0.9, 1.0)
+
+        gfx_circle(playerX, playerY, 24.0, 0.2, 0.8, 1.0, 1.0)
+        gfx_circle(enemyX, enemyY, 18.0, 1.0, 0.25, 0.2, 1.0)
+        gfx_line(playerX, playerY, enemyX, enemyY, 2.0, 0.9, 0.9, 0.3, 0.5)
+
+        gfx_text(24.0, 500.0, 1.5, "SCORE", 0.6, 0.7, 0.9, 1.0)
+        gfx_text(95.0, 500.0, 1.5, str_i64(score), 1.0, 1.0, 1.0, 1.0)
+        gfx_text(720.0, 500.0, 1.2, "NEXUS 0.5 GRAPHICS", 0.5, 0.6, 0.8, 1.0)
+        gfx_end()
+    }
+
+    gfx_shutdown()
+    print("Game closed")
+}

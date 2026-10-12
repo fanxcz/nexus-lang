@@ -1,0 +1,11 @@
+fn main() {
+    print("string.len: " + str_i64(string.len("Hello")))
+    print("string.byte_at: " + str_i64(string.byte_at("Hello", 0)))
+    print("sha256: " + sha256("abc"))
+    print("os.args_count: " + str_i64(os.args_count()))
+    let mut i: i64 = 0
+    while i < os.args_count() {
+        print("arg[" + str_i64(i) + "] = " + os.args_get(i))
+        i = i + 1
+    }
+}

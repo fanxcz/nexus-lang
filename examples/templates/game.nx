@@ -1,0 +1,272 @@
+fn main() {
+    let mut started = false
+    let mut paused = false
+    let mut gameOver = false
+    let mut score: i64 = 0
+    let mut kills: i64 = 0
+    let mut wave: i64 = 1
+    let mut hp: f64 = 100.0
+    let mut px: f64 = 0.0
+    let mut py: f64 = 0.0
+    let mut fireCooldown: f64 = 0.0
+    let mut hitCooldown: f64 = 0.0
+    let mut b1 = 0
+    let mut b2 = 0
+    let mut b3 = 0
+    let mut b4 = 0
+    let mut b5 = 0
+    let mut b1alive = false
+    let mut b2alive = false
+    let mut b3alive = false
+    let mut b4alive = false
+    let mut b5alive = false
+    let mut b1x: f64 = 0.0
+    let mut b1y: f64 = 0.0
+    let mut b1vx: f64 = 0.0
+    let mut b1vy: f64 = 0.0
+    let mut b2x: f64 = 0.0
+    let mut b2y: f64 = 0.0
+    let mut b2vx: f64 = 0.0
+    let mut b2vy: f64 = 0.0
+    let mut b3x: f64 = 0.0
+    let mut b3y: f64 = 0.0
+    let mut b3vx: f64 = 0.0
+    let mut b3vy: f64 = 0.0
+    let mut b4x: f64 = 0.0
+    let mut b4y: f64 = 0.0
+    let mut b4vx: f64 = 0.0
+    let mut b4vy: f64 = 0.0
+    let mut b5x: f64 = 0.0
+    let mut b5y: f64 = 0.0
+    let mut b5vx: f64 = 0.0
+    let mut b5vy: f64 = 0.0
+
+    let mut e1x: f64 = 180.0
+    let mut e1y: f64 = 180.0
+    let mut e2x: f64 = 800.0
+    let mut e2y: f64 = 170.0
+    let mut e3x: f64 = 200.0
+    let mut e3y: f64 = 430.0
+    let mut e4x: f64 = 820.0
+    let mut e4y: f64 = 430.0
+    let mut e1alive = true
+    let mut e2alive = true
+    let mut e3alive = true
+    let mut e4alive = true
+    let mut e1hp: i64 = 2
+    let mut e2hp: i64 = 2
+    let mut e3hp: i64 = 2
+    let mut e4hp: i64 = 2
+
+    let ok = gfx_init(1280, 720, "NEXUS - NEON SURVIVOR")
+    if !ok {
+        print("Graphics error: " + gfx_error())
+        return
+    }
+    gfx_vsync(true)
+    gfx_sound_tone(520.0, 120, 0.18)
+
+    while !gfx_should_close() {
+        gfx_poll()
+        let dt = gfx_dt()
+        let width = gfx_width()
+        let height = gfx_height()
+        let arenaW: f64 = 980.0
+        let arenaH: f64 = 540.0
+        let arenaX = (to_f64(width) - 980.0) / 2.0
+        let arenaY = (to_f64(height) - 540.0) / 2.0 + 20.0
+        let centerX = arenaX + arenaW / 2.0
+        let centerY = arenaY + arenaH / 2.0
+        if !started {
+            gfx_begin()
+            gfx_clear(0.015, 0.02, 0.04, 1.0)
+            gfx_text(centerX - 250.0, 170.0, 4.0, "NEXUS NEON SURVIVOR", 0.15, 0.9, 1.0, 1.0)
+            gfx_text(centerX - 180.0, 270.0, 1.9, "W A S D  MOVE", 0.75, 0.85, 1.0, 1.0)
+            gfx_text(centerX - 180.0, 305.0, 1.9, "MOUSE  AIM + LEFT CLICK FIRE", 0.75, 0.85, 1.0, 1.0)
+            gfx_text(centerX - 180.0, 340.0, 1.9, "P  PAUSE   ESC  QUIT", 0.75, 0.85, 1.0, 1.0)
+            gfx_rect(centerX - 160.0, 410.0, 320.0, 70.0, 0.08, 0.35, 0.55, 1.0)
+            gfx_text(centerX - 92.0, 430.0, 2.0, "PRESS ENTER", 1.0, 1.0, 1.0, 1.0)
+            gfx_end()
+            if gfx_key_down("ENTER") {
+                started = true
+                px = centerX
+                py = centerY
+                gfx_sound_tone(760.0, 100, 0.16)
+            }
+            continue
+        }
+
+        if gfx_key_down("P") {
+            if hitCooldown <= 0.0 {
+                paused = !paused
+                hitCooldown = 0.25
+            }
+        }
+        if hitCooldown > 0.0 { hitCooldown = hitCooldown - dt }
+
+        if gfx_key_down("ESC") { break }
+
+        if !paused && !gameOver {
+            let speed = 250.0 + to_f64(wave * 8)
+            if gfx_key_down("W") { py = py - speed * dt }
+            if gfx_key_down("S") { py = py + speed * dt }
+            if gfx_key_down("A") { px = px - speed * dt }
+            if gfx_key_down("D") { px = px + speed * dt }
+            if px < arenaX + 24.0 { px = arenaX + 24.0 }
+            if px > arenaX + arenaW - 24.0 { px = arenaX + arenaW - 24.0 }
+            if py < arenaY + 24.0 { py = arenaY + 24.0 }
+            if py > arenaY + arenaH - 24.0 { py = arenaY + arenaH - 24.0 }
+
+            if fireCooldown > 0.0 { fireCooldown = fireCooldown - dt }
+
+            if gfx_event_is("mouse_down") && gfx_event_mouse_button() == 1 && fireCooldown <= 0.0 {
+                let mx = gfx_mouse_x()
+                let my = gfx_mouse_y()
+                let dx = mx - px
+                let dy = my - py
+                let len = sqrt(dx * dx + dy * dy)
+                if len > 1.0 {
+                    let vx = dx / len * 650.0
+                    let vy = dy / len * 650.0
+                    if !b1alive { b1alive=true; b1x=px; b1y=py; b1vx=vx; b1vy=vy }
+                    else if !b2alive { b2alive=true; b2x=px; b2y=py; b2vx=vx; b2vy=vy }
+                    else if !b3alive { b3alive=true; b3x=px; b3y=py; b3vx=vx; b3vy=vy }
+                    else if !b4alive { b4alive=true; b4x=px; b4y=py; b4vx=vx; b4vy=vy }
+                    else if !b5alive { b5alive=true; b5x=px; b5y=py; b5vx=vx; b5vy=vy }
+                    gfx_sound_tone(920.0, 45, 0.09)
+                    fireCooldown = 0.13
+                }
+            }
+
+            if b1alive { b1x=b1x+b1vx*dt; b1y=b1y+b1vy*dt; if b1x<arenaX||b1x>arenaX+arenaW||b1y<arenaY||b1y>arenaY+arenaH { b1alive=false } }
+            if b2alive { b2x=b2x+b2vx*dt; b2y=b2y+b2vy*dt; if b2x<arenaX||b2x>arenaX+arenaW||b2y<arenaY||b2y>arenaY+arenaH { b2alive=false } }
+            if b3alive { b3x=b3x+b3vx*dt; b3y=b3y+b3vy*dt; if b3x<arenaX||b3x>arenaX+arenaW||b3y<arenaY||b3y>arenaY+arenaH { b3alive=false } }
+            if b4alive { b4x=b4x+b4vx*dt; b4y=b4y+b4vy*dt; if b4x<arenaX||b4x>arenaX+arenaW||b4y<arenaY||b4y>arenaY+arenaH { b4alive=false } }
+            if b5alive { b5x=b5x+b5vx*dt; b5y=b5y+b5vy*dt; if b5x<arenaX||b5x>arenaX+arenaW||b5y<arenaY||b5y>arenaY+arenaH { b5alive=false } }
+
+            let es = 45.0 + to_f64(wave * 4)
+            if e1alive {
+                if e1x < px { e1x = e1x + es * dt } else { e1x = e1x - es * dt }
+                if e1y < py { e1y = e1y + es * dt } else { e1y = e1y - es * dt }
+            }
+            if e2alive {
+                if e2x < px { e2x = e2x + es * dt } else { e2x = e2x - es * dt }
+                if e2y < py { e2y = e2y + es * dt } else { e2y = e2y - es * dt }
+            }
+            if e3alive {
+                if e3x < px { e3x = e3x + es * dt } else { e3x = e3x - es * dt }
+                if e3y < py { e3y = e3y + es * dt } else { e3y = e3y - es * dt }
+            }
+            if e4alive {
+                if e4x < px { e4x = e4x + es * dt } else { e4x = e4x - es * dt }
+                if e4y < py { e4y = e4y + es * dt } else { e4y = e4y - es * dt }
+            }
+
+            if b1alive && e1alive && physics_circle(b1x,b1y,8.0,e1x,e1y,22.0) { b1alive=false; e1hp=e1hp-1; gfx_sound_tone(1300.0,55,0.13); if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
+            if b1alive && e2alive && physics_circle(b1x,b1y,8.0,e2x,e2y,22.0) { b1alive=false; e2hp=e2hp-1; gfx_sound_tone(1300.0,55,0.13); if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
+            if b1alive && e3alive && physics_circle(b1x,b1y,8.0,e3x,e3y,22.0) { b1alive=false; e3hp=e3hp-1; gfx_sound_tone(1300.0,55,0.13); if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
+            if b1alive && e4alive && physics_circle(b1x,b1y,8.0,e4x,e4y,22.0) { b1alive=false; e4hp=e4hp-1; gfx_sound_tone(1300.0,55,0.13); if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
+            if b2alive && e1alive && physics_circle(b2x,b2y,8.0,e1x,e1y,22.0) { b2alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
+            if b2alive && e2alive && physics_circle(b2x,b2y,8.0,e2x,e2y,22.0) { b2alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
+            if b2alive && e3alive && physics_circle(b2x,b2y,8.0,e3x,e3y,22.0) { b2alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
+            if b2alive && e4alive && physics_circle(b2x,b2y,8.0,e4x,e4y,22.0) { b2alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
+            if b3alive && e1alive && physics_circle(b3x,b3y,8.0,e1x,e1y,22.0) { b3alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
+            if b3alive && e2alive && physics_circle(b3x,b3y,8.0,e2x,e2y,22.0) { b3alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
+            if b3alive && e3alive && physics_circle(b3x,b3y,8.0,e3x,e3y,22.0) { b3alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
+            if b3alive && e4alive && physics_circle(b3x,b3y,8.0,e4x,e4y,22.0) { b3alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
+            if b4alive && e1alive && physics_circle(b4x,b4y,8.0,e1x,e1y,22.0) { b4alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
+            if b4alive && e2alive && physics_circle(b4x,b4y,8.0,e2x,e2y,22.0) { b4alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
+            if b4alive && e3alive && physics_circle(b4x,b4y,8.0,e3x,e3y,22.0) { b4alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
+            if b4alive && e4alive && physics_circle(b4x,b4y,8.0,e4x,e4y,22.0) { b4alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
+            if b5alive && e1alive && physics_circle(b5x,b5y,8.0,e1x,e1y,22.0) { b5alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
+            if b5alive && e2alive && physics_circle(b5x,b5y,8.0,e2x,e2y,22.0) { b5alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
+            if b5alive && e3alive && physics_circle(b5x,b5y,8.0,e3x,e3y,22.0) { b5alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
+            if b5alive && e4alive && physics_circle(b5x,b5y,8.0,e4x,e4y,22.0) { b5alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
+
+            if physics_circle(px,py,18.0,e1x,e1y,22.0) || physics_circle(px,py,18.0,e2x,e2y,22.0) || physics_circle(px,py,18.0,e3x,e3y,22.0) || physics_circle(px,py,18.0,e4x,e4y,22.0) {
+                hp = hp - 22.0 * dt
+                if hitCooldown <= 0.0 { gfx_sound_tone(180.0, 90, 0.14); hitCooldown = 0.3 }
+            }
+            if hp <= 0.0 { hp=0.0; gameOver=true; gfx_sound_tone(90.0, 600, 0.2) }
+
+            if e1alive == false {
+                if kills % 4 == 0 { e1x = arenaX + 70.0; e1y = arenaY + 70.0 }
+                else if kills % 4 == 1 { e1x = arenaX + arenaW - 70.0; e1y = arenaY + 70.0 }
+                else if kills % 4 == 2 { e1x = arenaX + 70.0; e1y = arenaY + arenaH - 70.0 }
+                else { e1x = arenaX + arenaW - 70.0; e1y = arenaY + arenaH - 70.0 }
+                e1alive = true; e1hp = 2 + wave / 3
+            }
+            if e2alive == false {
+                if kills % 4 == 0 { e2x = arenaX + arenaW - 70.0; e2y = arenaY + 70.0 }
+                else if kills % 4 == 1 { e2x = arenaX + 70.0; e2y = arenaY + arenaH - 70.0 }
+                else if kills % 4 == 2 { e2x = arenaX + arenaW - 70.0; e2y = arenaY + arenaH - 70.0 }
+                else { e2x = arenaX + 70.0; e2y = arenaY + 70.0 }
+                e2alive = true; e2hp = 2 + wave / 3
+            }
+            if e3alive == false {
+                if kills % 4 == 0 { e3x = arenaX + 70.0; e3y = arenaY + arenaH - 70.0 }
+                else if kills % 4 == 1 { e3x = arenaX + arenaW - 70.0; e3y = arenaY + arenaH - 70.0 }
+                else if kills % 4 == 2 { e3x = arenaX + 70.0; e3y = arenaY + 70.0 }
+                else { e3x = arenaX + arenaW - 70.0; e3y = arenaY + 70.0 }
+                e3alive = true; e3hp = 2 + wave / 3
+            }
+            if e4alive == false {
+                if kills % 4 == 0 { e4x = arenaX + arenaW - 70.0; e4y = arenaY + arenaH - 70.0 }
+                else if kills % 4 == 1 { e4x = arenaX + 70.0; e4y = arenaY + 70.0 }
+                else if kills % 4 == 2 { e4x = arenaX + arenaW - 70.0; e4y = arenaY + 70.0 }
+                else { e4x = arenaX + 70.0; e4y = arenaY + arenaH - 70.0 }
+                e4alive = true; e4hp = 2 + wave / 3
+            }
+            wave = 1 + kills/10
+        }
+
+        gfx_begin()
+        gfx_clear(0.008, 0.012, 0.022, 1.0)
+        gfx_rect(0.0, 0.0, to_f64(width), 82.0, 0.025, 0.04, 0.075, 1.0)
+        gfx_text(28.0, 18.0, 2.5, "NEON SURVIVOR", 0.2, 0.85, 1.0, 1.0)
+        gfx_text(28.0, 50.0, 1.2, "WASD  MOVE     MOUSE  AIM     LMB  FIRE     P  PAUSE     ESC  QUIT", 0.65, 0.75, 0.9, 1.0)
+        gfx_rect(arenaX-6.0, arenaY-6.0, arenaW+12.0, arenaH+12.0, 0.08, 0.2, 0.3, 1.0)
+        gfx_rect(arenaX, arenaY, arenaW, arenaH, 0.015, 0.025, 0.045, 1.0)
+        gfx_line(arenaX+arenaW/2.0, arenaY, arenaX+arenaW/2.0, arenaY+arenaH, 0.06, 0.12, 0.18, 1.0, 1.0)
+        gfx_line(arenaX, arenaY+arenaH/2.0, arenaX+arenaW, arenaY+arenaH/2.0, 0.06, 0.12, 0.18, 1.0, 1.0)
+
+        if e1alive { gfx_circle(e1x,e1y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e1x,e1y,9.0,1.0,0.5,0.18,1.0) }
+        if e2alive { gfx_circle(e2x,e2y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e2x,e2y,9.0,1.0,0.5,0.18,1.0) }
+        if e3alive { gfx_circle(e3x,e3y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e3x,e3y,9.0,1.0,0.5,0.18,1.0) }
+        if e4alive { gfx_circle(e4x,e4y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e4x,e4y,9.0,1.0,0.5,0.18,1.0) }
+
+        if b1alive { gfx_circle(b1x,b1y,6.0,0.9,0.95,1.0,1.0) }
+        if b2alive { gfx_circle(b2x,b2y,6.0,0.9,0.95,1.0,1.0) }
+        if b3alive { gfx_circle(b3x,b3y,6.0,0.9,0.95,1.0,1.0) }
+        if b4alive { gfx_circle(b4x,b4y,6.0,0.9,0.95,1.0,1.0) }
+        if b5alive { gfx_circle(b5x,b5y,6.0,0.9,0.95,1.0,1.0) }
+
+        gfx_circle(px,py,18.0,0.15,0.85,1.0,1.0)
+        gfx_circle(px,py,8.0,0.9,1.0,1.0,1.0)
+        gfx_line(px, py, gfx_mouse_x(), gfx_mouse_y(), 0.15, 0.5, 0.7, 0.35, 1.0)
+
+        gfx_text(arenaX, arenaY+arenaH+18.0, 1.4, "HP", 0.8,0.85,0.95,1.0)
+        gfx_rect(arenaX+42.0, arenaY+arenaH+14.0, 240.0, 22.0, 0.08,0.1,0.14,1.0)
+        gfx_rect(arenaX+42.0, arenaY+arenaH+14.0, 240.0*(hp/100.0), 22.0, 0.12,0.82,0.46,1.0)
+        gfx_text(arenaX+300.0, arenaY+arenaH+18.0, 1.4, "SCORE " + str_i64(score), 0.7,0.8,1.0,1.0)
+        gfx_text(arenaX+500.0, arenaY+arenaH+18.0, 1.4, "WAVE " + str_i64(wave), 0.8,0.55,1.0,1.0)
+        gfx_text(arenaX+680.0, arenaY+arenaH+18.0, 1.4, "KILLS " + str_i64(kills), 0.95,0.7,0.35,1.0)
+
+        if paused {
+            gfx_rect(arenaX+320.0, arenaY+190.0, 340.0, 120.0, 0.03,0.05,0.09,0.94)
+            gfx_text(arenaX+410.0, arenaY+235.0, 2.6, "PAUSED", 0.55,0.9,1.0,1.0)
+            gfx_text(arenaX+365.0, arenaY+272.0, 1.3, "PRESS P TO CONTINUE", 0.75,0.8,0.9,1.0)
+        }
+        if gameOver {
+            gfx_rect(arenaX+270.0, arenaY+160.0, 440.0, 200.0, 0.04,0.02,0.05,0.96)
+            gfx_text(arenaX+370.0, arenaY+210.0, 3.0, "GAME OVER", 1.0,0.25,0.35,1.0)
+            gfx_text(arenaX+390.0, arenaY+255.0, 1.7, "SCORE " + str_i64(score), 0.85,0.9,1.0,1.0)
+            gfx_text(arenaX+350.0, arenaY+292.0, 1.2, "RESTART WITH ENTER OR ESC TO QUIT", 0.75,0.8,0.9,1.0)
+            if gfx_key_down("ENTER") {
+                score=0;kills=0;wave=1;hp=100.0;gameOver=false;px=centerX;py=centerY;e1alive=true;e2alive=true;e3alive=true;e4alive=true;e1hp=2;e2hp=2;e3hp=2;e4hp=2;gfx_sound_tone(760.0,100,0.16)
+            }
+        }
+        gfx_end()
+    }
+    gfx_shutdown()
+}

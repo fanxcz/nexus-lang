@@ -1,0 +1,5 @@
+extern "C" fn puts(message: string) -> i64;
+
+fn main() {
+    puts("Hello through C ABI")
+}

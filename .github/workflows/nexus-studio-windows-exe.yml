@@ -1,0 +1,56 @@
+name: Build and commit NEXUS Studio Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/project-tools/nexus-studio/**'
+      - '!.github/project-tools/nexus-studio/downloads/**'
+      - '.github/workflows/nexus-studio-windows-exe.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .github/project-tools/nexus-studio
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build Windows installer
+        run: npx electron-builder --win nsis
+
+      - name: Prepare EXE for repository
+        shell: pwsh
+        run: |
+          $source = Get-ChildItem release -Filter '*.exe' -File |
+            Sort-Object Length -Descending |
+            Select-Object -First 1
+          if (-not $source) { throw 'electron-builder did not produce an EXE installer.' }
+          if ($source.Length -ge 100MB) { throw "EXE is $($source.Length) bytes; GitHub blocks regular Git files at 100 MB. Use the Actions artifact instead." }
+          New-Item -ItemType Directory -Force downloads | Out-Null
+          Copy-Item $source.FullName 'downloads/NEXUS-Studio-Windows-x64.exe' -Force
+          Get-Item 'downloads/NEXUS-Studio-Windows-x64.exe' | Format-List FullName,Length
+
+      - name: Commit EXE into repository
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe
+          git commit -m 'Add built NEXUS Studio Windows EXE'
+          git push

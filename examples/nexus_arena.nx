@@ -1,0 +1,226 @@
+enum GameState { Boot, Combat, Victory, Defeat }
+enum Action { Strike, HeavyStrike, Heal, Pulse }
+
+struct Hero {
+    hp: i64
+    mana: i64
+    level: i64
+    speed: f64
+    score: i64
+}
+
+struct Boss {
+    hp: i64
+    armor: i64
+    phase: i64
+    rage: i64
+}
+
+fn physical_damage(power: i64, level: i64, armor: i64) -> i64 {
+    let raw = power + level * 4
+    let reduced = raw - armor
+    if reduced < 1 {
+        return 1
+    } else {
+        return reduced
+    }
+}
+
+fn magic_damage(power: i64, level: i64, phase: i64) -> i64 {
+    return power + level * 5 + phase * 3
+}
+
+fn heal_amount(level: i64, wave: i64) -> i64 {
+    return 10 + level * 3 + wave * 2
+}
+
+fn rank_name(score: i64) -> string {
+    if score >= 900 {
+        return "MYTHIC"
+    } else if score >= 600 {
+        return "ELITE"
+    } else if score >= 300 {
+        return "VETERAN"
+    } else {
+        return "ROOKIE"
+    }
+}
+
+fn main() {
+    print("========================================")
+    print("          NEXUS // TERMINAL ARENA       ")
+    print("========================================")
+    print("Universal-language feature showcase")
+    print("")
+
+    let mut hero = Hero { hp: 140, mana: 75, level: 7, speed: 8.5, score: 0 }
+    let mut boss = Boss { hp: 420, armor: 12, phase: 1, rage: 0 }
+
+    let weaponPower = [18, 27, 35, 44]
+    let bossRage = [0, 4, 8, 13]
+    let waveBonus = [0, 10, 20, 35]
+
+    let mut state = GameState::Boot
+    let mut action = Action::Strike
+    let mut round: i64 = 1
+    let mut weaponIndex: i64 = 0
+    let mut wave: i64 = 0
+
+    match state {
+        GameState::Boot => { print("[BOOT] NEXUS runtime initialized") }
+        _ => { print("[BOOT] unexpected state") }
+    }
+
+    print("[PLAYER] HP / MANA / LEVEL")
+    print(hero.hp)
+    print(hero.mana)
+    print(hero.level)
+    print("[PLAYER] SPEED")
+    print(hero.speed)
+
+    state = GameState::Combat
+
+    while round <= 12 {
+        if boss.hp <= 0 {
+            break
+        }
+
+        print("")
+        print("----------------------------------------")
+        print("ROUND")
+        print(round)
+        print("BOSS HP")
+        print(boss.hp)
+        print("HERO HP")
+        print(hero.hp)
+        print("HERO SCORE")
+        print(hero.score)
+
+        weaponIndex = round % 4
+        wave = round % 4
+
+        if round % 4 == 0 {
+            action = Action::Pulse
+        } else if round % 3 == 0 {
+            action = Action::HeavyStrike
+        } else if hero.hp < 55 {
+            action = Action::Heal
+        } else {
+            action = Action::Strike
+        }
+
+        match action {
+            Action::Strike => {
+                let power = weaponPower[weaponIndex]
+                let damage = physical_damage(power, hero.level, boss.armor)
+                boss.hp = boss.hp - damage
+                hero.score = hero.score + damage
+                print("ACTION: STRIKE")
+                print("DAMAGE")
+                print(damage)
+            }
+            Action::HeavyStrike => {
+                let power = weaponPower[weaponIndex] + 18
+                let damage = physical_damage(power, hero.level, boss.armor)
+                boss.hp = boss.hp - damage
+                hero.score = hero.score + damage * 2
+                hero.mana = hero.mana - 5
+                print("ACTION: HEAVY STRIKE")
+                print("DAMAGE")
+                print(damage)
+            }
+            Action::Heal => {
+                let amount = heal_amount(hero.level, wave)
+                hero.hp = hero.hp + amount
+                if hero.hp > 140 {
+                    hero.hp = 140
+                }
+                hero.mana = hero.mana - 8
+                hero.score = hero.score + waveBonus[wave]
+                print("ACTION: HEAL")
+                print("HEAL")
+                print(amount)
+            }
+            Action::Pulse => {
+                let damage = magic_damage(22, hero.level, boss.phase)
+                boss.hp = boss.hp - damage
+                hero.mana = hero.mana - 12
+                hero.score = hero.score + damage + 20
+                print("ACTION: ARCANE PULSE")
+                print("MAGIC DAMAGE")
+                print(damage)
+            }
+        }
+
+        if boss.hp > 0 {
+            boss.rage = boss.rage + bossRage[wave]
+            if boss.hp < 250 {
+                boss.phase = 2
+            }
+            if boss.hp < 100 {
+                boss.phase = 3
+            }
+
+            let retaliation = 7 + boss.phase * 4 + boss.rage / 8
+            hero.hp = hero.hp - retaliation
+            print("BOSS RETALIATION")
+            print(retaliation)
+
+            if hero.hp <= 0 {
+                state = GameState::Defeat
+                break
+            }
+        }
+
+        round = round + 1
+    }
+
+    if boss.hp <= 0 {
+        state = GameState::Victory
+    }
+
+    print("")
+    print("========================================")
+    print("                RESULT                  ")
+    print("========================================")
+
+    match state {
+        GameState::Victory => {
+            print("VICTORY")
+            hero.score = hero.score + 500
+        }
+        GameState::Defeat => {
+            print("DEFEAT")
+            hero.score = hero.score / 2
+        }
+        _ => {
+            print("RUN ENDED")
+        }
+    }
+
+    print("FINAL HP")
+    print(hero.hp)
+    print("FINAL MANA")
+    print(hero.mana)
+    print("FINAL SCORE")
+    print(hero.score)
+    print("RANK")
+    print(rank_name(hero.score))
+
+    let scoreMirror = hero.score
+    let scorePtr = &scoreMirror
+    print("MEMORY POINTER CHECK")
+    print(*scorePtr)
+
+    print("ARRAY CHECK")
+    print(weaponPower[3])
+    print("ENUM CHECK")
+    match state {
+        GameState::Victory => { print("GameState::Victory") }
+        GameState::Defeat => { print("GameState::Defeat") }
+        _ => { print("Other") }
+    }
+
+    print("")
+    print("NEXUS ARENA COMPLETE")
+}

@@ -1,0 +1,6 @@
+import std.net
+
+fn main() {
+    let body = get("https://example.com")
+    print(body)
+}
