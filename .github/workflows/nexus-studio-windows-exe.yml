@@ -48,7 +48,9 @@ jobs:
           if ($source.Length -ge 100MB) { throw "EXE is $($source.Length) bytes; GitHub blocks regular Git files at 100 MB. Use the Actions artifact instead." }
           New-Item -ItemType Directory -Force downloads | Out-Null
           Copy-Item $source.FullName 'downloads/NEXUS-Studio-Windows-x64.exe' -Force
-          Get-Item 'downloads/NEXUS-Studio-Windows-x64.exe' | Format-List FullName,Length
+          $hash = (Get-FileHash 'downloads/NEXUS-Studio-Windows-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  NEXUS-Studio-Windows-x64.exe" | Set-Content 'downloads/NEXUS-Studio-Windows-x64.exe.sha256' -Encoding ASCII
+          Get-Item 'downloads/NEXUS-Studio-Windows-x64.exe','downloads/NEXUS-Studio-Windows-x64.exe.sha256' | Format-Table FullName,Length
 
       - name: Commit EXE into repository
         shell: pwsh
@@ -59,8 +61,8 @@ jobs:
 
           # The job already runs inside .github/project-tools/nexus-studio.
           # Stage a relative path and fail loudly if any Git operation fails.
-          git add 'downloads/NEXUS-Studio-Windows-x64.exe'
-          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the built NEXUS Studio EXE.' }
+          git add 'downloads/NEXUS-Studio-Windows-x64.exe' 'downloads/NEXUS-Studio-Windows-x64.exe.sha256'
+          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Studio EXE or SHA-256 file.' }
 
           git diff --cached --quiet
           $diffExitCode = $LASTEXITCODE
