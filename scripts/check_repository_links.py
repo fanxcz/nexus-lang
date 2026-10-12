@@ -23,15 +23,15 @@ GENERATED_ASSETS = {
     "NEXUS-Paint-Windows-x64.exe", "NEXUS-Paint-Windows-x64.exe.sha256.txt",
     "NEXUS-Paint-Windows-x64.zip", "NEXUS-Paint-Windows-x64.zip.sha256.txt",
 }
-MD_LINK = re.compile(r"!?\\[[^\\]]*\\]\\(\\s*(?:<([^>]+)>|([^\\s)]+))", re.M)
-MD_REF = re.compile(r"(?m)^\\s{0,3}\\[[^\\]]+\\]:\\s*<?([^\\s>]+)>?")
-HTML_ATTR = re.compile(r"""(?i)\\b(?:href|src|poster|action)\\s*=\\s*["']([^"']+)["']""")
-CSS_URL = re.compile(r"""(?i)\\burl\\(\\s*["']?([^)'"\\s]+)""")
-BARE_URL = re.compile(r"""https?://[^\\s"'<>\\x60]+""")
-HEADING = re.compile(r"(?m)^\\s{0,3}#{1,6}\\s+(.+?)\\s*#*\\s*$")
-HTML_ID = re.compile(r"""(?i)\\b(?:id|name)\\s*=\\s*["']([^"']+)["']""")
+MD_LINK = re.compile(r"!?\[[^\]]*\]\(\s*(?:<([^>]+)>|([^\s)]+))", re.M)
+MD_REF = re.compile(r"(?m)^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?")
+HTML_ATTR = re.compile(r"""(?i)\b(?:href|src|poster|action)\s*=\s*["']([^"']+)["']""")
+CSS_URL = re.compile(r"""(?i)\burl\(\s*["']?([^)'"\s]+)""")
+BARE_URL = re.compile(r"""https?://[^\s"'<>\x60]+""")
+HEADING = re.compile(r"(?m)^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$")
+HTML_ID = re.compile(r"""(?i)\b(?:id|name)\s*=\s*["']([^"']+)["']""")
 GITHUB_FILE = re.compile(
-    r"^https://(?:raw\\.githubusercontent\\.com|github\\.com)/fanxcz/nexus-lang/"
+    r"^https://(?:raw\.githubusercontent\.com|github\.com)/fanxcz/nexus-lang/"
     r"(?:blob/|tree/|raw/)?main/([^?#]+)", re.I
 )
 
@@ -49,11 +49,11 @@ def source_files() -> list[Path]:
 
 def heading_slug(value: str) -> str:
     tick = chr(96)
-    value = re.sub(tick + r"([^" + tick + r"]*)" + tick, r"\\1", value)
-    value = re.sub(r"\\[([^\\]]+)\\]\\([^)]*\\)", r"\\1", value)
+    value = re.sub(tick + r"([^" + tick + r"]*)" + tick, r"\1", value)
+    value = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", value)
     value = re.sub(r"<[^>]+>", "", value).lower().strip()
-    value = re.sub(r"[^\\w\\- ]", "", value, flags=re.UNICODE)
-    return re.sub(r"\\s+", "-", value)
+    value = re.sub(r"[^\w\- ]", "", value, flags=re.UNICODE)
+    return re.sub(r"\s+", "-", value)
 
 def anchors_for(path: Path) -> set[str]:
     try:
@@ -119,14 +119,14 @@ def main() -> int:
             for match in pattern.finditer(content):
                 target = next((group for group in match.groups() if group is not None), "").strip()
                 if target:
-                    targets.append((target, content.count("\\n", 0, match.start()) + 1))
+                    targets.append((target, content.count("\n", 0, match.start()) + 1))
         for raw in BARE_URL.findall(content):
             url = raw.rstrip(".,;:!?)]}")
             urls += 1
             own = repo_url_path(url)
             if own and not own[0]:
                 offset = content.find(raw)
-                line = content.count("\\n", 0, max(offset, 0)) + 1
+                line = content.count("\n", 0, max(offset, 0)) + 1
                 errors.append(f"{rel}:{line}: repository URL points to missing path: {url}")
         for target, line in targets:
             if target.startswith(("https://", "http://")):
@@ -156,10 +156,10 @@ def main() -> int:
                     errors.append(f"{rel}:{line}: missing heading anchor #{fragment} in {target_file.relative_to(ROOT)}")
     print(f"Scanned {len(files)} text files; checked {checked} local link(s); found {urls} URL occurrence(s).")
     if errors:
-        print("\\nLINK ERRORS:")
+        print("\nLINK ERRORS:")
         for issue in errors:
             print(" - " + issue)
-        print(f"\\nFAILED: {len(errors)} link problem(s).")
+        print(f"\nFAILED: {len(errors)} link problem(s).")
         return 1
     print("PASS: no broken local links or same-repository GitHub file URLs found.")
     return 0
