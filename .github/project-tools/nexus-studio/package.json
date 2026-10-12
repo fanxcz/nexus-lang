@@ -10,7 +10,7 @@
     "dist:linux": "electron-builder --linux AppImage deb --publish never",
     "dist:mac": "electron-builder --mac dmg zip --publish never",
     "dist": "electron-builder",
-    "check": "node --check main.cjs && node --check preload.cjs && node --check renderer.js && node --check renderer/nexus-mode.js"
+    "check": "node --check main.cjs && node --check preload.cjs && node --check renderer.js && node --check renderer/nexus-mode.js && node --check path-guard.cjs && node --test path-guard.test.cjs"
   },
   "dependencies": {
     "ace-builds": "^1.39.1"
@@ -27,6 +27,7 @@
     },
     "files": [
       "main.cjs",
+      "path-guard.cjs",
       "preload.cjs",
       "index.html",
       "renderer.js",
