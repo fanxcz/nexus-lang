@@ -20,19 +20,18 @@ async function assertProjectPath(target) {
   const realRoot = await fs.realpath(projectRoot);
   let probe = resolved;
   while (true) {
+    let realProbe;
     try {
-      const realProbe = await fs.realpath(probe);
-      if (!isInside(realRoot, realProbe)) {
-        throw new Error('Файл находится за пределами проекта.');
-      }
-      return resolved;
+      realProbe = await fs.realpath(probe);
     } catch (error) {
-      if (error.message === 'Файл находится за пределами проекта.') throw error;
       if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
       const parent = path.dirname(probe);
       if (parent === probe) throw new Error('Не удалось проверить путь внутри проекта.');
       probe = parent;
+      continue;
     }
+    if (!isInside(realRoot, realProbe)) throw new Error('Файл находится за пределами проекта.');
+    return resolved;
   }
 }
 function createWindow() {
