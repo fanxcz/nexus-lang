@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
-[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  

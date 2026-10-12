@@ -68,4 +68,4 @@ Open a pull request against `main` and include the problem, the approach, tests 
 
 ## Where to help
 
-Start with [open issues](https://github.com/fanxcz/nexus-lang/issues), [discussions](https://github.com/fanxcz/nexus-lang/discussions), or the [development documentation](https://github.com/fanxcz/nexus-lang/blob/main/docs/development/index.md). Bug reports should include a minimal source example, exact command, platform, expected behavior and actual output.
+Start with [open issues](https://github.com/fanxcz/nexus-lang/issues), or the [development documentation](https://github.com/fanxcz/nexus-lang/blob/main/docs/development/index.md). Bug reports should include a minimal source example, exact command, platform, expected behavior and actual output.

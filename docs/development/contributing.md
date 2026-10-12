@@ -73,6 +73,6 @@ Open a pull request against `fanxcz/nexus-lang:main`. Include the problem, what 
 ## Where to contribute
 
 - [Open issues](https://github.com/fanxcz/nexus-lang/issues)
-- [GitHub Discussions](https://github.com/fanxcz/nexus-lang/discussions)
+- [Open issue tracker](https://github.com/fanxcz/nexus-lang/issues)
 - [Root contributor guide](https://github.com/fanxcz/nexus-lang/blob/main/CONTRIBUTING.md)
 - [Development roadmap](roadmap.md)

@@ -41,6 +41,8 @@ jobs:
             --timeout 30
             --max-retries 2
             --max-concurrency 8
+            --exclude '^https://fanxcz.github.io/nexus-lang/'
+            --exclude '^file:///.*docs/assets/downloads/'
             README.md
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md
