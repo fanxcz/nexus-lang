@@ -264,7 +264,6 @@ try {
                             }
                         }
                         Write-Info 'Build completed. Bundled runtime DLLs were copied beside the EXE.'
-                Write-RunLauncher $outputPath
                         Write-RunLauncher $builtExecutable
                     }
                 }
@@ -272,8 +271,7 @@ try {
                 Pop-Location
             }
             if ($Mode -eq 'Run') { Wait-ForUserIfRequested $exitCode }
-            if ($Mode -eq 'Run') { Wait-ForUserIfRequested $exitCode }
-    exit $exitCode
+            exit $exitCode
         }
 
         if ($Mode -eq 'Build') {
@@ -311,11 +309,13 @@ try {
                     }
                 }
                 Write-Info 'Build completed. Bundled runtime DLLs were copied beside the EXE.'
+                Write-RunLauncher $outputPath
             }
         }
     } finally {
         Pop-Location
     }
+    if ($Mode -eq 'Run') { Wait-ForUserIfRequested $exitCode }
     exit $exitCode
 } catch {
     Write-Fail $_.Exception.Message
