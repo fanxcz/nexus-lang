@@ -1,1 +1,1 @@
-c610e78d58576bdda035a0546cafccfcfd03a77d9427a0098a9ac4f292290889  NEXUS-Paint-Windows-x64.exe
+3208fffe87c93f7bd8967b35a3e7028266cc8ce512aa276ba3c8717ace8a05fc  NEXUS-Paint-Windows-x64.exe
