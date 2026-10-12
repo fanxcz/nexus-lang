@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: nexus-studio-windows-exe-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windows-exe:
     runs-on: windows-latest
@@ -49,8 +53,25 @@ jobs:
       - name: Commit EXE into repository
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe
+
+          # The job already runs inside .github/project-tools/nexus-studio.
+          # Stage a relative path and fail loudly if any Git operation fails.
+          git add 'downloads/NEXUS-Studio-Windows-x64.exe'
+          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the built NEXUS Studio EXE.' }
+
+          git diff --cached --quiet
+          $diffExitCode = $LASTEXITCODE
+          if ($diffExitCode -eq 0) {
+            Write-Host 'The repository already contains the current NEXUS Studio EXE; no commit is needed.'
+            exit 0
+          }
+          if ($diffExitCode -ne 1) { throw "git diff --cached failed with exit code $diffExitCode." }
+
           git commit -m 'Add built NEXUS Studio Windows EXE'
-          git push
+          if ($LASTEXITCODE -ne 0) { throw 'git commit failed for the built NEXUS Studio EXE.' }
+
+          git push origin "HEAD:$env:GITHUB_REF_NAME"
+          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $env:GITHUB_REF_NAME." }
