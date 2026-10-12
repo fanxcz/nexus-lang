@@ -3,6 +3,8 @@
 CMake builds the NEXUS compiler and its test programs. The project's `CMakeLists.txt` sets the minimum supported CMake version to 3.20 and requests C++20. Ninja is used by the repository presets and CI, but another CMake generator can be selected explicitly.
 
 ## Requirements
+The project itself requires CMake 3.20 or newer. However, the checked-in `CMakePresets.json` uses preset schema version 6, which requires CMake 3.25 or newer. Use CMake 3.25+ for the preset commands below. With CMake 3.20–3.24, use the explicit configure command shown further down instead.
+
 
 - CMake 3.20 or newer.
 - A C++20-capable compiler and a compatible build tool.
