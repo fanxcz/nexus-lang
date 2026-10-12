@@ -1,8 +1,8 @@
 site_name: NEXUS Programming Language
 site_description: NEXUS is an open-source native programming language and runtime for applications, creative tools, and games.
 site_author: fanxcz
-site_url: https://fanxcz.github.io/nexus/
-repo_url: https://github.com/fanxcz/nexus
+site_url: https://fanxcz.github.io/nexus-lang/
+repo_url: https://github.com/fanxcz/nexus-lang
 repo_name: fanxcz/nexus
 
 docs_dir: ../../../docs
@@ -165,6 +165,6 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/fanxcz/nexus
+      link: https://github.com/fanxcz/nexus-lang
   version:
     provider: mike
