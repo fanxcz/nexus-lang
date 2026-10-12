@@ -4,12 +4,12 @@ Thank you for your interest in contributing to NEXUS! This guide will help you g
 
 ## Code of Conduct
 
-Please read and follow our [Code of Conduct](https://github.com/fanxcz/nexus/blob/main/CODE_OF_CONDUCT.md).
+Please read and follow our [Code of Conduct](https://github.com/fanxcz/nexus-lang/blob/main/CODE_OF_CONDUCT.md).
 
 ## Ways to Contribute
 
-- **Bug reports** — Use the [bug template](https://github.com/fanxcz/nexus/issues/new?template=bug_report.yml)
-- **Feature requests** — Use the [feature template](https://github.com/fanxcz/nexus/issues/new?template=feature_request.yml)
+- **Bug reports** — Use the [bug template](https://github.com/fanxcz/nexus-lang/issues/new?template=bug_report.yml)
+- **Feature requests** — Use the [feature template](https://github.com/fanxcz/nexus-lang/issues/new?template=feature_request.yml)
 - **Documentation** — Improve docs, fix typos, add examples
 - **Code contributions** — Fix bugs, implement features, improve performance
 - **Testing** — Write tests, test on different platforms
@@ -29,7 +29,7 @@ git clone https://github.com/YOUR_USERNAME/nexus.git
 cd nexus
 
 # Add upstream remote
-git remote add upstream https://github.com/fanxcz/nexus.git
+git remote add upstream https://github.com/fanxcz/nexus-lang.git
 ```
 
 ### Build
@@ -230,9 +230,9 @@ Maintainers only:
 ## Getting Help
 
 - **Discord**: [NEXUS Community](https://discord.gg/nexus-lang)
-- **GitHub Discussions**: [Q&A](https://github.com/fanxcz/nexus/discussions)
-- **Issues**: [Bug/Feature](https://github.com/fanxcz/nexus/issues)
+- **GitHub Discussions**: [Q&A](https://github.com/fanxcz/nexus-lang/discussions)
+- **Issues**: [Bug/Feature](https://github.com/fanxcz/nexus-lang/issues)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/fanxcz/nexus/blob/main/LICENSE).
+By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE).
