@@ -7,9 +7,9 @@ body:
     attributes:
       value: |
         Have a question about NEXUS? We're happy to help! Please check the documentation first:
-        - [Language Reference](https://fanxcz.github.io/nexus/language/)
-        - [Runtime API](https://fanxcz.github.io/nexus/runtime/)
-        - [Examples](https://github.com/fanxcz/nexus/tree/main/examples)
+        - [Language Reference](https://fanxcz.github.io/nexus-lang/language/)
+        - [Runtime API](https://fanxcz.github.io/nexus-lang/runtime/)
+        - [Examples](https://github.com/fanxcz/nexus-lang/tree/main/examples)
   - type: dropdown
     id: category
     attributes:
