@@ -21,7 +21,7 @@ fn main() {
     let mut player_x: f64 = 640.0
     let mut player_y: f64 = 360.0
     let mut score: i64 = 0
-    let mut frame: i32 = 0
+    let mut frame: i64 = 0
     let mut running = true
     let mut time: f64 = 0.0
 
@@ -76,9 +76,10 @@ fn main() {
         gfx_rect(0, 0, 1280, 60, 0.025, 0.04, 0.075, 1.0)
         gfx_text(20, 18, 24, "NEXUS SHOWCASE", 0.2, 0.85, 1.0, 1.0)
         gfx_text(20, 40, 14, "WASD:Move  Mouse:Aim  Click:Shoot  ESC:Quit", 0.65, 0.75, 0.9, 1.0)
+        gfx_text(900, 40, 14, "FRAME " + str_i64(frame), 0.55, 0.7, 0.85, 1.0)
 
         gfx_text(1100, 18, 20, "SCORE", 0.7, 0.8, 1.0, 1.0)
-        gfx_text(1100, 40, 16, "0", 0.9, 1.0, 1.0, 1.0)
+        gfx_text(1100, 40, 16, str_i64(score), 0.9, 1.0, 1.0, 1.0)
 
         gfx_end()
     }
