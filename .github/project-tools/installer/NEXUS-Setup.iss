@@ -2,7 +2,7 @@
 #define MyAppVersion "1.1.0"
 #define MyAppPublisher "NEXUS Project"
 #ifndef SourceDir
-  #define SourceDir "..\\..\\..\\dist\\NEXUS_Windows_Portable"
+  #define SourceDir "..\..\..\dist\NEXUS_Windows_Portable"
 #endif
 
 [Setup]
@@ -14,7 +14,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL=https://github.com/fanxcz/nexus-lang
 AppSupportURL=https://github.com/fanxcz/nexus-lang/issues
 AppUpdatesURL=https://fanxcz.github.io/nexus-lang/
-DefaultDirName={localappdata}\\Programs\\NEXUS
+DefaultDirName={localappdata}\Programs\NEXUS
 DefaultGroupName=NEXUS
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
@@ -22,7 +22,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 WizardStyle=modern
 LanguageDetectionMethod=uilanguage
-UninstallDisplayIcon={app}\\bin\\nexus-core.exe
+UninstallDisplayIcon={app}\bin\nexus-core.exe
 OutputBaseFilename=NEXUS-Setup-1.1.0
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -38,7 +38,7 @@ VersionInfoDescription=NEXUS native programming language installer
 UninstallDisplayName=NEXUS 1.1.0
 
 [Languages]
-Name: "russian"; MessagesFile: "compiler:Languages\\Russian.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
@@ -48,20 +48,20 @@ Name: "addtopath"; Description: "Добавить команду nexus в PATH �
 Name: "associate_nx"; Description: "Добавить пункт «Запустить с NEXUS» для файлов .nx"; GroupDescription: "Интеграция:"; Flags: unchecked
 
 [Files]
-Source: "{#SourceDir}\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autodesktop}\\NEXUS Console"; Filename: "{app}\\NEXUS-Console.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\\cmd.exe"; Tasks: desktopicon
-Name: "{autoprograms}\\NEXUS\\NEXUS Console"; Filename: "{app}\\NEXUS-Console.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\\cmd.exe"; Tasks: startmenuicon
-Name: "{autoprograms}\\NEXUS\\Run hello.nx example"; Filename: "{app}\\Run-NEXUS.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\\cmd.exe"; Tasks: startmenuicon
+Name: "{autodesktop}\NEXUS Console"; Filename: "{app}\NEXUS-Console.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\cmd.exe"; Tasks: desktopicon
+Name: "{autoprograms}\NEXUS\NEXUS Console"; Filename: "{app}\NEXUS-Console.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\cmd.exe"; Tasks: startmenuicon
+Name: "{autoprograms}\NEXUS\Run hello.nx example"; Filename: "{app}\Run-NEXUS.bat"; WorkingDir: "{app}"; IconFilename: "{sys}\cmd.exe"; Tasks: startmenuicon
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}\\_setup_temp"
+Type: filesandordirs; Name: "{app}\_setup_temp"
 
 [Code]
 const
   UserEnvironmentSubKey = 'Environment';
-  NexusContextMenuKey = 'Software\\Classes\\SystemFileAssociations\\.nx\\shell\\NEXUS';
+  NexusContextMenuKey = 'Software\Classes\SystemFileAssociations\.nx\shell\NEXUS';
 
 function NormalizePathEntry(const Value: string): string;
 var
@@ -172,11 +172,11 @@ var
   CommandLine: string;
 begin
   RegWriteStringValue(HKEY_CURRENT_USER, NexusContextMenuKey, '', 'Запустить с NEXUS');
-  RegWriteStringValue(HKEY_CURRENT_USER, NexusContextMenuKey, 'Icon', ExpandConstant('{app}\\bin\\nexus-core.exe'));
-  CommandKey := NexusContextMenuKey + '\\command';
-  CommandLine := '"' + ExpandConstant('{sys}\\WindowsPowerShell\\v1.0\\powershell.exe') +
+  RegWriteStringValue(HKEY_CURRENT_USER, NexusContextMenuKey, 'Icon', ExpandConstant('{app}\bin\nexus-core.exe'));
+  CommandKey := NexusContextMenuKey + '\command';
+  CommandLine := '"' + ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe') +
     '" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "' +
-    ExpandConstant('{app}\\NEXUS-Windows.ps1') + '" -Mode Run -SourcePath "%1"';
+    ExpandConstant('{app}\NEXUS-Windows.ps1') + '" -Mode Run -SourcePath "%1"';
   RegWriteStringValue(HKEY_CURRENT_USER, CommandKey, '', CommandLine);
 end;
 
@@ -188,9 +188,9 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    PowerShell := ExpandConstant('{sys}\\WindowsPowerShell\\v1.0\\powershell.exe');
+    PowerShell := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
     Parameters := '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' +
-      ExpandConstant('{app}\\NEXUS-Windows.ps1') + '" -Mode Check';
+      ExpandConstant('{app}\NEXUS-Windows.ps1') + '" -Mode Check';
 
     WizardForm.StatusLabel.Caption := 'Проверка встроенного компилятора NEXUS...';
     WizardForm.Refresh;
