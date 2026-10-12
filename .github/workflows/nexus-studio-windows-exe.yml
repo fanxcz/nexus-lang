@@ -82,7 +82,8 @@ jobs:
           # The binary build takes several minutes; docs or code may land on main
           # while it runs. Rebase this asset-only commit on the latest branch first.
           $branch = $env:GITHUB_REF_NAME
-          git fetch origin "+refs/heads/$branch:refs/remotes/origin/$branch"
+          $refspec = "+refs/heads/{0}:refs/remotes/origin/{0}" -f $branch
+          git fetch origin $refspec
           if ($LASTEXITCODE -ne 0) { throw "git fetch failed for branch $branch." }
 
           git rebase "origin/$branch"
