@@ -235,4 +235,4 @@ fn main() {
 - Async/Await: Not yet implemented
 - Pattern matching: Basic match on integers/enums only
 
-See [CHANGELOG](https://github.com/fanxcz/nexus/blob/main/CHANGELOG.md) for version history.
+See [CHANGELOG](https://github.com/fanxcz/nexus-lang/blob/main/CHANGELOG.md) for version history.
