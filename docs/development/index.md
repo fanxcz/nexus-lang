@@ -15,7 +15,7 @@ Guides for contributing to and developing NEXUS.
 
 ```bash
 # Clone and build
-git clone https://github.com/fanxcz/nexus.git
+git clone https://github.com/fanxcz/nexus-lang-lang.git
 cd nexus
 cmake --preset=debug
 cmake --build --preset=debug
