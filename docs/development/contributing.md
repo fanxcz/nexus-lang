@@ -1,238 +1,78 @@
 # Contributing to NEXUS
 
-Thank you for your interest in contributing to NEXUS! This guide will help you get started.
+NEXUS is developed in the open. Useful contributions include compiler fixes, language and runtime tests, examples that compile, documentation corrections, packaging improvements, and reproducible bug reports.
 
-## Code of Conduct
+The repository-level [CONTRIBUTING.md](https://github.com/fanxcz/nexus-lang/blob/main/CONTRIBUTING.md) is the canonical contributor guide. Also read the [Code of Conduct](https://github.com/fanxcz/nexus-lang/blob/main/CODE_OF_CONDUCT.md) and [Security Policy](https://github.com/fanxcz/nexus-lang/blob/main/SECURITY.md).
 
-Please read and follow our [Code of Conduct](https://github.com/fanxcz/nexus-lang/blob/main/CODE_OF_CONDUCT.md).
+## 1. Fork and clone the correct repository
 
-## Ways to Contribute
-
-- **Bug reports** — Use the [bug template](https://github.com/fanxcz/nexus-lang/issues/new?template=bug_report.yml)
-- **Feature requests** — Use the [feature template](https://github.com/fanxcz/nexus-lang/issues/new?template=feature_request.yml)
-- **Documentation** — Improve docs, fix typos, add examples
-- **Code contributions** — Fix bugs, implement features, improve performance
-- **Testing** — Write tests, test on different platforms
-- **Community** — Help in discussions, review PRs
-
-## Development Setup
-
-### Prerequisites
-
-See [Installation Guide](../getting-started/installation.md#building-from-source).
-
-### Fork and Clone
+Fork `fanxcz/nexus-lang` on GitHub, then clone your fork:
 
 ```bash
-# Fork on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/nexus.git
-cd nexus
-
-# Add upstream remote
+git clone https://github.com/YOUR_USERNAME/nexus-lang.git
+cd nexus-lang
 git remote add upstream https://github.com/fanxcz/nexus-lang.git
 ```
 
-### Build
+Use `main` as the base branch. Do not target the unrelated `fanxcz/nexus` repository.
+
+## 2. Build and run tests
+
+CMake presets require CMake 3.25+ because the checked-in preset file uses schema version 6. A C++20 compiler is required; LLVM/Clang and SDL2 dependencies are needed for the paths and runtime features that use them.
 
 ```bash
-# Configure with debug preset
 cmake --preset=debug
-
-# Build
 cmake --build --preset=debug
+ctest --test-dir build --output-on-failure
+./build/nexus --version
+./build/nexus self-test
+```
 
-# Run tests
+On Windows, the compiler is normally `build/nexus.exe`. With CMake 3.20–3.24, configure explicitly rather than using presets:
+
+```bash
+cmake -S . -B build -G Ninja -DNEXUS_BUILD_TESTS=ON
+cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-### Run Locally
+For a language change, add a focused regression test under `tests/`. The test should demonstrate the old behavior and prevent regressions. For runtime and packaging changes, test on the affected platform when possible and describe what you could not test.
 
-```bash
-# Build and run a test project
-./build/nexus new test_game --template game
-cd test_game
-../build/nexus build
-../build/nexus run
-```
-
-## Workflow
-
-### 1. Create an Issue
-
-Before starting work, create or claim an issue:
-- Bug: Use bug report template
-- Feature: Use feature request template
-- Discuss design in the issue
-
-### 2. Create a Branch
+## 3. Make a focused branch
 
 ```bash
 git checkout main
 git pull upstream main
-git checkout -b feat/my-feature
-# or
-git checkout -b fix/my-bugfix
+git checkout -b fix/short-description
 ```
 
-Branch naming:
-- `feat/` — New features
-- `fix/` — Bug fixes
-- `docs/` — Documentation
-- `refactor/` — Code refactoring
-- `test/` — Tests
-- `chore/` — Maintenance
+Use prefixes such as `feat/`, `fix/`, `docs/`, `test/`, or `refactor/`. Keep a change small enough to review and keep generated files, build directories, executables and secrets out of unrelated commits.
 
-### 3. Make Changes
+## 4. Keep documentation honest
 
-- Write code following [style guide](#style-guide)
-- Add tests for new functionality
-- Update documentation
-- Run `nexus fmt` and `nexus lint`
+- Code samples should compile against the current compiler/runtime, or be clearly marked as pseudocode.
+- Do not claim a backend or platform works until a real build and test demonstrates it.
+- Explain backend limitations; a listed target is not necessarily supported by every backend.
+- Update the relevant language, runtime, tooling, or template page when changing a public feature.
+- For release and installer changes, verify the actual artifacts, checksums and links rather than relying only on a successful build step.
 
-### 4. Test
+## 5. Test, commit and open a pull request
 
 ```bash
-# Run all tests
+cmake --build build
 ctest --test-dir build --output-on-failure
-
-# Run specific test
-./build/nexus_tests --gtest_filter=LexerTest.*
-
-# Test project creation
-./build/nexus new test_proj --template app
-cd test_proj && ../build/nexus build && ../build/nexus run
+git diff --check
+git status --short
+git add <files>
+git commit -m "fix: describe the change"
+git push -u origin fix/short-description
 ```
 
-### 5. Commit
+Open a pull request against `fanxcz/nexus-lang:main`. Include the problem, what changed, tests run, and remaining limitations. Do not describe a test as passing unless it was actually run and passed.
 
-```bash
-git add .
-git commit -m "feat: add awesome feature
+## Where to contribute
 
-- Implement feature X
-- Add tests for X
-- Update docs
-
-Fixes #123"
-```
-
-Commit message format:
-- `feat:` — New feature
-- `fix:` — Bug fix
-- `docs:` — Documentation
-- `refactor:` — Refactoring
-- `test:` — Tests
-- `chore:` — Maintenance
-- `perf:` — Performance
-- `ci:` — CI changes
-
-### 6. Push and Create PR
-
-```bash
-git push origin feat/my-feature
-```
-
-Open PR against `fanxcz/nexus:main`.
-
-### 7. Code Review
-
-- Address review comments
-- Keep PR updated with main
-- All CI checks must pass
-
-## Style Guide
-
-### C++ (Compiler)
-
-- **Standard**: C++20
-- **Formatting**: `nexus fmt` (clang-format via `.clang-format`)
-- **Naming**:
-  - Types: `PascalCase` (`Token`, `AstNode`)
-  - Functions/Variables: `snake_case` (`parse_expression`, `token_list`)
-  - Constants: `SCREAMING_SNAKE_CASE` (`MAX_TOKENS`)
-  - Namespaces: `lowercase` (`nexus`, `compiler`)
-- **Headers**: Self-contained, `#pragma once`
-- **Includes**: System → Project → Local
-- **Error Handling**: Return `Result<T, Error>`, avoid exceptions
-
-### NEXUS (Language)
-
-- **Formatting**: `nexus fmt`
-- **Naming**:
-  - Types: `PascalCase` (`Vec2`, `GameState`)
-  - Functions/Variables: `snake_case` (`update_player`, `max_health`)
-  - Constants: `SCREAMING_SNAKE_CASE` (`DEFAULT_SPEED`)
-  - Modules: `lowercase` (`game`, `render`)
-- **Indentation**: 4 spaces
-- **Line Length**: 100 characters max
-
-### Documentation
-
-- Markdown with Mermaid diagrams where helpful
-- Code examples must compile
-- Update relevant docs with code changes
-
-## Testing
-
-### Unit Tests (C++)
-
-```cpp
-// tests/test_lexer.cpp
-#include <gtest/gtest.h>
-
-TEST(LexerTest, TokenizesIntegers) {
-    Lexer lexer("42");
-    auto tokens = lexer.tokenize();
-    ASSERT_EQ(tokens.size(), 2); // INT(42), EOF
-    EXPECT_EQ(tokens[0].type, TokenType::Integer);
-    EXPECT_EQ(tokens[0].value, "42");
-}
-```
-
-### Integration Tests
-
-```cmake
-# tests/CMakeLists.txt
-add_test(NAME my_feature_test
-    COMMAND ${NEXUS_BIN} build examples/my_feature.nx
-    COMMAND ./build/my_feature
-)
-```
-
-### Example Tests
-
-Add examples to `examples/` that demonstrate the feature.
-
-## Pull Request Checklist
-
-- [ ] Issue referenced in PR description
-- [ ] Branch up to date with main
-- [ ] All CI checks pass
-- [ ] `nexus fmt` applied
-- [ ] `nexus lint` passes
-- [ ] Tests added/updated
-- [ ] Documentation updated
-- [ ] CHANGELOG.md updated (for user-facing changes)
-- [ ] No new warnings
-
-## Release Process
-
-Maintainers only:
-
-1. Update version in `CMakeLists.txt` and `nexus.toml.example`
-2. Update `CHANGELOG.md`
-3. Create release branch: `release/v1.2.0`
-4. Tag: `git tag v1.2.0`
-5. Push tag: `git push upstream v1.2.0`
-6. GitHub Actions builds and publishes release
-7. Update documentation version
-
-## Getting Help
-
-- **Discord**: [NEXUS Community](https://discord.gg/nexus-lang)
-- **GitHub Discussions**: [Q&A](https://github.com/fanxcz/nexus-lang/discussions)
-- **Issues**: [Bug/Feature](https://github.com/fanxcz/nexus-lang/issues)
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE).
+- [Open issues](https://github.com/fanxcz/nexus-lang/issues)
+- [GitHub Discussions](https://github.com/fanxcz/nexus-lang/discussions)
+- [Root contributor guide](https://github.com/fanxcz/nexus-lang/blob/main/CONTRIBUTING.md)
+- [Development roadmap](roadmap.md)
