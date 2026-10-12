@@ -2,7 +2,7 @@
 
 ## Pre-built Binaries
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/fanxcz/nexus/releases).
+Download the latest release for your platform from [GitHub Releases](https://github.com/fanxcz/nexus-lang/releases).
 
 ### Linux (x86_64)
 
@@ -87,7 +87,7 @@ brew install cmake ninja llvm sdl2 sdl2_image sdl2_mixer sdl2_ttf
 ### Build Steps
 
 ```bash
-git clone https://github.com/fanxcz/nexus.git
+git clone https://github.com/fanxcz/nexus-lang-lang.git
 cd nexus
 
 cmake --preset=release
@@ -137,6 +137,6 @@ CMake can build the compiler without SDL2, but the graphics/audio runtime will b
 
 ### Getting Help
 
-- Check [GitHub Issues](https://github.com/fanxcz/nexus/issues) for known problems.
+- Check [GitHub Issues](https://github.com/fanxcz/nexus-lang/issues) for known problems.
 - Run `nexus doctor --json` for script-friendly environment diagnostics.
-- Open a [new issue](https://github.com/fanxcz/nexus/issues/new/choose) with a reproducible example.
+- Open a [new issue](https://github.com/fanxcz/nexus-lang/issues/new/choose) with a reproducible example.
