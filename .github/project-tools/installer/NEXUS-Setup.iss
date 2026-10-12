@@ -176,7 +176,7 @@ begin
   CommandKey := NexusContextMenuKey + '\command';
   CommandLine := '"' + ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe') +
     '" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "' +
-    ExpandConstant('{app}\NEXUS-Windows.ps1') + '" -Mode Run -SourcePath "%1"';
+    ExpandConstant('{app}\NEXUS-Windows.ps1') + '" -Mode Run -PauseOnExit -SourcePath "%1"';
   RegWriteStringValue(HKEY_CURRENT_USER, CommandKey, '', CommandLine);
 end;
 

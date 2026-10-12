@@ -1,7 +1,8 @@
 ﻿param(
     [ValidateSet('Run','Build','Check','Install')]
     [string]$Mode = 'Run',
-    [string]$SourcePath = ''
+    [string]$SourcePath = '',
+    [switch]$PauseOnExit
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,6 +16,44 @@ $Runtime = Join-Path $Root 'runtime'
 
 function Write-Info([string]$Message) { Write-Host "[NEXUS] $Message" -ForegroundColor Cyan }
 function Write-Fail([string]$Message) { Write-Host "[NEXUS ERROR] $Message" -ForegroundColor Red }
+
+function Wait-ForUserIfRequested([int]$ExitCode) {
+    if (-not $PauseOnExit) { return }
+    Write-Host ''
+    Write-Host ("NEXUS finished with exit code {0}." -f $ExitCode) -ForegroundColor DarkGray
+    [void](Read-Host 'Press Enter to close this window')
+}
+
+function Write-RunLauncher([string]$ExecutablePath) {
+    if ([string]::IsNullOrWhiteSpace($ExecutablePath)) { return }
+    $exe = [System.IO.Path]::GetFullPath($ExecutablePath)
+    if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { return }
+
+    $directory = Split-Path -Parent $exe
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($exe)
+    $launcher = Join-Path $directory ("Run-{0}.bat" -f $baseName)
+    $lines = @(
+        '@echo off',
+        'setlocal',
+        'set "EXE_NAME=%~n0"',
+        'set "EXE_NAME=%EXE_NAME:~4%"',
+        'set "NEXUS_EXE=%~dp0%EXE_NAME%.exe"',
+        'if not exist "%NEXUS_EXE%" (',
+        '  echo [NEXUS ERROR] Executable not found: "%NEXUS_EXE%"',
+        '  echo.',
+        '  pause',
+        '  exit /b 1',
+        ')',
+        '"%NEXUS_EXE%" %*',
+        'set "NEXUS_EXIT_CODE=%ERRORLEVEL%"',
+        'echo.',
+        'echo Program exited with code %NEXUS_EXIT_CODE%.',
+        'pause',
+        'exit /b %NEXUS_EXIT_CODE%'
+    )
+    [System.IO.File]::WriteAllLines($launcher, $lines, [System.Text.Encoding]::ASCII)
+    Write-Info ("Console-preserving launcher: {0}" -f $launcher)
+}
 
 function Find-VsDevCmd {
     $pf86 = [Environment]::GetFolderPath('ProgramFilesX86')
@@ -225,12 +264,16 @@ try {
                             }
                         }
                         Write-Info 'Build completed. Bundled runtime DLLs were copied beside the EXE.'
+                Write-RunLauncher $outputPath
+                        Write-RunLauncher $builtExecutable
                     }
                 }
             } finally {
                 Pop-Location
             }
-            exit $exitCode
+            if ($Mode -eq 'Run') { Wait-ForUserIfRequested $exitCode }
+            if ($Mode -eq 'Run') { Wait-ForUserIfRequested $exitCode }
+    exit $exitCode
         }
 
         if ($Mode -eq 'Build') {
@@ -276,5 +319,6 @@ try {
     exit $exitCode
 } catch {
     Write-Fail $_.Exception.Message
+    if ($Mode -eq 'Run') { Wait-ForUserIfRequested 1 }
     exit 1
 }
