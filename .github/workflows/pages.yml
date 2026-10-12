@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -425,43 +425,48 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Commit NEXUS Paint EXE and checksum to repository
-        shell: pwsh
+  publish-paint-exe:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Commit NEXUS Paint EXE into main
+    runs-on: ubuntu-latest
+    needs: package-windows
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download tested NEXUS Paint build
+        uses: actions/download-artifact@v4
+        with:
+          name: NEXUS_Windows_Packages
+          path: paint-artifacts
+
+      - name: Commit EXE and SHA-256
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          $downloadDir = Join-Path $env:GITHUB_WORKSPACE '.github/project-tools/downloads'
-          New-Item -ItemType Directory -Path $downloadDir -Force | Out-Null
-          Copy-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe') -Destination (Join-Path $downloadDir 'NEXUS-Paint-Windows-x64.exe') -Force
-          Copy-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Destination (Join-Path $downloadDir 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Force
+          set -euo pipefail
+          exe='paint-artifacts/NEXUS-Paint-Windows-x64.exe'
+          test -s "$exe"
+          dest='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
+          checksum='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
+          mkdir -p .github/project-tools/downloads
+          cp "$exe" "$dest"
+          sha256sum "$dest" | awk '{print $1 "  NEXUS-Paint-Windows-x64.exe"}' > "$checksum"
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f '.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
-          if ($LASTEXITCODE -ne 0) { throw 'git add -f failed for the NEXUS Paint EXE.' }
-          git add '.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
-          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Paint SHA-256 file.' }
-
-          git diff --cached --quiet
-          $diffExitCode = $LASTEXITCODE
-          if ($diffExitCode -eq 0) {
-            Write-Host 'The repository already contains the current NEXUS Paint EXE; no commit is needed.'
+          git add -f "$dest" "$checksum"
+          if git diff --cached --quiet; then
+            echo 'NEXUS Paint EXE and SHA-256 are already current.'
             exit 0
-          }
-          if ($diffExitCode -ne 1) { throw "git diff --cached failed with exit code $diffExitCode." }
+          fi
           git commit -m 'Add built NEXUS Paint Windows EXE'
-          if ($LASTEXITCODE -ne 0) { throw 'git commit failed for the NEXUS Paint EXE.' }
-
-          $branch = $env:GITHUB_REF_NAME
-          $refspec = "+refs/heads/{0}:refs/remotes/origin/{0}" -f $branch
-          git fetch origin $refspec
-          if ($LASTEXITCODE -ne 0) { throw "git fetch failed for branch $branch." }
-          git rebase "origin/$branch"
-          if ($LASTEXITCODE -ne 0) {
-            git rebase --abort
-            throw "Could not rebase the NEXUS Paint EXE commit on the latest $branch."
-          }
-          git push origin "HEAD:$branch"
-          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $branch." }
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git rebase origin/main
+          git push origin HEAD:main
 
   build:
     name: Build documentation website
