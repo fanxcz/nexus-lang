@@ -13,6 +13,8 @@ Complete guide to building NEXUS compiler and runtime from source.
 | C++20 compiler | Clang 18 / GCC 11 / MSVC 19.30 | Clang 18 / GCC 13 / MSVC 19.40 | See above |
 
 ## Quick Build
+**CMake version note:** the project minimum is CMake 3.20, but the checked-in `CMakePresets.json` uses schema version 6 and therefore requires CMake 3.25+ for `--preset` commands. With CMake 3.20–3.24, configure with `cmake -S . -B build -G Ninja -DNEXUS_BUILD_TESTS=ON`, then use `cmake --build build` and `ctest --test-dir build --output-on-failure`.
+
 
 ```bash
 # Clone
