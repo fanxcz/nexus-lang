@@ -13,6 +13,7 @@ edit_uri: edit/main/docs/
 # Re-include it because the template guides are linked in the navigation.
 exclude_docs: |
   !/templates/
+  /assets/screenshots/README.md
 
 copyright: Copyright &copy; 2026 fanxcz
 
@@ -82,11 +83,13 @@ nav:
   - Downloads: downloads.md
   - Screenshots: screenshots.md
   - Getting Started:
+      - Overview: getting-started/index.md
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
       - Project Structure: getting-started/project-structure.md
   - Language Reference:
-      - Overview: language/overview.md
+      - Overview: language/index.md
+      - Language Basics: language/overview.md
       - Syntax: language/syntax.md
       - Types: language/types.md
       - Functions: language/functions.md
@@ -95,7 +98,8 @@ nav:
       - Error Handling: language/error-handling.md
       - FFI: language/ffi.md
   - Standard Library:
-      - Overview: std/overview.md
+      - Overview: std/index.md
+      - Module Overview: std/overview.md
       - std.io: std/io.md
       - std.fs: std/fs.md
       - std.net: std/net.md
@@ -104,7 +108,8 @@ nav:
       - std.memory: std/memory.md
       - std.crypto: std/crypto.md
   - Runtime:
-      - Overview: runtime/overview.md
+      - Overview: runtime/index.md
+      - Runtime Overview: runtime/overview.md
       - Memory: runtime/memory.md
       - Graphics 2D: runtime/graphics-2d.md
       - Graphics 3D: runtime/graphics-3d.md
@@ -116,6 +121,7 @@ nav:
       - Particles: runtime/particles.md
       - UI: runtime/ui.md
   - Tooling:
+      - Overview: tooling/index.md
       - Commands: tooling/commands.md
       - Native backend: tooling/native-backend.md
       - Backend selection: tooling/backend-explainer.md
@@ -127,11 +133,13 @@ nav:
       - Editor: tooling/editor.md
       - VS Code Extension: tooling/vscode-extension.md
   - Package Manager:
-      - Overview: packages/overview.md
+      - Overview: packages/index.md
+      - Manager Overview: packages/overview.md
       - Creating Packages: packages/creating.md
       - Using Packages: packages/using.md
       - Publishing: packages/publishing.md
   - Templates:
+      - Overview: templates/index.md
       - App: templates/app.md
       - Game: templates/game.md
       - Paint: templates/paint.md
@@ -141,7 +149,8 @@ nav:
       - Server: templates/server.md
       - 3D: templates/3d.md
   - Examples:
-      - Overview: examples/overview.md
+      - Index: examples/index.md
+      - Catalog: examples/overview.md
       - Games: examples/games.md
       - Graphics: examples/graphics.md
       - Audio: examples/audio.md
@@ -151,11 +160,13 @@ nav:
       - Cross-compilation: build/cross-compilation.md
       - Targets: build/targets.md
   - Architecture:
+      - Overview: architecture/index.md
       - Repository Layout: architecture/repository-layout.md
       - Compiler Pipeline: architecture/compiler-pipeline.md
       - Runtime Design: architecture/runtime-design.md
       - Memory Model: architecture/memory-model.md
   - Development:
+      - Overview: development/index.md
       - Contributing: development/contributing.md
       - Building from Source: development/building.md
       - Testing: development/testing.md
