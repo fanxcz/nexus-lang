@@ -14,7 +14,9 @@ on:
       - 'stdlib/**'
       - 'examples/**'
       - 'tests/**'
-      - '.github/project-tools/**'
+      - '.github/project-tools/repository-files/**'
+      - '.github/project-tools/installer/**'
+      - '.github/project-tools/vscode-extension/**'
   pull_request:
   workflow_dispatch:
 
