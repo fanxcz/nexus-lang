@@ -3,7 +3,7 @@
 **NEXUS is an open-source programming language and native runtime for applications, tools, and games.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support.
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
@@ -144,7 +144,7 @@ Consult the template and current documentation for its supported features.
 - [Download NEXUS Paint EXE](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe)
 - [Verify Paint EXE SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
 - [Verify Paint ZIP SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
-- [View Paint source](examples/nexus_paint.nx)
+- [View Paint source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 ## Build from source
 
 ### Requirements
@@ -167,7 +167,7 @@ ctest --test-dir build --output-on-failure
 .\build\nexus.exe self-test
 ```
 
-Linux/macOS builds use the corresponding executable path (for example, `./build/nexus --version`). See the [CMake configuration](CMakeLists.txt), [docs](docs/), and CI workflows for the currently tested build matrix.
+Linux/macOS builds use the corresponding executable path (for example, `./build/nexus --version`). See the [CMake configuration](https://github.com/fanxcz/nexus-lang/blob/main/CMakeLists.txt), [docs](https://github.com/fanxcz/nexus-lang/tree/main/docs), and CI workflows for the currently tested build matrix.
 
 ## Repository map
 
@@ -185,9 +185,9 @@ Issues, bug reports, documentation improvements, tests, and focused pull request
 
 - [Open an issue](https://github.com/fanxcz/nexus-lang/issues)
 - [Pull requests](https://github.com/fanxcz/nexus-lang/pulls)
-- [Contributing guide](CONTRIBUTING.md)
+- [Contributing guide](https://github.com/fanxcz/nexus-lang/blob/main/CONTRIBUTING.md)
 - [Development roadmap](https://fanxcz.github.io/nexus-lang/development/roadmap/)
 
 ## License
 
-NEXUS is distributed under the MIT License. See [LICENSE](LICENSE).
+NEXUS is distributed under the MIT License. See [LICENSE](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE).

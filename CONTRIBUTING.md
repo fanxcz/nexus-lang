@@ -4,7 +4,7 @@ Thank you for helping improve NEXUS. The compiler, language, standard library, r
 
 ## Before changing code
 
-Check the [roadmap](docs/development/roadmap.md), open issues and recent commits before starting a large change. For substantial language or runtime changes, open an issue first so the design can be discussed.
+Check the [roadmap](https://github.com/fanxcz/nexus-lang/blob/main/docs/development/roadmap.md), open issues and recent commits before starting a large change. For substantial language or runtime changes, open an issue first so the design can be discussed.
 
 Keep changes focused. Add a regression test for every compiler bug or language feature where practical. Document language limitations and target support honestly: a listed or detectable target is not automatically supported by every backend.
 
@@ -68,4 +68,4 @@ Open a pull request against `main` and include the problem, the approach, tests 
 
 ## Where to help
 
-Start with [open issues](https://github.com/fanxcz/nexus-lang/issues), [discussions](https://github.com/fanxcz/nexus-lang/discussions), or the [development documentation](docs/development/index.md). Bug reports should include a minimal source example, exact command, platform, expected behavior and actual output.
+Start with [open issues](https://github.com/fanxcz/nexus-lang/issues), [discussions](https://github.com/fanxcz/nexus-lang/discussions), or the [development documentation](https://github.com/fanxcz/nexus-lang/blob/main/docs/development/index.md). Bug reports should include a minimal source example, exact command, platform, expected behavior and actual output.
