@@ -42,6 +42,8 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
     [Download NEXUS Paint portable ZIP](assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button .md-button--primary }
 
+    [Direct ZIP download from the repository](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip)
+
     [Download EXE only (requires DLLs from the ZIP)](assets/downloads/NEXUS-Paint-Windows-x64.exe)
 
     [EXE SHA-256](assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt) · [ZIP SHA-256](assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)

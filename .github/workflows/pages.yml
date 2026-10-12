@@ -450,20 +450,27 @@ jobs:
           set -euo pipefail
           exe='paint-artifacts/NEXUS-Paint-Windows-x64.exe'
           test -s "$exe"
+          zip='paint-artifacts/NEXUS-Paint-Windows-x64.zip'
+          test -s "$exe"
+          test -s "$zip"
           dest='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
           checksum='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
+          zipdest='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip'
+          zipchecksum='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt'
           mkdir -p .github/project-tools/downloads
           cp "$exe" "$dest"
+          cp "$zip" "$zipdest"
           sha256sum "$dest" | awk '{print $1 "  NEXUS-Paint-Windows-x64.exe"}' > "$checksum"
+          sha256sum "$zipdest" | awk '{print $1 "  NEXUS-Paint-Windows-x64.zip"}' > "$zipchecksum"
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f "$dest" "$checksum"
+          git add -f "$dest" "$checksum" "$zipdest" "$zipchecksum"
           if git diff --cached --quiet; then
-            echo 'NEXUS Paint EXE and SHA-256 are already current.'
+            echo 'NEXUS Paint EXE, portable ZIP and checksums are already current.'
             exit 0
           fi
-          git commit -m 'Add built NEXUS Paint Windows EXE'
+          git commit -m 'Add NEXUS Paint portable Windows package'
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git rebase origin/main
           git push origin HEAD:main
