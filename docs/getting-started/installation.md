@@ -87,7 +87,7 @@ brew install cmake ninja llvm sdl2 sdl2_image sdl2_mixer sdl2_ttf
 ### Build Steps
 
 ```bash
-git clone https://github.com/fanxcz/nexus-lang-lang.git
+git clone https://github.com/fanxcz/nexus-lang.git
 cd nexus
 
 cmake --preset=release
