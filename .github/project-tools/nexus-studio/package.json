@@ -70,9 +70,13 @@
   "author": {
     "name": "NEXUS Project",
     "email": "noreply@github.com",
-    "url": "https://github.com/fanxcz/nexus"
+    "url": "https://github.com/fanxcz"
   },
-  "homepage": "https://github.com/fanxcz/nexus",
+  "homepage": "https://github.com/fanxcz/nexus-lang",
   "license": "MIT",
-  "desktopName": "nexus-studio"
+  "desktopName": "nexus-studio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fanxcz/nexus-lang.git"
+  }
 }
