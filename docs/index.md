@@ -14,11 +14,11 @@ hide:
 
 A programming language for turning ideas into native applications, creative tools, and games.
 
-Write clean <code>.nx</code> code. Start with a lightweight built-in compiler backend, then use the LLVM pipeline when your program needs broader language and target coverage.
+Write clean `.nx` code. Start with a lightweight built-in compiler backend, then use the LLVM pipeline when your program needs broader language and target coverage.
 
 [Get started](getting-started/quickstart.md){ .md-button .md-button--primary }
 [Downloads](downloads.md){ .md-button }
-[View source](https://github.com/fanxcz/nexus){ .md-button }
+[View source](https://github.com/fanxcz/nexus-lang){ .md-button }
 
 <p class="nx-platforms">Open source · MIT licensed · Windows · Linux · macOS source builds</p>
 
@@ -125,7 +125,7 @@ Installer and portable bundle for Windows x64. The portable package includes a b
 
 The release workflow is configured to publish multi-platform archives containing a bundled Zig C++ compiler/linker for the LLVM compilation path. Those assets appear on GitHub Releases after a version tag is published. The built-in direct machine-code backend currently targets its documented x86-64 Linux/Windows subset; optional graphics/audio integrations may still depend on platform libraries.
 
-[Platform releases](https://github.com/fanxcz/nexus/releases){ .md-button }
+[Platform releases](https://github.com/fanxcz/nexus-lang/releases){ .md-button }
 </div>
 </div>
 
@@ -133,5 +133,5 @@ The release workflow is configured to publish multi-platform archives containing
 
 NEXUS is actively developed. Some advanced language features and runtime components are experimental; consult the relevant documentation before using them in production. Issues and contributions are welcome.
 
-[Contribute on GitHub](https://github.com/fanxcz/nexus){ .md-button }
-[Report a problem](https://github.com/fanxcz/nexus/issues){ .md-button }
+[Contribute on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
+[Report a problem](https://github.com/fanxcz/nexus-lang/issues){ .md-button }
