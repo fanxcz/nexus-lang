@@ -246,4 +246,4 @@ NEXUS runtime is **not thread-safe**. All runtime calls must be made from the ma
 | 1.1.x | 1.1.x | Current stable |
 | 1.0.x | 1.0.x | Legacy (OpenGL-only 2D) |
 
-See [CHANGELOG](https://github.com/fanxcz/nexus/blob/main/CHANGELOG.md) for detailed changes.
+See [CHANGELOG](https://github.com/fanxcz/nexus-lang/blob/main/CHANGELOG.md) for detailed changes.
