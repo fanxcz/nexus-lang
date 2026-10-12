@@ -12,11 +12,28 @@ function isInside(root, target) {
   const rel = path.relative(root, path.resolve(target));
   return rel === '' || (!rel.startsWith('..' + path.sep) && rel !== '..' && !path.isAbsolute(rel));
 }
-function assertProjectPath(target) {
+async function assertProjectPath(target) {
   if (!projectRoot) throw new Error('Сначала открой папку проекта.');
   const resolved = path.resolve(target);
   if (!isInside(projectRoot, resolved)) throw new Error('Файл находится за пределами проекта.');
-  return resolved;
+
+  const realRoot = await fs.realpath(projectRoot);
+  let probe = resolved;
+  while (true) {
+    try {
+      const realProbe = await fs.realpath(probe);
+      if (!isInside(realRoot, realProbe)) {
+        throw new Error('Файл находится за пределами проекта.');
+      }
+      return resolved;
+    } catch (error) {
+      if (error.message === 'Файл находится за пределами проекта.') throw error;
+      if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
+      const parent = path.dirname(probe);
+      if (parent === probe) throw new Error('Не удалось проверить путь внутри проекта.');
+      probe = parent;
+    }
+  }
 }
 function createWindow() {
   win = new BrowserWindow({
@@ -30,7 +47,7 @@ function createWindow() {
       sandbox: true
     }
   });
-  win.loadFile('index.html');
+  win.loadFile(path.join(__dirname, 'index.html'));
 }
 function sendOutput(sender, type, data) {
   if (!sender.isDestroyed()) sender.send('terminal:data', { type, data: String(data) });
@@ -139,7 +156,7 @@ async function compilerInvocation(mode, sourcePath, compiler) {
   return { command: compiler, args, cwd: projectRoot };
 }
 async function compileOrRun(event, mode, rel) {
-  const source = assertProjectPath(path.join(projectRoot, rel));
+  const source = await assertProjectPath(path.join(projectRoot, rel));
   if (path.extname(source).toLowerCase() !== '.nx') throw new Error('Выбери исходный файл с расширением .nx.');
   if (!(await existsFile(source))) throw new Error('Файл не найден: ' + source);
   const compiler = await detectCompiler();
@@ -195,19 +212,19 @@ app.whenReady().then(async () => {
     return path.relative(projectRoot, chosen).split(path.sep).join('/');
   });
   ipcMain.handle('file:read', async (_event, rel) => {
-    const target = assertProjectPath(path.join(projectRoot, rel));
+    const target = await assertProjectPath(path.join(projectRoot, rel));
     const stat = await fs.stat(target);
     if (!stat.isFile() || stat.size > 2 * 1024 * 1024) throw new Error('Файл нельзя открыть или его размер превышает 2 МБ.');
     return fs.readFile(target, 'utf8');
   });
   ipcMain.handle('file:save', async (_event, rel, content) => {
-    const target = assertProjectPath(path.join(projectRoot, rel));
+    const target = await assertProjectPath(path.join(projectRoot, rel));
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(target, String(content), 'utf8');
     return true;
   });
   ipcMain.handle('file:new', async (_event, rel) => {
-    const target = assertProjectPath(path.join(projectRoot, rel));
+    const target = await assertProjectPath(path.join(projectRoot, rel));
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(target, '', { flag: 'wx' });
     return true;
