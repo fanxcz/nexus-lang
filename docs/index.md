@@ -75,8 +75,7 @@ nexus run</code></pre>
 
 You can also compile a single supported source file directly, with no separately installed compiler toolchain:
 
-<pre><code class="language-bash">nexus build hello.nx -o hello --backend native
-./hello</code></pre>
+<pre><code class="language-bash">nexus run hello.nx --backend native</code></pre>
 
 The built-in machine-code backend currently targets x86-64 Linux and Windows and supports a defined subset of NEXUS. Run <code>nexus explain-backend hello.nx</code> to see which backend will be selected and why.
 
