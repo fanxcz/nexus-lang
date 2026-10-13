@@ -1955,6 +1955,134 @@ namespace nexus {
             return diagnostics;
         };
         std::unordered_map<std::string, std::string> openDocuments;
+        // Decode the path component of a file:// URI, including UTF-8 bytes.
+        const auto pathFromUri = [](const std::string& uri) -> fs::path {
+            if (uri.rfind("file://", 0) != 0) return {};
+            const std::string encoded = uri.substr(7);
+            std::string decoded;
+            decoded.reserve(encoded.size());
+            const auto hexValue = [](char c) -> int {
+                if (c >= '0' && c <= '9') return c - '0';
+                if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+                if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+                return -1;
+            };
+            for (std::size_t i = 0; i < encoded.size(); ++i) {
+                if (encoded[i] == '%' && i + 2 < encoded.size()) {
+                    const int high = hexValue(encoded[i + 1]);
+                    const int low = hexValue(encoded[i + 2]);
+                    if (high >= 0 && low >= 0) {
+                        decoded.push_back(static_cast<char>((high << 4) | low));
+                        i += 2;
+                        continue;
+                    }
+                }
+                decoded.push_back(encoded[i]);
+            }
+#ifdef _WIN32
+            if (decoded.size() >= 3 && decoded[0] == '/' &&
+                ((decoded[1] >= 'A' && decoded[1] <= 'Z') ||
+                 (decoded[1] >= 'a' && decoded[1] <= 'z')) && decoded[2] == ':') {
+                decoded.erase(decoded.begin());
+            }
+#endif
+            return fs::path(decoded);
+        };
+        const auto uriFromPath = [](const fs::path& inputPath) {
+            std::error_code ec;
+            fs::path absolute = fs::absolute(inputPath, ec);
+            if (ec) absolute = inputPath;
+            std::string path = absolute.lexically_normal().generic_string();
+            if (path.empty() || path.front() != '/') path.insert(path.begin(), '/');
+            static constexpr char hex[] = "0123456789ABCDEF";
+            std::string encoded;
+            encoded.reserve(path.size());
+            for (const unsigned char ch : path) {
+                const bool unreserved = (ch >= 'a' && ch <= 'z') ||
+                    (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+                    ch == '/' || ch == ':' || ch == '-' || ch == '_' ||
+                    ch == '.' || ch == '~';
+                if (unreserved) {
+                    encoded.push_back(static_cast<char>(ch));
+                } else {
+                    encoded.push_back('%');
+                    encoded.push_back(hex[ch >> 4]);
+                    encoded.push_back(hex[ch & 0x0f]);
+                }
+            }
+            return std::string("file://") + encoded;
+        };
+        const auto collectWorkspaceDocuments = [&](const std::string& requestUri,
+                const std::string& requestSource) {
+            // Unsaved buffers override disk files. Rebuilding this bounded index
+            // per request avoids stale symbols while workspace edits are in flight.
+            std::map<std::string, std::string> byUri;
+            byUri[requestUri] = requestSource;
+            for (const auto& opened : openDocuments) {
+                if (opened.first != requestUri) byUri[opened.first] = opened.second;
+            }
+
+            const fs::path documentPath = pathFromUri(requestUri);
+            if (documentPath.empty()) {
+                std::vector<std::pair<std::string, std::string>> result;
+                for (const auto& item : byUri) result.push_back(item);
+                return result;
+            }
+            const fs::path projectRoot = findProjectRoot(documentPath);
+            const bool hasProjectManifest = !projectRoot.empty();
+            const fs::path root = hasProjectManifest ? projectRoot : documentPath.parent_path();
+            // Virtual or test URIs at the filesystem root must not recursively
+            // scan the entire machine.
+            if (root.empty() || root == root.root_path()) {
+                std::vector<std::pair<std::string, std::string>> result;
+                for (const auto& item : byUri) result.push_back(item);
+                return result;
+            }
+
+            std::size_t indexedFiles = 0;
+            constexpr std::size_t maxWorkspaceFiles = 10000;
+            std::error_code ec;
+            const auto addFile = [&](const fs::path& path) {
+                if (indexedFiles >= maxWorkspaceFiles || path.extension() != ".nx") return;
+                const std::string fileUri = uriFromPath(path);
+                if (byUri.find(fileUri) != byUri.end()) return;
+                try {
+                    byUri.emplace(fileUri, readFile(path));
+                    ++indexedFiles;
+                } catch (const std::exception&) {
+                    // An unreadable or transiently removed file is not fatal.
+                }
+            };
+            if (hasProjectManifest) {
+                const auto options = fs::directory_options::skip_permission_denied;
+                fs::recursive_directory_iterator it(root, options, ec), end;
+                while (!ec && it != end && indexedFiles < maxWorkspaceFiles) {
+                    const fs::path current = it->path();
+                    if (it->is_directory(ec)) {
+                        const std::string name = current.filename().string();
+                        if (name == ".git" || name == "build" || name == "dist" ||
+                            name == "target" || name == "node_modules" || name == ".nexus") {
+                            it.disable_recursion_pending();
+                        }
+                    } else if (it->is_regular_file(ec)) {
+                        addFile(current);
+                    }
+                    it.increment(ec);
+                }
+            } else {
+                // Projects without nexus.toml are limited to a shallow sibling scan.
+                fs::directory_iterator it(root, fs::directory_options::skip_permission_denied, ec), end;
+                while (!ec && it != end && indexedFiles < maxWorkspaceFiles) {
+                    if (it->is_regular_file(ec)) addFile(it->path());
+                    it.increment(ec);
+                }
+            }
+
+            std::vector<std::pair<std::string, std::string>> result;
+            result.reserve(byUri.size());
+            for (auto& item : byUri) result.push_back(item);
+            return result;
+        };
         const auto utf16Length = [](const std::string& text) {
             std::size_t units = 0;
             for (std::size_t i = 0; i < text.size();) {
@@ -2009,10 +2137,7 @@ namespace nexus {
             if (first == last) return std::string("null");
             const std::string word = selected.substr(first, last - first);
             if (std::isdigit(static_cast<unsigned char>(word.front()))) return std::string("null");
-            std::vector<std::pair<std::string, std::string>> documents;
-            documents.emplace_back(requestUri, source);
-            for (const auto& opened : openDocuments)
-                if (opened.first != requestUri) documents.emplace_back(opened.first, opened.second);
+            const auto documents = collectWorkspaceDocuments(requestUri, source);
 
             for (const auto& doc : documents) {
                 std::istringstream linesStream(doc.second);
@@ -2105,10 +2230,12 @@ namespace nexus {
             }
             return std::string{};
         };
-        const auto findIdentifierOccurrences = [&](const std::string& identifier) {
+        const auto findIdentifierOccurrences = [&](const std::string& identifier,
+                const std::string& requestUri, const std::string& requestSource) {
             std::vector<LspIdentifierOccurrence> found;
             if (identifier.empty()) return found;
-            for (const auto& document : openDocuments) {
+            const auto documents = collectWorkspaceDocuments(requestUri, requestSource);
+            for (const auto& document : documents) {
                 std::vector<std::string> sourceLines;
                 std::istringstream input(document.second);
                 std::string line;
@@ -2403,7 +2530,7 @@ namespace nexus {
                 if (document != openDocuments.end()) {
                     const std::string identifier = identifierAtPosition(document->second,
                         extractNumber(body, "line"), extractNumber(body, "character"));
-                    const auto occurrences = findIdentifierOccurrences(identifier);
+                    const auto occurrences = findIdentifierOccurrences(identifier, uri, document->second);
                     std::ostringstream payload;
                     payload << "[";
                     for (std::size_t i = 0; i < occurrences.size(); ++i) {
@@ -2431,7 +2558,7 @@ namespace nexus {
                     if (document != openDocuments.end()) {
                         const std::string identifier = identifierAtPosition(document->second,
                             extractNumber(body, "line"), extractNumber(body, "character"));
-                        occurrences = findIdentifierOccurrences(identifier);
+                        occurrences = findIdentifierOccurrences(identifier, uri, document->second);
                     }
                     std::set<std::string> uris;
                     for (const auto& occurrence : occurrences) uris.insert(occurrence.uri);

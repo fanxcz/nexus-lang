@@ -8,7 +8,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 - Built-in x86-64 machine-code emitter for a documented subset of programs on supported Windows/Linux hosts. It does not replace the LLVM fallback for the full language.
 - Project templates and CLI workflows for creating, checking, building, running, testing, formatting, linting, exporting, and packaging projects.
 - Runtime modules for file and input operations, networking helpers, JSON field extraction, SQLite access, SHA-256, memory helpers, SDL-based graphics, and audio. APIs remain limited to what is implemented in the runtime.
-- LSP transport with diagnostics/completion, built-in and user-declaration hover, lexical references/rename and whole-document formatting, plus a limited go-to-definition resolver for currently open documents; there is no global workspace index yet.
+- LSP transport with diagnostics/completion, built-in and user-declaration hover, lexical references/rename across open buffers and discoverable project .nx files, whole-document formatting, and heuristic go-to-definition across those files. Symbol resolution is still lexical rather than fully scope/type-aware.
 - This release's environment doctor, JSON diagnostic output, built-in compile/run self-test, shared CLI/LSP whole-document formatter, and deterministic frontend fuzz smoke test.
 - The GitHub Actions matrix builds/tests Ubuntu, Windows, and macOS hosts. A separate Linux workflow runs ASan/UBSan on compiler and runtime tests; refer to the [platform support matrix](platform-support.md) for output-target boundaries.
 
@@ -24,7 +24,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 ## Priority 2 — Language-server and package reliability
 
-1. Extend the current declaration resolver and open-document reference/rename support into a real symbol index covering open and unopened files, with scope-aware navigation.
+1. Replace the request-time .nx file scan with a cached, incremental workspace symbol index covering open and unopened files, then make navigation and rename scope-aware.
 2. Add type-aware hover, scope-aware references/rename, range formatting and workspace-wide symbol indexing to the LSP, with regression tests. Built-in/keyword and parsed user-declaration hover, lexical references/rename in open documents and whole-document formatting are covered by integration tests.
 3. Strengthen lockfile behavior with atomic writes, preserved unrelated entries and tests for malformed manifests.
 4. Add integrity checksums and reproducible vendoring while keeping package path validation and transient-file exclusions.
