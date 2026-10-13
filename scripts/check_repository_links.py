@@ -35,8 +35,8 @@ GITHUB_FILE = re.compile(
     r"(?:blob/|tree/|raw/)?main/([^?#]+)", re.I
 )
 LEGACY_URLS = (
-    re.compile(r"(?i)https?://(?:www\\.)?github\\.com/fanxcz/nexus(?:/|\\.git(?:[?#]|$)|[?#]|$)"),
-    re.compile(r"(?i)https?://fanxcz\\.github\\.io/nexus(?:/|[?#]|$)"),
+    re.compile(r"(?i)https?://(?:www\.)?github\.com/fanxcz/nexus(?:/|\.git(?:[?#]|$)|[?#]|$)"),
+    re.compile(r"(?i)https?://fanxcz\.github\.io/nexus(?:/|[?#]|$)"),
 )
 
 def source_files() -> list[Path]:
@@ -157,11 +157,11 @@ def main() -> int:
                 target = next((group for group in match.groups() if group is not None), "").strip()
                 if target:
                     targets.append((target, parse_content.count("\n", 0, match.start()) + 1))
-        for raw in BARE_URL.findall(content):
+        for match in BARE_URL.finditer(content):
+            raw = match.group(0)
             url = raw.rstrip(".,;:!?)]}{")
             urls += 1
-            offset = content.find(raw)
-            line = content.count("\\n", 0, max(offset, 0)) + 1
+            line = content.count("\\n", 0, match.start()) + 1
             if any(pattern.search(url) for pattern in LEGACY_URLS):
                 errors.append(
                     f"{rel}:{line}: obsolete repository/site URL; use "
