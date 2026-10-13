@@ -1969,6 +1969,26 @@ namespace {
         { std::lock_guard<std::mutex> lock(gNxManagedMutex); gNxManagedBlocks.erase(pointer); }
         std::free(pointer);
     }
+    // Conservative collection scans arbitrary machine words from the active stack.
+    // ASan deliberately poisons stack red-zones, although those bytes are part of the
+    // stack range this collector walks. Keep this tiny byte-loader uninstrumented;
+    // the actual mark/sweep logic and heap-object scanning remain sanitizer-instrumented.
+#if defined(__clang__)
+    __attribute__((no_sanitize("address")))
+#elif defined(__GNUC__)
+    __attribute__((no_sanitize_address))
+#elif defined(_MSC_VER)
+    __declspec(no_sanitize_address)
+#endif
+    static uintptr_t nx_gc_read_stack_word(uintptr_t address) {
+        const volatile unsigned char* input =
+            reinterpret_cast<const volatile unsigned char*>(address);
+        uintptr_t value = 0;
+        unsigned char* output = reinterpret_cast<unsigned char*>(&value);
+        for (size_t i = 0; i < sizeof(value); ++i) output[i] = input[i];
+        return value;
+    }
+
     static void nx_gc_collect() {
         if (gNxCollecting) return;
         gNxCollecting = true;
@@ -2007,9 +2027,16 @@ namespace {
                 markCandidate(candidate);
             }
         };
+        auto scanStackRange = [&](uintptr_t begin, uintptr_t end) {
+            constexpr uintptr_t wordSize = sizeof(uintptr_t);
+            begin = (begin + wordSize - 1u) & ~(wordSize - 1u);
+            for (uintptr_t at = begin; at <= end && end - at >= wordSize; at += wordSize) {
+                markCandidate(nx_gc_read_stack_word(at));
+            }
+        };
         std::jmp_buf registerSnapshot;
         (void)setjmp(registerSnapshot);
-        scanRange(stackStart, stackEnd);
+        scanStackRange(stackStart, stackEnd);
         scanRange(reinterpret_cast<uintptr_t>(&registerSnapshot),
                   reinterpret_cast<uintptr_t>(&registerSnapshot) + sizeof(registerSnapshot));
         for (size_t next = 0; next < work.size(); ++next) {
