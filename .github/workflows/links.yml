@@ -42,9 +42,9 @@ jobs:
             --max-retries 4
             --max-concurrency 3
             --exclude '^file:///.*docs/assets/downloads/'
-            --exclude '^https://github\\.com/fanxcz/nexus-lang/(blob|tree)/main/'
-            --exclude '^https://raw\\.githubusercontent\\.com/fanxcz/nexus-lang/main/'
-            --exclude '^https://github\\.com/fanxcz/nexus-lang/issues/new/choose$'
+            --exclude '^https://github\.com/fanxcz/nexus-lang/(blob|tree)/main/'
+            --exclude '^https://raw\.githubusercontent\.com/fanxcz/nexus-lang/main/'
+            --exclude '^https://github\.com/fanxcz/nexus-lang/issues/new/choose$'
             README.md
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md
