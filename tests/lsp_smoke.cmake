@@ -50,7 +50,7 @@ set(open_completion_enum "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen
 set(enum_completion "{\"jsonrpc\":\"2.0\",\"id\":19,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_enum.nx\"},\"position\":{\"line\":1,\"character\":43}}}")
 set(open_multi_syntax "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///multi_syntax.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn first( { }\\nfn second( { }\\nfn main() { }\"}}}")
 set(open_unknown_field "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///unknown_field.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"struct Person { name: string }\\nfn main() { let person: Person = Person{name: \\\"A\\\"}; print(person.age) }\"}}}")
-set(open_multi_semantic "{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"method\\\":\\\"textDocument/didOpen\\\",\\\"params\\\":{\\\"textDocument\\\":{\\\"uri\\\":\\\"file:///multi_semantic.nx\\\",\\\"languageId\\\":\\\"nx\\\",\\\"version\\\":1,\\\"text\\\":\\\"fn main() { print(missingOne); print(missingTwo) }\\\"}}}")
+set(open_multi_semantic "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///multi_semantic.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn main() { print(missingOne); print(missingTwo) }\"}}}")
 set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":null}")
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
