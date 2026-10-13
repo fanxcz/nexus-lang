@@ -107,13 +107,13 @@ if(user_hover_response_pos EQUAL -1 OR user_hover_signature_pos EQUAL -1)
 endif()
 
 
-string(FIND "\${out}" "**struct Person**" user_struct_hover_pos)
-string(FIND "\${out}" "Fields:" user_struct_fields_pos)
-string(FIND "\${out}" "**enum Color**" user_enum_hover_pos)
-string(FIND "\${out}" "Variants:" user_enum_variants_pos)
+string(FIND "${out}" "**struct Person**" user_struct_hover_pos)
+string(FIND "${out}" "Fields:" user_struct_fields_pos)
+string(FIND "${out}" "**enum Color**" user_enum_hover_pos)
+string(FIND "${out}" "Variants:" user_enum_variants_pos)
 if(user_struct_hover_pos EQUAL -1 OR user_struct_fields_pos EQUAL -1 OR
    user_enum_hover_pos EQUAL -1 OR user_enum_variants_pos EQUAL -1)
-  message(FATAL_ERROR "NEXUS LSP did not return user-defined struct and enum hover details: \${out}")
+  message(FATAL_ERROR "NEXUS LSP did not return user-defined struct and enum hover details: ${out}")
 endif()
 
 file(REMOVE "${LSP_INPUT}")
