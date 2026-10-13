@@ -2061,6 +2061,78 @@ namespace nexus {
             }
             return std::string("null");
         };
+
+        struct LspIdentifierOccurrence {
+            std::string uri;
+            std::size_t line = 0;
+            std::size_t startCharacter = 0;
+            std::size_t endCharacter = 0;
+        };
+        const auto identifierAtPosition = [&](const std::string& source,
+                std::size_t requestedLine, std::size_t requestedCharacter) {
+            std::istringstream input(source);
+            std::vector<std::string> sourceLines;
+            std::string line;
+            while (std::getline(input, line)) sourceLines.push_back(line);
+            if (requestedLine >= sourceLines.size()) return std::string{};
+            const std::string& selected = sourceLines[requestedLine];
+            std::size_t cursor = byteOffsetForUtf16(selected, requestedCharacter);
+            if (cursor > 0 &&
+                (cursor == selected.size() ||
+                 !identifierCharacter(static_cast<unsigned char>(selected[cursor]))) &&
+                identifierCharacter(static_cast<unsigned char>(selected[cursor - 1]))) {
+                --cursor;
+            }
+            try {
+                const auto tokens = Lexer(source).tokenize();
+                for (const auto& token : tokens) {
+                    if (token.kind != TokenKind::Identifier ||
+                        token.pos.line != requestedLine + 1) continue;
+                    const std::size_t start = token.pos.column > 0 ? token.pos.column - 1 : 0;
+                    if (cursor >= start && cursor < start + token.text.size()) return token.text;
+                }
+            } catch (const std::exception&) {
+                // An incomplete string/comment can make the current buffer un-tokenizable.
+            }
+            return std::string{};
+        };
+        const auto findIdentifierOccurrences = [&](const std::string& identifier) {
+            std::vector<LspIdentifierOccurrence> found;
+            if (identifier.empty()) return found;
+            for (const auto& document : openDocuments) {
+                std::vector<std::string> sourceLines;
+                std::istringstream input(document.second);
+                std::string line;
+                while (std::getline(input, line)) sourceLines.push_back(line);
+                try {
+                    const auto tokens = Lexer(document.second).tokenize();
+                    for (const auto& token : tokens) {
+                        if (token.kind != TokenKind::Identifier || token.text != identifier ||
+                            token.pos.line == 0 || token.pos.line > sourceLines.size()) continue;
+                        const std::string& sourceLine = sourceLines[token.pos.line - 1];
+                        const std::size_t startByte = std::min(sourceLine.size(),
+                            token.pos.column > 0 ? token.pos.column - 1 : 0);
+                        const std::size_t start = utf16Length(sourceLine.substr(0, startByte));
+                        found.push_back({document.first, token.pos.line - 1, start,
+                                         start + utf16Length(token.text)});
+                    }
+                } catch (const std::exception&) {
+                    // Do not guess ranges in a document whose lexical structure is incomplete.
+                }
+            }
+            return found;
+        };
+        const auto isValidIdentifier = [&](const std::string& candidate) {
+            try {
+                const auto tokens = Lexer(candidate).tokenize();
+                return tokens.size() == 2 &&
+                    tokens[0].kind == TokenKind::Identifier &&
+                    tokens[0].text == candidate &&
+                    tokens[1].kind == TokenKind::End;
+            } catch (const std::exception&) {
+                return false;
+            }
+        };
         const auto publishDiagnostics = [&](const std::string& uri, const std::string& source) {
             const auto diagnostics = collectDiagnostics(source);
             std::ostringstream payload;
@@ -2143,7 +2215,7 @@ namespace nexus {
                     ",\"result\":{\"serverInfo\":{\"name\":\"nexus-lsp\",\"version\":\"" +
                     kVersion + "\"},\"capabilities\":{\"textDocumentSync\":1,"
                     "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":[\".\",\":\"]},"
-                    "\"definitionProvider\":true,\"documentFormattingProvider\":true}}}");
+                    "\"definitionProvider\":true,\"referencesProvider\":true,\"renameProvider\":true,\"documentFormattingProvider\":true}}}");
             } else if (method == "shutdown" && !id.empty()) {
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":null}");
             } else if (method == "textDocument/didOpen") {
@@ -2210,6 +2282,70 @@ namespace nexus {
                     }
                 }
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
+
+            } else if (method == "textDocument/references" && !id.empty()) {
+                const std::string uri = extractString(body, "uri");
+                const auto document = openDocuments.find(uri);
+                std::string result = "[]";
+                if (document != openDocuments.end()) {
+                    const std::string identifier = identifierAtPosition(document->second,
+                        extractNumber(body, "line"), extractNumber(body, "character"));
+                    const auto occurrences = findIdentifierOccurrences(identifier);
+                    std::ostringstream payload;
+                    payload << "[";
+                    for (std::size_t i = 0; i < occurrences.size(); ++i) {
+                        if (i) payload << ',';
+                        const auto& occurrence = occurrences[i];
+                        payload << "{\"uri\":\"" << jsonEscape(occurrence.uri)
+                            << "\",\"range\":{\"start\":{\"line\":"
+                            << occurrence.line << ",\"character\":" << occurrence.startCharacter
+                            << "},\"end\":{\"line\":" << occurrence.line
+                            << ",\"character\":" << occurrence.endCharacter << "}}}";
+                    }
+                    payload << "]";
+                    result = payload.str();
+                }
+                send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
+            } else if (method == "textDocument/rename" && !id.empty()) {
+                const std::string uri = extractString(body, "uri");
+                const auto document = openDocuments.find(uri);
+                const std::string newName = extractString(body, "newName");
+                if (!isValidIdentifier(newName)) {
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
+                         ",\"error\":{\"code\":-32602,\"message\":\"newName must be a valid NEXUS identifier\"}}");
+                } else {
+                    std::vector<LspIdentifierOccurrence> occurrences;
+                    if (document != openDocuments.end()) {
+                        const std::string identifier = identifierAtPosition(document->second,
+                            extractNumber(body, "line"), extractNumber(body, "character"));
+                        occurrences = findIdentifierOccurrences(identifier);
+                    }
+                    std::set<std::string> uris;
+                    for (const auto& occurrence : occurrences) uris.insert(occurrence.uri);
+                    std::ostringstream changes;
+                    changes << "{\"changes\":{";
+                    bool firstUri = true;
+                    for (const auto& changedUri : uris) {
+                        if (!firstUri) changes << ',';
+                        firstUri = false;
+                        changes << "\"" << jsonEscape(changedUri) << "\":[";
+                        bool firstEdit = true;
+                        for (const auto& occurrence : occurrences) {
+                            if (occurrence.uri != changedUri) continue;
+                            if (!firstEdit) changes << ',';
+                            firstEdit = false;
+                            changes << "{\"range\":{\"start\":{\"line\":" << occurrence.line
+                                << ",\"character\":" << occurrence.startCharacter
+                                << "},\"end\":{\"line\":" << occurrence.line
+                                << ",\"character\":" << occurrence.endCharacter
+                                << "}},\"newText\":\"" << jsonEscape(newName) << "\"}";
+                        }
+                        changes << "]";
+                    }
+                    changes << "}}";
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
+                         ",\"result\":" + changes.str() + "}");
+                }
             } else if (method == "textDocument/definition" && !id.empty()) {
                 const std::string uri = extractString(body, "uri");
                 const auto doc = openDocuments.find(uri);
