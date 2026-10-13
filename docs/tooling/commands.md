@@ -137,3 +137,6 @@ nexus --version
 ```
 
 See the [NEXUS Roadmap](../development/roadmap.md) for planned improvements and completion criteria.
+
+
+REPL history is session-local: `:history` lists submitted entries and `:history-clear` clears the list. History is not persisted between launches; terminal arrow-key editing is not yet provided.
