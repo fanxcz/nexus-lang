@@ -1,27 +1,29 @@
 /* NEXUS website — adapted from a free MIT developer-tool landing-page pattern.
    MkDocs Material remains the renderer; no third-party runtime is required. */
 :root {
+  color-scheme: dark;
   --md-primary-fg-color: #152536;
   --md-primary-fg-color--light: #263e55;
   --md-primary-fg-color--dark: #0b1724;
   --md-accent-fg-color: #f5c451;
-  --nx-ink: #152536;
-  --nx-muted: #5e6b78;
-  --nx-blue: #3f83b7;
-  --nx-deep: #0d1a28;
-  --nx-yellow: #f5c451;
-  --nx-line: #dfe5e9;
-  --nx-panel: #f5f7f8;
-  --nx-code: #111e2d;
-}
-[data-md-color-scheme="default"] {
-  --md-default-bg-color: #fbfcfd;
-  --md-code-bg-color: #f0f3f6;
-  --md-typeset-color: #283947;
-}
-[data-md-color-scheme="slate"] {
   --md-default-bg-color: #0d1722;
   --md-code-bg-color: #142333;
+  --md-typeset-color: #e5edf4;
+  --nx-ink: #f0f4f7;
+  --nx-muted: #adbbc6;
+  --nx-blue: #75b8e8;
+  --nx-deep: #0d1a28;
+  --nx-yellow: #f5c451;
+  --nx-line: #283b4d;
+  --nx-panel: #142333;
+  --nx-code: #0a1520;
+}
+[data-md-color-scheme="slate"],
+[data-md-color-scheme="default"] {
+  color-scheme: dark;
+  --md-default-bg-color: #0d1722;
+  --md-code-bg-color: #142333;
+  --md-typeset-color: #e5edf4;
   --nx-ink: #f0f4f7;
   --nx-muted: #adbbc6;
   --nx-line: #283b4d;
