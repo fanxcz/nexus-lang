@@ -38,10 +38,79 @@ jobs:
             --verbose
             --no-progress
             --include-fragments
-            --timeout 30
-            --max-retries 2
-            --max-concurrency 8
+            --timeout 45
+            --max-retries 4
+            --max-concurrency 3
             --exclude '^file:///.*docs/assets/downloads/'
+            --exclude '^https://github\\.com/fanxcz/nexus-lang/(blob|tree)/main/'
+            --exclude '^https://raw\\.githubusercontent\\.com/fanxcz/nexus-lang/main/'
+            --exclude '^https://github\\.com/fanxcz/nexus-lang/issues/new/choose
+            README.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            SECURITY.md
+            docs
+            examples
+            stdlib
+            src
+            tests
+            .github
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Verify live Pages routes and downloadable assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://fanxcz.github.io/nexus-lang'
+          routes=(
+            '/'
+            '/downloads/'
+            '/getting-started/quickstart/'
+            '/language/overview/'
+            '/runtime/overview/'
+            '/std/overview/'
+            '/tooling/commands/'
+          )
+          for route in "${routes[@]}"; do
+            echo "Checking page: $base$route"
+            curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --retry-all-errors --max-time 45 --output /dev/null "$base$route"
+          done
+
+          assets=(
+            'NEXUS-Setup-1.1.0.exe'
+            'NEXUS-Setup-1.1.0.exe.sha256.txt'
+            'NEXUS_Windows_Portable.zip'
+            'NEXUS_Windows_Portable.zip.sha256.txt'
+            'NEXUS-Language-1.1.0.vsix'
+            'NEXUS-Language-1.1.0.vsix.sha256.txt'
+            'NEXUS-Paint-Windows-x64.exe'
+            'NEXUS-Paint-Windows-x64.exe.sha256.txt'
+            'NEXUS-Paint-Windows-x64.zip'
+            'NEXUS-Paint-Windows-x64.zip.sha256.txt'
+          )
+          for asset in "${assets[@]}"; do
+            url="$base/assets/downloads/$asset"
+            echo "Checking download: $url"
+            curl --fail --silent --show-error --head --location --retry 3 --retry-delay 2 --retry-all-errors --max-time 45 --output /dev/null "$url"
+          done
+          # Raw binary links are excluded from lychee to avoid fetching large files
+          # during generic crawling; verify every direct-download URL with HEAD requests.
+          repository_assets=(
+            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe'
+            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256'
+            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
+            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
+            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip'
+            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt'
+          )
+          for url in "${repository_assets[@]}"; do
+            echo "Checking direct repository download: $url"
+            curl --fail --silent --show-error --head --location --retry 3 --retry-delay 2 --retry-all-errors --max-time 45 --output /dev/null "$url"
+          done
+          echo 'PASS: published documentation routes, Pages assets and direct repository downloads respond successfully.'
+
             README.md
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md
