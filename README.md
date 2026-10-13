@@ -44,6 +44,26 @@ The Windows installer is unsigned, so Windows SmartScreen may show a warning. Ve
 
 The [portable package](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip), when published by a successful Pages workflow, contains the compiler launcher, compiler executable, bundled Zig-based C++ toolchain, standard library, templates, examples, and runtime DLLs assembled by the packaging workflow. Extract the ZIP to a writable folder and run `nexus.cmd` from that folder. Use the installer for normal system integration.
 
+## Interactive terminal
+
+Run NEXUS without arguments to open its interactive shell, or start it explicitly with
+nexus repl. Enter an expression to evaluate it immediately:
+
+```text
+nexus> 2 + 2
+4
+nexus> let answer = 21
+nexus> answer * 2
+42
+nexus> answer = answer + 1
+nexus> answer
+22
+```
+
+Use `:help` for examples, `:vars` to list saved bindings, `:clear` to reset the
+session, and `:quit` to exit. The shell uses the NEXUS compiler and language syntax;
+it is an interactive evaluator, not a Python interpreter.
+
 ## Quick start
 
 Create a project from a template:
@@ -82,6 +102,8 @@ Use `nexus explain-backend hello.nx` to inspect backend selection and `nexus doc
 
 ```text
 nexus --version
+nexus
+nexus repl
 nexus new MyApp --template cli
 nexus init
 nexus check hello.nx
