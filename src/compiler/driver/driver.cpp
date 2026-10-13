@@ -2086,8 +2086,17 @@ namespace nexus {
             try {
                 const auto tokens = Lexer(source).tokenize();
                 for (const auto& token : tokens) {
-                    if (token.kind != TokenKind::Identifier ||
-                        token.pos.line != requestedLine + 1) continue;
+                    if (token.kind == TokenKind::String || token.kind == TokenKind::Integer ||
+                        token.kind == TokenKind::Float || token.kind == TokenKind::End ||
+                        token.pos.line != requestedLine + 1 || token.text.empty()) continue;
+                    bool wordToken = true;
+                    for (const unsigned char ch : token.text) {
+                        if (!identifierCharacter(ch)) {
+                            wordToken = false;
+                            break;
+                        }
+                    }
+                    if (!wordToken) continue;
                     const std::size_t start = token.pos.column > 0 ? token.pos.column - 1 : 0;
                     if (cursor >= start && cursor < start + token.text.size()) return token.text;
                 }
