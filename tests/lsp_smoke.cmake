@@ -44,11 +44,15 @@ set(open_scope "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"param
 set(scope_references "{\"jsonrpc\":\"2.0\",\"id\":15,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14},\"context\":{\"includeDeclaration\":true}}}")
 set(scope_rename "{\"jsonrpc\":\"2.0\",\"id\":16,\"method\":\"textDocument/rename\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14},\"newName\":\"innerValue\"}}")
 set(scope_definition "{\"jsonrpc\":\"2.0\",\"id\":17,\"method\":\"textDocument/definition\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14}}}")
+set(open_completion_fields "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_fields.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"struct Person { name: string, age: i64 }\\nfn main() { let person: Person = Person{name: \\\"A\\\", age: 1}; person. }\"}}}")
+set(field_completion "{\"jsonrpc\":\"2.0\",\"id\":18,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_fields.nx\"},\"position\":{\"line\":1,\"character\":67}}}")
+set(open_completion_enum "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_enum.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"enum Color { Red, Green }\\nfn main() { let color = Color::Red; Color:: }\"}}}")
+set(enum_completion "{\"jsonrpc\":\"2.0\",\"id\":19,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_enum.nx\"},\"position\":{\"line\":1,\"character\":43}}}")
 set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":null}")
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${shutdown}" "${exit_msg}")
+foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${shutdown}" "${exit_msg}")
   string(LENGTH "${message}" message_length)
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
@@ -79,6 +83,14 @@ if(NOT out MATCHES "completionProvider"
    OR NOT out MATCHES "\"diagnostics\":\\[\\]")
   message(FATAL_ERROR "Expected initialize, completion, live error diagnostics, and diagnostic clearing, got: ${out}")
 endif()
+
+if(NOT out MATCHES "\"label\":\"name\"" OR
+   NOT out MATCHES "\"label\":\"age\"" OR
+   NOT out MATCHES "\"label\":\"Color::Red\"" OR
+   NOT out MATCHES "\"label\":\"Color::Green\"")
+  message(FATAL_ERROR "NEXUS LSP did not return struct-field and enum-variant completions: ${out}")
+endif()
+
 
 string(FIND "${out}" "\"globPattern\":\"**/*.nx\"" watcher_glob_position)
 if(watcher_glob_position EQUAL -1)
