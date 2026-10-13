@@ -2322,7 +2322,7 @@ namespace nexus {
                                     } else {
                                         description << "\n\nFields:";
                                         for (const auto& field : declaration.fields) {
-                                            description << "\n- `" << field.name << "`: "`
+                                            description << "\n- `" << field.name << "`: "
                                                 << describeType(describeType, field.type) << "`";
                                         }
                                     }
