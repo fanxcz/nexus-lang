@@ -258,6 +258,11 @@ if (NEXUS_BUILD_TESTS)
   add_test(NAME nexus_tests COMMAND nexus_tests)
   add_test(NAME nexus_version_smoke COMMAND $<TARGET_FILE:nexus> --version)
   set_tests_properties(nexus_version_smoke PROPERTIES PASS_REGULAR_EXPRESSION "Nexus ${PROJECT_VERSION}")
+  add_test(NAME nexus_repl_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -DREPL_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+          -P ${CMAKE_SOURCE_DIR}/tests/repl_smoke.cmake)
   add_test(NAME nexus_self_test COMMAND $<TARGET_FILE:nexus> self-test)
   set_tests_properties(nexus_self_test PROPERTIES PASS_REGULAR_EXPRESSION "self-test: PASS")
   add_test(NAME nexus_doctor_json_smoke
