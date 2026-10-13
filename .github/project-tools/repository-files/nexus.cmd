@@ -11,11 +11,11 @@ if /I "%~1"=="build" goto buildcommand
 exit /b %ERRORLEVEL%
 
 :runfile
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -SourcePath "%~1"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -PauseOnExit -SourcePath "%~1"
 exit /b %ERRORLEVEL%
 
 :runcommand
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -SourcePath "%~2"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -PauseOnExit -SourcePath "%~2"
 exit /b %ERRORLEVEL%
 
 :buildcommand

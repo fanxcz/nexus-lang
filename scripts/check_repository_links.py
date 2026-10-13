@@ -161,7 +161,7 @@ def main() -> int:
             raw = match.group(0)
             url = raw.rstrip(".,;:!?)]}{")
             urls += 1
-            line = content.count("\\n", 0, match.start()) + 1
+            line = content.count("\n", 0, match.start()) + 1
             if any(pattern.search(url) for pattern in LEGACY_URLS):
                 errors.append(
                     f"{rel}:{line}: obsolete repository/site URL; use "
