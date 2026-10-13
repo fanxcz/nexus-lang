@@ -230,5 +230,5 @@ jobs:
           if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v1.1.0"; fi
           gh release create "$release_tag" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "NEXUS $GITHUB_REF_NAME" \
+            --title "NEXUS $release_tag" \
             --generate-notes
