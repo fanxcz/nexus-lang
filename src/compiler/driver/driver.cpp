@@ -4,6 +4,7 @@
 #include "format/formatter.hpp"
 #include "lexer/lexer.hpp"
 #include "native/native.hpp"
+#include "package/sha256.hpp"
 #include "parser/parser.hpp"
 #include "semantic/semantic.hpp"
 
@@ -1413,6 +1414,45 @@ namespace nexus {
                                          ec.message());
             }
 #endif
+        }
+
+        std::string packageTreeSha256(const fs::path& root) {
+            static const std::set<std::string> excluded = {
+                ".git", ".vscode", "build", "dist", "node_modules", "CMakeFiles"};
+            std::vector<fs::path> files;
+            std::error_code ec;
+            for (fs::recursive_directory_iterator it(
+                     root, fs::directory_options::skip_permission_denied, ec), end;
+                 it != end; it.increment(ec)) {
+                if (ec)
+                    throw std::runtime_error("cannot traverse package for checksum: " + ec.message());
+                const auto status = it->symlink_status(ec);
+                if (ec)
+                    throw std::runtime_error("cannot inspect package for checksum: " + ec.message());
+                if (fs::is_symlink(status)) {
+                    it.disable_recursion_pending();
+                    continue;
+                }
+                if (fs::is_directory(status) && excluded.contains(it->path().filename().string())) {
+                    it.disable_recursion_pending();
+                    continue;
+                }
+                if (fs::is_regular_file(status))
+                    files.push_back(it->path());
+            }
+
+            std::sort(files.begin(), files.end(), [&](const fs::path& left, const fs::path& right) {
+                return left.lexically_relative(root).generic_string() <
+                       right.lexically_relative(root).generic_string();
+            });
+            std::string manifest;
+            for (const auto& file : files) {
+                manifest += file.lexically_relative(root).generic_string();
+                manifest.push_back('\\0');
+                manifest += package::sha256Hex(readFile(file));
+                manifest.push_back('\\n');
+            }
+            return "sha256:" + package::sha256Hex(manifest);
         }
 
         int commandFmt(const fs::path& file, bool checkOnly = false) {

@@ -1,6 +1,7 @@
 #include "format/formatter.hpp"
 #include "lexer/lexer.hpp"
 #include "native/native.hpp"
+#include "package/sha256.hpp"
 #include "parser/parser.hpp"
 #include "semantic/semantic.hpp"
 
@@ -347,6 +348,15 @@ int main() {
             if (nexus::formatNexusSource(input) != expected) {
                 std::cerr << "formatter compact-block regression\n";
                 return 23;
+            }
+        }
+        {
+            if (nexus::package::sha256Hex("") !=
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ||
+                nexus::package::sha256Hex("abc") !=
+                "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad") {
+                std::cerr << "SHA-256 regression\\n";
+                return 24;
             }
         }
         std::cout << "Nexus tests: PASS\n";
