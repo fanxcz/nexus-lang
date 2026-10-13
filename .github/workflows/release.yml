@@ -2,6 +2,8 @@ name: Publish NEXUS compiler releases
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -10,6 +12,7 @@ permissions:
 
 jobs:
   build:
+    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]'))
     name: Build ${{ matrix.asset }}
     strategy:
       fail-fast: false
@@ -62,7 +65,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            tag="v1.1.0"
+          fi
           asset="${{ matrix.asset }}"
           zig_version='0.14.1'
           zig_platform="${{ matrix.zig_platform }}"
@@ -129,7 +136,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $tag = $env:GITHUB_REF_NAME
+          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'v1.1.0' }
           $asset = '${{ matrix.asset }}'
           $zigVersion = '0.14.1'
           $package = Join-Path $env:RUNNER_TEMP "NEXUS-$tag-$asset"
@@ -196,6 +203,7 @@ jobs:
           retention-days: 7
 
   release:
+    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]'))
     name: Publish GitHub Release
     needs: build
     runs-on: ubuntu-latest
@@ -218,7 +226,9 @@ jobs:
             echo "No platform archives were produced." >&2
             exit 1
           fi
-          gh release create "$GITHUB_REF_NAME" "${files[@]}" \
+          release_tag="$GITHUB_REF_NAME"
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v1.1.0"; fi
+          gh release create "$release_tag" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --title "NEXUS $GITHUB_REF_NAME" \
             --generate-notes
