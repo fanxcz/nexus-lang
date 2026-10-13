@@ -2,6 +2,10 @@
 
 Choose the official NEXUS package for your system. The Windows x64 package is assembled and tested by GitHub Actions from this repository. Downloads are published to GitHub Pages only when the packaging and documentation workflow succeeds.
 
+**Important for direct downloads:** use the published URL below, not `raw.githubusercontent.com/.../docs/assets/downloads/NEXUS_Windows_Portable.zip`. The source tree previously contained an old, incomplete ZIP at that path; it is not the current package built by CI.
+
+[Direct download of the current portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip) · [Matching SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt)
+
 <div class="grid cards" markdown>
 
 -   :material-microsoft-windows: **NEXUS Setup for Windows 10/11 x64**
@@ -84,6 +88,32 @@ If the command is not found, first open a new terminal. You can test the install
 ```
 
 The installer is not code-signed. Only run it if you downloaded it from this repository's official GitHub Pages output or GitHub Actions artifact and are comfortable with the unsigned-app warning Windows may display.
+
+## Verify and unpack the current Windows portable package with PowerShell
+
+The ZIP and its checksum must both be downloaded from the published Pages URL. This command validates the hash and confirms the archive really contains `nexus.cmd` before you install it.
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$base = 'https://fanxcz.github.io/nexus-lang/assets/downloads/'
+$work = Join-Path $env:TEMP 'NEXUS-Windows-Portable'
+New-Item -ItemType Directory -Path $work -Force | Out-Null
+$zip = Join-Path $work 'NEXUS_Windows_Portable.zip'
+$sum = Join-Path $work 'NEXUS_Windows_Portable.zip.sha256.txt'
+$stage = Join-Path $work 'unpacked'
+
+Invoke-WebRequest ($base + 'NEXUS_Windows_Portable.zip') -OutFile $zip
+Invoke-WebRequest ($base + 'NEXUS_Windows_Portable.zip.sha256.txt') -OutFile $sum
+$expected = ((Get-Content $sum -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+$actual = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw 'SHA-256 mismatch; archive rejected.' }
+
+if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+Expand-Archive -LiteralPath $zip -DestinationPath $stage -Force
+$launcher = Get-ChildItem -LiteralPath $stage -Filter 'nexus.cmd' -File -Recurse | Select-Object -First 1
+if (-not $launcher) { throw 'The published ZIP does not contain nexus.cmd. Do not install it.' }
+Write-Host "Verified launcher: $($launcher.FullName)"
+```
 
 ## Portable installation
 
