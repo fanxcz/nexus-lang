@@ -5,11 +5,15 @@ endif()
 set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-smoke-input.txt")
 file(WRITE "${input_file}"
 "2 + 2\n"
+"(8 + 4) / 3\n"
+"2.5 * 4\n"
+"2 > 1\n"
 "let mut value = 21\n"
 "value * 2\n"
 "value = value + 1\n"
 "value\n"
-"\"NEXUS_REPL_OK\"\n"
+"\"NEXUS_\" + \"REPL_OK\"\n"
+"1 / 0\n"
 ":quit\n")
 
 execute_process(
@@ -27,8 +31,10 @@ if(NOT rc EQUAL 0)
   message(FATAL_ERROR "NEXUS default interactive shell exited with ${rc}: ${err}\n${out}")
 endif()
 
-if(NOT out MATCHES "4" OR NOT out MATCHES "42" OR
-   NOT out MATCHES "22" OR NOT out MATCHES "NEXUS_REPL_OK")
+if(NOT out MATCHES "4" OR NOT out MATCHES "10" OR
+   NOT out MATCHES "true" OR NOT out MATCHES "42" OR
+   NOT out MATCHES "22" OR NOT out MATCHES "NEXUS_REPL_OK" OR
+   NOT err MATCHES "division by zero")
   message(FATAL_ERROR "NEXUS REPL did not evaluate arithmetic and retain bindings: ${out}\n${err}")
 endif()
 
