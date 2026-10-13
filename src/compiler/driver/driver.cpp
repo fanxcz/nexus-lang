@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -3614,19 +3615,39 @@ namespace nexus {
                                                                         : ReplValue(left % right);
                                 return true;
                             }
-                            long double calculated = 0;
-                            if (binary->op == TokenKind::Plus)
-                                calculated = static_cast<long double>(left) + right;
-                            else if (binary->op == TokenKind::Minus)
-                                calculated = static_cast<long double>(left) - right;
-                            else if (binary->op == TokenKind::Star)
-                                calculated = static_cast<long double>(left) * right;
-                            else
+                            long long calculated = 0;
+                            const auto minimum = std::numeric_limits<long long>::min();
+                            const auto maximum = std::numeric_limits<long long>::max();
+                            if (binary->op == TokenKind::Plus) {
+                                if ((right > 0 && left > maximum - right) ||
+                                    (right < 0 && left < minimum - right))
+                                    return false;
+                                calculated = left + right;
+                            } else if (binary->op == TokenKind::Minus) {
+                                if ((right < 0 && left > maximum + right) ||
+                                    (right > 0 && left < minimum + right))
+                                    return false;
+                                calculated = left - right;
+                            } else if (binary->op == TokenKind::Star) {
+                                if (left != 0 && right != 0) {
+                                    if ((left == -1 && right == minimum) ||
+                                        (right == -1 && left == minimum))
+                                        return false;
+                                    if (left > 0) {
+                                        if ((right > 0 && left > maximum / right) ||
+                                            (right < 0 && right < minimum / left))
+                                            return false;
+                                    } else {
+                                        if ((right > 0 && left < minimum / right) ||
+                                            (right < 0 && left < maximum / right))
+                                            return false;
+                                    }
+                                }
+                                calculated = left * right;
+                            } else {
                                 return false;
-                            if (calculated < static_cast<long double>(std::numeric_limits<long long>::min()) ||
-                                calculated > static_cast<long double>(std::numeric_limits<long long>::max()))
-                                return false;
-                            result = static_cast<long long>(calculated);
+                            }
+                            result = calculated;
                             return true;
                         }
 
