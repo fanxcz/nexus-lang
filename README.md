@@ -102,7 +102,6 @@ Use `nexus explain-backend hello.nx` to inspect backend selection and `nexus doc
 
 ```text
 nexus --version
-nexus
 nexus repl
 nexus new MyApp --template cli
 nexus init
