@@ -41,11 +41,12 @@ set(workspace_rename "{\"jsonrpc\":\"2.0\",\"id\":14,\"method\":\"textDocument/r
 set(open_scope "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn main() {\\n    let value = 1\\n    if true {\\n        let value = 2\\n        print(value)\\n    }\\n    print(value)\\n}\\nfn other() { let value = 3; print(value) }\\n\"}}}")
 set(scope_references "{\"jsonrpc\":\"2.0\",\"id\":15,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14},\"context\":{\"includeDeclaration\":true}}}")
 set(scope_rename "{\"jsonrpc\":\"2.0\",\"id\":16,\"method\":\"textDocument/rename\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14},\"newName\":\"innerValue\"}}")
+set(scope_definition "{\"jsonrpc\":\"2.0\",\"id\":17,\"method\":\"textDocument/definition\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14}}}")
 set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":null}")
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${shutdown}" "${exit_msg}")
+foreach(message IN ITEMS "${init}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${shutdown}" "${exit_msg}")
   string(LENGTH "${message}" message_length)
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
@@ -180,6 +181,11 @@ string(FIND "${scope_rename_payload}" "\"line\":8" other_function_pos)
 if(scoped_rename_text_pos EQUAL -1 OR NOT outer_declaration_pos EQUAL -1 OR
    NOT outer_reference_pos EQUAL -1 OR NOT other_function_pos EQUAL -1)
   message(FATAL_ERROR "Scoped rename changed symbols outside the selected local binding: ${scope_rename_payload}")
+endif()
+
+string(FIND "${out}" "\"id\":17,\"result\":{\"uri\":\"file:///scope.nx\",\"range\":{\"start\":{\"line\":3,\"character\":12}" scope_definition_pos)
+if(scope_definition_pos EQUAL -1)
+  message(FATAL_ERROR "NEXUS LSP definition should resolve to the shadowing local variable, not the outer variable: ${out}")
 endif()
 
 file(REMOVE "${LSP_INPUT}")
