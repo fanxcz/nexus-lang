@@ -97,21 +97,57 @@ namespace nexus {
         structs_.clear();
         enums_.clear();
 
+        const auto located = [](const std::string& message, const SourceSpan& span) {
+            if (!span.valid || message.rfind(" at ") != std::string::npos)
+                return message;
+            return message + " at " + std::to_string(span.start.line) + ":" +
+                   std::to_string(span.start.column);
+        };
+        const auto report = [&](const std::string& message, const SourceSpan& span) {
+            diagnostics_.push_back(located(message, span));
+        };
+
         for (auto& s : p.structs) {
-            if (structs_.contains(s.name) || enums_.contains(s.name))
-                throw std::runtime_error("duplicate type: " + s.name);
-            structs_[s.name] = &s;
+            if (structs_.contains(s.name) || enums_.contains(s.name)) {
+                report("duplicate type: " + s.name, s.span);
+            } else {
+                structs_[s.name] = &s;
+            }
+
+            std::unordered_map<std::string, bool> fieldNames;
+            for (const auto& field : s.fields) {
+                if (fieldNames.contains(field.name)) {
+                    report("duplicate field '" + field.name + "' in struct '" + s.name + "'",
+                           field.span.valid ? field.span : s.span);
+                } else {
+                    fieldNames[field.name] = true;
+                }
+            }
         }
         for (auto& e : p.enums) {
-            if (structs_.contains(e.name) || enums_.contains(e.name))
-                throw std::runtime_error("duplicate type: " + e.name);
-            enums_[e.name] = &e;
+            if (structs_.contains(e.name) || enums_.contains(e.name)) {
+                report("duplicate type: " + e.name, e.span);
+            } else {
+                enums_[e.name] = &e;
+            }
+            std::unordered_map<std::string, bool> variantNames;
+            for (const auto& variant : e.variants) {
+                if (variantNames.contains(variant))
+                    report("duplicate enum variant '" + variant + "' in enum '" + e.name + "'",
+                           e.span);
+                else
+                    variantNames[variant] = true;
+            }
         }
         for (auto& f : p.functions) {
-            if (funcs_.contains(f.name))
-                throw std::runtime_error("duplicate function: " + f.name);
-            if (builtinSignature(f.name).has_value())
-                throw std::runtime_error("function name is reserved by builtin runtime: " + f.name);
+            if (funcs_.contains(f.name)) {
+                report("duplicate function: " + f.name, f.span);
+                continue;
+            }
+            if (builtinSignature(f.name).has_value()) {
+                report("function name is reserved by builtin runtime: " + f.name, f.span);
+                continue;
+            }
             funcs_[f.name] = &f;
         }
         std::function<void(const Type&)> validateType;
@@ -131,20 +167,30 @@ namespace nexus {
             }
         };
 
+        const auto validateTypeAt = [&](const Type& type, const SourceSpan& span) {
+            try {
+                validateType(type);
+            } catch (const std::exception& error) {
+                report(error.what(), span);
+            }
+        };
+
         for (auto& s : p.structs)
-            for (auto& f : s.fields)
-                validateType(f.type);
+            for (auto& field : s.fields)
+                validateTypeAt(field.type, field.span.valid ? field.span : s.span);
 
         for (auto& f : p.functions) {
             for (auto& a : f.params)
-                validateType(a.type);
-            validateType(f.ret);
+                validateTypeAt(a.type, a.span.valid ? a.span : f.span);
+            validateTypeAt(f.ret, f.span);
             if (f.external)
                 continue;
             std::unordered_map<std::string, Symbol> env;
             for (auto& a : f.params) {
-                if (env.contains(a.name))
-                    throw std::runtime_error("duplicate parameter: " + a.name);
+                if (env.contains(a.name)) {
+                    report("duplicate parameter: " + a.name, a.span.valid ? a.span : f.span);
+                    continue;
+                }
                 env[a.name] = {a.type, true};
             }
             if (f.body) {

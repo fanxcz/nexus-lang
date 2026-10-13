@@ -44,5 +44,22 @@ if(rc EQUAL 0 OR NOT semantic_combined MATCHES "semantic.nx:2:9: error\\[NX2001\
   message(FATAL_ERROR "Expected two independent semantic diagnostics with source positions: ${semantic_combined}")
 endif()
 
+# Declaration validation must not mask independent errors later in the file.
+set(DECLARATION_SOURCE "${DIAGNOSTIC_DIR}/declarations.nx")
+file(WRITE "${DECLARATION_SOURCE}" "struct Broken { value: MissingType, value: i64 }\\nfn main() { print(missingA); print(missingB) }\\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${DECLARATION_SOURCE}"
+  RESULT_VARIABLE rc
+  OUTPUT_VARIABLE out
+  ERROR_VARIABLE err
+)
+set(declaration_combined "${out}\\n${err}")
+if(rc EQUAL 0 OR NOT declaration_combined MATCHES "duplicate field 'value' in struct 'Broken'"
+   OR NOT declaration_combined MATCHES "unknown type: MissingType"
+   OR NOT declaration_combined MATCHES "unknown variable: missingA"
+   OR NOT declaration_combined MATCHES "unknown variable: missingB")
+  message(FATAL_ERROR "Semantic analysis did not aggregate declaration and body errors: ${declaration_combined}")
+endif()
+
 file(REMOVE_RECURSE "${DIAGNOSTIC_DIR}")
 message(STATUS "NEXUS diagnostics smoke test: PASS")

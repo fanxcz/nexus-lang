@@ -234,11 +234,13 @@ namespace nexus {
     struct Param {
         std::string name;
         Type type;
+        SourceSpan span{};
     };
 
     struct StructField {
         std::string name;
         Type type;
+        SourceSpan span{};
     };
 
     struct StructDecl {

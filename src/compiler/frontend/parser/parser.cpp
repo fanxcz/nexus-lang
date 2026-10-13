@@ -197,10 +197,13 @@ namespace nexus {
         s.name = expectIdentifier();
         expect(TokenKind::LBrace);
         while (cur().kind != TokenKind::RBrace && cur().kind != TokenKind::End) {
+            const std::size_t fieldStart = i_;
             auto n = expectIdentifier();
             expect(TokenKind::Colon);
             auto t = parseType();
-            s.fields.push_back({n, t});
+            StructField field{n, t};
+            field.span = spanForTokens(fieldStart, i_);
+            s.fields.push_back(std::move(field));
             accept(TokenKind::Comma);
             accept(TokenKind::Semicolon);
         }
@@ -229,9 +232,13 @@ namespace nexus {
         std::vector<Param> ps;
         if (cur().kind != TokenKind::RParen) {
             for (;;) {
+                const std::size_t paramStart = i_;
                 auto n = expectIdentifier();
                 expect(TokenKind::Colon);
-                ps.push_back({n, parseType()});
+                auto type = parseType();
+                Param param{n, std::move(type)};
+                param.span = spanForTokens(paramStart, i_);
+                ps.push_back(std::move(param));
                 if (!accept(TokenKind::Comma))
                     break;
             }

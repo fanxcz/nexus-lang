@@ -17,7 +17,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 1. Keep the full test suite green on clean Linux, Windows, and macOS runners; run the sanitizer workflow for frontend/runtime changes.
 2. Make `nexus doctor` verify the actual packaged compiler/runtime/stdlib/template layout on each platform.
 3. Extend tests for paths with spaces, clean installs, missing optional tools, malformed source, and repeatable builds.
-4. Make formatter and linter behavior deterministic, then support project-wide file discovery with explicit exclusions.
+4. Keep formatter and linter behavior deterministic. `nexus fmt --all` and `nexus fmt --check --all` now process `.nx` files in sorted path order while skipping dependency and build-output directories.
 5. Keep the CLI and published documentation synchronized so examples only use implemented options.
 
 **Completion criterion:** a fresh checkout or portable package passes build, test, and the built-in native compile/run self-test without relying on files from a developer's machine.
@@ -28,7 +28,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 2. Extend semantic resolution to struct fields, enum variants, imported aliases and inferred types; add range formatting and richer editor actions with regression tests.
 3. Keep atomic lockfile writes, preserve unrelated manifest entries, and add malformed-manifest regressions.
 4. Verify local vendored packages against SHA-256 tree checksums; `pkg verify` cross-checks manifest/lockfile dependencies and versions, rejects stale records, and confines resolved paths to the project's `vendor/` directory. Registry trust and signed packages remain future work.
-5. Expand diagnostics with stable error codes and semantic error recovery. AST source spans and top-level multi-error syntax recovery are now implemented.
+5. Expand diagnostics with stable error codes and semantic error recovery. AST expression/statement spans, aggregate syntax recovery, and multi-error semantic reporting for declarations and function bodies are implemented.
 
 **Completion criterion:** editor navigation and package operations have deterministic behavior covered by tests.
 
