@@ -45,3 +45,14 @@ nexus pkg update
 This is not a full package solver yet. There are no remote registries, Git fetching, semver range resolution, transitive dependency solver, checksums, or guaranteed reproducible source verification. `nexus pkg publish` creates a local ZIP-formatted `.nxpkg` archive under `dist/`; it does not upload anything to a server. `nexus pkg build` builds the configured entry source, not a dependency graph.
 
 See [Creating Packages](creating.md) and the [development roadmap](../development/roadmap.md).
+
+
+## Verify vendored package contents
+
+Before building or after reviewing dependency changes, run:
+
+```sh
+nexus pkg verify
+```
+
+This compares each recorded local package with SHA-256 hashes in `nexus.lock`. For an intentional change, review the diff and run `nexus pkg update` to refresh the checksum. This detects local content modifications; it is not a publisher signature and cannot establish that a package is trustworthy.

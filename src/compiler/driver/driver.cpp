@@ -1455,6 +1455,34 @@ namespace nexus {
             return "sha256:" + package::sha256Hex(manifest);
         }
 
+        std::map<std::string, std::string> readTomlSection(const std::string& data,
+                                                           const std::string& section) {
+            std::map<std::string, std::string> values;
+            std::istringstream input(data);
+            std::string line, activeSection;
+            while (std::getline(input, line)) {
+                const std::string current = trim(line);
+                if (current.empty() || current.front() == '#')
+                    continue;
+                if (current.front() == '[' && current.back() == ']') {
+                    activeSection = trim(current.substr(1, current.size() - 2));
+                    continue;
+                }
+                if (activeSection != section)
+                    continue;
+                const auto equal = current.find('=');
+                if (equal == std::string::npos)
+                    continue;
+                const std::string key = trim(current.substr(0, equal));
+                std::string value = trim(current.substr(equal + 1));
+                if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+                    value = value.substr(1, value.size() - 2);
+                if (!key.empty())
+                    values[key] = value;
+            }
+            return values;
+        }
+
         int commandFmt(const fs::path& file, bool checkOnly = false) {
             const std::string src = readFile(file);
             const std::string formatted = formatNexusSource(src);
@@ -1876,7 +1904,13 @@ namespace nexus {
         }
 
         void refreshLockfile(const ProjectConfig& cfg) {
-            std::vector<std::pair<std::string, std::string>> dependencies;
+            struct Dependency {
+                std::string name;
+                std::string version;
+                std::string source;
+                std::string integrity;
+            };
+            std::vector<Dependency> dependencies;
             std::istringstream input(readFile(cfg.root / "nexus.toml"));
             std::string line;
             bool inDependencies = false;
@@ -1897,7 +1931,8 @@ namespace nexus {
                 std::string value = trim(t.substr(eq + 1));
                 if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
                     value = value.substr(1, value.size() - 2);
-                std::string version = value;
+
+                Dependency dependency{name, value, {}, {}};
                 const fs::path local(value);
                 if (!local.is_absolute()) {
                     const fs::path dependencyRoot = (cfg.root / local).lexically_normal();
@@ -1908,19 +1943,43 @@ namespace nexus {
                         try {
                             const auto dep = loadProject(dependencyRoot);
                             if (!dep.version.empty())
-                                version = dep.version;
-                        } catch (const std::exception&) {}
+                                dependency.version = dep.version;
+                            dependency.source = rel.generic_string();
+                            dependency.integrity = packageTreeSha256(dependencyRoot);
+                        } catch (const std::exception& error) {
+                            throw std::runtime_error("cannot lock local dependency '" + name +
+                                                     "': " + error.what());
+                        }
                     }
                 }
-                dependencies.emplace_back(name, version);
+                dependencies.push_back(std::move(dependency));
             }
+
             std::ostringstream lock;
-            lock << "# NEXUS lockfile v1\npackage = \"" << cfg.name << "\"\nversion = \""
-                 << cfg.version << "\"\n";
+            lock << "# NEXUS lockfile v2 (SHA-256 content integrity)\npackage = \"" << cfg.name
+                 << "\"\nversion = \"" << cfg.version << "\"\n";
             if (!dependencies.empty()) {
                 lock << "\n[dependencies]\n";
                 for (const auto& dep : dependencies)
-                    lock << dep.first << " = \"" << dep.second << "\"\n";
+                    lock << dep.name << " = \"" << dep.version << "\"\n";
+
+                bool haveSources = false, haveIntegrity = false;
+                for (const auto& dep : dependencies) {
+                    haveSources = haveSources || !dep.source.empty();
+                    haveIntegrity = haveIntegrity || !dep.integrity.empty();
+                }
+                if (haveSources) {
+                    lock << "\n[sources]\n";
+                    for (const auto& dep : dependencies)
+                        if (!dep.source.empty())
+                            lock << dep.name << " = \"" << dep.source << "\"\n";
+                }
+                if (haveIntegrity) {
+                    lock << "\n[integrity]\n";
+                    for (const auto& dep : dependencies)
+                        if (!dep.integrity.empty())
+                            lock << dep.name << " = \"" << dep.integrity << "\"\n";
+                }
             }
             writeTextAtomically(cfg.root / "nexus.lock", lock.str());
         }
@@ -1974,7 +2033,7 @@ namespace nexus {
         int commandPkg(const std::vector<std::string>& args) {
             const auto cfg = loadProject();
             if (args.empty() || args[0] == "help") {
-                std::cout << "nexus pkg init|add <path>|remove <name>|list|update|build|publish\n";
+                std::cout << "nexus pkg init|add <path>|remove <name>|list|update|verify|build|publish\n";
                 return 0;
             }
             const std::string sub = args[0];
@@ -2066,6 +2125,72 @@ namespace nexus {
             if (sub == "update") {
                 refreshLockfile(cfg);
                 std::cout << "pkg update: lockfile refreshed from nexus.toml\n";
+                return 0;
+            }
+            if (sub == "verify") {
+                const std::string lock = readFile(cfg.root / "nexus.lock");
+                const auto sources = readTomlSection(lock, "sources");
+                const auto integrities = readTomlSection(lock, "integrity");
+                if (sources.empty() && integrities.empty()) {
+                    std::cout << "pkg verify: no checksummed local dependencies\\n";
+                    return 0;
+                }
+
+                bool failed = false;
+                std::size_t verified = 0;
+                std::error_code rootError;
+                const fs::path canonicalRoot = fs::weakly_canonical(cfg.root, rootError);
+                if (rootError)
+                    throw std::runtime_error("cannot resolve project root for package verification");
+                for (const auto& [name, source] : sources) {
+                    const auto integrity = integrities.find(name);
+                    if (integrity == integrities.end()) {
+                        std::cerr << "pkg verify: missing checksum for " << name << "\\n";
+                        failed = true;
+                        continue;
+                    }
+                    const fs::path relative(source);
+                    if (relative.is_absolute() || relative.empty() ||
+                        relative.begin() == relative.end() || *relative.begin() != "vendor") {
+                        std::cerr << "pkg verify: unsafe source path for " << name << "\\n";
+                        failed = true;
+                        continue;
+                    }
+                    const fs::path dependency = (canonicalRoot / relative).lexically_normal();
+                    std::error_code dependencyError;
+                    const fs::path canonicalDependency =
+                        fs::weakly_canonical(dependency, dependencyError);
+                    if (dependencyError || !fs::is_directory(canonicalDependency) ||
+                        !fs::is_regular_file(canonicalDependency / "nexus.toml")) {
+                        std::cerr << "pkg verify: missing local package " << name << "\\n";
+                        failed = true;
+                        continue;
+                    }
+                    const fs::path inside = canonicalDependency.lexically_relative(canonicalRoot);
+                    if (inside.empty() || *inside.begin() == "..") {
+                        std::cerr << "pkg verify: package path escapes project for " << name << "\\n";
+                        failed = true;
+                        continue;
+                    }
+                    const std::string actual = packageTreeSha256(canonicalDependency);
+                    if (actual != integrity->second) {
+                        std::cerr << "pkg verify: integrity mismatch for " << name << "\\n";
+                        failed = true;
+                        continue;
+                    }
+                    ++verified;
+                    std::cout << "  verified " << name << " [" << actual << "]\\n";
+                }
+                for (const auto& [name, checksum] : integrities) {
+                    (void)checksum;
+                    if (!sources.contains(name)) {
+                        std::cerr << "pkg verify: checksum has no source entry for " << name << "\\n";
+                        failed = true;
+                    }
+                }
+                if (failed)
+                    return 1;
+                std::cout << "pkg verify: OK (" << verified << " local package(s))\\n";
                 return 0;
             }
             if (sub == "build") {

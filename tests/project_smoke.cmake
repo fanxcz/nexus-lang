@@ -191,8 +191,28 @@ if(NOT rc EQUAL 0 OR NOT EXISTS "${SMOKE_DIR}/vendor/sample_lib/src/main.nx")
 endif()
 file(READ "${SMOKE_DIR}/nexus.toml" manifest_after_add)
 file(READ "${SMOKE_DIR}/nexus.lock" lock_after_add)
-if(NOT manifest_after_add MATCHES "vendor/sample_lib" OR NOT lock_after_add MATCHES "0.3.0")
-  message(FATAL_ERROR "pkg add failed to update dependency metadata")
+if(NOT manifest_after_add MATCHES "vendor/sample_lib" OR NOT lock_after_add MATCHES "0.3.0"
+   OR NOT lock_after_add MATCHES "\\[integrity\\]" OR NOT lock_after_add MATCHES "sha256:")
+  message(FATAL_ERROR "pkg add failed to update dependency metadata/checksum")
+endif()
+
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed for an unchanged local package: ${out}\\n${err}")
+endif()
+
+file(WRITE "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" "fn main() { print(\\"tampered\\") }\\n")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(rc EQUAL 0 OR NOT err MATCHES "integrity mismatch")
+  message(FATAL_ERROR "pkg verify did not detect modified package content: ${out}\\n${err}")
+endif()
+file(WRITE "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" "fn main() { print(\\"sample\\") }\\n")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after restoring package content: ${out}\\n${err}")
 endif()
 file(WRITE "${SMOKE_DIR}/outside-sentinel.txt" "keep")
 execute_process(COMMAND "${NEXUS_BIN}" pkg remove ../outside-sentinel.txt WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
