@@ -103,6 +103,9 @@ Use \`fmt\`, \`lint\`, \`doc\`, \`bench\`, \`doctor\`, and LSP integration in a 
 
 Start from the CLI template. The same commands work from a clean project created by NEXUS.
 
+For quick calculations, run `nexus` by itself or use `nexus repl`. The interactive shell
+evaluates expressions with the NEXUS compiler and keeps saved `let` bindings for the session.
+
 </div>
 <div class="nx-start-code" markdown>
 <div class="nx-code-label"><span>TERMINAL</span><span>POWERSHELL · BASH</span></div>
