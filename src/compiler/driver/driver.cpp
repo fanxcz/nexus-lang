@@ -2393,6 +2393,7 @@ namespace nexus {
             struct LspDiagnostic {
                 std::size_t line = 0;
                 std::size_t character = 0;
+                std::size_t length = 1;
                 std::string code;
                 std::string message;
             };
@@ -2426,6 +2427,42 @@ namespace nexus {
                     return diagnostics;
                 }
                 const std::vector<Token> diagnosticTokens = tokens;
+                const auto applyTokenRanges = [&]() {
+                    const auto utf16Length = [](const std::string& text) {
+                        std::size_t units = 0;
+                        for (std::size_t i = 0; i < text.size();) {
+                            const auto ch = static_cast<unsigned char>(text[i]);
+                            std::size_t width = 1;
+                            if ((ch & 0xe0) == 0xc0)
+                                width = 2;
+                            else if ((ch & 0xf0) == 0xe0)
+                                width = 3;
+                            else if ((ch & 0xf8) == 0xf0)
+                                width = 4;
+                            if (i + width > text.size())
+                                width = 1;
+                            units += width == 4 ? 2 : 1;
+                            i += width;
+                        }
+                        return units;
+                    };
+                    for (auto& diagnostic : diagnostics) {
+                        for (const auto& token : diagnosticTokens) {
+                            if (token.text.empty() || token.kind == TokenKind::End ||
+                                token.pos.line != diagnostic.line + 1 ||
+                                token.pos.column != diagnostic.character + 1)
+                                continue;
+                            diagnostic.length = std::max<std::size_t>(1, utf16Length(token.text));
+                            const std::size_t offset = std::min(token.pos.offset, source.size());
+                            const auto newline = source.rfind('\n', offset == 0 ? 0 : offset - 1);
+                            const std::size_t lineStart =
+                                newline == std::string::npos ? 0 : newline + 1;
+                            diagnostic.character =
+                                utf16Length(source.substr(lineStart, offset - lineStart));
+                            break;
+                        }
+                    }
+                };
                 Program program;
                 try {
                     program = Parser(std::move(tokens)).parseProgram();
@@ -2447,6 +2484,7 @@ namespace nexus {
                     } else {
                         add(error, "NX1001");
                     }
+                    applyTokenRanges();
                     return diagnostics;
                 }
                 try {
@@ -2471,6 +2509,7 @@ namespace nexus {
                         }
                     }
                 }
+                applyTokenRanges();
                 return diagnostics;
             };
             std::unordered_map<std::string, std::string> openDocuments;
@@ -3153,7 +3192,8 @@ namespace nexus {
                     payload << "{\"range\":{\"start\":{\"line\":" << diagnostic.line
                             << ",\"character\":" << diagnostic.character
                             << "},\"end\":{\"line\":" << diagnostic.line
-                            << ",\"character\":" << diagnostic.character + 1
+                            << ",\"character\":" << diagnostic.character +
+                                   std::max<std::size_t>(1, diagnostic.length)
                             << "}},\"severity\":1,\"code\":\"" << diagnostic.code
                             << "\",\"source\":\"nexus\",\"message\":\""
                             << jsonEscape(diagnostic.message) << "\"}";
