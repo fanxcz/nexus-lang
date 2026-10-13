@@ -101,7 +101,7 @@ This example is based on `examples/templates/app.nx`. Graphics require the runti
 | `game` | 2D game starting point |
 | `3d` | 3D graphics starting point |
 | `paint` | Raster-canvas drawing application |
-| `editor` | Editor-style application |
+
 | `server` | Server experiments |
 | `library` | Reusable source package |
 
