@@ -2,6 +2,21 @@
 
 The CLI reference below matches the commands implemented by NEXUS 1.1.0. Options that are not listed here should not be assumed to exist; unsupported options produce an error.
 
+## Interactive terminal
+
+Run `nexus` with no arguments or use `nexus repl` to enter the interactive shell.
+Each expression is compiled and evaluated by NEXUS; `let`/`const` bindings and simple
+assignments remain available in subsequent entries. The shell accepts NEXUS syntax, not
+Python syntax. Use `:help`, `:vars`, `:clear`, or `:quit` inside the shell.
+
+```text
+nexus> 2 + 2
+4
+nexus> let answer = 21
+nexus> answer * 2
+42
+```
+
 ## Project workflow
 
 | Command | Purpose |
@@ -103,7 +118,7 @@ The current package manager supports local vendoring and creation of a local `.n
 
 ## Language server
 
-Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The current server provides initialization, diagnostics, basic completion and limited go-to-definition among declarations in documents that are already open. It does not index unopened workspace files.
+Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The server provides initialization, diagnostics, completion, hover, whole-document formatting, references, rename, and brace-scope-aware resolution for local variables and simple parameters. Workspace files are cached and indexed for supported declarations, including unopened `.nx` files. Resolution is still lexical rather than a full type-aware semantic model: struct fields, enum variants, import aliases, and inferred types have known limitations.
 
 ## Diagnostics
 
