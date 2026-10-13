@@ -29,14 +29,14 @@ endif()
 
 # Independent semantic errors should be reported together and retain source ranges.
 set(SEMANTIC_SOURCE "${DIAGNOSTIC_DIR}/semantic.nx")
-file(WRITE "${SEMANTIC_SOURCE}" "fn main() {\\n  print(missingOne)\\n  print(missingTwo)\\n}\\n")
+file(WRITE "${SEMANTIC_SOURCE}" "fn main() {\n  print(missingOne)\n  print(missingTwo)\n}\n")
 execute_process(
   COMMAND "${NEXUS_BIN}" check "${SEMANTIC_SOURCE}"
   RESULT_VARIABLE rc
   OUTPUT_VARIABLE out
   ERROR_VARIABLE err
 )
-set(semantic_combined "${out}\\n${err}")
+set(semantic_combined "${out}\n${err}")
 if(rc EQUAL 0 OR NOT semantic_combined MATCHES "semantic.nx:2:9: error\\[NX2001\\]"
    OR NOT semantic_combined MATCHES "semantic.nx:3:9: error\\[NX2001\\]"
    OR NOT semantic_combined MATCHES "unknown variable: missingOne"
