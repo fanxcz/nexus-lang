@@ -4,133 +4,139 @@ hide:
   - toc
 ---
 
+<div class="nx-landing" markdown>
+
 <div class="nx-hero" markdown>
 
 <div class="nx-hero__copy" markdown>
 
-<p class="nx-eyebrow">NATIVE LANGUAGE · APPS · GAMES</p>
+<p class="nx-kicker"><span class="nx-kicker__dot"></span> NEXUS 1.1 · OPEN SOURCE · C++20</p>
 
-# Meet NEXUS.
+# Code closer to the machine.
 
-A programming language for turning ideas into native applications, creative tools, and games.
+NEXUS is a compiled programming language and native runtime for building applications, creative tools, and games — with a compiler you can inspect and a workflow you can use today.
 
-Write clean `.nx` code. Start with a lightweight built-in compiler backend, then use the LLVM pipeline when your program needs broader language and target coverage.
+<div class="nx-hero__actions" markdown>
+[Start building](getting-started/quickstart.md){ .md-button .md-button--primary }
+[Explore on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
+</div>
 
-[Get started](getting-started/quickstart.md){ .md-button .md-button--primary }
-[Downloads](downloads.md){ .md-button }
-[View source](https://github.com/fanxcz/nexus-lang){ .md-button }
-
-<p class="nx-platforms">Open source · MIT licensed · Windows · Linux · macOS source builds</p>
+<p class="nx-hero__meta">MIT licensed <span>·</span> Windows <span>·</span> Linux <span>·</span> macOS source builds</p>
 
 </div>
 
-<div class="nx-hero__example" markdown>
-<div class="nx-code-window">
-  <div class="nx-code-window__bar"><span></span><span></span><span></span><b>hello.nx</b></div>
-</div>
+<div class="nx-terminal" markdown>
+<div class="nx-terminal__top"><span></span><span></span><span></span><b>hello.nx</b><small>EXAMPLE 001</small></div>
+
 <pre><code class="language-nx">fn main() {
-    let language = "NEXUS"
-    print("Hello from " + language + "!")
+    let tool = "NEXUS"
+    print("Hello from " + tool + "!")
 }</code></pre>
-<div class="nx-code-note">One small program. A native executable.</div>
-</div>
-</div>
 
-<div class="nx-highlight-row" markdown>
-
-<div markdown>
-<span class="nx-number">01</span>
-
-**Start small**
-
-A readable language, direct command-line workflow, project templates, and fast feedback from the compiler.
-</div>
-
-<div markdown>
-<span class="nx-number">02</span>
-
-**Build real things**
-
-A native runtime with 2D/3D graphics, audio, input, UI, ECS, particles, and physics foundations.
-</div>
-
-<div markdown>
-<span class="nx-number">03</span>
-
-**Grow with your project**
-
-Use the built-in x86-64 backend for its supported subset, or LLVM for broader language and target coverage.
+<div class="nx-terminal__bottom"><span class="nx-terminal__check">✓</span> Source → compiler → native program</div>
 </div>
 
 </div>
 
-## From zero to a running program
+<div class="nx-signal-row" markdown>
+<div><span class="nx-signal__label">01 / LANGUAGE</span><strong>Readable syntax</strong><p>Functions, typed bindings, control flow, modules, structs, and enums.</p></div>
+<div><span class="nx-signal__label">02 / COMPILER</span><strong>Two compilation paths</strong><p>A built-in x86-64 backend for its documented subset, plus an LLVM/Clang path.</p></div>
+<div><span class="nx-signal__label">03 / RUNTIME</span><strong>Beyond the terminal</strong><p>Foundations for graphics, audio, input, UI, ECS, particles, and physics.</p></div>
+</div>
 
-Create a project from a template and build it:
+<div class="nx-section-heading" markdown>
+<p class="nx-kicker">A PRACTICAL TOOLCHAIN</p>
+
+## Start with an idea. Build something real.
+
+NEXUS brings the everyday parts of development into one CLI: project templates, compiler diagnostics, formatting, linting, tests, documentation, and editor integration.
+</div>
+
+<div class="nx-feature-grid" markdown>
+<div class="nx-feature" markdown>
+<div class="nx-feature__icon">⌘</div>
+<p class="nx-feature__eyebrow">01 · BUILD</p>
+
+### A direct workflow
+
+Create a project, check it, build it, and run it without learning a sprawling toolchain first.
+
+[Quick start →](getting-started/quickstart.md)
+</div>
+<div class="nx-feature" markdown>
+<div class="nx-feature__icon">⌁</div>
+<p class="nx-feature__eyebrow">02 · LANGUAGE</p>
+
+### A language you can inspect
+
+The compiler and runtime are written in C++20. The source, tests, and design notes are public.
+
+[Language reference →](language/index.md)
+</div>
+<div class="nx-feature" markdown>
+<div class="nx-feature__icon">▦</div>
+<p class="nx-feature__eyebrow">03 · CREATE</p>
+
+### Apps, tools, and games
+
+Explore starter templates and runtime examples before assembling your own project.
+
+[Browse templates →](templates/index.md)
+</div>
+<div class="nx-feature" markdown>
+<div class="nx-feature__icon">↗</div>
+<p class="nx-feature__eyebrow">04 · DEVELOP</p>
+
+### Tools that fit together
+
+Use \`fmt\`, \`lint\`, \`doc\`, \`bench\`, \`doctor\`, and LSP integration in a growing workflow.
+
+[CLI command guide →](tooling/commands.md)
+</div>
+</div>
+
+<div class="nx-start-grid" markdown>
+<div class="nx-start-copy" markdown>
+<p class="nx-kicker">YOUR FIRST FIVE MINUTES</p>
+
+## From fresh folder to running code
+
+Start from the CLI template. The same commands work from a clean project created by NEXUS.
+
+</div>
+<div class="nx-start-code" markdown>
+<div class="nx-code-label"><span>TERMINAL</span><span>POWERSHELL · BASH</span></div>
 
 <pre><code class="language-bash">nexus new HelloNexus --template cli
 cd HelloNexus
 nexus build
 nexus run</code></pre>
 
-You can also compile a single supported source file directly, with no separately installed compiler toolchain:
-
-<pre><code class="language-bash">nexus run hello.nx --backend native</code></pre>
-
-The built-in machine-code backend currently targets x86-64 Linux and Windows and supports a defined subset of NEXUS. Run <code>nexus explain-backend hello.nx</code> to see which backend will be selected and why.
-
-## Made for makers
-
-<div class="grid cards" markdown>
-
--   **Language and compiler**
-
-    Learn functions, types, control flow, modules, diagnostics, and native code generation.
-
-    [Read the language reference](language/overview.md)
-
--   **Games and graphics**
-
-    Start from the game, 3D, or Paint template. Explore the graphics, input, audio, ECS, and physics APIs.
-
-    [Explore the runtime](runtime/overview.md)
-
--   **Tools included**
-
-    Format and lint code, generate docs, manage local packages, run benchmarks, and connect editor tooling through LSP foundations.
-
-    [Explore the CLI](tooling/commands.md)
-
--   **Build with confidence**
-
-    Cross-platform CI and regression tests validate the compiler. Backend parity tests compare output where both x86-64 backends are available.
-
-    [See backend details](tooling/backend-explainer.md)
-
+<p>Working with a single source file? Try <code>nexus run hello.nx --backend native</code> for programs supported by the built-in backend.</p>
+</div>
 </div>
 
-## Get NEXUS
-
-<div class="nx-download-strip" markdown>
+<div class="nx-note" markdown>
+<div class="nx-note__mark">i</div>
 <div markdown>
-### Windows
+**Know what is supported.** The built-in backend currently emits x86-64 Windows PE and Linux ELF executables for a defined language subset. Other programs may need the LLVM/Clang toolchain. Runtime features and targets have individual limitations — the docs call them out instead of pretending every path is finished.
 
-Installer and portable bundle for Windows x64. The portable package includes a bundled C++ toolchain and the runtime DLLs used by the Windows workflow.
-
-[Windows downloads](downloads.md){ .md-button .md-button--primary }
+[Understand backend selection →](tooling/backend-explainer.md)
 </div>
+</div>
+
+<div class="nx-bottom-cta" markdown>
 <div markdown>
-### Linux and macOS
+<p class="nx-kicker">READY WHEN YOU ARE</p>
 
-The release workflow is configured to publish multi-platform archives containing a bundled Zig C++ compiler/linker for the LLVM compilation path. Those assets appear on GitHub Releases after a version tag is published. The built-in direct machine-code backend currently targets its documented x86-64 Linux/Windows subset; optional graphics/audio integrations may still depend on platform libraries.
+## Get the tools. Read the source. Make it yours.
 
-[Platform releases](https://github.com/fanxcz/nexus-lang/releases){ .md-button }
+Choose the Windows installer or portable package, browse the releases for other systems, or contribute directly to the compiler.
+</div>
+<div class="nx-bottom-cta__actions" markdown>
+[Downloads & installers](downloads.md){ .md-button .md-button--primary }
+[Read the roadmap](development/roadmap.md){ .md-button }
 </div>
 </div>
 
-## An open project
-
-NEXUS is actively developed. Some advanced language features and runtime components are experimental; consult the relevant documentation before using them in production. Issues and contributions are welcome.
-
-[Contribute on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
-[Report a problem](https://github.com/fanxcz/nexus-lang/issues){ .md-button }
+</div>
