@@ -13,6 +13,23 @@ nexus doctor
 
 On Windows, use PowerShell or Windows Terminal. If `nexus` is not found, follow the [installation guide](installation.md).
 
+### Interactive calculations
+
+Run `nexus` with no arguments, or use `nexus repl`, to evaluate expressions in the NEXUS language:
+
+```text
+nexus> 2 + 2
+4
+nexus> let mut answer = 21
+nexus> answer * 2
+42
+nexus> answer = answer + 1
+nexus> answer
+22
+```
+
+Use `:help` for commands, `:vars` to list saved bindings, `:clear` to reset the session and `:quit` to exit. This is a NEXUS evaluator, not a Python interpreter.
+
 ## 2. Create and run a command-line project
 
 ```bash
@@ -88,7 +105,7 @@ This example is based on `examples/templates/app.nx`. Graphics require the runti
 | `server` | Server experiments |
 | `library` | Reusable source package |
 
-For example, `nexus new MyPaint --template paint` creates a Paint application scaffold. See [Templates](../templates/index.md) and [Examples](../examples/overview.md) for details.
+The experimental editor demo is not a template accepted by `nexus new`. See [Editor source](../templates/editor.md) for the tested way to try it. For example, `nexus new MyPaint --template paint` creates a Paint application scaffold. See [Templates](../templates/index.md) and [Examples](../examples/overview.md) for details.
 
 ## 5. Useful commands
 
@@ -102,7 +119,7 @@ For example, `nexus new MyPaint --template paint` creates a Paint application sc
 | `nexus self-test` | Compile and run the compiler's small self-test |
 | `nexus explain-backend src/main.nx` | Explain which backend will be used |
 
-Use `nexus <command> --help` for command-specific options. The built-in native backend supports a defined x86-64 Linux/Windows subset; other programs may require the LLVM/Clang path. See [Backend selection](../tooling/backend-explainer.md).
+Use `nexus --help` to list the supported CLI commands. Command-specific `--help` flags are not currently implemented. The built-in native backend supports a defined x86-64 Linux/Windows subset; other programs may require the LLVM/Clang path. See [Backend selection](../tooling/backend-explainer.md).
 
 ## Next steps
 

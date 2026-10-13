@@ -24,7 +24,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 ## Priority 2 — Language-server and package reliability
 
-1. Add file-watcher registration/capability negotiation, prune stale index entries after removals, and benchmark cache refresh behavior on larger repositories.
+1. Benchmark cache refresh behavior on larger repositories and add regression coverage for file-watcher invalidation after external edits, renames, and deletions.
 2. Extend semantic resolution to struct fields, enum variants, imported aliases and inferred types; add range formatting and richer editor actions with regression tests.
 3. Strengthen lockfile behavior with atomic writes, preserved unrelated entries and tests for malformed manifests.
 4. Add integrity checksums and reproducible vendoring while keeping package path validation and transient-file exclusions.

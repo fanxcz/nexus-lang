@@ -1,143 +1,33 @@
 # Publishing Packages
 
-Sharing packages with the community (planned feature).
+## Current behavior
 
-## Current Status
+NEXUS does **not** have a hosted package registry. The implemented `nexus pkg publish` command creates a ZIP-formatted `.nxpkg` archive in the project's `dist/` directory; it does not upload it anywhere.
 
-Package registry is **not yet implemented** in v1.1.0. Currently only local packages supported.
+## Create a local archive
 
-## Planned Workflow
+Run this from a directory containing a valid `nexus.toml` manifest:
 
-```bash
-# 1. Prepare package
-cd my-package
-nexus test
+```sh
+nexus check
 nexus fmt --check
 nexus lint
-nexus doc
-
-# 2. Login to registry
-nexus pkg login
-# Or with token
-nexus pkg login --token $REGISTRY_TOKEN
-
-# 3. Publish
 nexus pkg publish
-# Or specific version
-nexus pkg publish --version 1.0.0
-
-# 4. Verify
-nexus pkg info my-package
 ```
 
-## Package Requirements
+The formatter and linter reflect their current limited implementations; review their output and run the project's actual tests before distributing an archive. The archive is a local file that you can share separately.
 
-Before publishing:
+## Add a package from source
 
-- [ ] Valid `nexus.toml` with all required fields
-- [ ] All tests pass (`nexus test`)
-- [ ] Code formatted (`nexus fmt --check`)
-- [ ] No lint warnings (`nexus lint`)
-- [ ] Documentation generated (`nexus doc`)
-- [ ] README.md with usage examples
-- [ ] LICENSE file
-- [ ] CHANGELOG.md
-- [ ] Version follows SemVer
+A consumer project can vendor a local **source directory** with:
 
-## Publishing Checklist
-
-```bash
-# Automated check
-nexus pkg publish --dry-run
+```sh
+nexus pkg add ../my-library
+nexus pkg list
 ```
 
-Checks:
-- Package name available
-- Version not already published
-- All files included
-- No sensitive files (`.env`, secrets, etc.)
-- Size limits respected
+The `pkg add` command expects a package directory, not the generated `.nxpkg` archive. See [Using Packages](using.md) for the supported local workflow.
 
-## Registry Configuration
+## Not available yet
 
-```toml
-# nexus.toml
-[registries]
-default = "https://packages.nexus-lang.org"
-private = "https://pkg.company.com"
-```
-
-## Authentication
-
-```bash
-# Token-based
-nexus pkg login --token $TOKEN
-
-# Or config file
-# ~/.config/nexus/auth.toml
-[registries.default]
-token = "..."
-
-[registries.private]
-token = "..."
-```
-
-## Unpublishing
-
-```bash
-# Within 24 hours (or with admin approval)
-nexus pkg unpublish my-package@1.0.0
-
-# Yank (mark as deprecated, don't delete)
-nexus pkg yank my-package@1.0.0 --reason "Critical bug"
-```
-
-## Ownership
-
-```bash
-# Add owner
-nexus pkg owner add my-package @user
-
-# Remove owner
-nexus pkg owner remove my-package @user
-
-# List owners
-nexus pkg owner list my-package
-```
-
-## Private Packages
-
-```toml
-# nexus.toml
-[package]
-publish = false  # Never publish to public registry
-
-# Or specific registries
-publish = ["private"]
-```
-
-## CI/CD Publishing
-
-```yaml
-# .github/workflows/publish.yml
-on:
-  release:
-    types: [published]
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: nexus-lang/setup-nexus@v1
-      - run: nexus pkg login --token ${{ secrets.REGISTRY_TOKEN }}
-      - run: nexus pkg publish
-```
-
-## Best Practices
-
-1. **Automate with CI** - publish on GitHub release
-2. **Sign releases** - GPG sign tags
-3. **Maintain CHANGELOG** - clear migration guides
-4. **Deprecate gracefully** - use `yank` for bad releases
-5. **Respond to issues** - maintainers expected to triage
+The CLI does not implement registry login, registry upload, remote package lookup, publish dry-runs, unpublishing/yanking, package ownership, private registries, or version-range solving. Commands such as `nexus pkg login`, `nexus pkg info`, and `nexus pkg unpublish` should not be used; they are not implemented.
