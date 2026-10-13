@@ -82,10 +82,14 @@ namespace nexus {
             return s.substr(first, last - first + 1);
         }
 
-        std::string formatDiagnostic(const std::exception& error) {
+        std::string formatDiagnostic(const std::exception& error,
+                                     const std::string& code = "NX1001") {
             const std::string raw = error.what();
             if (raw.rfind("NEXUS found ", 0) == 0 &&
-                raw.find(" syntax error") != std::string::npos) {
+                (raw.find(" syntax error") != std::string::npos ||
+                 raw.find(" semantic error") != std::string::npos)) {
+                const std::string nestedCode =
+                    raw.find(" semantic error") != std::string::npos ? "NX2001" : "NX1001";
                 std::istringstream input(raw);
                 std::string line;
                 std::getline(input, line); // The first line is the summary count.
@@ -97,7 +101,7 @@ namespace nexus {
                     const std::runtime_error one(line.substr(4));
                     if (!first)
                         combined << '\n';
-                    combined << formatDiagnostic(one);
+                    combined << formatDiagnostic(one, nestedCode);
                     first = false;
                 }
                 if (!first)
@@ -127,7 +131,7 @@ namespace nexus {
                         !gDiagnosticSource.empty()) {
                         std::ostringstream out;
                         out << gDiagnosticSource.string() << ":" << line << ":" << column
-                            << ": error[NX1001]: " << trim(raw.substr(0, marker));
+                            << ": error[" << code << "]: " << trim(raw.substr(0, marker));
                         std::istringstream source(gDiagnosticText);
                         std::string sourceLine;
                         for (std::size_t current = 1;

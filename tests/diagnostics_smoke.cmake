@@ -27,5 +27,22 @@ if(excerpt_index EQUAL -1 OR NOT combined MATCHES "\\^")
   message(FATAL_ERROR "Expected offending source line and caret, got: ${combined}")
 endif()
 
+# Independent semantic errors should be reported together and retain source ranges.
+set(SEMANTIC_SOURCE "${DIAGNOSTIC_DIR}/semantic.nx")
+file(WRITE "${SEMANTIC_SOURCE}" "fn main() {\\n  print(missingOne)\\n  print(missingTwo)\\n}\\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${SEMANTIC_SOURCE}"
+  RESULT_VARIABLE rc
+  OUTPUT_VARIABLE out
+  ERROR_VARIABLE err
+)
+set(semantic_combined "${out}\\n${err}")
+if(rc EQUAL 0 OR NOT semantic_combined MATCHES "semantic.nx:2:9: error\\[NX2001\\]"
+   OR NOT semantic_combined MATCHES "semantic.nx:3:9: error\\[NX2001\\]"
+   OR NOT semantic_combined MATCHES "unknown variable: missingOne"
+   OR NOT semantic_combined MATCHES "unknown variable: missingTwo")
+  message(FATAL_ERROR "Expected two independent semantic diagnostics with source positions: ${semantic_combined}")
+endif()
+
 file(REMOVE_RECURSE "${DIAGNOSTIC_DIR}")
 message(STATUS "NEXUS diagnostics smoke test: PASS")
