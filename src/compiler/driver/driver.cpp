@@ -1448,9 +1448,9 @@ namespace nexus {
             std::string manifest;
             for (const auto& file : files) {
                 manifest += file.lexically_relative(root).generic_string();
-                manifest.push_back('\\0');
+                manifest.push_back('\0');
                 manifest += package::sha256Hex(readFile(file));
-                manifest.push_back('\\n');
+                manifest.push_back('\n');
             }
             return "sha256:" + package::sha256Hex(manifest);
         }

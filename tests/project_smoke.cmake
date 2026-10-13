@@ -208,7 +208,7 @@ execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR
 if(rc EQUAL 0 OR NOT err MATCHES "integrity mismatch")
   message(FATAL_ERROR "pkg verify did not detect modified package content: ${out}\\n${err}")
 endif()
-file(COPY "${PKG_SOURCE}/src/main.nx" DESTINATION "${SMOKE_DIR}/vendor/sample_lib/src")
+configure_file("${PKG_SOURCE}/src/main.nx" "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" COPYONLY)
 execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
