@@ -3410,19 +3410,174 @@ namespace nexus {
                     send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
                 } else if ((method == "textDocument/completion" || method == "completion") &&
                            !id.empty()) {
+                    std::vector<std::pair<std::string, std::string>> choices;
+                    std::string prefix, objectName, enumName;
+                    bool memberContext = false, enumContext = false;
+                    const std::string uri = extractString(body, "uri");
+                    const auto document = openDocuments.find(uri);
+                    std::size_t currentLine = 0, currentCharacter = 0, absoluteCursor = 0;
+                    std::string currentLineText;
+                    if (document != openDocuments.end()) {
+                        currentLine = extractNumber(body, "line");
+                        currentCharacter = extractNumber(body, "character");
+                        const std::string& source = document->second;
+                        std::size_t lineStart = 0;
+                        for (std::size_t i = 0; i < currentLine; ++i) {
+                            const auto newline = source.find('\n', lineStart);
+                            if (newline == std::string::npos) {
+                                lineStart = source.size();
+                                break;
+                            }
+                            lineStart = newline + 1;
+                        }
+                        if (lineStart <= source.size()) {
+                            const auto newline = source.find('\n', lineStart);
+                            currentLineText = source.substr(
+                                lineStart, newline == std::string::npos
+                                               ? std::string::npos
+                                               : newline - lineStart);
+                            const std::size_t cursor =
+                                std::min(byteOffsetForUtf16(currentLineText, currentCharacter),
+                                         currentLineText.size());
+                            absoluteCursor = lineStart + cursor;
+                            std::size_t prefixStart = cursor;
+                            while (prefixStart > 0 &&
+                                   identifierCharacter(static_cast<unsigned char>(
+                                       currentLineText[prefixStart - 1])))
+                                --prefixStart;
+                            prefix = currentLineText.substr(prefixStart, cursor - prefixStart);
+
+                            if (prefixStart > 0 && currentLineText[prefixStart - 1] == '.') {
+                                memberContext = true;
+                                std::size_t objectEnd = prefixStart - 1;
+                                while (objectEnd > 0 &&
+                                       std::isspace(static_cast<unsigned char>(
+                                           currentLineText[objectEnd - 1])))
+                                    --objectEnd;
+                                std::size_t objectStart = objectEnd;
+                                while (objectStart > 0 &&
+                                       identifierCharacter(static_cast<unsigned char>(
+                                           currentLineText[objectStart - 1])))
+                                    --objectStart;
+                                objectName =
+                                    currentLineText.substr(objectStart, objectEnd - objectStart);
+                            } else if (prefixStart >= 2 &&
+                                       currentLineText.substr(prefixStart - 2, 2) == "::") {
+                                enumContext = true;
+                                const std::size_t separator = prefixStart - 2;
+                                std::size_t typeStart = separator;
+                                while (typeStart > 0 &&
+                                       identifierCharacter(static_cast<unsigned char>(
+                                           currentLineText[typeStart - 1])))
+                                    --typeStart;
+                                enumName = currentLineText.substr(typeStart, separator - typeStart);
+                            }
+                        }
+                    }
+
+                    bool contextualSuggestions = false;
+                    if (document != openDocuments.end() && (memberContext || enumContext)) {
+                        try {
+                            std::string parseSource = document->second;
+                            parseSource.insert(absoluteCursor, "__nexus_completion");
+                            Program program = Parser(Lexer(parseSource).tokenize()).parseProgram();
+
+                            if (enumContext) {
+                                for (const auto& declaration : program.enums) {
+                                    if (declaration.name != enumName)
+                                        continue;
+                                    for (const auto& variant : declaration.variants) {
+                                        const std::string label = declaration.name + "::" + variant;
+                                        if (prefix.empty() || label.rfind(enumName + "::" + prefix, 0) == 0)
+                                            choices.emplace_back(label, "Variant of " + enumName);
+                                    }
+                                }
+                                contextualSuggestions = !choices.empty();
+                            } else {
+                                std::map<std::string, std::string> variableTypes;
+                                for (const auto& function : program.functions) {
+                                    for (const auto& parameter : function.params) {
+                                        if (!parameter.type.name.empty())
+                                            variableTypes[parameter.name] = parameter.type.name;
+                                    }
+                                }
+                                const auto collectTypes = [&](const auto& self, const Block& block) -> void {
+                                    for (const auto& statement : block.statements) {
+                                        if (const auto* declaration =
+                                                dynamic_cast<const LetStmt*>(statement.get())) {
+                                            std::string typeName = declaration->type.name;
+                                            if (const auto* init =
+                                                    dynamic_cast<const StructInitExpr*>(declaration->init.get()))
+                                                typeName = init->typeName;
+                                            else if (const auto* init =
+                                                         dynamic_cast<const EnumVariantExpr*>(
+                                                             declaration->init.get()))
+                                                typeName = init->enumName;
+                                            if (!typeName.empty())
+                                                variableTypes[declaration->name] = typeName;
+                                        } else if (const auto* conditional =
+                                                       dynamic_cast<const IfStmt*>(statement.get())) {
+                                            if (conditional->thenBlock)
+                                                self(self, *conditional->thenBlock);
+                                            if (conditional->elseBlock)
+                                                self(self, *conditional->elseBlock);
+                                        } else if (const auto* loop =
+                                                       dynamic_cast<const WhileStmt*>(statement.get())) {
+                                            if (loop->body)
+                                                self(self, *loop->body);
+                                        } else if (const auto* match =
+                                                       dynamic_cast<const MatchStmt*>(statement.get())) {
+                                            for (const auto& arm : match->arms)
+                                                if (arm.body)
+                                                    self(self, *arm.body);
+                                        } else if (const auto* nested =
+                                                       dynamic_cast<const Block*>(statement.get())) {
+                                            self(self, *nested);
+                                        }
+                                    }
+                                };
+                                for (const auto& function : program.functions)
+                                    if (function.body)
+                                        collectTypes(collectTypes, *function.body);
+
+                                const auto type = variableTypes.find(objectName);
+                                if (type != variableTypes.end()) {
+                                    for (const auto& declaration : program.structs) {
+                                        if (declaration.name != type->second)
+                                            continue;
+                                        for (const auto& field : declaration.fields) {
+                                            if (prefix.empty() || field.name.rfind(prefix, 0) == 0)
+                                                choices.emplace_back(
+                                                    field.name, "Field of " + declaration.name);
+                                        }
+                                    }
+                                    contextualSuggestions = !choices.empty();
+                                }
+                            }
+                        } catch (const std::exception&) {
+                            // Incomplete edits are normal in an editor; fall back to prefix
+                            // completion rather than surfacing parser errors from this request.
+                        }
+                    }
+
+                    if (!contextualSuggestions) {
+                        for (const auto& item : completions) {
+                            if (prefix.empty() || item.first.rfind(prefix, 0) == 0)
+                                choices.push_back(item);
+                        }
+                    }
+
                     std::ostringstream result;
                     result << "{\"jsonrpc\":\"2.0\",\"id\":" << id << ",\"result\":[";
-                    for (std::size_t i = 0; i < completions.size(); ++i) {
+                    for (std::size_t i = 0; i < choices.size(); ++i) {
                         if (i)
                             result << ',';
-                        std::string escaped;
-                        for (const char c : completions[i].first) {
-                            if (c == '"' || c == '\\')
-                                escaped.push_back('\\');
-                            escaped.push_back(c);
-                        }
-                        result << "{\"label\":\"" << escaped << "\",\"kind\":14,\"detail\":\""
-                               << completions[i].second << "\"}";
+                        const int kind = choices[i].second.rfind("Field of ", 0) == 0
+                                             ? 5
+                                             : (choices[i].second.rfind("Variant of ", 0) == 0 ? 20 : 14);
+                        result << "{\"label\":\"" << jsonEscape(choices[i].first)
+                               << "\",\"kind\":" << kind
+                               << ",\"detail\":\"" << jsonEscape(choices[i].second) << "\"}";
                     }
                     result << "]}";
                     send(result.str());
