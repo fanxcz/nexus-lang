@@ -14,19 +14,18 @@ int main() {
     constexpr std::uint64_t seed = 0x4e455855535f4655ULL;
     constexpr std::size_t iterations = 5000;
     constexpr std::size_t maxLength = 256;
-    const std::string alphabet =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-        "{}()[],:;.+-*/%!=&|<>#\"' \t\r\n";
+    const std::string alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+                                 "{}()[],:;.+-*/%!=&|<>#\"' \t\r\n";
     std::mt19937_64 random(seed);
 
     for (std::size_t caseIndex = 0; caseIndex < iterations; ++caseIndex) {
-        const auto length = static_cast<std::size_t>(
-            random() % static_cast<std::uint64_t>(maxLength + 1));
+        const auto length =
+            static_cast<std::size_t>(random() % static_cast<std::uint64_t>(maxLength + 1));
         std::string source;
         source.reserve(length);
         for (std::size_t i = 0; i < length; ++i) {
-            const auto character = static_cast<std::size_t>(
-                random() % static_cast<std::uint64_t>(alphabet.size()));
+            const auto character =
+                static_cast<std::size_t>(random() % static_cast<std::uint64_t>(alphabet.size()));
             source.push_back(alphabet[character]);
         }
 
@@ -78,9 +77,11 @@ int main() {
     }
 
     std::string deeplyNestedBlocks = "fn main()";
-    for (std::size_t i = 0; i < 300; ++i) deeplyNestedBlocks += "{ if true ";
+    for (std::size_t i = 0; i < 300; ++i)
+        deeplyNestedBlocks += "{ if true ";
     deeplyNestedBlocks += "{ print(1) }";
-    for (std::size_t i = 0; i < 300; ++i) deeplyNestedBlocks += " }";
+    for (std::size_t i = 0; i < 300; ++i)
+        deeplyNestedBlocks += " }";
     deeplyNestedBlocks += " }";
     if (!rejects(deeplyNestedBlocks)) {
         std::cerr << "deeply nested blocks were not rejected\n";
@@ -88,7 +89,7 @@ int main() {
     }
 
     std::cout << "NEXUS frontend fuzz smoke: PASS (" << iterations
-              << " deterministic inputs plus parser depth/range regressions, seed "
-              << seed << ")\n";
+              << " deterministic inputs plus parser depth/range regressions, seed " << seed
+              << ")\n";
     return 0;
 }

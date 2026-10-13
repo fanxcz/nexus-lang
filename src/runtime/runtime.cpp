@@ -1,27 +1,27 @@
 #if defined(__linux__) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
 #endif
-#include <cstdio>
-#include <cstdint>
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cctype>
+#include <cmath>
+#include <csetjmp>
 #include <cstdbool>
+#include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <cmath>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <array>
-#include <algorithm>
-#include <cctype>
-#include <memory>
 #include <fstream>
-#include <sstream>
-#include <mutex>
-#include <thread>
-#include <atomic>
-#include <csetjmp>
 #include <limits>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 #if defined(_WIN32)
 #include <winternl.h>
 #endif
@@ -48,8 +48,8 @@
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <termios.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 #endif
 
 // NEXUS runtime is deliberately built without SDL/OpenGL development headers.
@@ -94,7 +94,6 @@ namespace {
         void (*callback)(void*, uint8_t*, int);
 
         void* userdata;
-
     };
 
     struct SDL_PixelFormat {
@@ -118,7 +117,6 @@ namespace {
         int32_t refcount;
 
         void* next;
-
     };
 
     struct SDL_Surface {
@@ -146,7 +144,6 @@ namespace {
         int refcount;
 
         void* reserved;
-
     };
 
     struct SDL_Keysym {
@@ -158,7 +155,6 @@ namespace {
         uint16_t mod;
 
         uint32_t unused;
-
     };
 
     struct SDL_KeyboardEvent {
@@ -178,7 +174,6 @@ namespace {
         uint8_t padding3;
 
         SDL_Keysym keysym;
-
     };
 
     struct SDL_MouseMotionEvent {
@@ -190,7 +185,6 @@ namespace {
         uint32_t state;
 
         int x, y, xrel, yrel;
-
     };
 
     struct SDL_MouseButtonEvent {
@@ -202,7 +196,6 @@ namespace {
         uint8_t button, state, clicks, padding1;
 
         int x, y;
-
     };
 
     struct SDL_MouseWheelEvent {
@@ -218,7 +211,6 @@ namespace {
         double preciseX, preciseY;
 
         int32_t mouseX, mouseY;
-
     };
 
     struct SDL_WindowEvent {
@@ -230,7 +222,6 @@ namespace {
         uint8_t padding1, padding2, padding3;
 
         int data1, data2;
-
     };
 
     union SDL_Event {
@@ -248,7 +239,6 @@ namespace {
         SDL_MouseWheelEvent wheel;
 
         SDL_WindowEvent window;
-
     };
 
     struct SDL_Rect {
@@ -397,43 +387,49 @@ namespace {
 
     constexpr GLenum GL_CULL_FACE = 0x0B44;
 
-    #define GLPROC(name, ret, args) using PFN_##name = ret (*)args; PFN_##name name = nullptr;
-    GLPROC(glViewport, void, (GLint,GLint,GLsizei,GLsizei))
+#define GLPROC(name, ret, args)                                                                    \
+    using PFN_##name = ret(*) args;                                                                \
+    PFN_##name name = nullptr;
+    GLPROC(glViewport, void, (GLint, GLint, GLsizei, GLsizei))
     GLPROC(glMatrixMode, void, (GLenum))
     GLPROC(glLoadIdentity, void, ())
-    GLPROC(glOrtho, void, (GLdouble,GLdouble,GLdouble,GLdouble,GLdouble,GLdouble))
-    GLPROC(glFrustum, void, (GLdouble,GLdouble,GLdouble,GLdouble,GLdouble,GLdouble))
+    GLPROC(glOrtho, void, (GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble))
+    GLPROC(glFrustum, void, (GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble))
     GLPROC(glBegin, void, (GLenum))
     GLPROC(glEnd, void, ())
-    GLPROC(glColor4f, void, (GLfloat,GLfloat,GLfloat,GLfloat))
-    GLPROC(glVertex2f, void, (GLfloat,GLfloat))
-    GLPROC(glVertex3f, void, (GLfloat,GLfloat,GLfloat))
-    GLPROC(glTexCoord2f, void, (GLfloat,GLfloat))
-    GLPROC(glBindTexture, void, (GLenum,GLuint))
-    GLPROC(glGenTextures, void, (GLsizei,GLuint*))
-    GLPROC(glDeleteTextures, void, (GLsizei,const GLuint*))
-    GLPROC(glTexParameteri, void, (GLenum,GLenum,GLint))
-    GLPROC(glTexImage2D, void, (GLenum,GLint,GLint,GLsizei,GLsizei,GLint,GLenum,GLenum,const GLvoid*))
+    GLPROC(glColor4f, void, (GLfloat, GLfloat, GLfloat, GLfloat))
+    GLPROC(glVertex2f, void, (GLfloat, GLfloat))
+    GLPROC(glVertex3f, void, (GLfloat, GLfloat, GLfloat))
+    GLPROC(glTexCoord2f, void, (GLfloat, GLfloat))
+    GLPROC(glBindTexture, void, (GLenum, GLuint))
+    GLPROC(glGenTextures, void, (GLsizei, GLuint*))
+    GLPROC(glDeleteTextures, void, (GLsizei, const GLuint*))
+    GLPROC(glTexParameteri, void, (GLenum, GLenum, GLint))
+    GLPROC(glTexImage2D,
+           void,
+           (GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid*))
     GLPROC(glEnable, void, (GLenum))
     GLPROC(glDisable, void, (GLenum))
-    GLPROC(glClearColor, void, (GLfloat,GLfloat,GLfloat,GLfloat))
+    GLPROC(glClearColor, void, (GLfloat, GLfloat, GLfloat, GLfloat))
     GLPROC(glClear, void, (GLbitfield))
-    GLPROC(glTranslatef, void, (GLfloat,GLfloat,GLfloat))
-    GLPROC(glRotatef, void, (GLfloat,GLfloat,GLfloat,GLfloat))
-    GLPROC(glScalef, void, (GLfloat,GLfloat,GLfloat))
+    GLPROC(glTranslatef, void, (GLfloat, GLfloat, GLfloat))
+    GLPROC(glRotatef, void, (GLfloat, GLfloat, GLfloat, GLfloat))
+    GLPROC(glScalef, void, (GLfloat, GLfloat, GLfloat))
     GLPROC(glPushMatrix, void, ())
     GLPROC(glPopMatrix, void, ())
     GLPROC(glLineWidth, void, (GLfloat))
-    GLPROC(glPolygonMode, void, (GLenum,GLenum))
-    #undef GLPROC
+    GLPROC(glPolygonMode, void, (GLenum, GLenum))
+#undef GLPROC
 
-    #define SDLPROC(name, ret, args) using PFN_SDL_##name = ret (*)args; PFN_SDL_##name name = nullptr;
+#define SDLPROC(name, ret, args)                                                                   \
+    using PFN_SDL_##name = ret(*) args;                                                            \
+    PFN_SDL_##name name = nullptr;
     SDLPROC(SDL_Init, int, (uint32_t))
     SDLPROC(SDL_Quit, void, ())
     SDLPROC(SDL_GetError, const char*, ())
     SDLPROC(SDL_CreateWindow, SDL_Window*, (const char*, int, int, int, int, uint32_t))
     SDLPROC(SDL_DestroyWindow, void, (SDL_Window*))
-    SDLPROC(SDL_GL_SetAttribute, int, (int,int))
+    SDLPROC(SDL_GL_SetAttribute, int, (int, int))
     SDLPROC(SDL_GL_CreateContext, SDL_GLContext, (SDL_Window*))
     SDLPROC(SDL_GL_DeleteContext, void, (SDL_GLContext))
     SDLPROC(SDL_GL_SwapWindow, void, (SDL_Window*))
@@ -462,21 +458,23 @@ namespace {
     SDLPROC(SDL_GL_SetSwapInterval, int, (int))
     SDLPROC(SDL_PollEvent, int, (SDL_Event*))
     SDLPROC(SDL_GetKeyboardState, const uint8_t*, (int*))
-    SDLPROC(SDL_GetMouseState, uint32_t, (int*,int*))
+    SDLPROC(SDL_GetMouseState, uint32_t, (int*, int*))
     SDLPROC(SDL_ShowCursor, int, (int))
     SDLPROC(SDL_LoadBMP, SDL_Surface*, (const char*))
-    SDLPROC(SDL_ConvertSurfaceFormat, SDL_Surface*, (SDL_Surface*,uint32_t,uint32_t))
+    SDLPROC(SDL_ConvertSurfaceFormat, SDL_Surface*, (SDL_Surface*, uint32_t, uint32_t))
     SDLPROC(SDL_FreeSurface, void, (SDL_Surface*))
     SDLPROC(SDL_GetPerformanceCounter, uint64_t, ())
     SDLPROC(SDL_GetPerformanceFrequency, uint64_t, ())
-    SDLPROC(SDL_OpenAudioDevice, SDL_AudioDeviceID, (const char*,int,const SDL_AudioSpec*,SDL_AudioSpec*,int))
+    SDLPROC(SDL_OpenAudioDevice,
+            SDL_AudioDeviceID,
+            (const char*, int, const SDL_AudioSpec*, SDL_AudioSpec*, int))
     SDLPROC(SDL_CloseAudioDevice, void, (SDL_AudioDeviceID))
-    SDLPROC(SDL_PauseAudioDevice, void, (SDL_AudioDeviceID,int))
-    SDLPROC(SDL_QueueAudio, int, (SDL_AudioDeviceID,const void*,uint32_t))
+    SDLPROC(SDL_PauseAudioDevice, void, (SDL_AudioDeviceID, int))
+    SDLPROC(SDL_QueueAudio, int, (SDL_AudioDeviceID, const void*, uint32_t))
     SDLPROC(SDL_GetQueuedAudioSize, uint32_t, (SDL_AudioDeviceID))
     SDLPROC(SDL_ClearQueuedAudio, void, (SDL_AudioDeviceID))
     SDLPROC(SDL_GetNumAudioDevices, int, (int))
-    #undef SDLPROC
+#undef SDLPROC
 
     using PFN_IMG_Load = SDL_Surface* (*)(const char*);
 
@@ -584,16 +582,14 @@ namespace {
 
     static std::vector<uint8_t> gKeys(512, 0);
 
-    static std::array<uint8_t, 8> gMouseButtons{
-    };
+    static std::array<uint8_t, 8> gMouseButtons{};
 
     static SDL_AudioDeviceID gAudioDevice = 0;
     static SDL_Renderer* gRenderer = nullptr;
     static bool gSoftware2D = false;
     static bool gOpenGL3D = false;
 
-    static SDL_AudioSpec gAudioSpec{
-    };
+    static SDL_AudioSpec gAudioSpec{};
 
     static int gAudioVolume = 128;
 
@@ -612,11 +608,9 @@ namespace {
 
     struct CanvasData {
 
-        int w{
-        };
+        int w{};
 
-        int h{
-        };
+        int h{};
 
         GLuint tex{};
         SDL_Texture* software{};
@@ -626,32 +620,26 @@ namespace {
         std::vector<CanvasSnapshot> undo;
 
         std::vector<CanvasSnapshot> redo;
-
     };
 
     struct Sound {
 
         std::vector<uint8_t> data;
 
-        int freq{
-        };
+        int freq{};
 
-        uint16_t format{
-        };
+        uint16_t format{};
 
-        uint8_t channels{
-        };
+        uint8_t channels{};
 
-        uint16_t samples{
-        };
-
+        uint16_t samples{};
     };
 
     static std::unordered_map<int64_t, Texture> gTextures;
 
     static std::unordered_map<int64_t, CanvasData> gCanvases;
 
-    static int64_t gNextCanvas=1;
+    static int64_t gNextCanvas = 1;
 
     static std::unordered_map<int64_t, Sound> gSounds;
 
@@ -687,12 +675,11 @@ namespace {
 
     struct EcsEntity {
 
-        bool alive=true;
-        float x=0, y=0, vx=0, vy=0, w=48, h=48;
+        bool alive = true;
+        float x = 0, y = 0, vx = 0, vy = 0, w = 48, h = 48;
 
-        float r=0.25f, g=0.75f, b=1.0f, a=1.0f;
-        int64_t texture=0;
-
+        float r = 0.25f, g = 0.75f, b = 1.0f, a = 1.0f;
+        int64_t texture = 0;
     };
 
     static std::unordered_map<int64_t, EcsEntity> gEntities;
@@ -701,18 +688,17 @@ namespace {
 
     struct SpriteAnim {
 
-        int64_t texture=0;
+        int64_t texture = 0;
 
-        int64_t frameW=0, frameH=0, columns=1, frameCount=1;
+        int64_t frameW = 0, frameH = 0, columns = 1, frameCount = 1;
 
-        double fps=8.0;
+        double fps = 8.0;
 
-        bool loop=true;
+        bool loop = true;
 
-        double time=0.0;
+        double time = 0.0;
 
-        int64_t frame=0;
-
+        int64_t frame = 0;
     };
 
     static std::unordered_map<int64_t, SpriteAnim> gAnims;
@@ -722,7 +708,6 @@ namespace {
     struct SceneData {
 
         std::vector<EcsEntity> entities;
-
     };
 
     static std::unordered_map<int64_t, SceneData> gScenes;
@@ -741,11 +726,10 @@ namespace {
 
     struct Particle {
 
-        bool alive=true;
-        float x=0,y=0,vx=0,vy=0,life=1,maxLife=1,size=6;
+        bool alive = true;
+        float x = 0, y = 0, vx = 0, vy = 0, life = 1, maxLife = 1, size = 6;
 
-        float r=1,g=1,b=1,a=1;
-
+        float r = 1, g = 1, b = 1, a = 1;
     };
 
     static std::unordered_map<int64_t, Particle> gParticles;
@@ -754,134 +738,130 @@ namespace {
 
     static void* load_library(const char* name) {
 
-        #if defined(_WIN32)
+#if defined(_WIN32)
         return reinterpret_cast<void*>(LoadLibraryA(name));
 
-        #else
+#else
         return dlopen(name, RTLD_NOW | RTLD_LOCAL);
 
-        #endif
+#endif
     }
     static void* load_symbol(void* lib, const char* name) {
 
-        #if defined(_WIN32)
+#if defined(_WIN32)
         return reinterpret_cast<void*>(GetProcAddress(reinterpret_cast<HMODULE>(lib), name));
 
-        #else
+#else
         return dlsym(lib, name);
 
-        #endif
+#endif
     }
     static std::string sdl_error() {
         return gSDL && SDL_GetError ? SDL_GetError() : "SDL2 unavailable";
     }
     static void* load_optional(const char* const* names, size_t count) {
-        for(size_t i=0;i<count;++i){
-            if(void* h=load_library(names[i])) return h;
-        } return nullptr;
+        for (size_t i = 0; i < count; ++i) {
+            if (void* h = load_library(names[i]))
+                return h;
+        }
+        return nullptr;
     }
     static void load_optional_media_libs() {
 
-        #if defined(_WIN32)
-        const char* imgNames[] = {
-            "SDL2_image.dll", "SDL2_image-2.0.dll"
-        };
+#if defined(_WIN32)
+        const char* imgNames[] = {"SDL2_image.dll", "SDL2_image-2.0.dll"};
 
-        const char* ttfNames[] = {
-            "SDL2_ttf.dll", "SDL2_ttf-2.0.dll"
-        };
+        const char* ttfNames[] = {"SDL2_ttf.dll", "SDL2_ttf-2.0.dll"};
+
+        const char* mixNames[] = {"SDL2_mixer.dll", "SDL2_mixer-2.0.dll"};
+
+#elif defined(__APPLE__)
+        const char* imgNames[] = {"libSDL2_image-2.0.0.dylib", "libSDL2_image.dylib"};
+
+        const char* ttfNames[] = {"libSDL2_ttf-2.0.0.dylib", "libSDL2_ttf.dylib"};
+
+        const char* mixNames[] = {"libSDL2_mixer-2.0.0.dylib", "libSDL2_mixer.dylib"};
+
+#else
+        const char* imgNames[] = {
+            "libSDL2_image-2.0.so.0", "libSDL2_image.so", "libSDL2_image-2.0.so"};
+
+        const char* ttfNames[] = {"libSDL2_ttf-2.0.so.0", "libSDL2_ttf.so", "libSDL2_ttf-2.0.so"};
 
         const char* mixNames[] = {
-            "SDL2_mixer.dll", "SDL2_mixer-2.0.dll"
-        };
+            "libSDL2_mixer-2.0.so.0", "libSDL2_mixer.so", "libSDL2_mixer-2.0.so"};
 
-        #elif defined(__APPLE__)
-        const char* imgNames[] = {
-            "libSDL2_image-2.0.0.dylib", "libSDL2_image.dylib"
-        };
+#endif
+        if (!gIMG)
+            gIMG = load_optional(imgNames, sizeof(imgNames) / sizeof(imgNames[0]));
 
-        const char* ttfNames[] = {
-            "libSDL2_ttf-2.0.0.dylib", "libSDL2_ttf.dylib"
-        };
-
-        const char* mixNames[] = {
-            "libSDL2_mixer-2.0.0.dylib", "libSDL2_mixer.dylib"
-        };
-
-        #else
-        const char* imgNames[] = {
-            "libSDL2_image-2.0.so.0", "libSDL2_image.so", "libSDL2_image-2.0.so"
-        };
-
-        const char* ttfNames[] = {
-            "libSDL2_ttf-2.0.so.0", "libSDL2_ttf.so", "libSDL2_ttf-2.0.so"
-        };
-
-        const char* mixNames[] = {
-            "libSDL2_mixer-2.0.so.0", "libSDL2_mixer.so", "libSDL2_mixer-2.0.so"
-        };
-
-        #endif
-        if(!gIMG) gIMG=load_optional(imgNames, sizeof(imgNames)/sizeof(imgNames[0]));
-
-        if(gIMG && !IMG_Load){
-            IMG_Load=reinterpret_cast<PFN_IMG_Load>(load_symbol(gIMG,"IMG_Load"));
-            IMG_GetError=reinterpret_cast<PFN_IMG_GetError>(load_symbol(gIMG,"IMG_GetError"));
+        if (gIMG && !IMG_Load) {
+            IMG_Load = reinterpret_cast<PFN_IMG_Load>(load_symbol(gIMG, "IMG_Load"));
+            IMG_GetError = reinterpret_cast<PFN_IMG_GetError>(load_symbol(gIMG, "IMG_GetError"));
         }
-        if(!gTTF) gTTF=load_optional(ttfNames, sizeof(ttfNames)/sizeof(ttfNames[0]));
+        if (!gTTF)
+            gTTF = load_optional(ttfNames, sizeof(ttfNames) / sizeof(ttfNames[0]));
 
-        if(gTTF && !TTF_Init){
-            TTF_Init=reinterpret_cast<PFN_TTF_Init>(load_symbol(gTTF,"TTF_Init"));
-            TTF_Quit=reinterpret_cast<PFN_TTF_Quit>(load_symbol(gTTF,"TTF_Quit"));
-            TTF_GetError=reinterpret_cast<PFN_TTF_GetError>(load_symbol(gTTF,"TTF_GetError"));
-            TTF_OpenFont=reinterpret_cast<PFN_TTF_OpenFont>(load_symbol(gTTF,"TTF_OpenFont"));
-            TTF_CloseFont=reinterpret_cast<PFN_TTF_CloseFont>(load_symbol(gTTF,"TTF_CloseFont"));
-            TTF_RenderUTF8_Blended=reinterpret_cast<PFN_TTF_RenderUTF8_Blended>(load_symbol(gTTF,"TTF_RenderUTF8_Blended"));
+        if (gTTF && !TTF_Init) {
+            TTF_Init = reinterpret_cast<PFN_TTF_Init>(load_symbol(gTTF, "TTF_Init"));
+            TTF_Quit = reinterpret_cast<PFN_TTF_Quit>(load_symbol(gTTF, "TTF_Quit"));
+            TTF_GetError = reinterpret_cast<PFN_TTF_GetError>(load_symbol(gTTF, "TTF_GetError"));
+            TTF_OpenFont = reinterpret_cast<PFN_TTF_OpenFont>(load_symbol(gTTF, "TTF_OpenFont"));
+            TTF_CloseFont = reinterpret_cast<PFN_TTF_CloseFont>(load_symbol(gTTF, "TTF_CloseFont"));
+            TTF_RenderUTF8_Blended = reinterpret_cast<PFN_TTF_RenderUTF8_Blended>(
+                load_symbol(gTTF, "TTF_RenderUTF8_Blended"));
         }
-        if(!gMIX) gMIX=load_optional(mixNames, sizeof(mixNames)/sizeof(mixNames[0]));
+        if (!gMIX)
+            gMIX = load_optional(mixNames, sizeof(mixNames) / sizeof(mixNames[0]));
 
-        if(gMIX && !Mix_OpenAudio){
-            Mix_OpenAudio=reinterpret_cast<PFN_Mix_OpenAudio>(load_symbol(gMIX,"Mix_OpenAudio"));
-            Mix_CloseAudio=reinterpret_cast<PFN_Mix_CloseAudio>(load_symbol(gMIX,"Mix_CloseAudio"));
-            Mix_GetError=reinterpret_cast<PFN_Mix_GetError>(load_symbol(gMIX,"Mix_GetError"));
-            Mix_LoadMUS=reinterpret_cast<PFN_Mix_LoadMUS>(load_symbol(gMIX,"Mix_LoadMUS"));
-            Mix_FreeMusic=reinterpret_cast<PFN_Mix_FreeMusic>(load_symbol(gMIX,"Mix_FreeMusic"));
-            Mix_PlayMusic=reinterpret_cast<PFN_Mix_PlayMusic>(load_symbol(gMIX,"Mix_PlayMusic"));
-            Mix_HaltMusic=reinterpret_cast<PFN_Mix_HaltMusic>(load_symbol(gMIX,"Mix_HaltMusic"));
-            Mix_VolumeMusic=reinterpret_cast<PFN_Mix_VolumeMusic>(load_symbol(gMIX,"Mix_VolumeMusic"));
+        if (gMIX && !Mix_OpenAudio) {
+            Mix_OpenAudio = reinterpret_cast<PFN_Mix_OpenAudio>(load_symbol(gMIX, "Mix_OpenAudio"));
+            Mix_CloseAudio =
+                reinterpret_cast<PFN_Mix_CloseAudio>(load_symbol(gMIX, "Mix_CloseAudio"));
+            Mix_GetError = reinterpret_cast<PFN_Mix_GetError>(load_symbol(gMIX, "Mix_GetError"));
+            Mix_LoadMUS = reinterpret_cast<PFN_Mix_LoadMUS>(load_symbol(gMIX, "Mix_LoadMUS"));
+            Mix_FreeMusic = reinterpret_cast<PFN_Mix_FreeMusic>(load_symbol(gMIX, "Mix_FreeMusic"));
+            Mix_PlayMusic = reinterpret_cast<PFN_Mix_PlayMusic>(load_symbol(gMIX, "Mix_PlayMusic"));
+            Mix_HaltMusic = reinterpret_cast<PFN_Mix_HaltMusic>(load_symbol(gMIX, "Mix_HaltMusic"));
+            Mix_VolumeMusic =
+                reinterpret_cast<PFN_Mix_VolumeMusic>(load_symbol(gMIX, "Mix_VolumeMusic"));
         }
     }
     static bool load_sdl() {
 
-        if(gSDL) return true;
+        if (gSDL)
+            return true;
 
-        #if defined(_WIN32)
-        const char* names[] = {
-            "SDL2.dll", "SDL2-2.0.dll"
-        };
+#if defined(_WIN32)
+        const char* names[] = {"SDL2.dll", "SDL2-2.0.dll"};
 
-        #elif defined(__APPLE__)
-        const char* names[] = {
-            "libSDL2-2.0.0.dylib", "libSDL2.dylib"
-        };
+#elif defined(__APPLE__)
+        const char* names[] = {"libSDL2-2.0.0.dylib", "libSDL2.dylib"};
 
-        #else
-        const char* names[] = {
-            "libSDL2-2.0.so.0", "libSDL2.so", "libSDL2-2.0.so"
-        };
+#else
+        const char* names[] = {"libSDL2-2.0.so.0", "libSDL2.so", "libSDL2-2.0.so"};
 
-        #endif
-        for(const char* n: names){
-            if((gSDL=load_library(n))) break;
+#endif
+        for (const char* n : names) {
+            if ((gSDL = load_library(n)))
+                break;
         }
-        if(!gSDL){
+        if (!gSDL) {
             gGraphicsError = "SDL2 runtime library not found";
             return false;
         }
-        bool ok=true;
+        bool ok = true;
 
-        #define LOAD_REQUIRED_SDL(n) do { n = reinterpret_cast<PFN_SDL_##n>(load_symbol(gSDL, #n)); if(!n) ok=false; } while(0)
-        #define LOAD_OPTIONAL_SDL(n) do { n = reinterpret_cast<PFN_SDL_##n>(load_symbol(gSDL, #n)); } while(0)
+#define LOAD_REQUIRED_SDL(n)                                                                       \
+    do {                                                                                           \
+        n = reinterpret_cast<PFN_SDL_##n>(load_symbol(gSDL, #n));                                  \
+        if (!n)                                                                                    \
+            ok = false;                                                                            \
+    } while (0)
+#define LOAD_OPTIONAL_SDL(n)                                                                       \
+    do {                                                                                           \
+        n = reinterpret_cast<PFN_SDL_##n>(load_symbol(gSDL, #n));                                  \
+    } while (0)
         // Only video/window/event/timing entry points are required to start graphics.
         // Image and audio entry points are optional and are loaded lazily when those
         // features are actually used. This avoids rejecting valid SDL2 runtimes.
@@ -940,24 +920,29 @@ namespace {
         LOAD_OPTIONAL_SDL(SDL_ClearQueuedAudio);
         LOAD_OPTIONAL_SDL(SDL_GetNumAudioDevices);
 
-        #undef LOAD_OPTIONAL_SDL
-        #undef LOAD_REQUIRED_SDL
-        if(!ok){
+#undef LOAD_OPTIONAL_SDL
+#undef LOAD_REQUIRED_SDL
+        if (!ok) {
             gGraphicsError = "SDL2 runtime is missing required video/window symbols";
-            gSDL=nullptr;
+            gSDL = nullptr;
             return false;
         }
         load_optional_media_libs();
 
         return true;
-
     }
 
     static bool load_gl() {
 
-        if(!SDL_GL_GetProcAddress) return false;
+        if (!SDL_GL_GetProcAddress)
+            return false;
 
-        #define LOAD_GL(n) do { n = reinterpret_cast<PFN_##n>(SDL_GL_GetProcAddress(#n)); if(!n) return false; } while(0)
+#define LOAD_GL(n)                                                                                 \
+    do {                                                                                           \
+        n = reinterpret_cast<PFN_##n>(SDL_GL_GetProcAddress(#n));                                  \
+        if (!n)                                                                                    \
+            return false;                                                                          \
+    } while (0)
         LOAD_GL(glViewport);
         LOAD_GL(glMatrixMode);
         LOAD_GL(glLoadIdentity);
@@ -989,26 +974,25 @@ namespace {
         LOAD_GL(glLineWidth);
         LOAD_GL(glPolygonMode);
 
-        #undef LOAD_GL
+#undef LOAD_GL
         return true;
-
     }
 
     static double now_seconds() {
 
-        if(SDL_GetPerformanceCounter && SDL_GetPerformanceFrequency){
+        if (SDL_GetPerformanceCounter && SDL_GetPerformanceFrequency) {
 
             static uint64_t start = SDL_GetPerformanceCounter();
 
-            return double(SDL_GetPerformanceCounter() - start) / double(SDL_GetPerformanceFrequency());
-
+            return double(SDL_GetPerformanceCounter() - start) /
+                   double(SDL_GetPerformanceFrequency());
         }
         return double(std::clock()) / double(CLOCKS_PER_SEC);
-
     }
 
     static void apply_software_layout() {
-        if (!gRenderer) return;
+        if (!gRenderer)
+            return;
         const int logicalW = gUiWidth > 0.0 ? int(std::llround(gUiWidth)) : gWidth;
         const int logicalH = gUiHeight > 0.0 ? int(std::llround(gUiHeight)) : gHeight;
         SDL_RenderSetLogicalSize(gRenderer, logicalW, logicalH);
@@ -1016,21 +1000,25 @@ namespace {
     }
 
     static void software_color(double r, double g, double b, double a) {
-        if (!gRenderer) return;
-        SDL_SetRenderDrawColor(
-            gRenderer,
-            uint8_t(std::clamp(r, 0.0, 1.0) * 255.0),
-            uint8_t(std::clamp(g, 0.0, 1.0) * 255.0),
-            uint8_t(std::clamp(b, 0.0, 1.0) * 255.0),
-            uint8_t(std::clamp(a, 0.0, 1.0) * 255.0));
+        if (!gRenderer)
+            return;
+        SDL_SetRenderDrawColor(gRenderer,
+                               uint8_t(std::clamp(r, 0.0, 1.0) * 255.0),
+                               uint8_t(std::clamp(g, 0.0, 1.0) * 255.0),
+                               uint8_t(std::clamp(b, 0.0, 1.0) * 255.0),
+                               uint8_t(std::clamp(a, 0.0, 1.0) * 255.0));
     }
 
     static SDL_Rect software_rect(double x, double y, double w, double h) {
-        return SDL_Rect{int(std::llround(x)), int(std::llround(y)), std::max(0, int(std::llround(w))), std::max(0, int(std::llround(h)))};
+        return SDL_Rect{int(std::llround(x)),
+                        int(std::llround(y)),
+                        std::max(0, int(std::llround(w))),
+                        std::max(0, int(std::llround(h)))};
     }
 
     static void software_fill_rect(double x, double y, double w, double h) {
-        if (!gRenderer) return;
+        if (!gRenderer)
+            return;
         SDL_Rect rect = software_rect(x, y, w, h);
         SDL_RenderFillRect(gRenderer, &rect);
     }
@@ -1040,7 +1028,6 @@ namespace {
         if (!gWindow || !SDL_GetWindowSize) {
 
             return;
-
         }
 
         int width = 0;
@@ -1052,12 +1039,10 @@ namespace {
         if (width > 0) {
 
             gWidth = width;
-
         }
         if (height > 0) {
 
             gHeight = height;
-
         }
 
         const double logicalWidth = gUiWidth > 0.0 ? gUiWidth : static_cast<double>(gWidth);
@@ -1075,7 +1060,6 @@ namespace {
         if (gUiWidth <= 0.0 || gUiHeight <= 0.0 || gWidth <= 0 || gHeight <= 0) {
 
             return;
-
         }
 
         const double scaleX = static_cast<double>(gWidth) / logicalWidth;
@@ -1091,7 +1075,6 @@ namespace {
         gViewportX = (gWidth - gViewportWidth) / 2;
 
         gViewportY = (gHeight - gViewportHeight) / 2;
-
     }
 
     static void apply_2d_viewport() {
@@ -1099,7 +1082,6 @@ namespace {
         update_window_metrics();
 
         glViewport(gViewportX, gViewportY, gViewportWidth, gViewportHeight);
-
     }
 
     static void window_to_ui(double windowX, double windowY, double& uiX, double& uiY) {
@@ -1115,17 +1097,17 @@ namespace {
             uiY = windowY;
 
             return;
-
         }
 
-        uiX = (windowX - static_cast<double>(gViewportX)) * logicalWidth / static_cast<double>(gViewportWidth);
+        uiX = (windowX - static_cast<double>(gViewportX)) * logicalWidth /
+              static_cast<double>(gViewportWidth);
 
-        uiY = (windowY - static_cast<double>(gViewportY)) * logicalHeight / static_cast<double>(gViewportHeight);
-
+        uiY = (windowY - static_cast<double>(gViewportY)) * logicalHeight /
+              static_cast<double>(gViewportHeight);
     }
 
     // glBlendFunc is loaded separately to keep the backend tiny but complete.
-    using PFN_glBlendFunc = void (*)(GLenum,GLenum);
+    using PFN_glBlendFunc = void (*)(GLenum, GLenum);
 
     static PFN_glBlendFunc glBlendFuncPtr = nullptr;
 
@@ -1142,7 +1124,6 @@ namespace {
         if (glBlendFuncPtr) {
 
             glBlendFuncPtr(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         }
 
         glMatrixMode(GL_PROJECTION);
@@ -1157,677 +1138,664 @@ namespace {
 
         if (gCameraZoom != 1.0f || gCameraX != 0.0f || gCameraY != 0.0f) {
 
-            glTranslatef(static_cast<float>(logicalWidth * 0.5), static_cast<float>(logicalHeight * 0.5), 0.0f);
+            glTranslatef(static_cast<float>(logicalWidth * 0.5),
+                         static_cast<float>(logicalHeight * 0.5),
+                         0.0f);
 
             glScalef(gCameraZoom, gCameraZoom, 1.0f);
 
             glTranslatef(static_cast<float>(-logicalWidth * 0.5 - gCameraX),
-            static_cast<float>(-logicalHeight * 0.5 - gCameraY),
-            0.0f);
-
+                         static_cast<float>(-logicalHeight * 0.5 - gCameraY),
+                         0.0f);
         }
     }
 
-    static void draw_quad(float x,float y,float w,float h,float r,float g,float b,float a){
+    static void draw_quad(float x, float y, float w, float h, float r, float g, float b, float a) {
 
-        glColor4f(r,g,b,a);
+        glColor4f(r, g, b, a);
         glBegin(GL_QUADS);
-        glVertex2f(x,y);
-        glVertex2f(x+w,y);
-        glVertex2f(x+w,y+h);
-        glVertex2f(x,y+h);
+        glVertex2f(x, y);
+        glVertex2f(x + w, y);
+        glVertex2f(x + w, y + h);
+        glVertex2f(x, y + h);
         glEnd();
-
     }
 
-    static void draw_circle(float cx,float cy,float radius,float r,float g,float b,float a){
+    static void draw_circle(float cx, float cy, float radius, float r, float g, float b, float a) {
 
-        glColor4f(r,g,b,a);
+        glColor4f(r, g, b, a);
         glBegin(GL_TRIANGLES);
-        constexpr int N=48;
-        for(int i=0;i<N;i++){
-            double a0=(2.0*M_PI*i)/N,a1=(2.0*M_PI*(i+1))/N;
-            glVertex2f(cx,cy);
-            glVertex2f(float(cx+std::cos(a0)*radius),float(cy+std::sin(a0)*radius));
-            glVertex2f(float(cx+std::cos(a1)*radius),float(cy+std::sin(a1)*radius));
-        } glEnd();
-
+        constexpr int N = 48;
+        for (int i = 0; i < N; i++) {
+            double a0 = (2.0 * M_PI * i) / N, a1 = (2.0 * M_PI * (i + 1)) / N;
+            glVertex2f(cx, cy);
+            glVertex2f(float(cx + std::cos(a0) * radius), float(cy + std::sin(a0) * radius));
+            glVertex2f(float(cx + std::cos(a1) * radius), float(cy + std::sin(a1) * radius));
+        }
+        glEnd();
     }
 
     static const uint8_t FONT5X7[][7] = {
 
-        {
-            0x0E,0x11,0x11,0x1F,0x11,0x11,0x11
-        }, // A
-        {
-            0x1E,0x11,0x11,0x1E,0x11,0x11,0x1E
-        }, // B
-        {
-            0x0F,0x10,0x10,0x10,0x10,0x10,0x0F
-        }, // C
-        {
-            0x1E,0x11,0x11,0x11,0x11,0x11,0x1E
-        }, // D
-        {
-            0x1F,0x10,0x10,0x1E,0x10,0x10,0x1F
-        }, // E
-        {
-            0x1F,0x10,0x10,0x1E,0x10,0x10,0x10
-        }, // F
-        {
-            0x0F,0x10,0x10,0x17,0x11,0x11,0x0F
-        }, // G
-        {
-            0x11,0x11,0x11,0x1F,0x11,0x11,0x11
-        }, // H
-        {
-            0x1F,0x04,0x04,0x04,0x04,0x04,0x1F
-        }, // I
-        {
-            0x01,0x01,0x01,0x01,0x11,0x11,0x0E
-        }, // J
-        {
-            0x11,0x12,0x14,0x18,0x14,0x12,0x11
-        }, // K
-        {
-            0x10,0x10,0x10,0x10,0x10,0x10,0x1F
-        }, // L
-        {
-            0x11,0x1B,0x15,0x15,0x11,0x11,0x11
-        }, // M
-        {
-            0x11,0x19,0x15,0x13,0x11,0x11,0x11
-        }, // N
-        {
-            0x0E,0x11,0x11,0x11,0x11,0x11,0x0E
-        }, // O
-        {
-            0x1E,0x11,0x11,0x1E,0x10,0x10,0x10
-        }, // P
-        {
-            0x0E,0x11,0x11,0x11,0x15,0x12,0x0D
-        }, // Q
-        {
-            0x1E,0x11,0x11,0x1E,0x14,0x12,0x11
-        }, // R
-        {
-            0x0F,0x10,0x10,0x0E,0x01,0x01,0x1E
-        }, // S
-        {
-            0x1F,0x04,0x04,0x04,0x04,0x04,0x04
-        }, // T
-        {
-            0x11,0x11,0x11,0x11,0x11,0x11,0x0E
-        }, // U
-        {
-            0x11,0x11,0x11,0x11,0x11,0x0A,0x04
-        }, // V
-        {
-            0x11,0x11,0x11,0x15,0x15,0x1B,0x11
-        }, // W
-        {
-            0x11,0x11,0x0A,0x04,0x0A,0x11,0x11
-        }, // X
-        {
-            0x11,0x11,0x0A,0x04,0x04,0x04,0x04
-        }, // Y
-        {
-            0x1F,0x01,0x02,0x04,0x08,0x10,0x1F
-        }, // Z
-        {
-            0x0E,0x11,0x13,0x15,0x19,0x11,0x0E
-        }, // 0
-        {
-            0x04,0x0C,0x04,0x04,0x04,0x04,0x0E
-        }, // 1
-        {
-            0x0E,0x11,0x01,0x02,0x04,0x08,0x1F
-        }, // 2
-        {
-            0x1E,0x01,0x01,0x0E,0x01,0x01,0x1E
-        }, // 3
-        {
-            0x02,0x06,0x0A,0x12,0x1F,0x02,0x02
-        }, // 4
-        {
-            0x1F,0x10,0x10,0x1E,0x01,0x01,0x1E
-        }, // 5
-        {
-            0x06,0x08,0x10,0x1E,0x11,0x11,0x0E
-        }, // 6
-        {
-            0x1F,0x01,0x02,0x04,0x08,0x08,0x08
-        }, // 7
-        {
-            0x0E,0x11,0x11,0x0E,0x11,0x11,0x0E
-        }, // 8
-        {
-            0x0E,0x11,0x11,0x0F,0x01,0x02,0x0C
-        }, // 9
+        {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}, // A
+        {0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E}, // B
+        {0x0F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x0F}, // C
+        {0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E}, // D
+        {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F}, // E
+        {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10}, // F
+        {0x0F, 0x10, 0x10, 0x17, 0x11, 0x11, 0x0F}, // G
+        {0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}, // H
+        {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x1F}, // I
+        {0x01, 0x01, 0x01, 0x01, 0x11, 0x11, 0x0E}, // J
+        {0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11}, // K
+        {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F}, // L
+        {0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11}, // M
+        {0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11}, // N
+        {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}, // O
+        {0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10}, // P
+        {0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D}, // Q
+        {0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11}, // R
+        {0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E}, // S
+        {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}, // T
+        {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}, // U
+        {0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04}, // V
+        {0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11}, // W
+        {0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11}, // X
+        {0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04}, // Y
+        {0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F}, // Z
+        {0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E}, // 0
+        {0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E}, // 1
+        {0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F}, // 2
+        {0x1E, 0x01, 0x01, 0x0E, 0x01, 0x01, 0x1E}, // 3
+        {0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02}, // 4
+        {0x1F, 0x10, 0x10, 0x1E, 0x01, 0x01, 0x1E}, // 5
+        {0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E}, // 6
+        {0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08}, // 7
+        {0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E}, // 8
+        {0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C}, // 9
     };
 
-    static const uint8_t* glyph(char c){
+    static const uint8_t* glyph(char c) {
 
-        c=(c>='a'&&c<='z')?char(c-'a'+'A'):c;
+        c = (c >= 'a' && c <= 'z') ? char(c - 'a' + 'A') : c;
 
-        if(c>='A'&&c<='Z') return FONT5X7[c-'A'];
+        if (c >= 'A' && c <= 'Z')
+            return FONT5X7[c - 'A'];
 
-        if(c>='0'&&c<='9') return FONT5X7[26+(c-'0')];
+        if (c >= '0' && c <= '9')
+            return FONT5X7[26 + (c - '0')];
 
         return nullptr;
-
     }
-    static void draw_text(float x,float y,float scale,const char* text,float r,float g,float b,float a){
+    static void
+    draw_text(float x, float y, float scale, const char* text, float r, float g, float b, float a) {
 
-        if(!text) return;
-        float ox=x;
-        glColor4f(r,g,b,a);
+        if (!text)
+            return;
+        float ox = x;
+        glColor4f(r, g, b, a);
 
-        for(const char* p=text;*p;p++){
+        for (const char* p = text; *p; p++) {
 
-            if(*p=='\n'){
-                y+=8.0f*scale;
-                x=ox;
-                continue;
-            } if(*p==' '){
-                x+=6.0f*scale;
-                continue;
-            }
-            const auto* glyphBits=glyph(*p);
-            if(!glyphBits){
-                x+=6.0f*scale;
+            if (*p == '\n') {
+                y += 8.0f * scale;
+                x = ox;
                 continue;
             }
-            for(int row=0;row<7;row++) for(int col=0;col<5;col++) if(glyphBits[row]&(1u<<(4-col))) draw_quad(x+col*scale,y+row*scale,scale,scale,r,g,b,a);
+            if (*p == ' ') {
+                x += 6.0f * scale;
+                continue;
+            }
+            const auto* glyphBits = glyph(*p);
+            if (!glyphBits) {
+                x += 6.0f * scale;
+                continue;
+            }
+            for (int row = 0; row < 7; row++)
+                for (int col = 0; col < 5; col++)
+                    if (glyphBits[row] & (1u << (4 - col)))
+                        draw_quad(x + col * scale, y + row * scale, scale, scale, r, g, b, a);
 
-            x+=6.0f*scale;
-
+            x += 6.0f * scale;
         }
     }
 
-    static void draw_textured_quad(const Texture& t,float x,float y,float w,float h,float tintR,float tintG,float tintB,float tintA){
+    static void draw_textured_quad(const Texture& t,
+                                   float x,
+                                   float y,
+                                   float w,
+                                   float h,
+                                   float tintR,
+                                   float tintG,
+                                   float tintB,
+                                   float tintA) {
 
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D,t.id);
-        glColor4f(tintR,tintG,tintB,tintA);
+        glBindTexture(GL_TEXTURE_2D, t.id);
+        glColor4f(tintR, tintG, tintB, tintA);
         glBegin(GL_QUADS);
 
-        glTexCoord2f(0,0);
-        glVertex2f(x,y);
-        glTexCoord2f(1,0);
-        glVertex2f(x+w,y);
-        glTexCoord2f(1,1);
-        glVertex2f(x+w,y+h);
-        glTexCoord2f(0,1);
-        glVertex2f(x,y+h);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
         glEnd();
-        glBindTexture(GL_TEXTURE_2D,0);
+        glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
-
     }
 
-    static int64_t scancode_for(const char* name){
+    static int64_t scancode_for(const char* name) {
 
-        if(!name)return -1;
+        if (!name)
+            return -1;
         std::string s(name);
-        std::transform(s.begin(),s.end(),s.begin(),[](unsigned char c){return char(std::toupper(c));
-    });
+        std::transform(
+            s.begin(), s.end(), s.begin(), [](unsigned char c) { return char(std::toupper(c)); });
 
-    if(s.size()==1 && s[0]>='A'&&s[0]<='Z'){
-        static const int codes[26]={
-            4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29
-        };
-        return codes[s[0]-'A'];
-    }
-    if(s=="SPACE")return 44;
-    if(s=="ENTER")return 40;
-    if(s=="ESC"||s=="ESCAPE")return 41;
-    if(s=="LEFT")return 80;
-    if(s=="RIGHT")return 79;
-    if(s=="UP")return 82;
-    if(s=="DOWN")return 81;
-    if(s=="TAB")return 43;
-    if(s=="SHIFT")return 225;
-    if(s=="CTRL"||s=="CONTROL")return 224;
-    return -1;
-
-}
-
-static void clear_event(){
-    gLastEvent=0;
-    gLastKey=-1;
-    gLastMouseButton=0;
-    gMouseClicked=false;
-}
-static void process_events(){
-
-    if(!SDL_PollEvent) return;
-    SDL_Event e{
-    };
-
-    clear_event();
-
-    while(SDL_PollEvent(&e)){
-
-        gLastEvent=int(e.type);
-
-        if(e.type==SDL_QUIT){
-            gClose=true;
+        if (s.size() == 1 && s[0] >= 'A' && s[0] <= 'Z') {
+            static const int codes[26] = {4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
+                                          17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
+            return codes[s[0] - 'A'];
         }
-        else if(e.type==SDL_KEYDOWN){
-            gLastKey=int(e.key.keysym.scancode);
-            if(gLastKey>=0&&gLastKey<int(gKeys.size()))gKeys[size_t(gLastKey)]=1;
-        }
-        else if(e.type==SDL_KEYUP){
-            gLastKey=int(e.key.keysym.scancode);
-            if(gLastKey>=0&&gLastKey<int(gKeys.size()))gKeys[size_t(gLastKey)]=0;
-        }
-        else if(e.type==SDL_MOUSEMOTION){
-            gLastX=e.motion.x;
-            gLastY=e.motion.y;
-        }
-        else if(e.type==SDL_MOUSEBUTTONDOWN){
-            gMouseClicked=true;
-            gLastMouseButton=int(e.button.button);
-            gLastX=e.button.x;
-            gLastY=e.button.y;
-            if(e.button.button<gMouseButtons.size())gMouseButtons[e.button.button]=1;
-        }
-        else if(e.type==SDL_MOUSEBUTTONUP){
-            gLastMouseButton=int(e.button.button);
-            gLastX=e.button.x;
-            gLastY=e.button.y;
-            if(e.button.button<gMouseButtons.size())gMouseButtons[e.button.button]=0;
-        }
-        else if(e.type==SDL_WINDOWEVENT){
-            gLastX=e.window.data1;
-            gLastY=e.window.data2;
-            if(e.window.data1>0)gWidth=e.window.data1;
-            if(e.window.data2>0)gHeight=e.window.data2;
-        }
+        if (s == "SPACE")
+            return 44;
+        if (s == "ENTER")
+            return 40;
+        if (s == "ESC" || s == "ESCAPE")
+            return 41;
+        if (s == "LEFT")
+            return 80;
+        if (s == "RIGHT")
+            return 79;
+        if (s == "UP")
+            return 82;
+        if (s == "DOWN")
+            return 81;
+        if (s == "TAB")
+            return 43;
+        if (s == "SHIFT")
+            return 225;
+        if (s == "CTRL" || s == "CONTROL")
+            return 224;
+        return -1;
     }
-}
 
-static uint16_t rd16(const uint8_t* p) {
-    return uint16_t(p[0]) | (uint16_t(p[1]) << 8);
-}
-static uint32_t rd32(const uint8_t* p) {
-    return uint32_t(p[0]) | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16) | (uint32_t(p[3]) << 24);
-}
-static bool load_pcm_wav(const char* path, SDL_AudioSpec& spec, std::vector<uint8_t>& audio, std::string& err) {
-
-    std::FILE* f = std::fopen(path, "rb");
-
-    if(!f) {
-        err = std::string("cannot open WAV: ") + path;
-        return false;
+    static void clear_event() {
+        gLastEvent = 0;
+        gLastKey = -1;
+        gLastMouseButton = 0;
+        gMouseClicked = false;
     }
-    std::vector<uint8_t> bytes;
-
-    std::fseek(f, 0, SEEK_END);
-
-    long n = std::ftell(f);
-
-    std::rewind(f);
-
-    if(n <= 0) {
-        std::fclose(f);
-        err = "WAV file is empty";
-        return false;
-    }
-    bytes.resize(size_t(n));
-
-    if(std::fread(bytes.data(), 1, bytes.size(), f) != bytes.size()) {
-        std::fclose(f);
-        err = "cannot read WAV";
-        return false;
-    }
-    std::fclose(f);
-
-    if(bytes.size() < 12 || std::memcmp(bytes.data(), "RIFF", 4) != 0 || std::memcmp(bytes.data()+8, "WAVE", 4) != 0) {
-        err = "not a RIFF/WAVE file";
-        return false;
-    }
-    uint16_t audioFormat=0, channels=0, bits=0;
-
-    uint32_t sampleRate=0, dataOffset=0, dataSize=0;
-
-    size_t pos = 12;
-
-    while(pos + 8 <= bytes.size()) {
-
-        const uint8_t* h = bytes.data() + pos;
-
-        uint32_t chunkSize = rd32(h + 4);
-
-        size_t payload = pos + 8;
-
-        if(payload > bytes.size()) break;
-
-        size_t available = bytes.size() - payload;
-
-        size_t actual = std::min<size_t>(chunkSize, available);
-
-        if(std::memcmp(h, "fmt ", 4) == 0 && actual >= 16) {
-
-            const uint8_t* q = bytes.data() + payload;
-
-            audioFormat = rd16(q + 0);
-
-            channels = rd16(q + 2);
-
-            sampleRate = rd32(q + 4);
-
-            bits = rd16(q + 14);
-
-        } else if(std::memcmp(h, "data", 4) == 0) {
-
-            dataOffset = uint32_t(payload);
-
-            dataSize = uint32_t(actual);
-
-        }
-        pos = payload + actual + (actual & 1u);
-
-    }
-    if(audioFormat != 1) {
-        err = "only PCM WAV is supported without SDL2_mixer";
-        return false;
-    }
-    if(channels == 0 || channels > 2 || sampleRate == 0) {
-        err = "unsupported WAV channel/sample-rate configuration";
-        return false;
-    }
-    if(bits != 8 && bits != 16) {
-        err = "only 8-bit or 16-bit PCM WAV is supported";
-        return false;
-    }
-    if(dataSize == 0 || dataOffset + dataSize > bytes.size()) {
-        err = "WAV data chunk is missing or invalid";
-        return false;
-    }
-    spec = SDL_AudioSpec{
-    };
-
-    spec.freq = int(sampleRate);
-
-    spec.channels = uint8_t(channels);
-
-    spec.samples = 4096;
-
-    spec.padding = 0;
-
-    spec.callback = nullptr;
-
-    spec.userdata = nullptr;
-
-    if(bits == 8) spec.format = 0x0008u;
-    // AUDIO_U8
-    else spec.format = 0x8010u;
-    // AUDIO_S16LSB
-    spec.size = dataSize;
-
-    audio.assign(bytes.begin() + dataOffset, bytes.begin() + dataOffset + dataSize);
-
-    return true;
-
-}
-
-static bool ensure_audio_device(const SDL_AudioSpec& wanted) {
-
-    if(gAudioDevice) return true;
-
-    if(!SDL_OpenAudioDevice || !SDL_PauseAudioDevice) {
-        gAudioError = "SDL2 audio queue API unavailable";
-        return false;
-    }
-    SDL_AudioSpec obtained{
-    };
-
-    constexpr int ALLOW_FREQUENCY_CHANGE = 0x0001;
-
-    constexpr int ALLOW_FORMAT_CHANGE = 0x0002;
-
-    constexpr int ALLOW_CHANNELS_CHANGE = 0x0004;
-
-    const int allowed = ALLOW_FREQUENCY_CHANGE | ALLOW_FORMAT_CHANGE | ALLOW_CHANNELS_CHANGE;
-
-    gAudioDevice = SDL_OpenAudioDevice(nullptr, 0, &wanted, &obtained, allowed);
-
-    if(!gAudioDevice) {
-        gAudioError = std::string("SDL_OpenAudioDevice failed: ") + sdl_error();
-        return false;
-    }
-    gAudioSpec = obtained;
-
-    SDL_PauseAudioDevice(gAudioDevice, 0);
-
-    return true;
-
-}
-
-static float pcm_sample(const uint8_t* p, uint16_t format) {
-
-    if(format == 0x0008u) return (float(int(*p) - 128)) / 128.0f;
-
-    if(format == 0x8010u) {
-        int16_t v = int16_t(uint16_t(p[0]) | (uint16_t(p[1]) << 8));
-        return float(v) / 32768.0f;
-    }
-    return 0.0f;
-
-}
-
-static std::vector<uint8_t> convert_pcm(const std::vector<uint8_t>& src, const SDL_AudioSpec& in, const SDL_AudioSpec& out) {
-
-    const int inBytes = (in.format == 0x0008u) ? 1 : (in.format == 0x8010u ? 2 : 0);
-
-    const int outBytes = (out.format == 0x0008u) ? 1 : (out.format == 0x8010u ? 2 : 0);
-
-    if(inBytes == 0 || outBytes == 0 || in.channels == 0 || out.channels == 0 || in.freq <= 0 || out.freq <= 0) return {
-    };
-
-    const size_t inFrameBytes = size_t(inBytes) * in.channels;
-
-    if(inFrameBytes == 0 || src.size() < inFrameBytes) return {
-    };
-
-    const size_t inFrames = src.size() / inFrameBytes;
-
-    const size_t outFrames = std::max<size_t>(1, size_t(std::llround(double(inFrames) * double(out.freq) / double(in.freq))));
-
-    std::vector<float> inF(inFrames * in.channels, 0.0f);
-
-    for(size_t f=0; f<inFrames; ++f) {
-
-        for(unsigned c=0; c<in.channels; ++c) inF[f*in.channels+c] = pcm_sample(src.data()+f*inFrameBytes+c*inBytes, in.format);
-
-    }
-    std::vector<float> outF(outFrames * out.channels, 0.0f);
-
-    for(size_t of=0; of<outFrames; ++of) {
-
-        double srcPos = double(of) * double(in.freq) / double(out.freq);
-
-        size_t i0 = size_t(std::min<double>(std::floor(srcPos), double(inFrames-1)));
-
-        size_t i1 = std::min(i0+1, inFrames-1);
-
-        float frac = float(srcPos - double(i0));
-
-        auto chan = [&](unsigned c)->float {
-
-            if(in.channels == 1) return inF[i0] * (1.0f-frac) + inF[i1] * frac;
-
-            if(out.channels == 1) {
-
-                float a0=inF[i0*in.channels+0], a1=inF[i0*in.channels+std::min<unsigned>(1,in.channels-1)];
-
-                float b0=inF[i1*in.channels+0], b1=inF[i1*in.channels+std::min<unsigned>(1,in.channels-1)];
-
-                return ((a0+a1)*0.5f)*(1.0f-frac) + ((b0+b1)*0.5f)*frac;
-
+    static void process_events() {
+
+        if (!SDL_PollEvent)
+            return;
+        SDL_Event e{};
+
+        clear_event();
+
+        while (SDL_PollEvent(&e)) {
+
+            gLastEvent = int(e.type);
+
+            if (e.type == SDL_QUIT) {
+                gClose = true;
+            } else if (e.type == SDL_KEYDOWN) {
+                gLastKey = int(e.key.keysym.scancode);
+                if (gLastKey >= 0 && gLastKey < int(gKeys.size()))
+                    gKeys[size_t(gLastKey)] = 1;
+            } else if (e.type == SDL_KEYUP) {
+                gLastKey = int(e.key.keysym.scancode);
+                if (gLastKey >= 0 && gLastKey < int(gKeys.size()))
+                    gKeys[size_t(gLastKey)] = 0;
+            } else if (e.type == SDL_MOUSEMOTION) {
+                gLastX = e.motion.x;
+                gLastY = e.motion.y;
+            } else if (e.type == SDL_MOUSEBUTTONDOWN) {
+                gMouseClicked = true;
+                gLastMouseButton = int(e.button.button);
+                gLastX = e.button.x;
+                gLastY = e.button.y;
+                if (e.button.button < gMouseButtons.size())
+                    gMouseButtons[e.button.button] = 1;
+            } else if (e.type == SDL_MOUSEBUTTONUP) {
+                gLastMouseButton = int(e.button.button);
+                gLastX = e.button.x;
+                gLastY = e.button.y;
+                if (e.button.button < gMouseButtons.size())
+                    gMouseButtons[e.button.button] = 0;
+            } else if (e.type == SDL_WINDOWEVENT) {
+                gLastX = e.window.data1;
+                gLastY = e.window.data2;
+                if (e.window.data1 > 0)
+                    gWidth = e.window.data1;
+                if (e.window.data2 > 0)
+                    gHeight = e.window.data2;
             }
-            unsigned srcC = std::min<unsigned>(c, in.channels-1);
-
-            return inF[i0*in.channels+srcC] * (1.0f-frac) + inF[i1*in.channels+srcC] * frac;
-
-        };
-
-        for(unsigned c=0;c<out.channels;++c) outF[of*out.channels+c]=std::clamp(chan(c),-1.0f,1.0f);
-
-    }
-    std::vector<uint8_t> converted(outF.size()*size_t(outBytes));
-
-    for(size_t i=0;i<outF.size();++i) {
-
-        if(out.format == 0x8010u) {
-
-            int v=int(std::lrint(std::clamp(outF[i],-1.0f,1.0f)*32767.0f));
-
-            converted[i*2]=uint8_t(v&0xff);
-            converted[i*2+1]=uint8_t((uint16_t(v)>>8)&0xff);
-
-        } else {
-
-            int v=128+int(std::lrint(std::clamp(outF[i],-1.0f,1.0f)*127.0f));
-
-            converted[i]=uint8_t(std::clamp(v,0,255));
-
         }
     }
-    return converted;
 
-}
+    static uint16_t rd16(const uint8_t* p) {
+        return uint16_t(p[0]) | (uint16_t(p[1]) << 8);
+    }
+    static uint32_t rd32(const uint8_t* p) {
+        return uint32_t(p[0]) | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16) |
+               (uint32_t(p[3]) << 24);
+    }
+    static bool load_pcm_wav(const char* path,
+                             SDL_AudioSpec& spec,
+                             std::vector<uint8_t>& audio,
+                             std::string& err) {
 
-static bool init_graphics(int w, int h, const char* title) {
-    if (gGraphics) return true;
-    gGraphicsError.clear();
-    gSoftware2D = false;
-    gOpenGL3D = false;
-    if (!load_sdl()) return false;
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-        gGraphicsError = std::string("SDL_Init failed: ") + sdl_error();
-        return false;
+        std::FILE* f = std::fopen(path, "rb");
+
+        if (!f) {
+            err = std::string("cannot open WAV: ") + path;
+            return false;
+        }
+        std::vector<uint8_t> bytes;
+
+        std::fseek(f, 0, SEEK_END);
+
+        long n = std::ftell(f);
+
+        std::rewind(f);
+
+        if (n <= 0) {
+            std::fclose(f);
+            err = "WAV file is empty";
+            return false;
+        }
+        bytes.resize(size_t(n));
+
+        if (std::fread(bytes.data(), 1, bytes.size(), f) != bytes.size()) {
+            std::fclose(f);
+            err = "cannot read WAV";
+            return false;
+        }
+        std::fclose(f);
+
+        if (bytes.size() < 12 || std::memcmp(bytes.data(), "RIFF", 4) != 0 ||
+            std::memcmp(bytes.data() + 8, "WAVE", 4) != 0) {
+            err = "not a RIFF/WAVE file";
+            return false;
+        }
+        uint16_t audioFormat = 0, channels = 0, bits = 0;
+
+        uint32_t sampleRate = 0, dataOffset = 0, dataSize = 0;
+
+        size_t pos = 12;
+
+        while (pos + 8 <= bytes.size()) {
+
+            const uint8_t* h = bytes.data() + pos;
+
+            uint32_t chunkSize = rd32(h + 4);
+
+            size_t payload = pos + 8;
+
+            if (payload > bytes.size())
+                break;
+
+            size_t available = bytes.size() - payload;
+
+            size_t actual = std::min<size_t>(chunkSize, available);
+
+            if (std::memcmp(h, "fmt ", 4) == 0 && actual >= 16) {
+
+                const uint8_t* q = bytes.data() + payload;
+
+                audioFormat = rd16(q + 0);
+
+                channels = rd16(q + 2);
+
+                sampleRate = rd32(q + 4);
+
+                bits = rd16(q + 14);
+
+            } else if (std::memcmp(h, "data", 4) == 0) {
+
+                dataOffset = uint32_t(payload);
+
+                dataSize = uint32_t(actual);
+            }
+            pos = payload + actual + (actual & 1u);
+        }
+        if (audioFormat != 1) {
+            err = "only PCM WAV is supported without SDL2_mixer";
+            return false;
+        }
+        if (channels == 0 || channels > 2 || sampleRate == 0) {
+            err = "unsupported WAV channel/sample-rate configuration";
+            return false;
+        }
+        if (bits != 8 && bits != 16) {
+            err = "only 8-bit or 16-bit PCM WAV is supported";
+            return false;
+        }
+        if (dataSize == 0 || dataOffset + dataSize > bytes.size()) {
+            err = "WAV data chunk is missing or invalid";
+            return false;
+        }
+        spec = SDL_AudioSpec{};
+
+        spec.freq = int(sampleRate);
+
+        spec.channels = uint8_t(channels);
+
+        spec.samples = 4096;
+
+        spec.padding = 0;
+
+        spec.callback = nullptr;
+
+        spec.userdata = nullptr;
+
+        if (bits == 8)
+            spec.format = 0x0008u;
+        // AUDIO_U8
+        else
+            spec.format = 0x8010u;
+        // AUDIO_S16LSB
+        spec.size = dataSize;
+
+        audio.assign(bytes.begin() + dataOffset, bytes.begin() + dataOffset + dataSize);
+
+        return true;
     }
-    gWidth = std::max(w, 320);
-    gHeight = std::max(h, 240);
-    gWindow = SDL_CreateWindow(title ? title : "NEXUS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gWidth, gHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-    if (!gWindow) {
-        gGraphicsError = std::string("SDL_CreateWindow failed: ") + sdl_error();
-        SDL_Quit();
-        return false;
+
+    static bool ensure_audio_device(const SDL_AudioSpec& wanted) {
+
+        if (gAudioDevice)
+            return true;
+
+        if (!SDL_OpenAudioDevice || !SDL_PauseAudioDevice) {
+            gAudioError = "SDL2 audio queue API unavailable";
+            return false;
+        }
+        SDL_AudioSpec obtained{};
+
+        constexpr int ALLOW_FREQUENCY_CHANGE = 0x0001;
+
+        constexpr int ALLOW_FORMAT_CHANGE = 0x0002;
+
+        constexpr int ALLOW_CHANNELS_CHANGE = 0x0004;
+
+        const int allowed = ALLOW_FREQUENCY_CHANGE | ALLOW_FORMAT_CHANGE | ALLOW_CHANNELS_CHANGE;
+
+        gAudioDevice = SDL_OpenAudioDevice(nullptr, 0, &wanted, &obtained, allowed);
+
+        if (!gAudioDevice) {
+            gAudioError = std::string("SDL_OpenAudioDevice failed: ") + sdl_error();
+            return false;
+        }
+        gAudioSpec = obtained;
+
+        SDL_PauseAudioDevice(gAudioDevice, 0);
+
+        return true;
     }
-    // The 2D backend intentionally starts with SDL's software renderer.
-    // This avoids driver-dependent OpenGL/fixed-pipeline issues and makes
-    // Paint/GUI behavior deterministic across desktop and virtual displays.
-    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_SOFTWARE);
-    if (!gRenderer) {
-        // Fall back to accelerated 2D when software rendering is unavailable.
-        gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    static float pcm_sample(const uint8_t* p, uint16_t format) {
+
+        if (format == 0x0008u)
+            return (float(int(*p) - 128)) / 128.0f;
+
+        if (format == 0x8010u) {
+            int16_t v = int16_t(uint16_t(p[0]) | (uint16_t(p[1]) << 8));
+            return float(v) / 32768.0f;
+        }
+        return 0.0f;
     }
-    if (!gRenderer) {
-        gGraphicsError = std::string("SDL renderer creation failed: ") + sdl_error();
+
+    static std::vector<uint8_t> convert_pcm(const std::vector<uint8_t>& src,
+                                            const SDL_AudioSpec& in,
+                                            const SDL_AudioSpec& out) {
+
+        const int inBytes = (in.format == 0x0008u) ? 1 : (in.format == 0x8010u ? 2 : 0);
+
+        const int outBytes = (out.format == 0x0008u) ? 1 : (out.format == 0x8010u ? 2 : 0);
+
+        if (inBytes == 0 || outBytes == 0 || in.channels == 0 || out.channels == 0 ||
+            in.freq <= 0 || out.freq <= 0)
+            return {};
+
+        const size_t inFrameBytes = size_t(inBytes) * in.channels;
+
+        if (inFrameBytes == 0 || src.size() < inFrameBytes)
+            return {};
+
+        const size_t inFrames = src.size() / inFrameBytes;
+
+        const size_t outFrames = std::max<size_t>(
+            1, size_t(std::llround(double(inFrames) * double(out.freq) / double(in.freq))));
+
+        std::vector<float> inF(inFrames * in.channels, 0.0f);
+
+        for (size_t f = 0; f < inFrames; ++f) {
+
+            for (unsigned c = 0; c < in.channels; ++c)
+                inF[f * in.channels + c] =
+                    pcm_sample(src.data() + f * inFrameBytes + c * inBytes, in.format);
+        }
+        std::vector<float> outF(outFrames * out.channels, 0.0f);
+
+        for (size_t of = 0; of < outFrames; ++of) {
+
+            double srcPos = double(of) * double(in.freq) / double(out.freq);
+
+            size_t i0 = size_t(std::min<double>(std::floor(srcPos), double(inFrames - 1)));
+
+            size_t i1 = std::min(i0 + 1, inFrames - 1);
+
+            float frac = float(srcPos - double(i0));
+
+            auto chan = [&](unsigned c) -> float {
+                if (in.channels == 1)
+                    return inF[i0] * (1.0f - frac) + inF[i1] * frac;
+
+                if (out.channels == 1) {
+
+                    float a0 = inF[i0 * in.channels + 0],
+                          a1 = inF[i0 * in.channels + std::min<unsigned>(1, in.channels - 1)];
+
+                    float b0 = inF[i1 * in.channels + 0],
+                          b1 = inF[i1 * in.channels + std::min<unsigned>(1, in.channels - 1)];
+
+                    return ((a0 + a1) * 0.5f) * (1.0f - frac) + ((b0 + b1) * 0.5f) * frac;
+                }
+                unsigned srcC = std::min<unsigned>(c, in.channels - 1);
+
+                return inF[i0 * in.channels + srcC] * (1.0f - frac) +
+                       inF[i1 * in.channels + srcC] * frac;
+            };
+
+            for (unsigned c = 0; c < out.channels; ++c)
+                outF[of * out.channels + c] = std::clamp(chan(c), -1.0f, 1.0f);
+        }
+        std::vector<uint8_t> converted(outF.size() * size_t(outBytes));
+
+        for (size_t i = 0; i < outF.size(); ++i) {
+
+            if (out.format == 0x8010u) {
+
+                int v = int(std::lrint(std::clamp(outF[i], -1.0f, 1.0f) * 32767.0f));
+
+                converted[i * 2] = uint8_t(v & 0xff);
+                converted[i * 2 + 1] = uint8_t((uint16_t(v) >> 8) & 0xff);
+
+            } else {
+
+                int v = 128 + int(std::lrint(std::clamp(outF[i], -1.0f, 1.0f) * 127.0f));
+
+                converted[i] = uint8_t(std::clamp(v, 0, 255));
+            }
+        }
+        return converted;
+    }
+
+    static bool init_graphics(int w, int h, const char* title) {
+        if (gGraphics)
+            return true;
+        gGraphicsError.clear();
+        gSoftware2D = false;
+        gOpenGL3D = false;
+        if (!load_sdl())
+            return false;
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+            gGraphicsError = std::string("SDL_Init failed: ") + sdl_error();
+            return false;
+        }
+        gWidth = std::max(w, 320);
+        gHeight = std::max(h, 240);
+        gWindow = SDL_CreateWindow(title ? title : "NEXUS",
+                                   SDL_WINDOWPOS_CENTERED,
+                                   SDL_WINDOWPOS_CENTERED,
+                                   gWidth,
+                                   gHeight,
+                                   SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        if (!gWindow) {
+            gGraphicsError = std::string("SDL_CreateWindow failed: ") + sdl_error();
+            SDL_Quit();
+            return false;
+        }
+        // The 2D backend intentionally starts with SDL's software renderer.
+        // This avoids driver-dependent OpenGL/fixed-pipeline issues and makes
+        // Paint/GUI behavior deterministic across desktop and virtual displays.
+        gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_SOFTWARE);
+        if (!gRenderer) {
+            // Fall back to accelerated 2D when software rendering is unavailable.
+            gRenderer = SDL_CreateRenderer(
+                gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        }
+        if (!gRenderer) {
+            gGraphicsError = std::string("SDL renderer creation failed: ") + sdl_error();
+            SDL_DestroyWindow(gWindow);
+            gWindow = nullptr;
+            SDL_Quit();
+            return false;
+        }
+        gSoftware2D = true;
+        gGraphics = true;
+        gClose = false;
+        gLastFrame = now_seconds();
+        apply_software_layout();
+        software_color(0.04, 0.045, 0.065, 1.0);
+        SDL_RenderClear(gRenderer);
+        SDL_RenderPresent(gRenderer);
+        return true;
+    }
+
+    static bool ensure_opengl_backend() {
+        if (gOpenGL3D)
+            return true;
+        if (!gWindow || !gRenderer) {
+            gGraphicsError = "graphics window is not initialized";
+            return false;
+        }
+        int w = gWidth;
+        int h = gHeight;
+        if (SDL_GetWindowSize)
+            SDL_GetWindowSize(gWindow, &w, &h);
+        SDL_DestroyRenderer(gRenderer);
+        gRenderer = nullptr;
         SDL_DestroyWindow(gWindow);
         gWindow = nullptr;
-        SDL_Quit();
-        return false;
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        gWindow = SDL_CreateWindow("NEXUS",
+                                   SDL_WINDOWPOS_CENTERED,
+                                   SDL_WINDOWPOS_CENTERED,
+                                   std::max(w, 320),
+                                   std::max(h, 240),
+                                   SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        if (!gWindow) {
+            gGraphicsError = std::string("OpenGL window creation failed: ") + sdl_error();
+            return false;
+        }
+        gGL = SDL_GL_CreateContext(gWindow);
+        if (!gGL) {
+            gGraphicsError = std::string("SDL_GL_CreateContext failed: ") + sdl_error();
+            SDL_DestroyWindow(gWindow);
+            gWindow = nullptr;
+            return false;
+        }
+        if (!load_gl()) {
+            gGraphicsError = "OpenGL 2.1 compatibility functions are unavailable";
+            SDL_GL_DeleteContext(gGL);
+            gGL = nullptr;
+            SDL_DestroyWindow(gWindow);
+            gWindow = nullptr;
+            return false;
+        }
+        glBlendFuncPtr = reinterpret_cast<PFN_glBlendFunc>(SDL_GL_GetProcAddress("glBlendFunc"));
+        gWidth = std::max(w, 320);
+        gHeight = std::max(h, 240);
+        gSoftware2D = false;
+        gOpenGL3D = true;
+        apply_2d_viewport();
+        return true;
     }
-    gSoftware2D = true;
-    gGraphics = true;
-    gClose = false;
-    gLastFrame = now_seconds();
-    apply_software_layout();
-    software_color(0.04, 0.045, 0.065, 1.0);
-    SDL_RenderClear(gRenderer);
-    SDL_RenderPresent(gRenderer);
-    return true;
-}
 
-static bool ensure_opengl_backend() {
-    if (gOpenGL3D) return true;
-    if (!gWindow || !gRenderer) {
-        gGraphicsError = "graphics window is not initialized";
-        return false;
-    }
-    int w = gWidth;
-    int h = gHeight;
-    if (SDL_GetWindowSize) SDL_GetWindowSize(gWindow, &w, &h);
-    SDL_DestroyRenderer(gRenderer);
-    gRenderer = nullptr;
-    SDL_DestroyWindow(gWindow);
-    gWindow = nullptr;
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    gWindow = SDL_CreateWindow("NEXUS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, std::max(w, 320), std::max(h, 240), SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-    if (!gWindow) {
-        gGraphicsError = std::string("OpenGL window creation failed: ") + sdl_error();
-        return false;
-    }
-    gGL = SDL_GL_CreateContext(gWindow);
-    if (!gGL) {
-        gGraphicsError = std::string("SDL_GL_CreateContext failed: ") + sdl_error();
-        SDL_DestroyWindow(gWindow);
-        gWindow = nullptr;
-        return false;
-    }
-    if (!load_gl()) {
-        gGraphicsError = "OpenGL 2.1 compatibility functions are unavailable";
-        SDL_GL_DeleteContext(gGL);
+    static void shutdown_graphics() {
+        if (gMusic && Mix_FreeMusic)
+            Mix_FreeMusic(gMusic);
+        gMusic = nullptr;
+        if (Mix_CloseAudio && gMixerReady)
+            Mix_CloseAudio();
+        gMixerReady = false;
+        if (gAudioDevice && SDL_CloseAudioDevice)
+            SDL_CloseAudioDevice(gAudioDevice);
+        gAudioDevice = 0;
+        gAudio = false;
+        for (auto& [id, font] : gFonts) {
+            if (TTF_CloseFont && font)
+                TTF_CloseFont(font);
+        }
+        gFonts.clear();
+        if (TTF_Quit && gTTFReady)
+            TTF_Quit();
+        gTTFReady = false;
+        for (auto& [id, texture] : gTextures) {
+            if (texture.id && glDeleteTextures && gOpenGL3D)
+                glDeleteTextures(1, &texture.id);
+            if (texture.software && SDL_DestroyTexture)
+                SDL_DestroyTexture(texture.software);
+        }
+        gTextures.clear();
+        for (auto& [id, canvas] : gCanvases) {
+            if (canvas.tex && glDeleteTextures && gOpenGL3D)
+                glDeleteTextures(1, &canvas.tex);
+            if (canvas.software && SDL_DestroyTexture)
+                SDL_DestroyTexture(canvas.software);
+        }
+        gCanvases.clear();
+        gSounds.clear();
+        gModels.clear();
+        gParticles.clear();
+        gAnims.clear();
+        gScenes.clear();
+        gEntities.clear();
+        if (gGL && SDL_GL_DeleteContext)
+            SDL_GL_DeleteContext(gGL);
         gGL = nullptr;
-        SDL_DestroyWindow(gWindow);
+        if (gRenderer && SDL_DestroyRenderer)
+            SDL_DestroyRenderer(gRenderer);
+        gRenderer = nullptr;
+        if (gWindow && SDL_DestroyWindow)
+            SDL_DestroyWindow(gWindow);
         gWindow = nullptr;
-        return false;
+        if (SDL_Quit)
+            SDL_Quit();
+        gGraphics = false;
+        gSoftware2D = false;
+        gOpenGL3D = false;
     }
-    glBlendFuncPtr = reinterpret_cast<PFN_glBlendFunc>(SDL_GL_GetProcAddress("glBlendFunc"));
-    gWidth = std::max(w, 320);
-    gHeight = std::max(h, 240);
-    gSoftware2D = false;
-    gOpenGL3D = true;
-    apply_2d_viewport();
-    return true;
-}
-
-static void shutdown_graphics() {
-    if (gMusic && Mix_FreeMusic) Mix_FreeMusic(gMusic);
-    gMusic = nullptr;
-    if (Mix_CloseAudio && gMixerReady) Mix_CloseAudio();
-    gMixerReady = false;
-    if (gAudioDevice && SDL_CloseAudioDevice) SDL_CloseAudioDevice(gAudioDevice);
-    gAudioDevice = 0;
-    gAudio = false;
-    for (auto& [id, font] : gFonts) { if (TTF_CloseFont && font) TTF_CloseFont(font); }
-    gFonts.clear();
-    if (TTF_Quit && gTTFReady) TTF_Quit();
-    gTTFReady = false;
-    for (auto& [id, texture] : gTextures) {
-        if (texture.id && glDeleteTextures && gOpenGL3D) glDeleteTextures(1, &texture.id);
-        if (texture.software && SDL_DestroyTexture) SDL_DestroyTexture(texture.software);
-    }
-    gTextures.clear();
-    for (auto& [id, canvas] : gCanvases) {
-        if (canvas.tex && glDeleteTextures && gOpenGL3D) glDeleteTextures(1, &canvas.tex);
-        if (canvas.software && SDL_DestroyTexture) SDL_DestroyTexture(canvas.software);
-    }
-    gCanvases.clear();
-    gSounds.clear();
-    gModels.clear();
-    gParticles.clear();
-    gAnims.clear();
-    gScenes.clear();
-    gEntities.clear();
-    if (gGL && SDL_GL_DeleteContext) SDL_GL_DeleteContext(gGL);
-    gGL = nullptr;
-    if (gRenderer && SDL_DestroyRenderer) SDL_DestroyRenderer(gRenderer);
-    gRenderer = nullptr;
-    if (gWindow && SDL_DestroyWindow) SDL_DestroyWindow(gWindow);
-    gWindow = nullptr;
-    if (SDL_Quit) SDL_Quit();
-    gGraphics = false;
-    gSoftware2D = false;
-    gOpenGL3D = false;
-}
 
 } // namespace
 
@@ -1835,84 +1803,97 @@ namespace {
 
     static std::string nx_shell_quote(const char* s) {
 
-        std::string out="'";
+        std::string out = "'";
 
-        if (!s) return out+"'";
+        if (!s)
+            return out + "'";
 
-        for (const char c: std::string(s)) {
-            if (c=='\'') out += "'\\''";
-            else out += c;
+        for (const char c : std::string(s)) {
+            if (c == '\'')
+                out += "'\\''";
+            else
+                out += c;
         }
         out += "'";
         return out;
-
     }
 
     struct SQLiteApi {
 
         using Db = void;
 
-        using Open = int(*)(const char*, Db**);
+        using Open = int (*)(const char*, Db**);
 
-        using Exec = int(*)(Db*, const char*, int(*)(void*,int,char**,char**), void*, char**);
+        using Exec = int (*)(Db*, const char*, int (*)(void*, int, char**, char**), void*, char**);
 
-        using Close = int(*)(Db*);
+        using Close = int (*)(Db*);
 
-        void* handle=nullptr;
-        Open open=nullptr;
-        Exec exec=nullptr;
-        Close close=nullptr;
-
+        void* handle = nullptr;
+        Open open = nullptr;
+        Exec exec = nullptr;
+        Close close = nullptr;
     };
 
     static SQLiteApi gSqlite;
 
     static std::unordered_map<int64_t, SQLiteApi::Db*> gDatabases;
 
-    static int64_t gNextDb=1;
+    static int64_t gNextDb = 1;
 
     static bool load_sqlite_runtime() {
 
-        if (gSqlite.open) return true;
+        if (gSqlite.open)
+            return true;
 
-        #if defined(_WIN32)
-        HMODULE h=LoadLibraryA("sqlite3.dll");
+#if defined(_WIN32)
+        HMODULE h = LoadLibraryA("sqlite3.dll");
 
-        if(!h) return false;
+        if (!h)
+            return false;
 
-        gSqlite.handle=h;
+        gSqlite.handle = h;
 
-        gSqlite.open=reinterpret_cast<SQLiteApi::Open>(GetProcAddress(h,"sqlite3_open"));
+        gSqlite.open = reinterpret_cast<SQLiteApi::Open>(GetProcAddress(h, "sqlite3_open"));
 
-        gSqlite.exec=reinterpret_cast<SQLiteApi::Exec>(GetProcAddress(h,"sqlite3_exec"));
+        gSqlite.exec = reinterpret_cast<SQLiteApi::Exec>(GetProcAddress(h, "sqlite3_exec"));
 
-        gSqlite.close=reinterpret_cast<SQLiteApi::Close>(GetProcAddress(h,"sqlite3_close"));
+        gSqlite.close = reinterpret_cast<SQLiteApi::Close>(GetProcAddress(h, "sqlite3_close"));
 
-        #else
-        void* h=dlopen("libsqlite3.so.0",RTLD_LAZY);
+#else
+        void* h = dlopen("libsqlite3.so.0", RTLD_LAZY);
 
-        if(!h) h=dlopen("libsqlite3.so",RTLD_LAZY);
+        if (!h)
+            h = dlopen("libsqlite3.so", RTLD_LAZY);
 
-        if(!h) return false;
+        if (!h)
+            return false;
 
-        gSqlite.handle=h;
+        gSqlite.handle = h;
 
-        gSqlite.open=reinterpret_cast<SQLiteApi::Open>(dlsym(h,"sqlite3_open"));
+        gSqlite.open = reinterpret_cast<SQLiteApi::Open>(dlsym(h, "sqlite3_open"));
 
-        gSqlite.exec=reinterpret_cast<SQLiteApi::Exec>(dlsym(h,"sqlite3_exec"));
+        gSqlite.exec = reinterpret_cast<SQLiteApi::Exec>(dlsym(h, "sqlite3_exec"));
 
-        gSqlite.close=reinterpret_cast<SQLiteApi::Close>(dlsym(h,"sqlite3_close"));
+        gSqlite.close = reinterpret_cast<SQLiteApi::Close>(dlsym(h, "sqlite3_close"));
 
-        #endif
+#endif
         return gSqlite.open && gSqlite.exec && gSqlite.close;
-
     }
-}
-
+} // namespace
 
 namespace {
-    struct NxManagedBlock { size_t size = 0; bool scanContents = false; std::thread::id owner; };
-    struct NxManagedBlockView { uintptr_t base = 0; void* pointer = nullptr; size_t size = 0; bool scanContents = false; bool marked = false; };
+    struct NxManagedBlock {
+        size_t size = 0;
+        bool scanContents = false;
+        std::thread::id owner;
+    };
+    struct NxManagedBlockView {
+        uintptr_t base = 0;
+        void* pointer = nullptr;
+        size_t size = 0;
+        bool scanContents = false;
+        bool marked = false;
+    };
     static std::unordered_map<void*, NxManagedBlock> gNxManagedBlocks;
     static std::mutex gNxManagedMutex;
     static constexpr size_t kNxGcThreshold = 512u * 1024u;
@@ -1927,8 +1908,10 @@ namespace {
         return reinterpret_cast<uintptr_t>(pthread_get_stackaddr_np(pthread_self()));
 #elif defined(__linux__)
         pthread_attr_t attr;
-        if (pthread_getattr_np(pthread_self(), &attr) != 0) return 0;
-        void* base = nullptr; size_t size = 0;
+        if (pthread_getattr_np(pthread_self(), &attr) != 0)
+            return 0;
+        void* base = nullptr;
+        size_t size = 0;
         const int status = pthread_attr_getstack(&attr, &base, &size);
         pthread_attr_destroy(&attr);
         return status == 0 ? reinterpret_cast<uintptr_t>(base) + size : 0;
@@ -1938,35 +1921,55 @@ namespace {
     }
     static void nx_gc_collect();
     static void* nx_managed_alloc(size_t size, bool scanContents = false) {
-        if (size == 0) size = 1;
-        if (!gNxCollecting && gNxBytesSinceCollection >= kNxGcThreshold) nx_gc_collect();
+        if (size == 0)
+            size = 1;
+        if (!gNxCollecting && gNxBytesSinceCollection >= kNxGcThreshold)
+            nx_gc_collect();
         void* pointer = std::malloc(size);
-        if (!pointer) return nullptr;
-        { std::lock_guard<std::mutex> lock(gNxManagedMutex);
-          gNxManagedBlocks.emplace(pointer, NxManagedBlock{size, scanContents, std::this_thread::get_id()}); }
-        if (size > std::numeric_limits<size_t>::max() - gNxBytesSinceCollection) gNxBytesSinceCollection = kNxGcThreshold;
-        else gNxBytesSinceCollection += size;
+        if (!pointer)
+            return nullptr;
+        {
+            std::lock_guard<std::mutex> lock(gNxManagedMutex);
+            gNxManagedBlocks.emplace(
+                pointer, NxManagedBlock{size, scanContents, std::this_thread::get_id()});
+        }
+        if (size > std::numeric_limits<size_t>::max() - gNxBytesSinceCollection)
+            gNxBytesSinceCollection = kNxGcThreshold;
+        else
+            gNxBytesSinceCollection += size;
         return pointer;
     }
     static void* nx_managed_realloc(void* pointer, size_t size) {
-        if (!pointer) return nx_managed_alloc(size);
-        if (size == 0) size = 1;
-        if (!gNxCollecting && gNxBytesSinceCollection >= kNxGcThreshold) nx_gc_collect();
+        if (!pointer)
+            return nx_managed_alloc(size);
+        if (size == 0)
+            size = 1;
+        if (!gNxCollecting && gNxBytesSinceCollection >= kNxGcThreshold)
+            nx_gc_collect();
         std::lock_guard<std::mutex> lock(gNxManagedMutex);
         auto old = gNxManagedBlocks.find(pointer);
         void* resized = std::realloc(pointer, size);
-        if (!resized) return nullptr;
+        if (!resized)
+            return nullptr;
         if (old != gNxManagedBlocks.end()) {
             NxManagedBlock block = old->second;
-            gNxManagedBlocks.erase(old); block.size = size; gNxManagedBlocks[resized] = block;
+            gNxManagedBlocks.erase(old);
+            block.size = size;
+            gNxManagedBlocks[resized] = block;
         }
-        if (size > std::numeric_limits<size_t>::max() - gNxBytesSinceCollection) gNxBytesSinceCollection = kNxGcThreshold;
-        else gNxBytesSinceCollection += size;
+        if (size > std::numeric_limits<size_t>::max() - gNxBytesSinceCollection)
+            gNxBytesSinceCollection = kNxGcThreshold;
+        else
+            gNxBytesSinceCollection += size;
         return resized;
     }
     static void nx_managed_free(void* pointer) {
-        if (!pointer) return;
-        { std::lock_guard<std::mutex> lock(gNxManagedMutex); gNxManagedBlocks.erase(pointer); }
+        if (!pointer)
+            return;
+        {
+            std::lock_guard<std::mutex> lock(gNxManagedMutex);
+            gNxManagedBlocks.erase(pointer);
+        }
         std::free(pointer);
     }
     // Conservative collection scans arbitrary machine words from the active stack.
@@ -1980,43 +1983,67 @@ namespace {
 #elif defined(_MSC_VER)
     __declspec(no_sanitize_address)
 #endif
-    static uintptr_t nx_gc_read_stack_word(uintptr_t address) {
+    static uintptr_t
+    nx_gc_read_stack_word(uintptr_t address) {
         const volatile unsigned char* input =
             reinterpret_cast<const volatile unsigned char*>(address);
         uintptr_t value = 0;
         unsigned char* output = reinterpret_cast<unsigned char*>(&value);
-        for (size_t i = 0; i < sizeof(value); ++i) output[i] = input[i];
+        for (size_t i = 0; i < sizeof(value); ++i)
+            output[i] = input[i];
         return value;
     }
 
     static void nx_gc_collect() {
-        if (gNxCollecting) return;
+        if (gNxCollecting)
+            return;
         gNxCollecting = true;
-        struct CollectGuard { ~CollectGuard() { gNxCollecting = false; } } guard;
+        struct CollectGuard {
+            ~CollectGuard() {
+                gNxCollecting = false;
+            }
+        } guard;
         volatile uintptr_t stackMarker = 0;
         const uintptr_t stackStart = reinterpret_cast<uintptr_t>(&stackMarker);
         const uintptr_t stackEnd = nx_stack_high();
-        if (stackEnd <= stackStart) { gNxBytesSinceCollection = 0; return; }
+        if (stackEnd <= stackStart) {
+            gNxBytesSinceCollection = 0;
+            return;
+        }
         std::lock_guard<std::mutex> lock(gNxManagedMutex);
         const auto owner = std::this_thread::get_id();
         std::vector<NxManagedBlockView> blocks;
         blocks.reserve(gNxManagedBlocks.size());
         for (const auto& [pointer, block] : gNxManagedBlocks) {
-            if (block.owner != owner) continue;
-            blocks.push_back({reinterpret_cast<uintptr_t>(pointer), pointer, block.size, block.scanContents, false});
+            if (block.owner != owner)
+                continue;
+            blocks.push_back({reinterpret_cast<uintptr_t>(pointer),
+                              pointer,
+                              block.size,
+                              block.scanContents,
+                              false});
         }
-        std::sort(blocks.begin(), blocks.end(), [](const auto& left, const auto& right) { return left.base < right.base; });
+        std::sort(blocks.begin(), blocks.end(), [](const auto& left, const auto& right) {
+            return left.base < right.base;
+        });
         std::vector<size_t> work;
         work.reserve(blocks.size() / 4u + 1u);
         auto markCandidate = [&](uintptr_t candidate) {
-            auto it = std::upper_bound(blocks.begin(), blocks.end(), candidate,
-                [](uintptr_t value, const NxManagedBlockView& block) { return value < block.base; });
-            if (it == blocks.begin()) return;
+            auto it = std::upper_bound(blocks.begin(),
+                                       blocks.end(),
+                                       candidate,
+                                       [](uintptr_t value, const NxManagedBlockView& block) {
+                                           return value < block.base;
+                                       });
+            if (it == blocks.begin())
+                return;
             --it;
-            if (candidate < it->base || candidate - it->base >= it->size || it->marked) return;
+            if (candidate < it->base || candidate - it->base >= it->size || it->marked)
+                return;
             it->marked = true;
             const size_t index = static_cast<size_t>(it - blocks.begin());
-            if (it->scanContents && it->size <= kNxGcMaxScannedBlock) work.push_back(index);
+            if (it->scanContents && it->size <= kNxGcMaxScannedBlock)
+                work.push_back(index);
         };
         auto scanRange = [&](uintptr_t begin, uintptr_t end) {
             constexpr uintptr_t wordSize = sizeof(uintptr_t);
@@ -2047,7 +2074,8 @@ namespace {
             if (!block.marked) {
                 auto it = gNxManagedBlocks.find(block.pointer);
                 if (it != gNxManagedBlocks.end() && it->second.owner == owner) {
-                    std::free(block.pointer); gNxManagedBlocks.erase(it);
+                    std::free(block.pointer);
+                    gNxManagedBlocks.erase(it);
                 }
             }
         }
@@ -2056,1203 +2084,1419 @@ namespace {
 #ifdef NEXUS_RUNTIME_TESTING
     static size_t nx_test_live_managed_bytes() {
         std::lock_guard<std::mutex> lock(gNxManagedMutex);
-        size_t total = 0; const auto owner = std::this_thread::get_id();
-        for (const auto& [pointer, block] : gNxManagedBlocks) { (void)pointer; if (block.owner == owner) total += block.size; }
+        size_t total = 0;
+        const auto owner = std::this_thread::get_id();
+        for (const auto& [pointer, block] : gNxManagedBlocks) {
+            (void)pointer;
+            if (block.owner == owner)
+                total += block.size;
+        }
         return total;
     }
 #endif
-}
+} // namespace
 
 extern "C" {
 
-    // Existing runtime API -------------------------------------------------------
-    static char* nx_strdup(const char* src){
-        if(!src)src="";
-        size_t n=std::strlen(src);
-        char* out=(char*)nx_managed_alloc(n+1);
-        if(!out)return nullptr;
-        std::memcpy(out,src,n+1);
-        return out;
-    }
-    double nexus_sqrt(double x){
-        return std::sqrt(std::max(0.0,x));
-    }
-    double nexus_to_f64(int64_t x){
-        return double(x);
-    }
-    int64_t nexus_to_i64(double x){
-        return int64_t(std::llround(x));
-    }
-    void nexus_print_i64(int64_t x){
-        std::printf("%lld\n",(long long)x);
-    } void nexus_print_f64(double x){
-        std::printf("%.15g\n",x);
-    } void nexus_print_bool(bool x){
-        std::puts(x?"true":"false");
-    } void nexus_print_str(const char*x){
-        std::puts(x?x:"null");
-    }
+// Existing runtime API -------------------------------------------------------
+static char* nx_strdup(const char* src) {
+    if (!src)
+        src = "";
+    size_t n = std::strlen(src);
+    char* out = (char*)nx_managed_alloc(n + 1);
+    if (!out)
+        return nullptr;
+    std::memcpy(out, src, n + 1);
+    return out;
+}
+double nexus_sqrt(double x) {
+    return std::sqrt(std::max(0.0, x));
+}
+double nexus_to_f64(int64_t x) {
+    return double(x);
+}
+int64_t nexus_to_i64(double x) {
+    return int64_t(std::llround(x));
+}
+void nexus_print_i64(int64_t x) {
+    std::printf("%lld\n", (long long)x);
+}
+void nexus_print_f64(double x) {
+    std::printf("%.15g\n", x);
+}
+void nexus_print_bool(bool x) {
+    std::puts(x ? "true" : "false");
+}
+void nexus_print_str(const char* x) {
+    std::puts(x ? x : "null");
+}
 
 #ifdef NEXUS_RUNTIME_TESTING
-    size_t nexus_runtime_test_live_bytes() { return nx_test_live_managed_bytes(); }
-    void nexus_runtime_test_collect() { nx_gc_collect(); }
+size_t nexus_runtime_test_live_bytes() {
+    return nx_test_live_managed_bytes();
+}
+void nexus_runtime_test_collect() {
+    nx_gc_collect();
+}
 #endif
 
-    void* nexus_alloc(size_t n){
-        return nx_managed_alloc(n, n <= kNxGcMaxScannedBlock);
-    } void nexus_free(void*p){
-        nx_managed_free(p);
-    } void nexus_bounds_check(int64_t i,int64_t n){
-        if(i<0||i>=n){
-            std::fprintf(stderr,"Nexus runtime error: array index %lld out of bounds for size %lld\n",(long long)i,(long long)n);
-            std::exit(1);
-        }
+void* nexus_alloc(size_t n) {
+    return nx_managed_alloc(n, n <= kNxGcMaxScannedBlock);
+}
+void nexus_free(void* p) {
+    nx_managed_free(p);
+}
+void nexus_bounds_check(int64_t i, int64_t n) {
+    if (i < 0 || i >= n) {
+        std::fprintf(stderr,
+                     "Nexus runtime error: array index %lld out of bounds for size %lld\n",
+                     (long long)i,
+                     (long long)n);
+        std::exit(1);
     }
-    char* nexus_str_concat(const char*a,const char*b){
-        if(!a)a="";
-        if(!b)b="";
-        size_t la=std::strlen(a),lb=std::strlen(b);
-        char*out=(char*)nx_managed_alloc(la+lb+1);
-        if(!out)return nullptr;
-        std::memcpy(out,a,la);
-        std::memcpy(out+la,b,lb);
-        out[la+lb]=0;
-        return out;
-    } bool nexus_str_equal(const char*a,const char*b){
-        return a==b||(!a&&!b)||(a&&b&&std::strcmp(a,b)==0);
-    }
-    static char* nx_readline(){
-        size_t cap=256,len=0;
-        char*buf=(char*)nx_managed_alloc(cap);
-        if(!buf)return nullptr;
-        int ch;
-        while((ch=std::getchar())!=EOF){
-            if(ch=='\r')continue;
-            if(ch=='\n')break;
-            if(len+1>=cap){
-                cap*=2;
-                char*nb=(char*)nx_managed_realloc(buf,cap);
-                if(!nb){
-                    nx_managed_free(buf);
-                    return nullptr;
-                }
-                buf=nb;
+}
+char* nexus_str_concat(const char* a, const char* b) {
+    if (!a)
+        a = "";
+    if (!b)
+        b = "";
+    size_t la = std::strlen(a), lb = std::strlen(b);
+    char* out = (char*)nx_managed_alloc(la + lb + 1);
+    if (!out)
+        return nullptr;
+    std::memcpy(out, a, la);
+    std::memcpy(out + la, b, lb);
+    out[la + lb] = 0;
+    return out;
+}
+bool nexus_str_equal(const char* a, const char* b) {
+    return a == b || (!a && !b) || (a && b && std::strcmp(a, b) == 0);
+}
+static char* nx_readline() {
+    size_t cap = 256, len = 0;
+    char* buf = (char*)nx_managed_alloc(cap);
+    if (!buf)
+        return nullptr;
+    int ch;
+    while ((ch = std::getchar()) != EOF) {
+        if (ch == '\r')
+            continue;
+        if (ch == '\n')
+            break;
+        if (len + 1 >= cap) {
+            cap *= 2;
+            char* nb = (char*)nx_managed_realloc(buf, cap);
+            if (!nb) {
+                nx_managed_free(buf);
+                return nullptr;
             }
-            buf[len++]=(char)ch;
+            buf = nb;
         }
-        buf[len]=0;
-        return buf;
+        buf[len++] = (char)ch;
     }
-    char* nexus_input(const char*p){
-        if(p)std::fputs(p,stdout);
-        std::fflush(stdout);
-        return nx_readline();
-    }
-    int64_t nexus_input_i64(const char*p){
-        for(;;){
-            char*s=nexus_input(p);
-            if(!s)return 0;
-            char*e=nullptr;
-            long long v=std::strtoll(s,&e,10);
-            while(e&&*e==' ')++e;
-            if(e&&*e==0){
-                nx_managed_free(s);
-                return v;
-            }
-            std::fprintf(stderr,"Invalid integer.\n");
+    buf[len] = 0;
+    return buf;
+}
+char* nexus_input(const char* p) {
+    if (p)
+        std::fputs(p, stdout);
+    std::fflush(stdout);
+    return nx_readline();
+}
+int64_t nexus_input_i64(const char* p) {
+    for (;;) {
+        char* s = nexus_input(p);
+        if (!s)
+            return 0;
+        char* e = nullptr;
+        long long v = std::strtoll(s, &e, 10);
+        while (e && *e == ' ')
+            ++e;
+        if (e && *e == 0) {
             nx_managed_free(s);
+            return v;
         }
+        std::fprintf(stderr, "Invalid integer.\n");
+        nx_managed_free(s);
     }
-    double nexus_input_f64(const char*p){
-        for(;;){
-            char*s=nexus_input(p);
-            if(!s)return 0;
-            char*e=nullptr;
-            double v=std::strtod(s,&e);
-            while(e&&*e==' ')++e;
-            if(e&&*e==0){
-                nx_managed_free(s);
-                return v;
-            }
-            std::fprintf(stderr,"Invalid number.\n");
+}
+double nexus_input_f64(const char* p) {
+    for (;;) {
+        char* s = nexus_input(p);
+        if (!s)
+            return 0;
+        char* e = nullptr;
+        double v = std::strtod(s, &e);
+        while (e && *e == ' ')
+            ++e;
+        if (e && *e == 0) {
             nx_managed_free(s);
+            return v;
         }
+        std::fprintf(stderr, "Invalid number.\n");
+        nx_managed_free(s);
     }
-    char* nexus_str_i64(int64_t v){
-        char b[64];
-        std::snprintf(b,sizeof(b),"%lld",(long long)v);
-        return nx_strdup(b);
-    } char* nexus_str_f64(double v){
-        char b[96];
-        std::snprintf(b,sizeof(b),"%.15g",v);
-        return nx_strdup(b);
-    } char* nexus_str_bool(bool v){
-        return nx_strdup(v?"true":"false");
-    }
-    void nexus_clear(){
-        std::fputs("\033[2J\033[H",stdout);
-        std::fflush(stdout);
-    } void nexus_sleep_ms(int64_t ms){
-        if(ms<=0)return;
+}
+char* nexus_str_i64(int64_t v) {
+    char b[64];
+    std::snprintf(b, sizeof(b), "%lld", (long long)v);
+    return nx_strdup(b);
+}
+char* nexus_str_f64(double v) {
+    char b[96];
+    std::snprintf(b, sizeof(b), "%.15g", v);
+    return nx_strdup(b);
+}
+char* nexus_str_bool(bool v) {
+    return nx_strdup(v ? "true" : "false");
+}
+void nexus_clear() {
+    std::fputs("\033[2J\033[H", stdout);
+    std::fflush(stdout);
+}
+void nexus_sleep_ms(int64_t ms) {
+    if (ms <= 0)
+        return;
 
-        #if defined(_WIN32)
-        Sleep((DWORD)ms);
+#if defined(_WIN32)
+    Sleep((DWORD)ms);
 
-        #else
-        timespec ts{
-        };
-        ts.tv_sec=ms/1000;
-        ts.tv_nsec=(long)((ms%1000)*1000000);
-        nanosleep(&ts,nullptr);
+#else
+    timespec ts{};
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (long)((ms % 1000) * 1000000);
+    nanosleep(&ts, nullptr);
 
-        #endif
+#endif
+}
+int64_t nexus_random_i64(int64_t min, int64_t max) {
+    static bool s = false;
+    if (!s) {
+        std::srand((unsigned)std::time(nullptr));
+        s = true;
     }
-    int64_t nexus_random_i64(int64_t min,int64_t max){
-        static bool s=false;
-        if(!s){
-            std::srand((unsigned)std::time(nullptr));
-            s=true;
-        }
-        if(min>max)std::swap(min,max);
-        uint64_t span=uint64_t(max-min)+1u;
-        if(!span)return min;
-        uint64_t r=(uint64_t(std::rand())<<32)^uint64_t(std::rand());
-        return min+int64_t(r%span);
-    }
-    int64_t nexus_time_ms(){
-        return int64_t(now_seconds()*1000.0);
-    }
-    int64_t nexus_system(const char*c){
-        return c?std::system(c):-1;
-    }
-    char*nexus_file_read(const char*p){
-        if(!p)return nullptr;
-        std::FILE*f=std::fopen(p,"rb");
-        if(!f)return nullptr;
-        std::fseek(f,0,SEEK_END);
-        long n=std::ftell(f);
-        std::rewind(f);
-        if(n<0){
-            std::fclose(f);
-            return nullptr;
-        }
-        char*o=(char*)nx_managed_alloc(size_t(n)+1);
-        if(!o){
-            std::fclose(f);
-            return nullptr;
-        }
-        size_t got=std::fread(o,1,size_t(n),f);
+    if (min > max)
+        std::swap(min, max);
+    uint64_t span = uint64_t(max - min) + 1u;
+    if (!span)
+        return min;
+    uint64_t r = (uint64_t(std::rand()) << 32) ^ uint64_t(std::rand());
+    return min + int64_t(r % span);
+}
+int64_t nexus_time_ms() {
+    return int64_t(now_seconds() * 1000.0);
+}
+int64_t nexus_system(const char* c) {
+    return c ? std::system(c) : -1;
+}
+char* nexus_file_read(const char* p) {
+    if (!p)
+        return nullptr;
+    std::FILE* f = std::fopen(p, "rb");
+    if (!f)
+        return nullptr;
+    std::fseek(f, 0, SEEK_END);
+    long n = std::ftell(f);
+    std::rewind(f);
+    if (n < 0) {
         std::fclose(f);
-        o[got]=0;
-        return o;
+        return nullptr;
     }
-    int64_t nexus_file_write(const char*p,const char*d){
-        if(!p)return-1;
-        std::FILE*f=std::fopen(p,"wb");
-        if(!f)return-1;
-        const char*s=d?d:"";
-        size_t n=std::strlen(s),w=std::fwrite(s,1,n,f);
-        int ok=w==n&&std::fclose(f)==0;
-        return ok?0:-1;
-    }
-    bool nexus_file_exists(const char*p){
-        if(!p)return false;
-        std::FILE*f=std::fopen(p,"rb");
-        if(!f)return false;
+    char* o = (char*)nx_managed_alloc(size_t(n) + 1);
+    if (!o) {
         std::fclose(f);
-        return true;
+        return nullptr;
     }
-    char*nexus_env(const char*n){
-        const char*v=n?std::getenv(n):nullptr;
-        return nx_strdup(v?v:"");
-    }
-    void nexus_exit(int64_t c){
-        std::exit(int(c));
-    }
-    int64_t nexus_mem_alloc(int64_t bytes){
-        if(bytes<=0)return 0;
-        return reinterpret_cast<int64_t>(nx_managed_alloc(static_cast<size_t>(bytes), static_cast<size_t>(bytes) <= kNxGcMaxScannedBlock));
-    }
-    void nexus_mem_free(int64_t ptr){
-        if(ptr) nx_managed_free(reinterpret_cast<void*>(ptr));
-    }
+    size_t got = std::fread(o, 1, size_t(n), f);
+    std::fclose(f);
+    o[got] = 0;
+    return o;
+}
+int64_t nexus_file_write(const char* p, const char* d) {
+    if (!p)
+        return -1;
+    std::FILE* f = std::fopen(p, "wb");
+    if (!f)
+        return -1;
+    const char* s = d ? d : "";
+    size_t n = std::strlen(s), w = std::fwrite(s, 1, n, f);
+    int ok = w == n && std::fclose(f) == 0;
+    return ok ? 0 : -1;
+}
+bool nexus_file_exists(const char* p) {
+    if (!p)
+        return false;
+    std::FILE* f = std::fopen(p, "rb");
+    if (!f)
+        return false;
+    std::fclose(f);
+    return true;
+}
+char* nexus_env(const char* n) {
+    const char* v = n ? std::getenv(n) : nullptr;
+    return nx_strdup(v ? v : "");
+}
+void nexus_exit(int64_t c) {
+    std::exit(int(c));
+}
+int64_t nexus_mem_alloc(int64_t bytes) {
+    if (bytes <= 0)
+        return 0;
+    return reinterpret_cast<int64_t>(nx_managed_alloc(
+        static_cast<size_t>(bytes), static_cast<size_t>(bytes) <= kNxGcMaxScannedBlock));
+}
+void nexus_mem_free(int64_t ptr) {
+    if (ptr)
+        nx_managed_free(reinterpret_cast<void*>(ptr));
+}
 
-    void nexus_mem_set(int64_t ptr,int64_t value,int64_t bytes){
-        if(ptr==0 || bytes<=0) return;
-        std::memset(reinterpret_cast<void*>(ptr), int(value)&0xff, static_cast<size_t>(bytes));
-    }
+void nexus_mem_set(int64_t ptr, int64_t value, int64_t bytes) {
+    if (ptr == 0 || bytes <= 0)
+        return;
+    std::memset(reinterpret_cast<void*>(ptr), int(value) & 0xff, static_cast<size_t>(bytes));
+}
 
-    void nexus_mem_copy(int64_t destination,int64_t source,int64_t bytes){
-        if(destination==0 || source==0 || bytes<=0) return;
-        std::memcpy(reinterpret_cast<void*>(destination), reinterpret_cast<const void*>(source), static_cast<size_t>(bytes));
-    }
-    char* nexus_http_get(const char* url){
+void nexus_mem_copy(int64_t destination, int64_t source, int64_t bytes) {
+    if (destination == 0 || source == 0 || bytes <= 0)
+        return;
+    std::memcpy(reinterpret_cast<void*>(destination),
+                reinterpret_cast<const void*>(source),
+                static_cast<size_t>(bytes));
+}
+char* nexus_http_get(const char* url) {
 
-        if(!url||!*url)return nx_strdup("");
+    if (!url || !*url)
+        return nx_strdup("");
 
-        #if defined(_WIN32)
-        FILE* p=_popen(("curl -fsSL --max-time 15 "+nx_shell_quote(url)).c_str(),"r");
+#if defined(_WIN32)
+    FILE* p = _popen(("curl -fsSL --max-time 15 " + nx_shell_quote(url)).c_str(), "r");
 
-        #else
-        FILE* p=popen(("curl -fsSL --max-time 15 "+nx_shell_quote(url)).c_str(),"r");
+#else
+    FILE* p = popen(("curl -fsSL --max-time 15 " + nx_shell_quote(url)).c_str(), "r");
 
-        #endif
-        if(!p)return nx_strdup("");
+#endif
+    if (!p)
+        return nx_strdup("");
 
-        std::string out;
-        char buf[4096];
-        while(std::fgets(buf,sizeof(buf),p))out += buf;
+    std::string out;
+    char buf[4096];
+    while (std::fgets(buf, sizeof(buf), p))
+        out += buf;
 
-        #if defined(_WIN32)
-        _pclose(p);
+#if defined(_WIN32)
+    _pclose(p);
 
-        #else
-        pclose(p);
+#else
+    pclose(p);
 
-        #endif
-        return nx_strdup(out.c_str());
+#endif
+    return nx_strdup(out.c_str());
+}
+char* nexus_json_get(const char* json, const char* key) {
 
-    }
-    char* nexus_json_get(const char* json,const char* key){
+    if (!json || !key)
+        return nx_strdup("");
 
-        if(!json||!key)return nx_strdup("");
+    const std::string src(json), needle = "\"" + std::string(key) + "\"";
 
-        const std::string src(json), needle="\""+std::string(key)+"\"";
+    auto pos = src.find(needle);
+    if (pos == std::string::npos)
+        return nx_strdup("");
 
-        auto pos=src.find(needle);
-        if(pos==std::string::npos)return nx_strdup("");
+    pos = src.find(':', pos + needle.size());
+    if (pos == std::string::npos)
+        return nx_strdup("");
+    ++pos;
 
-        pos=src.find(':',pos+needle.size());
-        if(pos==std::string::npos)return nx_strdup("");
+    while (pos < src.size() && std::isspace(static_cast<unsigned char>(src[pos])))
         ++pos;
 
-        while(pos<src.size()&&std::isspace(static_cast<unsigned char>(src[pos])))++pos;
+    if (pos >= src.size())
+        return nx_strdup("");
 
-        if(pos>=src.size())return nx_strdup("");
+    if (src[pos] == '"') {
 
-        if(src[pos]=='"'){
+        ++pos;
+        std::string out;
+        bool esc = false;
 
-            ++pos;
-            std::string out;
-            bool esc=false;
-
-            for(;pos<src.size();++pos){
-                char c=src[pos];
-                if(esc){
-                    out+=c;
-                    esc=false;
-                    continue;
-                } if(c=='\\'){
-                    esc=true;
-                    continue;
-                } if(c=='"')break;
-                out+=c;
+        for (; pos < src.size(); ++pos) {
+            char c = src[pos];
+            if (esc) {
+                out += c;
+                esc = false;
+                continue;
             }
-            return nx_strdup(out.c_str());
-
+            if (c == '\\') {
+                esc = true;
+                continue;
+            }
+            if (c == '"')
+                break;
+            out += c;
         }
-        auto end=pos;
-        while(end<src.size()&&src[end]!=','&&src[end]!='}'&&src[end]!='\n'&&src[end]!='\r')++end;
-
-        auto out=src.substr(pos,end-pos);
-        while(!out.empty()&&std::isspace(static_cast<unsigned char>(out.back())))out.pop_back();
         return nx_strdup(out.c_str());
-
     }
-    int64_t nexus_sqlite_open(const char* path){
+    auto end = pos;
+    while (end < src.size() && src[end] != ',' && src[end] != '}' && src[end] != '\n' &&
+           src[end] != '\r')
+        ++end;
 
-        if(!load_sqlite_runtime())return 0;
-        SQLiteApi::Db* db=nullptr;
-        if(gSqlite.open(path?path:":memory:",&db)!=0||!db)return 0;
-        const int64_t id=gNextDb++;
-        gDatabases[id]=db;
-        return id;
+    auto out = src.substr(pos, end - pos);
+    while (!out.empty() && std::isspace(static_cast<unsigned char>(out.back())))
+        out.pop_back();
+    return nx_strdup(out.c_str());
+}
+int64_t nexus_sqlite_open(const char* path) {
 
-    }
-    int64_t nexus_sqlite_exec(int64_t id,const char* sql){
+    if (!load_sqlite_runtime())
+        return 0;
+    SQLiteApi::Db* db = nullptr;
+    if (gSqlite.open(path ? path : ":memory:", &db) != 0 || !db)
+        return 0;
+    const int64_t id = gNextDb++;
+    gDatabases[id] = db;
+    return id;
+}
+int64_t nexus_sqlite_exec(int64_t id, const char* sql) {
 
-        auto it=gDatabases.find(id);
-        if(it==gDatabases.end()||!gSqlite.exec)return -1;
-        char* err=nullptr;
-        const int rc=gSqlite.exec(it->second,sql?sql:"",nullptr,nullptr,&err);
-        if(err){
-            std::fprintf(stderr,"SQLite: %s\n",err);
-            if(std::strlen(err)) std::free(err);
-        } return rc;
-
-    }
-    void nexus_sqlite_close(int64_t id){
-        auto it=gDatabases.find(id);
-        if(it==gDatabases.end())return;
-        if(gSqlite.close)gSqlite.close(it->second);
-        gDatabases.erase(it);
-    }
-    // Portable in-process SHA-256 implementation (FIPS 180-4).
-    // No external commands, temporary files, or platform-specific crypto APIs.
-    static void sha256_transform(uint32_t state[8], const uint8_t block[64]) {
-        static const uint32_t K[64] = {
-            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-        };
-        uint32_t W[64];
-        for (int i = 0; i < 16; ++i) {
-            W[i] = (uint32_t(block[i*4]) << 24) | (uint32_t(block[i*4+1]) << 16) |
-                   (uint32_t(block[i*4+2]) << 8) | uint32_t(block[i*4+3]);
-        }
-        for (int i = 16; i < 64; ++i) {
-            uint32_t s0 = (W[i-15] >> 7 | W[i-15] << 25) ^ (W[i-15] >> 18 | W[i-15] << 14) ^ (W[i-15] >> 3);
-            uint32_t s1 = (W[i-2] >> 17 | W[i-2] << 15) ^ (W[i-2] >> 19 | W[i-2] << 13) ^ (W[i-2] >> 10);
-            W[i] = W[i-16] + s0 + W[i-7] + s1;
-        }
-        uint32_t a = state[0], b = state[1], c = state[2], d = state[3];
-        uint32_t e = state[4], f = state[5], g = state[6], h = state[7];
-        for (int i = 0; i < 64; ++i) {
-            uint32_t S1 = (e >> 6 | e << 26) ^ (e >> 11 | e << 21) ^ (e >> 25 | e << 7);
-            uint32_t ch = (e & f) ^ (~e & g);
-            uint32_t temp1 = h + S1 + ch + K[i] + W[i];
-            uint32_t S0 = (a >> 2 | a << 30) ^ (a >> 13 | a << 19) ^ (a >> 22 | a << 10);
-            uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
-            uint32_t temp2 = S0 + maj;
-            h = g; g = f; f = e; e = d + temp1;
-            d = c; c = b; b = a; a = temp1 + temp2;
-        }
-        state[0] += a; state[1] += b; state[2] += c; state[3] += d;
-        state[4] += e; state[5] += f; state[6] += g; state[7] += h;
-    }
-
-    char* nexus_sha256(const char* text) {
-        if (!text) return nx_strdup("");
-
-        const uint8_t* data = reinterpret_cast<const uint8_t*>(text);
-        size_t len = strlen(text);
-
-        uint32_t state[8] = {
-            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-        };
-
-        // Process full 64-byte blocks
-        size_t i = 0;
-        for (; i + 64 <= len; i += 64) {
-            sha256_transform(state, data + i);
-        }
-
-        // Final block with padding
-        uint8_t block[64] = {0};
-        size_t remaining = len - i;
-        memcpy(block, data + i, remaining);
-        block[remaining] = 0x80;
-
-        if (remaining < 56) {
-            // Length fits in this block
-            uint64_t bit_len = static_cast<uint64_t>(len) * 8;
-            for (int j = 0; j < 8; ++j) {
-                block[63 - j] = static_cast<uint8_t>(bit_len >> (8 * j));
-            }
-            sha256_transform(state, block);
-        } else {
-            // Need two blocks
-            sha256_transform(state, block);
-            memset(block, 0, 64);
-            uint64_t bit_len = static_cast<uint64_t>(len) * 8;
-            for (int j = 0; j < 8; ++j) {
-                block[63 - j] = static_cast<uint8_t>(bit_len >> (8 * j));
-            }
-            sha256_transform(state, block);
-        }
-
-        // Format as hex string
-        char hex[65];
-        for (int j = 0; j < 8; ++j) {
-            sprintf(hex + j * 8, "%08x", state[j]);
-        }
-        hex[64] = '\0';
-        return nx_strdup(hex);
-    }
-
-    // os.args_count / os.args_get: command-line arguments (excluding executable name).
-    // Platform-specific implementation to avoid requiring argc/argv from the compiler.
-    static std::vector<std::string> get_os_args() {
-        std::vector<std::string> args;
-        #if defined(_WIN32)
-        int argc = 0;
-        LPWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
-        if (wargv && argc > 0) {
-            for (int i = 1; i < argc; ++i) { // Skip executable name (index 0)
-                int size = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, nullptr, 0, nullptr, nullptr);
-                if (size > 0) {
-                    std::string arg(static_cast<size_t>(size), '\0');
-                    WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, &arg[0], size, nullptr, nullptr);
-                    if (!arg.empty() && arg.back() == '\0') arg.pop_back();
-                    args.push_back(std::move(arg));
-                }
-            }
-            LocalFree(wargv);
-        }
-        #elif defined(__APPLE__)
-        // macOS does not expose Linux's /proc/self/cmdline. Use the system
-        // argument vector and skip argv[0], matching the Windows/Linux API.
-        int argc = *_NSGetArgc();
-        char** argv = *_NSGetArgv();
-        for (int i = 1; argv && i < argc; ++i) {
-            args.emplace_back(argv[i] ? argv[i] : "");
-        }
-        #else
-        // Linux: /proc/self/cmdline is a NUL-separated argument vector.
-        std::ifstream cmdline("/proc/self/cmdline", std::ios::binary);
-        if (cmdline) {
-            std::string arg;
-            char ch;
-            bool first = true;
-            while (cmdline.get(ch)) {
-                if (ch == '\0') {
-                    if (!first) args.push_back(arg);
-                    first = false;
-                    arg.clear();
-                } else {
-                    arg += ch;
-                }
-            }
-            if (!first && !arg.empty()) args.push_back(arg);
-        }
-        #endif
-        return args;
-    }
-
-    int64_t nexus_os_args_count() {
-        auto args = get_os_args();
-        return static_cast<int64_t>(args.size());
-    }
-
-    char* nexus_os_args_get(int64_t index) {
-        auto args = get_os_args();
-        if (index < 0 || static_cast<size_t>(index) >= args.size()) {
-            return nx_strdup("");
-        }
-        return nx_strdup(args[static_cast<size_t>(index)].c_str());
-    }
-
-    // string.len: returns byte length of string
-    int64_t nexus_string_len(const char* s) {
-        if (!s) return 0;
-        return static_cast<int64_t>(std::strlen(s));
-    }
-
-    // string.byte_at: returns byte at index (0-255), or -1 if out of bounds
-    int64_t nexus_string_byte_at(const char* s, int64_t index) {
-        if (!s) return -1;
-        size_t len = std::strlen(s);
-        if (index < 0 || static_cast<size_t>(index) >= len) return -1;
-        return static_cast<int64_t>(static_cast<unsigned char>(s[static_cast<size_t>(index)]));
-    }
-
-    // Interactive terminal helpers remain available.
-    void nexus_screen_begin(){
-    } void nexus_screen_end(){
-    } void nexus_screen_clear(){
-        nexus_clear();
-    }
-    void nexus_screen_put(int64_t x,int64_t y,const char*t){
-        std::printf("\033[%lld;%lldH%s",(long long)(y+1),(long long)(x+1),t?t:"");
-    }
-    void nexus_screen_present(){
-        std::fflush(stdout);
-    }
-    void nexus_screen_set_title(const char*t){
-        (void)t;
-    }
-    int64_t nexus_screen_width(){
-        return 80;
-    }
-    int64_t nexus_screen_height(){
-        return 24;
-    }
-    bool nexus_key_pressed(){
-        return false;
-    }
-    int64_t nexus_read_key(){
+    auto it = gDatabases.find(id);
+    if (it == gDatabases.end() || !gSqlite.exec)
         return -1;
+    char* err = nullptr;
+    const int rc = gSqlite.exec(it->second, sql ? sql : "", nullptr, nullptr, &err);
+    if (err) {
+        std::fprintf(stderr, "SQLite: %s\n", err);
+        if (std::strlen(err))
+            std::free(err);
     }
-    void nexus_beep(){
-        std::fputs("\a",stdout);
-        std::fflush(stdout);
+    return rc;
+}
+void nexus_sqlite_close(int64_t id) {
+    auto it = gDatabases.find(id);
+    if (it == gDatabases.end())
+        return;
+    if (gSqlite.close)
+        gSqlite.close(it->second);
+    gDatabases.erase(it);
+}
+// Portable in-process SHA-256 implementation (FIPS 180-4).
+// No external commands, temporary files, or platform-specific crypto APIs.
+static void sha256_transform(uint32_t state[8], const uint8_t block[64]) {
+    static const uint32_t K[64] = {
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
+        0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
+        0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
+        0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc,
+        0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116,
+        0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
+        0xc67178f2};
+    uint32_t W[64];
+    for (int i = 0; i < 16; ++i) {
+        W[i] = (uint32_t(block[i * 4]) << 24) | (uint32_t(block[i * 4 + 1]) << 16) |
+               (uint32_t(block[i * 4 + 2]) << 8) | uint32_t(block[i * 4 + 3]);
+    }
+    for (int i = 16; i < 64; ++i) {
+        uint32_t s0 = (W[i - 15] >> 7 | W[i - 15] << 25) ^ (W[i - 15] >> 18 | W[i - 15] << 14) ^
+                      (W[i - 15] >> 3);
+        uint32_t s1 = (W[i - 2] >> 17 | W[i - 2] << 15) ^ (W[i - 2] >> 19 | W[i - 2] << 13) ^
+                      (W[i - 2] >> 10);
+        W[i] = W[i - 16] + s0 + W[i - 7] + s1;
+    }
+    uint32_t a = state[0], b = state[1], c = state[2], d = state[3];
+    uint32_t e = state[4], f = state[5], g = state[6], h = state[7];
+    for (int i = 0; i < 64; ++i) {
+        uint32_t S1 = (e >> 6 | e << 26) ^ (e >> 11 | e << 21) ^ (e >> 25 | e << 7);
+        uint32_t ch = (e & f) ^ (~e & g);
+        uint32_t temp1 = h + S1 + ch + K[i] + W[i];
+        uint32_t S0 = (a >> 2 | a << 30) ^ (a >> 13 | a << 19) ^ (a >> 22 | a << 10);
+        uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+        uint32_t temp2 = S0 + maj;
+        h = g;
+        g = f;
+        f = e;
+        e = d + temp1;
+        d = c;
+        c = b;
+        b = a;
+        a = temp1 + temp2;
+    }
+    state[0] += a;
+    state[1] += b;
+    state[2] += c;
+    state[3] += d;
+    state[4] += e;
+    state[5] += f;
+    state[6] += g;
+    state[7] += h;
+}
+
+char* nexus_sha256(const char* text) {
+    if (!text)
+        return nx_strdup("");
+
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(text);
+    size_t len = strlen(text);
+
+    uint32_t state[8] = {0x6a09e667,
+                         0xbb67ae85,
+                         0x3c6ef372,
+                         0xa54ff53a,
+                         0x510e527f,
+                         0x9b05688c,
+                         0x1f83d9ab,
+                         0x5be0cd19};
+
+    // Process full 64-byte blocks
+    size_t i = 0;
+    for (; i + 64 <= len; i += 64) {
+        sha256_transform(state, data + i);
     }
 
-    // Window / events ------------------------------------------------------------
-    bool nexus_gfx_init(int64_t w,int64_t h,const char* title){
-        return init_graphics(int(w),int(h),title);
-    }
-    const char* nexus_gfx_error(){
-        return gGraphicsError.c_str();
-    }
-    void nexus_gfx_shutdown(){
-        shutdown_graphics();
-    }
-    bool nexus_gfx_should_close(){
-        return gClose;
-    }
-    void nexus_gfx_poll(){
-        process_events();
-    }
-    int64_t nexus_gfx_event_type(){
-        return gLastEvent;
-    }
-    int64_t nexus_gfx_event_key(){
-        return gLastKey;
-    }
-    int64_t nexus_gfx_event_mouse_button(){
-        return gLastMouseButton;
-    }
-    int64_t nexus_gfx_event_x(){
-        return gLastX;
-    }
-    int64_t nexus_gfx_event_y(){
-        return gLastY;
-    }
-    double nexus_gfx_mouse_x() {
+    // Final block with padding
+    uint8_t block[64] = {0};
+    size_t remaining = len - i;
+    memcpy(block, data + i, remaining);
+    block[remaining] = 0x80;
 
-        if (gGraphics && SDL_GetMouseState) {
-
-            int x = 0;
-
-            int y = 0;
-
-            SDL_GetMouseState(&x, &y);
-
-            gLastX = x;
-
-            gLastY = y;
-
+    if (remaining < 56) {
+        // Length fits in this block
+        uint64_t bit_len = static_cast<uint64_t>(len) * 8;
+        for (int j = 0; j < 8; ++j) {
+            block[63 - j] = static_cast<uint8_t>(bit_len >> (8 * j));
         }
-
-        double uiX = 0.0;
-
-        double uiY = 0.0;
-
-        window_to_ui(static_cast<double>(gLastX), static_cast<double>(gLastY), uiX, uiY);
-
-        return uiX;
-
-    }
-
-    double nexus_gfx_mouse_y() {
-
-        if (gGraphics && SDL_GetMouseState) {
-
-            int x = 0;
-
-            int y = 0;
-
-            SDL_GetMouseState(&x, &y);
-
-            gLastX = x;
-
-            gLastY = y;
-
+        sha256_transform(state, block);
+    } else {
+        // Need two blocks
+        sha256_transform(state, block);
+        memset(block, 0, 64);
+        uint64_t bit_len = static_cast<uint64_t>(len) * 8;
+        for (int j = 0; j < 8; ++j) {
+            block[63 - j] = static_cast<uint8_t>(bit_len >> (8 * j));
         }
-
-        double uiX = 0.0;
-
-        double uiY = 0.0;
-
-        window_to_ui(static_cast<double>(gLastX), static_cast<double>(gLastY), uiX, uiY);
-
-        return uiY;
-
+        sha256_transform(state, block);
     }
-    bool nexus_gfx_mouse_down(int64_t button){
-        if(button<0||button>=int64_t(gMouseButtons.size()))return false;
-        if(gGraphics&&SDL_GetMouseState){
-            int x,y;
-            uint32_t b=SDL_GetMouseState(&x,&y);
-            return button>0 && (b&(1u<<uint32_t(button-1)))!=0;
-        }
-        return gMouseButtons[size_t(button)]!=0;
+
+    // Format as hex string
+    char hex[65];
+    for (int j = 0; j < 8; ++j) {
+        sprintf(hex + j * 8, "%08x", state[j]);
     }
-    bool nexus_gfx_key_down(const char* name){
-        if(!gGraphics||!SDL_GetKeyboardState)return false;
-        int64_t sc=scancode_for(name);
-        if(sc<0)return false;
-        int n=0;
-        const uint8_t*k=SDL_GetKeyboardState(&n);
-        return sc<n&&k!=nullptr&&k[sc]!=0;
-    }
-    double nexus_gfx_dt(){
-        double n=now_seconds();
-        double d=gLastFrame? n-gLastFrame:0.0;
-        gLastFrame=n;
-        return d;
-    }
-    bool nexus_gfx_event_is(const char* name){
-        if(!name)return false;
-        std::string s(name);
-        if(s=="quit")return gLastEvent==int(SDL_QUIT);
-        if(s=="key_down")return gLastEvent==int(SDL_KEYDOWN);
-        if(s=="key_up")return gLastEvent==int(SDL_KEYUP);
-        if(s=="mouse_move")return gLastEvent==int(SDL_MOUSEMOTION);
-        if(s=="mouse_down")return gLastEvent==int(SDL_MOUSEBUTTONDOWN);
-        if(s=="mouse_up")return gLastEvent==int(SDL_MOUSEBUTTONUP);
-        if(s=="window")return gLastEvent==int(SDL_WINDOWEVENT);
-        return false;
-    }
-    void nexus_gfx_set_ui_resolution(double width, double height) {
+    hex[64] = '\0';
+    return nx_strdup(hex);
+}
 
-        if (width <= 0.0 || height <= 0.0) {
-
-            gUiWidth = 0.0;
-
-            gUiHeight = 0.0;
-
-        } else {
-
-            gUiWidth = width;
-
-            gUiHeight = height;
-
-        }
-
-        if (gGraphics) {
-            if (gSoftware2D) {
-                update_window_metrics();
-                apply_software_layout();
-            } else {
-                apply_2d_viewport();
-                setup_2d();
+// os.args_count / os.args_get: command-line arguments (excluding executable name).
+// Platform-specific implementation to avoid requiring argc/argv from the compiler.
+static std::vector<std::string> get_os_args() {
+    std::vector<std::string> args;
+#if defined(_WIN32)
+    int argc = 0;
+    LPWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (wargv && argc > 0) {
+        for (int i = 1; i < argc; ++i) { // Skip executable name (index 0)
+            int size = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, nullptr, 0, nullptr, nullptr);
+            if (size > 0) {
+                std::string arg(static_cast<size_t>(size), '\0');
+                WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, &arg[0], size, nullptr, nullptr);
+                if (!arg.empty() && arg.back() == '\0')
+                    arg.pop_back();
+                args.push_back(std::move(arg));
             }
         }
+        LocalFree(wargv);
     }
-
-    int64_t nexus_gfx_width(){
-        return gWidth;
-    } int64_t nexus_gfx_height(){
-        return gHeight;
+#elif defined(__APPLE__)
+    // macOS does not expose Linux's /proc/self/cmdline. Use the system
+    // argument vector and skip argv[0], matching the Windows/Linux API.
+    int argc = *_NSGetArgc();
+    char** argv = *_NSGetArgv();
+    for (int i = 1; argv && i < argc; ++i) {
+        args.emplace_back(argv[i] ? argv[i] : "");
     }
-    bool nexus_gfx_vsync(bool enabled){
-        if(!gGraphics) return false;
-        if(gSoftware2D) return true;
-        return SDL_GL_SetSwapInterval && SDL_GL_SetSwapInterval(enabled ? 1 : 0)==0;
-    }
-    void nexus_gfx_set_title(const char*title){
-        if(gWindow&&title&&SDL_SetWindowTitle)SDL_SetWindowTitle(gWindow,title);
-    }
-
-    void nexus_gfx_fullscreen(bool enabled){
-        if(!gWindow || !SDL_SetWindowFullscreen) return;
-        if(SDL_SetWindowFullscreen(gWindow, enabled ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0u) != 0) {
-            gGraphicsError = std::string("fullscreen failed: ") + sdl_error();
+#else
+    // Linux: /proc/self/cmdline is a NUL-separated argument vector.
+    std::ifstream cmdline("/proc/self/cmdline", std::ios::binary);
+    if (cmdline) {
+        std::string arg;
+        char ch;
+        bool first = true;
+        while (cmdline.get(ch)) {
+            if (ch == '\0') {
+                if (!first)
+                    args.push_back(arg);
+                first = false;
+                arg.clear();
+            } else {
+                arg += ch;
+            }
         }
+        if (!first && !arg.empty())
+            args.push_back(arg);
+    }
+#endif
+    return args;
+}
+
+int64_t nexus_os_args_count() {
+    auto args = get_os_args();
+    return static_cast<int64_t>(args.size());
+}
+
+char* nexus_os_args_get(int64_t index) {
+    auto args = get_os_args();
+    if (index < 0 || static_cast<size_t>(index) >= args.size()) {
+        return nx_strdup("");
+    }
+    return nx_strdup(args[static_cast<size_t>(index)].c_str());
+}
+
+// string.len: returns byte length of string
+int64_t nexus_string_len(const char* s) {
+    if (!s)
+        return 0;
+    return static_cast<int64_t>(std::strlen(s));
+}
+
+// string.byte_at: returns byte at index (0-255), or -1 if out of bounds
+int64_t nexus_string_byte_at(const char* s, int64_t index) {
+    if (!s)
+        return -1;
+    size_t len = std::strlen(s);
+    if (index < 0 || static_cast<size_t>(index) >= len)
+        return -1;
+    return static_cast<int64_t>(static_cast<unsigned char>(s[static_cast<size_t>(index)]));
+}
+
+// Interactive terminal helpers remain available.
+void nexus_screen_begin() {}
+void nexus_screen_end() {}
+void nexus_screen_clear() {
+    nexus_clear();
+}
+void nexus_screen_put(int64_t x, int64_t y, const char* t) {
+    std::printf("\033[%lld;%lldH%s", (long long)(y + 1), (long long)(x + 1), t ? t : "");
+}
+void nexus_screen_present() {
+    std::fflush(stdout);
+}
+void nexus_screen_set_title(const char* t) {
+    (void)t;
+}
+int64_t nexus_screen_width() {
+    return 80;
+}
+int64_t nexus_screen_height() {
+    return 24;
+}
+bool nexus_key_pressed() {
+    return false;
+}
+int64_t nexus_read_key() {
+    return -1;
+}
+void nexus_beep() {
+    std::fputs("\a", stdout);
+    std::fflush(stdout);
+}
+
+// Window / events ------------------------------------------------------------
+bool nexus_gfx_init(int64_t w, int64_t h, const char* title) {
+    return init_graphics(int(w), int(h), title);
+}
+const char* nexus_gfx_error() {
+    return gGraphicsError.c_str();
+}
+void nexus_gfx_shutdown() {
+    shutdown_graphics();
+}
+bool nexus_gfx_should_close() {
+    return gClose;
+}
+void nexus_gfx_poll() {
+    process_events();
+}
+int64_t nexus_gfx_event_type() {
+    return gLastEvent;
+}
+int64_t nexus_gfx_event_key() {
+    return gLastKey;
+}
+int64_t nexus_gfx_event_mouse_button() {
+    return gLastMouseButton;
+}
+int64_t nexus_gfx_event_x() {
+    return gLastX;
+}
+int64_t nexus_gfx_event_y() {
+    return gLastY;
+}
+double nexus_gfx_mouse_x() {
+
+    if (gGraphics && SDL_GetMouseState) {
+
+        int x = 0;
+
+        int y = 0;
+
+        SDL_GetMouseState(&x, &y);
+
+        gLastX = x;
+
+        gLastY = y;
     }
 
-    void nexus_gfx_maximize(){
-        if(gWindow && SDL_MaximizeWindow) SDL_MaximizeWindow(gWindow);
+    double uiX = 0.0;
+
+    double uiY = 0.0;
+
+    window_to_ui(static_cast<double>(gLastX), static_cast<double>(gLastY), uiX, uiY);
+
+    return uiX;
+}
+
+double nexus_gfx_mouse_y() {
+
+    if (gGraphics && SDL_GetMouseState) {
+
+        int x = 0;
+
+        int y = 0;
+
+        SDL_GetMouseState(&x, &y);
+
+        gLastX = x;
+
+        gLastY = y;
     }
 
-    void nexus_gfx_restore(){
-        if(gWindow && SDL_RestoreWindow) SDL_RestoreWindow(gWindow);
+    double uiX = 0.0;
+
+    double uiY = 0.0;
+
+    window_to_ui(static_cast<double>(gLastX), static_cast<double>(gLastY), uiX, uiY);
+
+    return uiY;
+}
+bool nexus_gfx_mouse_down(int64_t button) {
+    if (button < 0 || button >= int64_t(gMouseButtons.size()))
+        return false;
+    if (gGraphics && SDL_GetMouseState) {
+        int x, y;
+        uint32_t b = SDL_GetMouseState(&x, &y);
+        return button > 0 && (b & (1u << uint32_t(button - 1))) != 0;
+    }
+    return gMouseButtons[size_t(button)] != 0;
+}
+bool nexus_gfx_key_down(const char* name) {
+    if (!gGraphics || !SDL_GetKeyboardState)
+        return false;
+    int64_t sc = scancode_for(name);
+    if (sc < 0)
+        return false;
+    int n = 0;
+    const uint8_t* k = SDL_GetKeyboardState(&n);
+    return sc < n && k != nullptr && k[sc] != 0;
+}
+double nexus_gfx_dt() {
+    double n = now_seconds();
+    double d = gLastFrame ? n - gLastFrame : 0.0;
+    gLastFrame = n;
+    return d;
+}
+bool nexus_gfx_event_is(const char* name) {
+    if (!name)
+        return false;
+    std::string s(name);
+    if (s == "quit")
+        return gLastEvent == int(SDL_QUIT);
+    if (s == "key_down")
+        return gLastEvent == int(SDL_KEYDOWN);
+    if (s == "key_up")
+        return gLastEvent == int(SDL_KEYUP);
+    if (s == "mouse_move")
+        return gLastEvent == int(SDL_MOUSEMOTION);
+    if (s == "mouse_down")
+        return gLastEvent == int(SDL_MOUSEBUTTONDOWN);
+    if (s == "mouse_up")
+        return gLastEvent == int(SDL_MOUSEBUTTONUP);
+    if (s == "window")
+        return gLastEvent == int(SDL_WINDOWEVENT);
+    return false;
+}
+void nexus_gfx_set_ui_resolution(double width, double height) {
+
+    if (width <= 0.0 || height <= 0.0) {
+
+        gUiWidth = 0.0;
+
+        gUiHeight = 0.0;
+
+    } else {
+
+        gUiWidth = width;
+
+        gUiHeight = height;
     }
 
-    bool nexus_gfx_is_fullscreen(){
-        if(!gWindow || !SDL_GetWindowFlags) return false;
-        return (SDL_GetWindowFlags(gWindow) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-    }
-
-    const char* nexus_gfx_backend(){
-        if(!gGraphics) return "uninitialized";
-        return gOpenGL3D ? "opengl-3d" : (gSoftware2D ? "sdl2-2d" : "unknown");
-    }
-    void nexus_gfx_begin() {
-        if (!gGraphics) return;
+    if (gGraphics) {
         if (gSoftware2D) {
             update_window_metrics();
             apply_software_layout();
-            return;
-        }
-        apply_2d_viewport();
-        setup_2d();
-    }
-
-    void nexus_gfx_end() {
-        if (gSoftware2D) {
-            if (gRenderer) SDL_RenderPresent(gRenderer);
-            return;
-        }
-        if (gWindow && SDL_GL_SwapWindow) SDL_GL_SwapWindow(gWindow);
-    }
-
-    void nexus_gfx_clear(double r, double g, double b, double a) {
-        if (!gGraphics) return;
-        if (gSoftware2D) {
-            software_color(r, g, b, a);
-            SDL_RenderClear(gRenderer);
-            return;
-        }
-        glClearColor(float(r), float(g), float(b), float(a));
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-
-    void nexus_gfx_rect(double x, double y, double w, double h, double r, double g, double b, double a) {
-        if (!gGraphics) return;
-        if (gSoftware2D) {
-            software_color(r, g, b, a);
-            software_fill_rect(x, y, w, h);
-            return;
-        }
-        setup_2d();
-        draw_quad(float(x), float(y), float(w), float(h), float(r), float(g), float(b), float(a));
-    }
-
-    void nexus_gfx_circle(double x, double y, double radius, double r, double g, double b, double a) {
-        if (!gGraphics) return;
-        if (gSoftware2D) {
-            software_color(r, g, b, a);
-            constexpr int segments = 40;
-            for (int i = -segments; i <= segments; ++i) {
-                double dy = radius * double(i) / double(segments);
-                double half = std::sqrt(std::max(0.0, radius * radius - dy * dy));
-                SDL_RenderDrawLine(gRenderer, int(std::llround(x - half)), int(std::llround(y + dy)), int(std::llround(x + half)), int(std::llround(y + dy)));
-            }
-            return;
-        }
-        setup_2d();
-        draw_circle(float(x), float(y), float(radius), float(r), float(g), float(b), float(a));
-    }
-
-    void nexus_gfx_line(double x1, double y1, double x2, double y2, double width, double r, double g, double b, double a) {
-        if (!gGraphics) return;
-        if (gSoftware2D) {
-            software_color(r, g, b, a);
-            SDL_RenderDrawLine(gRenderer, int(std::llround(x1)), int(std::llround(y1)), int(std::llround(x2)), int(std::llround(y2)));
-            for (int i = 1; i < int(std::floor(width)); ++i) SDL_RenderDrawLine(gRenderer, int(std::llround(x1)) + i, int(std::llround(y1)), int(std::llround(x2)) + i, int(std::llround(y2)));
-            return;
-        }
-        setup_2d();
-        glLineWidth(float(width));
-        glColor4f(float(r), float(g), float(b), float(a));
-        glBegin(GL_LINES);
-        glVertex2f(float(x1), float(y1));
-        glVertex2f(float(x2), float(y2));
-        glEnd();
-    }
-
-    void nexus_gfx_text(double x, double y, double scale, const char* text, double r, double g, double b, double a) {
-        if (!gGraphics || !text) return;
-        if (gSoftware2D) {
-            software_color(r, g, b, a);
-            double px = x;
-            double py = y;
-            for (const char* p = text; *p; ++p) {
-                if (*p == '\n') { px = x; py += 8.0 * scale; continue; }
-                if (*p == ' ') { px += 6.0 * scale; continue; }
-                const auto* bits = glyph(*p);
-                if (bits) {
-                    for (int row = 0; row < 7; ++row) for (int col = 0; col < 5; ++col) if (bits[row] & (1u << (4 - col))) software_fill_rect(px + col * scale, py + row * scale, scale, scale);
-                }
-                px += 6.0 * scale;
-            }
-            return;
-        }
-        setup_2d();
-        draw_text(float(x), float(y), float(scale), text, float(r), float(g), float(b), float(a));
-    }
-
-    void nexus_gfx_set_fps(int64_t fps){
-        if(fps<=0)return;
-        /* language-level limiter is preferable; keep backend deterministic */
-    }
-
-    int64_t nexus_gfx_texture_load(const char*path){
-
-        if(!gGraphics||!path||!SDL_ConvertSurfaceFormat||!SDL_FreeSurface){
-            gGraphicsError="graphics texture system is unavailable";
-            return 0;
-        }
-        SDL_Surface*src=nullptr;
-
-        if(IMG_Load) src=IMG_Load(path);
-
-        if(!src && SDL_LoadBMP) src=SDL_LoadBMP(path);
-
-        if(!src){
-            gGraphicsError=IMG_GetError?std::string("image load failed: ")+IMG_GetError():"image load failed (need SDL2_image for PNG/JPG or BMP)";
-            return 0;
-        }
-        SDL_Surface*surf=SDL_ConvertSurfaceFormat(src,SDL_PIXELFORMAT_ABGR8888,0);
-        SDL_FreeSurface(src);
-        if(!surf)return 0;
-        const int sw = surf->w;
-        const int sh = surf->h;
-        if(gSoftware2D){
-            SDL_Texture* software = SDL_CreateTextureFromSurface(gRenderer, surf);
-            SDL_FreeSurface(surf);
-            if(!software){
-                gGraphicsError = std::string("SDL texture creation failed: ") + sdl_error();
-                return 0;
-            }
-            SDL_SetTextureBlendMode(software, SDL_BLENDMODE_BLEND);
-            const int64_t id=gNextTexture++;
-            gTextures[id]=Texture{0,software,sw,sh};
-            return id;
-        }
-        GLuint tex=0;
-        glGenTextures(1,&tex);
-        glBindTexture(GL_TEXTURE_2D,tex);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D,0,4,surf->w,surf->h,0,GL_RGBA,GL_UNSIGNED_BYTE,surf->pixels);
-        glBindTexture(GL_TEXTURE_2D,0);
-        int64_t id=gNextTexture++;
-        gTextures[id]=Texture{
-            tex,nullptr,surf->w,surf->h
-        };
-        SDL_FreeSurface(surf);
-        return id;
-    }
-    void nexus_gfx_texture_draw(int64_t id,double x,double y,double w,double h,double r,double g,double b,double a){
-        auto it=gTextures.find(id);
-        if(!gGraphics||it==gTextures.end())return;
-        if(gSoftware2D){
-            if(!it->second.software)return;
-            SDL_Rect dst=software_rect(x,y,w,h);
-            SDL_RenderCopy(gRenderer,it->second.software,nullptr,&dst);
-            return;
-        }
-        setup_2d();
-        draw_textured_quad(it->second,float(x),float(y),float(w),float(h),float(r),float(g),float(b),float(a));
-    }
-    void nexus_gfx_texture_unload(int64_t id){
-        auto it=gTextures.find(id);
-        if(it==gTextures.end())return;
-        if(it->second.id&&glDeleteTextures&&gOpenGL3D)glDeleteTextures(1,&it->second.id);
-        if(it->second.software&&SDL_DestroyTexture)SDL_DestroyTexture(it->second.software);
-        gTextures.erase(it);
-    }
-    int64_t nexus_gfx_texture_width(int64_t id){
-        auto it=gTextures.find(id);
-        return it==gTextures.end()?0:it->second.w;
-    }
-    int64_t nexus_gfx_texture_height(int64_t id){
-        auto it=gTextures.find(id);
-        return it==gTextures.end()?0:it->second.h;
-    }
-    void nexus_gfx_texture_filter(int64_t id,bool nearest){
-        auto it=gTextures.find(id);
-        if(it==gTextures.end() || !gGraphics) return;
-        if(gSoftware2D) {
-            // SDL2 software textures use nearest filtering implicitly.
-            (void)nearest;
-            return;
-        }
-        glBindTexture(GL_TEXTURE_2D,it->second.id);
-        GLint f=nearest ? GL_NEAREST : GL_LINEAR;
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,f);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,f);
-        glBindTexture(GL_TEXTURE_2D,0);
-    }
-
-    void nexus_gfx_camera_set(double x,double y,double zoom){
-        gCameraX=float(x);
-        gCameraY=float(y);
-        gCameraZoom=zoom>0.01?float(zoom):0.01f;
-    }
-    void nexus_gfx_camera_reset(){
-        gCameraX=0;
-        gCameraY=0;
-        gCameraZoom=1;
-    }
-    void nexus_gfx_texture_draw_frame(int64_t id,double x,double y,double w,double h,int64_t frame,int64_t frameW,int64_t frameH,int64_t columns,double r,double g,double b,double a){
-        auto it=gTextures.find(id);
-        if(!gGraphics||it==gTextures.end()||frameW<=0||frameH<=0||columns<=0)return;
-        const int64_t col=frame%columns;
-        const int64_t row=frame/columns;
-        if(gSoftware2D){
-            if(!it->second.software)return;
-            SDL_Rect src{int(col*frameW),int(row*frameH),int(frameW),int(frameH)};
-            SDL_Rect dst=software_rect(x,y,w,h);
-            SDL_RenderCopy(gRenderer,it->second.software,&src,&dst);
-            return;
-        }
-        const float u0=float(col*frameW)/float(it->second.w);
-        const float v0=float(row*frameH)/float(it->second.h);
-        const float u1=float((col+1)*frameW)/float(it->second.w);
-        const float v1=float((row+1)*frameH)/float(it->second.h);
-        setup_2d();
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D,it->second.id);
-        glColor4f(float(r),float(g),float(b),float(a));
-        glBegin(GL_QUADS);
-        glTexCoord2f(u0,v0); glVertex2f(float(x),float(y));
-        glTexCoord2f(u1,v0); glVertex2f(float(x+w),float(y));
-        glTexCoord2f(u1,v1); glVertex2f(float(x+w),float(y+h));
-        glTexCoord2f(u0,v1); glVertex2f(float(x),float(y+h));
-        glEnd();
-        glBindTexture(GL_TEXTURE_2D,0);
-        glDisable(GL_TEXTURE_2D);
-    }
-    int64_t nexus_gfx_anim_create(int64_t texture,int64_t frameW,int64_t frameH,int64_t columns,int64_t frameCount,double fps,bool loop){
-
-        auto it=gTextures.find(texture);
-
-        if(it==gTextures.end()||frameW<=0||frameH<=0||columns<=0||frameCount<=0||fps<=0.0){
-            gGraphicsError="invalid sprite animation parameters";
-            return 0;
-        }
-        if(frameW>it->second.w||frameH>it->second.h){
-            gGraphicsError="sprite frame exceeds texture dimensions";
-            return 0;
-        }
-        SpriteAnim a;
-        a.texture=texture;
-        a.frameW=frameW;
-        a.frameH=frameH;
-        a.columns=columns;
-        a.frameCount=frameCount;
-        a.fps=fps;
-        a.loop=loop;
-
-        int64_t id=gNextAnim++;
-        gAnims[id]=a;
-        return id;
-
-    }
-    void nexus_gfx_anim_update(int64_t id,double dt){
-        auto it=gAnims.find(id);
-        if(it==gAnims.end())return;
-        auto&a=it->second;
-        if(a.frameCount<=1)return;
-        a.time+=std::max(dt,0.0);
-        double step=1.0/a.fps;
-        while(a.time>=step){
-            a.time-=step;
-            ++a.frame;
-            if(a.frame>=a.frameCount){
-                if(a.loop)a.frame=0;
-                else a.frame=a.frameCount-1;
-            }
+        } else {
+            apply_2d_viewport();
+            setup_2d();
         }
     }
-    void nexus_gfx_anim_draw(int64_t id,double x,double y,double w,double h,double r,double g,double b,double a){
-        auto it=gAnims.find(id);
-        if(it==gAnims.end())return;
-        const auto&v=it->second;
-        nexus_gfx_texture_draw_frame(v.texture,x,y,w,h,v.frame,v.frameW,v.frameH,v.columns,r,g,b,a);
+}
+
+int64_t nexus_gfx_width() {
+    return gWidth;
+}
+int64_t nexus_gfx_height() {
+    return gHeight;
+}
+bool nexus_gfx_vsync(bool enabled) {
+    if (!gGraphics)
+        return false;
+    if (gSoftware2D)
+        return true;
+    return SDL_GL_SetSwapInterval && SDL_GL_SetSwapInterval(enabled ? 1 : 0) == 0;
+}
+void nexus_gfx_set_title(const char* title) {
+    if (gWindow && title && SDL_SetWindowTitle)
+        SDL_SetWindowTitle(gWindow, title);
+}
+
+void nexus_gfx_fullscreen(bool enabled) {
+    if (!gWindow || !SDL_SetWindowFullscreen)
+        return;
+    if (SDL_SetWindowFullscreen(gWindow, enabled ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0u) != 0) {
+        gGraphicsError = std::string("fullscreen failed: ") + sdl_error();
     }
-    int64_t nexus_gfx_anim_frame(int64_t id){
-        auto it=gAnims.find(id);
-        return it==gAnims.end()?-1:it->second.frame;
-    }
-    void nexus_gfx_anim_destroy(int64_t id){
-        gAnims.erase(id);
-    }
+}
 
-    const char* nexus_gfx_image_type(){
-        return IMG_Load?"PNG/JPG/BMP (SDL2_image + SDL2 core)":"BMP only (install SDL2_image for PNG/JPG)";
-    }
-    int64_t nexus_gfx_font_load(const char*path,int64_t size){
-        load_optional_media_libs();
-        if(!gTTF||!TTF_Init||!TTF_OpenFont||!TTF_CloseFont||!TTF_RenderUTF8_Blended||size<=0){
-            gGraphicsError="TTF font backend unavailable; install SDL2_ttf";
-            return 0;
-        }
-        if(!gTTFReady&&TTF_Init()!=0){
-            gGraphicsError=TTF_GetError?TTF_GetError():"TTF_Init failed";
-            return 0;
-        }
-        gTTFReady=true;
-        TTF_Font*f=TTF_OpenFont(path,int(size));
-        if(!f){
-            gGraphicsError=TTF_GetError?TTF_GetError():"font load failed";
-            return 0;
-        }
-        int64_t id=gNextFont++;
-        gFonts[id]=f;
-        return id;
-    }
-    void nexus_gfx_text_font(int64_t id,double x,double y,const char*text,double r,double g,double b,double a){
-        auto it=gFonts.find(id);
-        if(!gGraphics||it==gFonts.end()||!TTF_RenderUTF8_Blended)return;
-        SDL_Color c{uint8_t(std::clamp(r,0.0,1.0)*255.0),uint8_t(std::clamp(g,0.0,1.0)*255.0),uint8_t(std::clamp(b,0.0,1.0)*255.0),uint8_t(std::clamp(a,0.0,1.0)*255.0)};
-        SDL_Surface*s=TTF_RenderUTF8_Blended(it->second,text?text:"",c);
-        if(!s)return;
-        if(gSoftware2D){
-            SDL_Texture*texture=SDL_CreateTextureFromSurface(gRenderer,s);
-            if(texture){
-                SDL_SetTextureBlendMode(texture,SDL_BLENDMODE_BLEND);
-                SDL_Rect dst{int(std::llround(x)),int(std::llround(y)),s->w,s->h};
-                SDL_RenderCopy(gRenderer,texture,nullptr,&dst);
-                SDL_DestroyTexture(texture);
-            }
-            SDL_FreeSurface(s);
-            return;
-        }
-        SDL_Surface*surf=SDL_ConvertSurfaceFormat(s,SDL_PIXELFORMAT_ABGR8888,0);
-        SDL_FreeSurface(s);
-        if(!surf)return;
-        GLuint tex=0;
-        glGenTextures(1,&tex); glBindTexture(GL_TEXTURE_2D,tex);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D,0,4,surf->w,surf->h,0,GL_RGBA,GL_UNSIGNED_BYTE,surf->pixels);
-        setup_2d();
-        glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,tex); glColor4f(1,1,1,1);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0,0); glVertex2f(float(x),float(y));
-        glTexCoord2f(1,0); glVertex2f(float(x+surf->w),float(y));
-        glTexCoord2f(1,1); glVertex2f(float(x+surf->w),float(y+surf->h));
-        glTexCoord2f(0,1); glVertex2f(float(x),float(y+surf->h));
-        glEnd();
-        glBindTexture(GL_TEXTURE_2D,0); glDisable(GL_TEXTURE_2D); glDeleteTextures(1,&tex); SDL_FreeSurface(surf);
-    }
-    void nexus_gfx_font_unload(int64_t id){
-        auto it=gFonts.find(id);
-        if(it!=gFonts.end()){
-            if(TTF_CloseFont)TTF_CloseFont(it->second);
-            gFonts.erase(it);
-        }
-    }
-    int64_t nexus_gfx_sound_load(const char*path);
+void nexus_gfx_maximize() {
+    if (gWindow && SDL_MaximizeWindow)
+        SDL_MaximizeWindow(gWindow);
+}
 
-    void nexus_gfx_sound_play(int64_t id,bool loop);
+void nexus_gfx_restore() {
+    if (gWindow && SDL_RestoreWindow)
+        SDL_RestoreWindow(gWindow);
+}
 
-    void nexus_gfx_sound_stop();
+bool nexus_gfx_is_fullscreen() {
+    if (!gWindow || !SDL_GetWindowFlags)
+        return false;
+    return (SDL_GetWindowFlags(gWindow) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+}
 
-    void nexus_gfx_sound_volume(double v);
-
-    int64_t nexus_gfx_music_load(const char*path){
-
-        load_optional_media_libs();
-
-        if(gMIX&&Mix_OpenAudio&&Mix_LoadMUS&&Mix_FreeMusic&&Mix_PlayMusic){
-
-            if(!gMixerReady&&Mix_OpenAudio(44100,AUDIO_S16LSB,2,2048)!=0){
-                gGraphicsError=Mix_GetError?Mix_GetError():"Mix_OpenAudio failed";
-            }
-            else {
-                gMixerReady=true;
-                Mix_Music*m=Mix_LoadMUS(path);
-                if(m){
-                    if(gMusic&&Mix_FreeMusic)Mix_FreeMusic(gMusic);
-                    gMusic=m;
-                    return 1;
-                }
-                gGraphicsError=Mix_GetError?Mix_GetError():"music load failed";
-            }
-        }
-        // Guaranteed fallback: plain PCM WAV using the core SDL2 audio queue.
-        return nexus_gfx_sound_load(path);
-
-    }
-    bool nexus_gfx_music_play(int64_t id,bool loop){
-
-        if(gMusic&&Mix_PlayMusic)return Mix_PlayMusic(gMusic,loop?-1:1)==0;
-
-        nexus_gfx_sound_play(id,loop);
-        return gAudioDevice!=0;
-
-    }
-    void nexus_gfx_music_stop(){
-        if(Mix_HaltMusic&&gMusic)Mix_HaltMusic();
-        nexus_gfx_sound_stop();
-    }
-    void nexus_gfx_music_volume(double v){
-        if(Mix_VolumeMusic&&gMusic)Mix_VolumeMusic(std::clamp(int(v*128.0),0,128));
-        nexus_gfx_sound_volume(v);
-    }
-    void nexus_gfx_cursor_visible(bool visible){
-        if(SDL_ShowCursor)SDL_ShowCursor(visible?1:0);
-    }
-
-    static uint8_t canvas_u8(double v) {
-
-        return uint8_t(std::clamp(v, 0.0, 1.0) * 255.0 + 0.5);
-
-    }
-    static size_t canvas_index(const CanvasData& c, int x, int y) {
-
-        return (size_t(y) * size_t(c.w) + size_t(x)) * 4u;
-
-    }
-    static void canvas_put(CanvasData& c, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-
-        if(x<0 || y<0 || x>=c.w || y>=c.h) return;
-
-        const size_t i=canvas_index(c,x,y);
-
-        c.pixels[i]=r;
-        c.pixels[i+1]=g;
-        c.pixels[i+2]=b;
-        c.pixels[i+3]=a;
-
-    }
-    static void canvas_circle(CanvasData& c, int cx, int cy, int radius, uint8_t r,uint8_t g,uint8_t b,uint8_t a) {
-
-        if(radius<=0){
-            canvas_put(c,cx,cy,r,g,b,a);
-            return;
-        }
-        const int rr=radius*radius;
-
-        for(int y=cy-radius;y<=cy+radius;++y){
-
-            for(int x=cx-radius;x<=cx+radius;++x){
-
-                const int dx=x-cx,dy=y-cy;
-
-                if(dx*dx+dy*dy<=rr) canvas_put(c,x,y,r,g,b,a);
-
-            }
-        }
-    }
-    static void canvas_blit_texture(CanvasData& c){
-    if(gSoftware2D){
-        if(!c.software){
-            c.software=SDL_CreateTexture(gRenderer,SDL_PIXELFORMAT_ABGR8888,SDL_TEXTUREACCESS_STREAMING,c.w,c.h);
-            if(c.software)SDL_SetTextureBlendMode(c.software,SDL_BLENDMODE_BLEND);
-        }
-        if(c.software)SDL_UpdateTexture(c.software,nullptr,c.pixels.data(),c.w*4);
+const char* nexus_gfx_backend() {
+    if (!gGraphics)
+        return "uninitialized";
+    return gOpenGL3D ? "opengl-3d" : (gSoftware2D ? "sdl2-2d" : "unknown");
+}
+void nexus_gfx_begin() {
+    if (!gGraphics)
+        return;
+    if (gSoftware2D) {
+        update_window_metrics();
+        apply_software_layout();
         return;
     }
-    if(!c.tex)glGenTextures(1,&c.tex);
-    glBindTexture(GL_TEXTURE_2D,c.tex);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D,0,4,c.w,c.h,0,GL_RGBA,GL_UNSIGNED_BYTE,c.pixels.data());
-    glBindTexture(GL_TEXTURE_2D,0);
+    apply_2d_viewport();
+    setup_2d();
+}
+
+void nexus_gfx_end() {
+    if (gSoftware2D) {
+        if (gRenderer)
+            SDL_RenderPresent(gRenderer);
+        return;
+    }
+    if (gWindow && SDL_GL_SwapWindow)
+        SDL_GL_SwapWindow(gWindow);
+}
+
+void nexus_gfx_clear(double r, double g, double b, double a) {
+    if (!gGraphics)
+        return;
+    if (gSoftware2D) {
+        software_color(r, g, b, a);
+        SDL_RenderClear(gRenderer);
+        return;
+    }
+    glClearColor(float(r), float(g), float(b), float(a));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void nexus_gfx_rect(
+    double x, double y, double w, double h, double r, double g, double b, double a) {
+    if (!gGraphics)
+        return;
+    if (gSoftware2D) {
+        software_color(r, g, b, a);
+        software_fill_rect(x, y, w, h);
+        return;
+    }
+    setup_2d();
+    draw_quad(float(x), float(y), float(w), float(h), float(r), float(g), float(b), float(a));
+}
+
+void nexus_gfx_circle(double x, double y, double radius, double r, double g, double b, double a) {
+    if (!gGraphics)
+        return;
+    if (gSoftware2D) {
+        software_color(r, g, b, a);
+        constexpr int segments = 40;
+        for (int i = -segments; i <= segments; ++i) {
+            double dy = radius * double(i) / double(segments);
+            double half = std::sqrt(std::max(0.0, radius * radius - dy * dy));
+            SDL_RenderDrawLine(gRenderer,
+                               int(std::llround(x - half)),
+                               int(std::llround(y + dy)),
+                               int(std::llround(x + half)),
+                               int(std::llround(y + dy)));
+        }
+        return;
+    }
+    setup_2d();
+    draw_circle(float(x), float(y), float(radius), float(r), float(g), float(b), float(a));
+}
+
+void nexus_gfx_line(double x1,
+                    double y1,
+                    double x2,
+                    double y2,
+                    double width,
+                    double r,
+                    double g,
+                    double b,
+                    double a) {
+    if (!gGraphics)
+        return;
+    if (gSoftware2D) {
+        software_color(r, g, b, a);
+        SDL_RenderDrawLine(gRenderer,
+                           int(std::llround(x1)),
+                           int(std::llround(y1)),
+                           int(std::llround(x2)),
+                           int(std::llround(y2)));
+        for (int i = 1; i < int(std::floor(width)); ++i)
+            SDL_RenderDrawLine(gRenderer,
+                               int(std::llround(x1)) + i,
+                               int(std::llround(y1)),
+                               int(std::llround(x2)) + i,
+                               int(std::llround(y2)));
+        return;
+    }
+    setup_2d();
+    glLineWidth(float(width));
+    glColor4f(float(r), float(g), float(b), float(a));
+    glBegin(GL_LINES);
+    glVertex2f(float(x1), float(y1));
+    glVertex2f(float(x2), float(y2));
+    glEnd();
+}
+
+void nexus_gfx_text(
+    double x, double y, double scale, const char* text, double r, double g, double b, double a) {
+    if (!gGraphics || !text)
+        return;
+    if (gSoftware2D) {
+        software_color(r, g, b, a);
+        double px = x;
+        double py = y;
+        for (const char* p = text; *p; ++p) {
+            if (*p == '\n') {
+                px = x;
+                py += 8.0 * scale;
+                continue;
+            }
+            if (*p == ' ') {
+                px += 6.0 * scale;
+                continue;
+            }
+            const auto* bits = glyph(*p);
+            if (bits) {
+                for (int row = 0; row < 7; ++row)
+                    for (int col = 0; col < 5; ++col)
+                        if (bits[row] & (1u << (4 - col)))
+                            software_fill_rect(px + col * scale, py + row * scale, scale, scale);
+            }
+            px += 6.0 * scale;
+        }
+        return;
+    }
+    setup_2d();
+    draw_text(float(x), float(y), float(scale), text, float(r), float(g), float(b), float(a));
+}
+
+void nexus_gfx_set_fps(int64_t fps) {
+    if (fps <= 0)
+        return;
+    /* language-level limiter is preferable; keep backend deterministic */
+}
+
+int64_t nexus_gfx_texture_load(const char* path) {
+
+    if (!gGraphics || !path || !SDL_ConvertSurfaceFormat || !SDL_FreeSurface) {
+        gGraphicsError = "graphics texture system is unavailable";
+        return 0;
+    }
+    SDL_Surface* src = nullptr;
+
+    if (IMG_Load)
+        src = IMG_Load(path);
+
+    if (!src && SDL_LoadBMP)
+        src = SDL_LoadBMP(path);
+
+    if (!src) {
+        gGraphicsError = IMG_GetError ? std::string("image load failed: ") + IMG_GetError()
+                                      : "image load failed (need SDL2_image for PNG/JPG or BMP)";
+        return 0;
+    }
+    SDL_Surface* surf = SDL_ConvertSurfaceFormat(src, SDL_PIXELFORMAT_ABGR8888, 0);
+    SDL_FreeSurface(src);
+    if (!surf)
+        return 0;
+    const int sw = surf->w;
+    const int sh = surf->h;
+    if (gSoftware2D) {
+        SDL_Texture* software = SDL_CreateTextureFromSurface(gRenderer, surf);
+        SDL_FreeSurface(surf);
+        if (!software) {
+            gGraphicsError = std::string("SDL texture creation failed: ") + sdl_error();
+            return 0;
+        }
+        SDL_SetTextureBlendMode(software, SDL_BLENDMODE_BLEND);
+        const int64_t id = gNextTexture++;
+        gTextures[id] = Texture{0, software, sw, sh};
+        return id;
+    }
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, surf->w, surf->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surf->pixels);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    int64_t id = gNextTexture++;
+    gTextures[id] = Texture{tex, nullptr, surf->w, surf->h};
+    SDL_FreeSurface(surf);
+    return id;
+}
+void nexus_gfx_texture_draw(
+    int64_t id, double x, double y, double w, double h, double r, double g, double b, double a) {
+    auto it = gTextures.find(id);
+    if (!gGraphics || it == gTextures.end())
+        return;
+    if (gSoftware2D) {
+        if (!it->second.software)
+            return;
+        SDL_Rect dst = software_rect(x, y, w, h);
+        SDL_RenderCopy(gRenderer, it->second.software, nullptr, &dst);
+        return;
+    }
+    setup_2d();
+    draw_textured_quad(
+        it->second, float(x), float(y), float(w), float(h), float(r), float(g), float(b), float(a));
+}
+void nexus_gfx_texture_unload(int64_t id) {
+    auto it = gTextures.find(id);
+    if (it == gTextures.end())
+        return;
+    if (it->second.id && glDeleteTextures && gOpenGL3D)
+        glDeleteTextures(1, &it->second.id);
+    if (it->second.software && SDL_DestroyTexture)
+        SDL_DestroyTexture(it->second.software);
+    gTextures.erase(it);
+}
+int64_t nexus_gfx_texture_width(int64_t id) {
+    auto it = gTextures.find(id);
+    return it == gTextures.end() ? 0 : it->second.w;
+}
+int64_t nexus_gfx_texture_height(int64_t id) {
+    auto it = gTextures.find(id);
+    return it == gTextures.end() ? 0 : it->second.h;
+}
+void nexus_gfx_texture_filter(int64_t id, bool nearest) {
+    auto it = gTextures.find(id);
+    if (it == gTextures.end() || !gGraphics)
+        return;
+    if (gSoftware2D) {
+        // SDL2 software textures use nearest filtering implicitly.
+        (void)nearest;
+        return;
+    }
+    glBindTexture(GL_TEXTURE_2D, it->second.id);
+    GLint f = nearest ? GL_NEAREST : GL_LINEAR;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, f);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, f);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void nexus_gfx_camera_set(double x, double y, double zoom) {
+    gCameraX = float(x);
+    gCameraY = float(y);
+    gCameraZoom = zoom > 0.01 ? float(zoom) : 0.01f;
+}
+void nexus_gfx_camera_reset() {
+    gCameraX = 0;
+    gCameraY = 0;
+    gCameraZoom = 1;
+}
+void nexus_gfx_texture_draw_frame(int64_t id,
+                                  double x,
+                                  double y,
+                                  double w,
+                                  double h,
+                                  int64_t frame,
+                                  int64_t frameW,
+                                  int64_t frameH,
+                                  int64_t columns,
+                                  double r,
+                                  double g,
+                                  double b,
+                                  double a) {
+    auto it = gTextures.find(id);
+    if (!gGraphics || it == gTextures.end() || frameW <= 0 || frameH <= 0 || columns <= 0)
+        return;
+    const int64_t col = frame % columns;
+    const int64_t row = frame / columns;
+    if (gSoftware2D) {
+        if (!it->second.software)
+            return;
+        SDL_Rect src{int(col * frameW), int(row * frameH), int(frameW), int(frameH)};
+        SDL_Rect dst = software_rect(x, y, w, h);
+        SDL_RenderCopy(gRenderer, it->second.software, &src, &dst);
+        return;
+    }
+    const float u0 = float(col * frameW) / float(it->second.w);
+    const float v0 = float(row * frameH) / float(it->second.h);
+    const float u1 = float((col + 1) * frameW) / float(it->second.w);
+    const float v1 = float((row + 1) * frameH) / float(it->second.h);
+    setup_2d();
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, it->second.id);
+    glColor4f(float(r), float(g), float(b), float(a));
+    glBegin(GL_QUADS);
+    glTexCoord2f(u0, v0);
+    glVertex2f(float(x), float(y));
+    glTexCoord2f(u1, v0);
+    glVertex2f(float(x + w), float(y));
+    glTexCoord2f(u1, v1);
+    glVertex2f(float(x + w), float(y + h));
+    glTexCoord2f(u0, v1);
+    glVertex2f(float(x), float(y + h));
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+}
+int64_t nexus_gfx_anim_create(int64_t texture,
+                              int64_t frameW,
+                              int64_t frameH,
+                              int64_t columns,
+                              int64_t frameCount,
+                              double fps,
+                              bool loop) {
+
+    auto it = gTextures.find(texture);
+
+    if (it == gTextures.end() || frameW <= 0 || frameH <= 0 || columns <= 0 || frameCount <= 0 ||
+        fps <= 0.0) {
+        gGraphicsError = "invalid sprite animation parameters";
+        return 0;
+    }
+    if (frameW > it->second.w || frameH > it->second.h) {
+        gGraphicsError = "sprite frame exceeds texture dimensions";
+        return 0;
+    }
+    SpriteAnim a;
+    a.texture = texture;
+    a.frameW = frameW;
+    a.frameH = frameH;
+    a.columns = columns;
+    a.frameCount = frameCount;
+    a.fps = fps;
+    a.loop = loop;
+
+    int64_t id = gNextAnim++;
+    gAnims[id] = a;
+    return id;
+}
+void nexus_gfx_anim_update(int64_t id, double dt) {
+    auto it = gAnims.find(id);
+    if (it == gAnims.end())
+        return;
+    auto& a = it->second;
+    if (a.frameCount <= 1)
+        return;
+    a.time += std::max(dt, 0.0);
+    double step = 1.0 / a.fps;
+    while (a.time >= step) {
+        a.time -= step;
+        ++a.frame;
+        if (a.frame >= a.frameCount) {
+            if (a.loop)
+                a.frame = 0;
+            else
+                a.frame = a.frameCount - 1;
+        }
+    }
+}
+void nexus_gfx_anim_draw(
+    int64_t id, double x, double y, double w, double h, double r, double g, double b, double a) {
+    auto it = gAnims.find(id);
+    if (it == gAnims.end())
+        return;
+    const auto& v = it->second;
+    nexus_gfx_texture_draw_frame(
+        v.texture, x, y, w, h, v.frame, v.frameW, v.frameH, v.columns, r, g, b, a);
+}
+int64_t nexus_gfx_anim_frame(int64_t id) {
+    auto it = gAnims.find(id);
+    return it == gAnims.end() ? -1 : it->second.frame;
+}
+void nexus_gfx_anim_destroy(int64_t id) {
+    gAnims.erase(id);
+}
+
+const char* nexus_gfx_image_type() {
+    return IMG_Load ? "PNG/JPG/BMP (SDL2_image + SDL2 core)"
+                    : "BMP only (install SDL2_image for PNG/JPG)";
+}
+int64_t nexus_gfx_font_load(const char* path, int64_t size) {
+    load_optional_media_libs();
+    if (!gTTF || !TTF_Init || !TTF_OpenFont || !TTF_CloseFont || !TTF_RenderUTF8_Blended ||
+        size <= 0) {
+        gGraphicsError = "TTF font backend unavailable; install SDL2_ttf";
+        return 0;
+    }
+    if (!gTTFReady && TTF_Init() != 0) {
+        gGraphicsError = TTF_GetError ? TTF_GetError() : "TTF_Init failed";
+        return 0;
+    }
+    gTTFReady = true;
+    TTF_Font* f = TTF_OpenFont(path, int(size));
+    if (!f) {
+        gGraphicsError = TTF_GetError ? TTF_GetError() : "font load failed";
+        return 0;
+    }
+    int64_t id = gNextFont++;
+    gFonts[id] = f;
+    return id;
+}
+void nexus_gfx_text_font(
+    int64_t id, double x, double y, const char* text, double r, double g, double b, double a) {
+    auto it = gFonts.find(id);
+    if (!gGraphics || it == gFonts.end() || !TTF_RenderUTF8_Blended)
+        return;
+    SDL_Color c{uint8_t(std::clamp(r, 0.0, 1.0) * 255.0),
+                uint8_t(std::clamp(g, 0.0, 1.0) * 255.0),
+                uint8_t(std::clamp(b, 0.0, 1.0) * 255.0),
+                uint8_t(std::clamp(a, 0.0, 1.0) * 255.0)};
+    SDL_Surface* s = TTF_RenderUTF8_Blended(it->second, text ? text : "", c);
+    if (!s)
+        return;
+    if (gSoftware2D) {
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(gRenderer, s);
+        if (texture) {
+            SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+            SDL_Rect dst{int(std::llround(x)), int(std::llround(y)), s->w, s->h};
+            SDL_RenderCopy(gRenderer, texture, nullptr, &dst);
+            SDL_DestroyTexture(texture);
+        }
+        SDL_FreeSurface(s);
+        return;
+    }
+    SDL_Surface* surf = SDL_ConvertSurfaceFormat(s, SDL_PIXELFORMAT_ABGR8888, 0);
+    SDL_FreeSurface(s);
+    if (!surf)
+        return;
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, surf->w, surf->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surf->pixels);
+    setup_2d();
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glColor4f(1, 1, 1, 1);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex2f(float(x), float(y));
+    glTexCoord2f(1, 0);
+    glVertex2f(float(x + surf->w), float(y));
+    glTexCoord2f(1, 1);
+    glVertex2f(float(x + surf->w), float(y + surf->h));
+    glTexCoord2f(0, 1);
+    glVertex2f(float(x), float(y + surf->h));
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+    glDeleteTextures(1, &tex);
+    SDL_FreeSurface(surf);
+}
+void nexus_gfx_font_unload(int64_t id) {
+    auto it = gFonts.find(id);
+    if (it != gFonts.end()) {
+        if (TTF_CloseFont)
+            TTF_CloseFont(it->second);
+        gFonts.erase(it);
+    }
+}
+int64_t nexus_gfx_sound_load(const char* path);
+
+void nexus_gfx_sound_play(int64_t id, bool loop);
+
+void nexus_gfx_sound_stop();
+
+void nexus_gfx_sound_volume(double v);
+
+int64_t nexus_gfx_music_load(const char* path) {
+
+    load_optional_media_libs();
+
+    if (gMIX && Mix_OpenAudio && Mix_LoadMUS && Mix_FreeMusic && Mix_PlayMusic) {
+
+        if (!gMixerReady && Mix_OpenAudio(44100, AUDIO_S16LSB, 2, 2048) != 0) {
+            gGraphicsError = Mix_GetError ? Mix_GetError() : "Mix_OpenAudio failed";
+        } else {
+            gMixerReady = true;
+            Mix_Music* m = Mix_LoadMUS(path);
+            if (m) {
+                if (gMusic && Mix_FreeMusic)
+                    Mix_FreeMusic(gMusic);
+                gMusic = m;
+                return 1;
+            }
+            gGraphicsError = Mix_GetError ? Mix_GetError() : "music load failed";
+        }
+    }
+    // Guaranteed fallback: plain PCM WAV using the core SDL2 audio queue.
+    return nexus_gfx_sound_load(path);
+}
+bool nexus_gfx_music_play(int64_t id, bool loop) {
+
+    if (gMusic && Mix_PlayMusic)
+        return Mix_PlayMusic(gMusic, loop ? -1 : 1) == 0;
+
+    nexus_gfx_sound_play(id, loop);
+    return gAudioDevice != 0;
+}
+void nexus_gfx_music_stop() {
+    if (Mix_HaltMusic && gMusic)
+        Mix_HaltMusic();
+    nexus_gfx_sound_stop();
+}
+void nexus_gfx_music_volume(double v) {
+    if (Mix_VolumeMusic && gMusic)
+        Mix_VolumeMusic(std::clamp(int(v * 128.0), 0, 128));
+    nexus_gfx_sound_volume(v);
+}
+void nexus_gfx_cursor_visible(bool visible) {
+    if (SDL_ShowCursor)
+        SDL_ShowCursor(visible ? 1 : 0);
+}
+
+static uint8_t canvas_u8(double v) {
+
+    return uint8_t(std::clamp(v, 0.0, 1.0) * 255.0 + 0.5);
+}
+static size_t canvas_index(const CanvasData& c, int x, int y) {
+
+    return (size_t(y) * size_t(c.w) + size_t(x)) * 4u;
+}
+static void canvas_put(CanvasData& c, int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+
+    if (x < 0 || y < 0 || x >= c.w || y >= c.h)
+        return;
+
+    const size_t i = canvas_index(c, x, y);
+
+    c.pixels[i] = r;
+    c.pixels[i + 1] = g;
+    c.pixels[i + 2] = b;
+    c.pixels[i + 3] = a;
+}
+static void canvas_circle(
+    CanvasData& c, int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+
+    if (radius <= 0) {
+        canvas_put(c, cx, cy, r, g, b, a);
+        return;
+    }
+    const int rr = radius * radius;
+
+    for (int y = cy - radius; y <= cy + radius; ++y) {
+
+        for (int x = cx - radius; x <= cx + radius; ++x) {
+
+            const int dx = x - cx, dy = y - cy;
+
+            if (dx * dx + dy * dy <= rr)
+                canvas_put(c, x, y, r, g, b, a);
+        }
+    }
+}
+static void canvas_blit_texture(CanvasData& c) {
+    if (gSoftware2D) {
+        if (!c.software) {
+            c.software = SDL_CreateTexture(
+                gRenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, c.w, c.h);
+            if (c.software)
+                SDL_SetTextureBlendMode(c.software, SDL_BLENDMODE_BLEND);
+        }
+        if (c.software)
+            SDL_UpdateTexture(c.software, nullptr, c.pixels.data(), c.w * 4);
+        return;
+    }
+    if (!c.tex)
+        glGenTextures(1, &c.tex);
+    glBindTexture(GL_TEXTURE_2D, c.tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, c.w, c.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, c.pixels.data());
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 static void canvas_checkpoint_internal(CanvasData& c) {
 
-        c.undo.push_back(CanvasSnapshot{c.pixels
-    });
+    c.undo.push_back(CanvasSnapshot{c.pixels});
 
-    if(c.undo.size()>32) c.undo.erase(c.undo.begin());
+    if (c.undo.size() > 32)
+        c.undo.erase(c.undo.begin());
 
     c.redo.clear();
-
 }
-static bool canvas_save_bmp_impl(const CanvasData& c,const char*path) {
+static bool canvas_save_bmp_impl(const CanvasData& c, const char* path) {
 
-    if(!path || c.w<=0 || c.h<=0) return false;
+    if (!path || c.w <= 0 || c.h <= 0)
+        return false;
 
-    std::ofstream f(path,std::ios::binary);
-    if(!f) return false;
+    std::ofstream f(path, std::ios::binary);
+    if (!f)
+        return false;
 
-    const uint32_t rowBytes=uint32_t(c.w*4), pixelBytes=rowBytes*uint32_t(c.h), fileSize=54u+pixelBytes;
+    const uint32_t rowBytes = uint32_t(c.w * 4), pixelBytes = rowBytes * uint32_t(c.h),
+                   fileSize = 54u + pixelBytes;
 
-    auto w16=[&](uint16_t v){
-        f.put(char(v&0xff));
-        f.put(char((v>>8)&0xff));
+    auto w16 = [&](uint16_t v) {
+        f.put(char(v & 0xff));
+        f.put(char((v >> 8) & 0xff));
     };
 
-    auto w32=[&](uint32_t v){
-        f.put(char(v&0xff));
-        f.put(char((v>>8)&0xff));
-        f.put(char((v>>16)&0xff));
-        f.put(char((v>>24)&0xff));
+    auto w32 = [&](uint32_t v) {
+        f.put(char(v & 0xff));
+        f.put(char((v >> 8) & 0xff));
+        f.put(char((v >> 16) & 0xff));
+        f.put(char((v >> 24) & 0xff));
     };
 
     w16(0x4D42);
@@ -3272,375 +3516,459 @@ static bool canvas_save_bmp_impl(const CanvasData& c,const char*path) {
     w32(0);
     w32(0);
 
-    for(int y=c.h-1;y>=0;--y){
+    for (int y = c.h - 1; y >= 0; --y) {
 
-        for(int x=0;x<c.w;++x){
-            const size_t i=canvas_index(c,x,y);
-            f.put(char(c.pixels[i+2]));
-            f.put(char(c.pixels[i+1]));
+        for (int x = 0; x < c.w; ++x) {
+            const size_t i = canvas_index(c, x, y);
+            f.put(char(c.pixels[i + 2]));
+            f.put(char(c.pixels[i + 1]));
             f.put(char(c.pixels[i]));
-            f.put(char(c.pixels[i+3]));
+            f.put(char(c.pixels[i + 3]));
         }
     }
     return bool(f);
-
 }
-static bool canvas_load_bmp_impl(const char*path,CanvasData& out) {
+static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
 
-    if(!path) return false;
-    std::ifstream f(path,std::ios::binary);
-    if(!f) return false;
+    if (!path)
+        return false;
+    std::ifstream f(path, std::ios::binary);
+    if (!f)
+        return false;
 
-    std::vector<uint8_t> b((std::istreambuf_iterator<char>(f)),std::istreambuf_iterator<char>());
-    if(b.size()<54||b[0]!='B'||b[1]!='M')return false;
+    std::vector<uint8_t> b((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    if (b.size() < 54 || b[0] != 'B' || b[1] != 'M')
+        return false;
 
-    auto rd16v=[&](size_t o)->uint16_t{
-        return uint16_t(b[o])|(uint16_t(b[o+1])<<8);
+    auto rd16v = [&](size_t o) -> uint16_t { return uint16_t(b[o]) | (uint16_t(b[o + 1]) << 8); };
+
+    auto rd32v = [&](size_t o) -> uint32_t {
+        return uint32_t(b[o]) | (uint32_t(b[o + 1]) << 8) | (uint32_t(b[o + 2]) << 16) |
+               (uint32_t(b[o + 3]) << 24);
     };
 
-    auto rd32v=[&](size_t o)->uint32_t{
-        return uint32_t(b[o])|(uint32_t(b[o+1])<<8)|(uint32_t(b[o+2])<<16)|(uint32_t(b[o+3])<<24);
-    };
+    const uint32_t offset = rd32v(10);
+    const int32_t w = int32_t(rd32v(18));
+    const int32_t hs = int32_t(rd32v(22));
+    const uint16_t bits = rd16v(28);
+    const uint32_t comp = rd32v(30);
 
-    const uint32_t offset=rd32v(10);
-    const int32_t w=int32_t(rd32v(18));
-    const int32_t hs=int32_t(rd32v(22));
-    const uint16_t bits=rd16v(28);
-    const uint32_t comp=rd32v(30);
+    if (w <= 0 || hs == 0 || (bits != 24 && bits != 32) || comp != 0 || offset >= b.size())
+        return false;
 
-    if(w<=0||hs==0||(bits!=24&&bits!=32)||comp!=0||offset>=b.size())return false;
+    const int h = hs < 0 ? -hs : hs;
+    const size_t pxBytes = size_t(bits / 8);
+    const size_t rowStride = ((size_t(w) * pxBytes + 3u) / 4u) * 4u;
 
-    const int h=hs<0?-hs:hs;
-    const size_t pxBytes=size_t(bits/8);
-    const size_t rowStride=((size_t(w)*pxBytes+3u)/4u)*4u;
+    if (size_t(h) * rowStride > b.size() - offset)
+        return false;
 
-    if(size_t(h)*rowStride > b.size()-offset)return false;
-
-    out.w=w;
-    out.h=h;
-    out.pixels.assign(size_t(w)*size_t(h)*4u,255);
+    out.w = w;
+    out.h = h;
+    out.pixels.assign(size_t(w) * size_t(h) * 4u, 255);
     out.undo.clear();
     out.redo.clear();
 
-    for(int y=0;y<h;++y){
-        const int sy=hs<0?y:(h-1-y);
-        const uint8_t*row=b.data()+offset+size_t(sy)*rowStride;
-        for(int x=0;x<w;++x){
-            const uint8_t*px=row+size_t(x)*pxBytes;
-            const size_t i=canvas_index(out,x,y);
-            out.pixels[i]=px[2];
-            out.pixels[i+1]=px[1];
-            out.pixels[i+2]=px[0];
-            out.pixels[i+3]=(bits==32?px[3]:255);
+    for (int y = 0; y < h; ++y) {
+        const int sy = hs < 0 ? y : (h - 1 - y);
+        const uint8_t* row = b.data() + offset + size_t(sy) * rowStride;
+        for (int x = 0; x < w; ++x) {
+            const uint8_t* px = row + size_t(x) * pxBytes;
+            const size_t i = canvas_index(out, x, y);
+            out.pixels[i] = px[2];
+            out.pixels[i + 1] = px[1];
+            out.pixels[i + 2] = px[0];
+            out.pixels[i + 3] = (bits == 32 ? px[3] : 255);
         }
     }
     return true;
-
 }
-int64_t nexus_gfx_canvas_create(int64_t w,int64_t h,double r,double g,double b,double a){
+int64_t nexus_gfx_canvas_create(int64_t w, int64_t h, double r, double g, double b, double a) {
 
-    if(!gGraphics || w<=0 || h<=0 || w>8192 || h>8192) return 0;
+    if (!gGraphics || w <= 0 || h <= 0 || w > 8192 || h > 8192)
+        return 0;
 
     CanvasData c;
-    c.w=int(w);
-    c.h=int(h);
-    c.pixels.resize(size_t(c.w)*size_t(c.h)*4u);
+    c.w = int(w);
+    c.h = int(h);
+    c.pixels.resize(size_t(c.w) * size_t(c.h) * 4u);
 
-    const uint8_t R=canvas_u8(r),G=canvas_u8(g),B=canvas_u8(b),A=canvas_u8(a);
+    const uint8_t R = canvas_u8(r), G = canvas_u8(g), B = canvas_u8(b), A = canvas_u8(a);
 
-    for(size_t i=0;i<c.pixels.size();i+=4){
-        c.pixels[i]=R;
-        c.pixels[i+1]=G;
-        c.pixels[i+2]=B;
-        c.pixels[i+3]=A;
+    for (size_t i = 0; i < c.pixels.size(); i += 4) {
+        c.pixels[i] = R;
+        c.pixels[i + 1] = G;
+        c.pixels[i + 2] = B;
+        c.pixels[i + 3] = A;
     }
-    const int64_t id=gNextCanvas++;
-    if(gSoftware2D){
-        c.software=SDL_CreateTexture(gRenderer,SDL_PIXELFORMAT_ABGR8888,SDL_TEXTUREACCESS_STREAMING,c.w,c.h);
-        if(c.software)SDL_SetTextureBlendMode(c.software,SDL_BLENDMODE_BLEND);
-    }else{
-        glGenTextures(1,&c.tex);
-        glBindTexture(GL_TEXTURE_2D,c.tex);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D,0,4,c.w,c.h,0,GL_RGBA,GL_UNSIGNED_BYTE,c.pixels.data());
-        glBindTexture(GL_TEXTURE_2D,0);
+    const int64_t id = gNextCanvas++;
+    if (gSoftware2D) {
+        c.software = SDL_CreateTexture(
+            gRenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, c.w, c.h);
+        if (c.software)
+            SDL_SetTextureBlendMode(c.software, SDL_BLENDMODE_BLEND);
+    } else {
+        glGenTextures(1, &c.tex);
+        glBindTexture(GL_TEXTURE_2D, c.tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, c.w, c.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, c.pixels.data());
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
-    gCanvases[id]=std::move(c);
+    gCanvases[id] = std::move(c);
     return id;
-
 }
-void nexus_gfx_canvas_destroy(int64_t id){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end())return;
-    if(it->second.tex && glDeleteTextures && gOpenGL3D) {
-        glDeleteTextures(1,&it->second.tex);
+void nexus_gfx_canvas_destroy(int64_t id) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end())
+        return;
+    if (it->second.tex && glDeleteTextures && gOpenGL3D) {
+        glDeleteTextures(1, &it->second.tex);
     }
-    if(it->second.software && SDL_DestroyTexture) {
+    if (it->second.software && SDL_DestroyTexture) {
         SDL_DestroyTexture(it->second.software);
     }
     gCanvases.erase(it);
 }
-void nexus_gfx_canvas_clear(int64_t id,double r,double g,double b,double a){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end())return;
+void nexus_gfx_canvas_clear(int64_t id, double r, double g, double b, double a) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end())
+        return;
     canvas_checkpoint_internal(it->second);
-    const uint8_t R=canvas_u8(r),G=canvas_u8(g),B=canvas_u8(b),A=canvas_u8(a);
-    for(size_t i=0;i<it->second.pixels.size();i+=4){
-        it->second.pixels[i]=R;
-        it->second.pixels[i+1]=G;
-        it->second.pixels[i+2]=B;
-        it->second.pixels[i+3]=A;
+    const uint8_t R = canvas_u8(r), G = canvas_u8(g), B = canvas_u8(b), A = canvas_u8(a);
+    for (size_t i = 0; i < it->second.pixels.size(); i += 4) {
+        it->second.pixels[i] = R;
+        it->second.pixels[i + 1] = G;
+        it->second.pixels[i + 2] = B;
+        it->second.pixels[i + 3] = A;
     }
 }
-void nexus_gfx_canvas_brush(int64_t id,double x,double y,double size,double r,double g,double b,double a){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end())return;
-    const int radius=std::max(1,int(std::round(size*0.5)));
-    canvas_circle(it->second,int(std::round(x)),int(std::round(y)),radius,canvas_u8(r),canvas_u8(g),canvas_u8(b),canvas_u8(a));
+void nexus_gfx_canvas_brush(
+    int64_t id, double x, double y, double size, double r, double g, double b, double a) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end())
+        return;
+    const int radius = std::max(1, int(std::round(size * 0.5)));
+    canvas_circle(it->second,
+                  int(std::round(x)),
+                  int(std::round(y)),
+                  radius,
+                  canvas_u8(r),
+                  canvas_u8(g),
+                  canvas_u8(b),
+                  canvas_u8(a));
 }
-void nexus_gfx_canvas_line(int64_t id,double x1,double y1,double x2,double y2,double size,double r,double g,double b,double a){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end())return;
-    CanvasData& c=it->second;
-    const double dx=x2-x1,dy=y2-y1;
-    const int steps=std::max(1,int(std::ceil(std::max(std::abs(dx),std::abs(dy)))));
-    for(int i=0;i<=steps;++i){
-        double t=double(i)/double(steps);
-        canvas_circle(c,int(std::round(x1+dx*t)),int(std::round(y1+dy*t)),std::max(1,int(std::round(size*0.5))),canvas_u8(r),canvas_u8(g),canvas_u8(b),canvas_u8(a));
+void nexus_gfx_canvas_line(int64_t id,
+                           double x1,
+                           double y1,
+                           double x2,
+                           double y2,
+                           double size,
+                           double r,
+                           double g,
+                           double b,
+                           double a) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end())
+        return;
+    CanvasData& c = it->second;
+    const double dx = x2 - x1, dy = y2 - y1;
+    const int steps = std::max(1, int(std::ceil(std::max(std::abs(dx), std::abs(dy)))));
+    for (int i = 0; i <= steps; ++i) {
+        double t = double(i) / double(steps);
+        canvas_circle(c,
+                      int(std::round(x1 + dx * t)),
+                      int(std::round(y1 + dy * t)),
+                      std::max(1, int(std::round(size * 0.5))),
+                      canvas_u8(r),
+                      canvas_u8(g),
+                      canvas_u8(b),
+                      canvas_u8(a));
     }
 }
-void nexus_gfx_canvas_rect(int64_t id,double x,double y,double w,double h,double size,double r,double g,double b,double a,bool filled){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end())return;
-    CanvasData& c=it->second;
-    int x0=int(std::floor(x)),y0=int(std::floor(y)),x1=int(std::ceil(x+w)),y1=int(std::ceil(y+h));
-    if(filled){
-        x0=std::max(0,x0);
-        y0=std::max(0,y0);
-        x1=std::min(c.w-1,x1);
-        y1=std::min(c.h-1,y1);
-        for(int yy=y0;yy<=y1;++yy)for(int xx=x0;xx<=x1;++xx)canvas_put(c,xx,yy,canvas_u8(r),canvas_u8(g),canvas_u8(b),canvas_u8(a));
-    }
-    else{
-        nexus_gfx_canvas_line(id,x0,y0,x1,y0,size,r,g,b,a);
-        nexus_gfx_canvas_line(id,x1,y0,x1,y1,size,r,g,b,a);
-        nexus_gfx_canvas_line(id,x1,y1,x0,y1,size,r,g,b,a);
-        nexus_gfx_canvas_line(id,x0,y1,x0,y0,size,r,g,b,a);
+void nexus_gfx_canvas_rect(int64_t id,
+                           double x,
+                           double y,
+                           double w,
+                           double h,
+                           double size,
+                           double r,
+                           double g,
+                           double b,
+                           double a,
+                           bool filled) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end())
+        return;
+    CanvasData& c = it->second;
+    int x0 = int(std::floor(x)), y0 = int(std::floor(y)), x1 = int(std::ceil(x + w)),
+        y1 = int(std::ceil(y + h));
+    if (filled) {
+        x0 = std::max(0, x0);
+        y0 = std::max(0, y0);
+        x1 = std::min(c.w - 1, x1);
+        y1 = std::min(c.h - 1, y1);
+        for (int yy = y0; yy <= y1; ++yy)
+            for (int xx = x0; xx <= x1; ++xx)
+                canvas_put(c, xx, yy, canvas_u8(r), canvas_u8(g), canvas_u8(b), canvas_u8(a));
+    } else {
+        nexus_gfx_canvas_line(id, x0, y0, x1, y0, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x1, y0, x1, y1, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x1, y1, x0, y1, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x0, y1, x0, y0, size, r, g, b, a);
     }
 }
-void nexus_gfx_canvas_fill(int64_t id,int64_t x,int64_t y,double r,double g,double b,double a){
+void nexus_gfx_canvas_fill(
+    int64_t id, int64_t x, int64_t y, double r, double g, double b, double a) {
 
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end())return;
-    CanvasData& c=it->second;
-    if(x<0||y<0||x>=c.w||y>=c.h)return;
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end())
+        return;
+    CanvasData& c = it->second;
+    if (x < 0 || y < 0 || x >= c.w || y >= c.h)
+        return;
     canvas_checkpoint_internal(c);
 
-    const size_t si=canvas_index(c,int(x),int(y));
-    const uint8_t sr=c.pixels[si],sg=c.pixels[si+1],sb=c.pixels[si+2],sa=c.pixels[si+3];
-    const uint8_t tr=canvas_u8(r),tg=canvas_u8(g),tb=canvas_u8(b),ta=canvas_u8(a);
-    if(sr==tr&&sg==tg&&sb==tb&&sa==ta)return;
+    const size_t si = canvas_index(c, int(x), int(y));
+    const uint8_t sr = c.pixels[si], sg = c.pixels[si + 1], sb = c.pixels[si + 2],
+                  sa = c.pixels[si + 3];
+    const uint8_t tr = canvas_u8(r), tg = canvas_u8(g), tb = canvas_u8(b), ta = canvas_u8(a);
+    if (sr == tr && sg == tg && sb == tb && sa == ta)
+        return;
 
     std::vector<int> stack;
-    stack.push_back(int(y)*c.w+int(x));
-    std::vector<uint8_t> seen(size_t(c.w)*size_t(c.h),0);
+    stack.push_back(int(y) * c.w + int(x));
+    std::vector<uint8_t> seen(size_t(c.w) * size_t(c.h), 0);
 
-    while(!stack.empty()){
-        int p=stack.back();
+    while (!stack.empty()) {
+        int p = stack.back();
         stack.pop_back();
-        if(p<0||p>=c.w*c.h||seen[size_t(p)])continue;
-        int px=p%c.w,py=p/c.w;
-        size_t i=canvas_index(c,px,py);
-        if(c.pixels[i]!=sr||c.pixels[i+1]!=sg||c.pixels[i+2]!=sb||c.pixels[i+3]!=sa)continue;
-        seen[size_t(p)]=1;
-        c.pixels[i]=tr;
-        c.pixels[i+1]=tg;
-        c.pixels[i+2]=tb;
-        c.pixels[i+3]=ta;
-        if(px>0)stack.push_back(p-1);
-        if(px+1<c.w)stack.push_back(p+1);
-        if(py>0)stack.push_back(p-c.w);
-        if(py+1<c.h)stack.push_back(p+c.w);
+        if (p < 0 || p >= c.w * c.h || seen[size_t(p)])
+            continue;
+        int px = p % c.w, py = p / c.w;
+        size_t i = canvas_index(c, px, py);
+        if (c.pixels[i] != sr || c.pixels[i + 1] != sg || c.pixels[i + 2] != sb ||
+            c.pixels[i + 3] != sa)
+            continue;
+        seen[size_t(p)] = 1;
+        c.pixels[i] = tr;
+        c.pixels[i + 1] = tg;
+        c.pixels[i + 2] = tb;
+        c.pixels[i + 3] = ta;
+        if (px > 0)
+            stack.push_back(p - 1);
+        if (px + 1 < c.w)
+            stack.push_back(p + 1);
+        if (py > 0)
+            stack.push_back(p - c.w);
+        if (py + 1 < c.h)
+            stack.push_back(p + c.w);
     }
 }
-void nexus_gfx_canvas_draw(int64_t id,double x,double y,double w,double h,double alpha){
-    auto it=gCanvases.find(id);
-    if(!gGraphics||it==gCanvases.end())return;
-    CanvasData&c=it->second;
+void nexus_gfx_canvas_draw(int64_t id, double x, double y, double w, double h, double alpha) {
+    auto it = gCanvases.find(id);
+    if (!gGraphics || it == gCanvases.end())
+        return;
+    CanvasData& c = it->second;
     canvas_blit_texture(c);
-    if(gSoftware2D){
-        if(c.software){
-            SDL_Rect dst=software_rect(x,y,w,h);
-            SDL_RenderCopy(gRenderer,c.software,nullptr,&dst);
+    if (gSoftware2D) {
+        if (c.software) {
+            SDL_Rect dst = software_rect(x, y, w, h);
+            SDL_RenderCopy(gRenderer, c.software, nullptr, &dst);
         }
         return;
     }
-    setup_2d(); glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,c.tex); glColor4f(1,1,1,float(std::clamp(alpha,0.0,1.0)));
+    setup_2d();
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, c.tex);
+    glColor4f(1, 1, 1, float(std::clamp(alpha, 0.0, 1.0)));
     glBegin(GL_QUADS);
-    glTexCoord2f(0,0); glVertex2f(float(x),float(y));
-    glTexCoord2f(1,0); glVertex2f(float(x+w),float(y));
-    glTexCoord2f(1,1); glVertex2f(float(x+w),float(y+h));
-    glTexCoord2f(0,1); glVertex2f(float(x),float(y+h));
-    glEnd(); glBindTexture(GL_TEXTURE_2D,0); glDisable(GL_TEXTURE_2D);
+    glTexCoord2f(0, 0);
+    glVertex2f(float(x), float(y));
+    glTexCoord2f(1, 0);
+    glVertex2f(float(x + w), float(y));
+    glTexCoord2f(1, 1);
+    glVertex2f(float(x + w), float(y + h));
+    glTexCoord2f(0, 1);
+    glVertex2f(float(x), float(y + h));
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
 }
-bool nexus_gfx_canvas_save_bmp(int64_t id,const char*path){
-    auto it=gCanvases.find(id);
-    return it!=gCanvases.end()&&canvas_save_bmp_impl(it->second,path);
+bool nexus_gfx_canvas_save_bmp(int64_t id, const char* path) {
+    auto it = gCanvases.find(id);
+    return it != gCanvases.end() && canvas_save_bmp_impl(it->second, path);
 }
-int64_t nexus_gfx_canvas_load_bmp(const char*path){
-    if(!gGraphics)return 0;
+int64_t nexus_gfx_canvas_load_bmp(const char* path) {
+    if (!gGraphics)
+        return 0;
     CanvasData c;
-    if(!canvas_load_bmp_impl(path,c))return 0;
-    if(gSoftware2D){
-        c.software=SDL_CreateTexture(gRenderer,SDL_PIXELFORMAT_ABGR8888,SDL_TEXTUREACCESS_STREAMING,c.w,c.h);
-        if(c.software)SDL_SetTextureBlendMode(c.software,SDL_BLENDMODE_BLEND);
-    }else{
-        glGenTextures(1,&c.tex);
-        glBindTexture(GL_TEXTURE_2D,c.tex);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D,0,4,c.w,c.h,0,GL_RGBA,GL_UNSIGNED_BYTE,c.pixels.data());
-        glBindTexture(GL_TEXTURE_2D,0);
+    if (!canvas_load_bmp_impl(path, c))
+        return 0;
+    if (gSoftware2D) {
+        c.software = SDL_CreateTexture(
+            gRenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, c.w, c.h);
+        if (c.software)
+            SDL_SetTextureBlendMode(c.software, SDL_BLENDMODE_BLEND);
+    } else {
+        glGenTextures(1, &c.tex);
+        glBindTexture(GL_TEXTURE_2D, c.tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, c.w, c.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, c.pixels.data());
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
-    const int64_t id=gNextCanvas++;
-    gCanvases[id]=std::move(c);
+    const int64_t id = gNextCanvas++;
+    gCanvases[id] = std::move(c);
     return id;
 }
-void nexus_gfx_canvas_checkpoint(int64_t id){
-    auto it=gCanvases.find(id);
-    if(it!=gCanvases.end())canvas_checkpoint_internal(it->second);
+void nexus_gfx_canvas_checkpoint(int64_t id) {
+    auto it = gCanvases.find(id);
+    if (it != gCanvases.end())
+        canvas_checkpoint_internal(it->second);
 }
-bool nexus_gfx_canvas_undo(int64_t id){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end()||it->second.undo.empty())return false;
-    CanvasData&c=it->second;
-    c.redo.push_back(CanvasSnapshot{c.pixels
-});
-c.pixels=std::move(c.undo.back().pixels);
-c.undo.pop_back();
-return true;
+bool nexus_gfx_canvas_undo(int64_t id) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end() || it->second.undo.empty())
+        return false;
+    CanvasData& c = it->second;
+    c.redo.push_back(CanvasSnapshot{c.pixels});
+    c.pixels = std::move(c.undo.back().pixels);
+    c.undo.pop_back();
+    return true;
 }
-bool nexus_gfx_canvas_redo(int64_t id){
-    auto it=gCanvases.find(id);
-    if(it==gCanvases.end()||it->second.redo.empty())return false;
-    CanvasData&c=it->second;
-    c.undo.push_back(CanvasSnapshot{c.pixels
-});
-c.pixels=std::move(c.redo.back().pixels);
-c.redo.pop_back();
-return true;
+bool nexus_gfx_canvas_redo(int64_t id) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end() || it->second.redo.empty())
+        return false;
+    CanvasData& c = it->second;
+    c.undo.push_back(CanvasSnapshot{c.pixels});
+    c.pixels = std::move(c.redo.back().pixels);
+    c.redo.pop_back();
+    return true;
 }
-int64_t nexus_gfx_canvas_width(int64_t id){
-    auto it=gCanvases.find(id);
-    return it==gCanvases.end()?0:it->second.w;
+int64_t nexus_gfx_canvas_width(int64_t id) {
+    auto it = gCanvases.find(id);
+    return it == gCanvases.end() ? 0 : it->second.w;
 }
-int64_t nexus_gfx_canvas_height(int64_t id){
-    auto it=gCanvases.find(id);
-    return it==gCanvases.end()?0:it->second.h;
+int64_t nexus_gfx_canvas_height(int64_t id) {
+    auto it = gCanvases.find(id);
+    return it == gCanvases.end() ? 0 : it->second.h;
 }
 
-bool nexus_ui_button(double x,double y,double w,double h,const char*label){
-    bool hover=false;
-    if(gGraphics){
-        const double mx=nexus_gfx_mouse_x();
-        const double my=nexus_gfx_mouse_y();
-        hover=mx>=x&&mx<=x+w&&my>=y&&my<=y+h;
+bool nexus_ui_button(double x, double y, double w, double h, const char* label) {
+    bool hover = false;
+    if (gGraphics) {
+        const double mx = nexus_gfx_mouse_x();
+        const double my = nexus_gfx_mouse_y();
+        hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
     }
-    nexus_gfx_rect(x,y,w,h,hover?0.12:0.08,hover?0.48:0.32,0.82,1.0);
-    nexus_gfx_text(x+12,y+12,1.5,label,1,1,1,1);
-    return hover&&gMouseClicked;
+    nexus_gfx_rect(x, y, w, h, hover ? 0.12 : 0.08, hover ? 0.48 : 0.32, 0.82, 1.0);
+    nexus_gfx_text(x + 12, y + 12, 1.5, label, 1, 1, 1, 1);
+    return hover && gMouseClicked;
 }
-void nexus_ui_panel(double x,double y,double w,double h,double r,double g,double b,double a){
-    nexus_gfx_rect(x,y,w,h,r,g,b,a);
+void nexus_ui_panel(
+    double x, double y, double w, double h, double r, double g, double b, double a) {
+    nexus_gfx_rect(x, y, w, h, r, g, b, a);
 }
-void nexus_ui_label(double x,double y,const char*text,double scale){
-    nexus_gfx_text(x,y,scale,text,1,1,1,1);
+void nexus_ui_label(double x, double y, const char* text, double scale) {
+    nexus_gfx_text(x, y, scale, text, 1, 1, 1, 1);
 }
-void nexus_ui_progress(double x,double y,double w,double h,double value,double r,double g,double b,double a){
-    nexus_gfx_rect(x,y,w,h,0.12,0.14,0.18,1);
-    double v=std::clamp(value,0.0,1.0);
-    nexus_gfx_rect(x,y,w*v,h,r,g,b,a);
+void nexus_ui_progress(
+    double x, double y, double w, double h, double value, double r, double g, double b, double a) {
+    nexus_gfx_rect(x, y, w, h, 0.12, 0.14, 0.18, 1);
+    double v = std::clamp(value, 0.0, 1.0);
+    nexus_gfx_rect(x, y, w * v, h, r, g, b, a);
 }
-bool nexus_ui_checkbox(double x,double y,const char*label,bool checked){
+bool nexus_ui_checkbox(double x, double y, const char* label, bool checked) {
 
-    bool hover=false;
-    if(gGraphics){
-        const double mx=nexus_gfx_mouse_x();
-        const double my=nexus_gfx_mouse_y();
-        hover=mx>=x&&mx<=x+28&&my>=y&&my<=y+28;
+    bool hover = false;
+    if (gGraphics) {
+        const double mx = nexus_gfx_mouse_x();
+        const double my = nexus_gfx_mouse_y();
+        hover = mx >= x && mx <= x + 28 && my >= y && my <= y + 28;
     }
-    bool on=checked;
-    if(hover&&gMouseClicked) on=!checked;
-    nexus_gfx_rect(x,y,28,28,0.10,0.12,0.18,1.0);
-    if(on)nexus_gfx_rect(x+5,y+5,18,18,0.2,0.75,1.0,1.0);
-    if(label)nexus_gfx_text(x+40,y+2,1.4,label,1,1,1,1);
+    bool on = checked;
+    if (hover && gMouseClicked)
+        on = !checked;
+    nexus_gfx_rect(x, y, 28, 28, 0.10, 0.12, 0.18, 1.0);
+    if (on)
+        nexus_gfx_rect(x + 5, y + 5, 18, 18, 0.2, 0.75, 1.0, 1.0);
+    if (label)
+        nexus_gfx_text(x + 40, y + 2, 1.4, label, 1, 1, 1, 1);
     return on;
-
 }
-double nexus_ui_slider(double x,double y,double w,double h,double value){
+double nexus_ui_slider(double x, double y, double w, double h, double value) {
 
-    double v=std::clamp(value,0.0,1.0);
-    double mx=0.0;
-    double my=0.0;
-    bool down=false;
-    if(gGraphics){
-        mx=nexus_gfx_mouse_x();
-        my=nexus_gfx_mouse_y();
-        down=nexus_gfx_mouse_down(1);
+    double v = std::clamp(value, 0.0, 1.0);
+    double mx = 0.0;
+    double my = 0.0;
+    bool down = false;
+    if (gGraphics) {
+        mx = nexus_gfx_mouse_x();
+        my = nexus_gfx_mouse_y();
+        down = nexus_gfx_mouse_down(1);
     }
-    const bool hover=mx>=x&&mx<=x+w&&my>=y&&my<=y+h;
-    if(down&&hover)v=std::clamp((mx-x)/std::max(w,1.0),0.0,1.0);
+    const bool hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
+    if (down && hover)
+        v = std::clamp((mx - x) / std::max(w, 1.0), 0.0, 1.0);
 
-    nexus_gfx_rect(x,y+h*0.35,w,h*0.3,0.12,0.14,0.18,1.0);
-    nexus_gfx_rect(x,y+h*0.35,w*v,h*0.3,0.2,0.65,1.0,1.0);
-    nexus_gfx_circle(x+w*v,y+h*0.5,h*0.7,0.9,0.95,1.0,1.0);
+    nexus_gfx_rect(x, y + h * 0.35, w, h * 0.3, 0.12, 0.14, 0.18, 1.0);
+    nexus_gfx_rect(x, y + h * 0.35, w * v, h * 0.3, 0.2, 0.65, 1.0, 1.0);
+    nexus_gfx_circle(x + w * v, y + h * 0.5, h * 0.7, 0.9, 0.95, 1.0, 1.0);
 
     return v;
-
 }
-bool nexus_physics_aabb(double ax,double ay,double aw,double ah,double bx,double by,double bw,double bh){
-    return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;
+bool nexus_physics_aabb(
+    double ax, double ay, double aw, double ah, double bx, double by, double bw, double bh) {
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
-bool nexus_physics_circle(double ax,double ay,double ar,double bx,double by,double br){
-    double dx=ax-bx,dy=ay-by,r=ar+br;
-    return dx*dx+dy*dy<=r*r;
+bool nexus_physics_circle(double ax, double ay, double ar, double bx, double by, double br) {
+    double dx = ax - bx, dy = ay - by, r = ar + br;
+    return dx * dx + dy * dy <= r * r;
 }
-int64_t nexus_scene_create(){
-    int64_t id=gNextScene++;
-    gScenes[id]=SceneData{
-    };
+int64_t nexus_scene_create() {
+    int64_t id = gNextScene++;
+    gScenes[id] = SceneData{};
     return id;
 }
-void nexus_scene_add(int64_t scene,int64_t entity){
-    auto sit=gScenes.find(scene);
-    auto eit=gEntities.find(entity);
-    if(sit!=gScenes.end()&&eit!=gEntities.end())sit->second.entities.push_back(eit->second);
+void nexus_scene_add(int64_t scene, int64_t entity) {
+    auto sit = gScenes.find(scene);
+    auto eit = gEntities.find(entity);
+    if (sit != gScenes.end() && eit != gEntities.end())
+        sit->second.entities.push_back(eit->second);
 }
-bool nexus_scene_save(int64_t scene,const char*path){
-    auto sit=gScenes.find(scene);
-    if(sit==gScenes.end()||!path)return false;
+bool nexus_scene_save(int64_t scene, const char* path) {
+    auto sit = gScenes.find(scene);
+    if (sit == gScenes.end() || !path)
+        return false;
     std::ofstream f(path);
-    if(!f)return false;
-    f<<"NEXUS_SCENE 1\n"<<sit->second.entities.size()<<"\n";
-    for(const auto&e:sit->second.entities){
-        f<<e.x<<' '<<e.y<<' '<<e.vx<<' '<<e.vy<<' '<<e.w<<' '<<e.h<<' '<<e.r<<' '<<e.g<<' '<<e.b<<' '<<e.a<<' '<<e.texture<<"\n";
+    if (!f)
+        return false;
+    f << "NEXUS_SCENE 1\n" << sit->second.entities.size() << "\n";
+    for (const auto& e : sit->second.entities) {
+        f << e.x << ' ' << e.y << ' ' << e.vx << ' ' << e.vy << ' ' << e.w << ' ' << e.h << ' '
+          << e.r << ' ' << e.g << ' ' << e.b << ' ' << e.a << ' ' << e.texture << "\n";
     }
     return true;
 }
-int64_t nexus_scene_load(const char*path){
-    if(!path)return 0;
+int64_t nexus_scene_load(const char* path) {
+    if (!path)
+        return 0;
     std::ifstream f(path);
-    if(!f)return 0;
+    if (!f)
+        return 0;
     std::string magic;
-    int version=0,count=0;
-    f>>magic>>version>>count;
-    if(magic!="NEXUS_SCENE"||version!=1||count<0||count>100000)return 0;
-    int64_t sid=nexus_scene_create();
-    auto&out=gScenes[sid].entities;
-    for(int i=0;i<count;++i){
+    int version = 0, count = 0;
+    f >> magic >> version >> count;
+    if (magic != "NEXUS_SCENE" || version != 1 || count < 0 || count > 100000)
+        return 0;
+    int64_t sid = nexus_scene_create();
+    auto& out = gScenes[sid].entities;
+    for (int i = 0; i < count; ++i) {
         EcsEntity e;
-        if(!(f>>e.x>>e.y>>e.vx>>e.vy>>e.w>>e.h>>e.r>>e.g>>e.b>>e.a>>e.texture)){
+        if (!(f >> e.x >> e.y >> e.vx >> e.vy >> e.w >> e.h >> e.r >> e.g >> e.b >> e.a >>
+              e.texture)) {
             gScenes.erase(sid);
             return 0;
         }
@@ -3648,482 +3976,532 @@ int64_t nexus_scene_load(const char*path){
     }
     return sid;
 }
-void nexus_scene_destroy(int64_t id){
+void nexus_scene_destroy(int64_t id) {
     gScenes.erase(id);
 }
-void nexus_scene_clear(int64_t id){
-    auto it=gScenes.find(id);
-    if(it!=gScenes.end())it->second.entities.clear();
+void nexus_scene_clear(int64_t id) {
+    auto it = gScenes.find(id);
+    if (it != gScenes.end())
+        it->second.entities.clear();
 }
-int64_t nexus_ecs_create(){
-    int64_t id=gNextEntity++;
-    gEntities[id]=EcsEntity{
-    };
+int64_t nexus_ecs_create() {
+    int64_t id = gNextEntity++;
+    gEntities[id] = EcsEntity{};
     return id;
 }
-void nexus_ecs_destroy(int64_t id){
+void nexus_ecs_destroy(int64_t id) {
     gEntities.erase(id);
 }
-bool nexus_ecs_alive(int64_t id){
+bool nexus_ecs_alive(int64_t id) {
     return gEntities.contains(id);
 }
-void nexus_ecs_set_position(int64_t id,double x,double y){
-    auto it=gEntities.find(id);
-    if(it!=gEntities.end()){
-        it->second.x=float(x);
-        it->second.y=float(y);
+void nexus_ecs_set_position(int64_t id, double x, double y) {
+    auto it = gEntities.find(id);
+    if (it != gEntities.end()) {
+        it->second.x = float(x);
+        it->second.y = float(y);
     }
 }
-void nexus_ecs_set_velocity(int64_t id,double x,double y){
-    auto it=gEntities.find(id);
-    if(it!=gEntities.end()){
-        it->second.vx=float(x);
-        it->second.vy=float(y);
+void nexus_ecs_set_velocity(int64_t id, double x, double y) {
+    auto it = gEntities.find(id);
+    if (it != gEntities.end()) {
+        it->second.vx = float(x);
+        it->second.vy = float(y);
     }
 }
-void nexus_ecs_set_size(int64_t id,double w,double h){
-    auto it=gEntities.find(id);
-    if(it!=gEntities.end()){
-        it->second.w=float(w);
-        it->second.h=float(h);
+void nexus_ecs_set_size(int64_t id, double w, double h) {
+    auto it = gEntities.find(id);
+    if (it != gEntities.end()) {
+        it->second.w = float(w);
+        it->second.h = float(h);
     }
 }
-void nexus_ecs_set_color(int64_t id,double r,double g,double b,double a){
-    auto it=gEntities.find(id);
-    if(it!=gEntities.end()){
-        it->second.r=float(r);
-        it->second.g=float(g);
-        it->second.b=float(b);
-        it->second.a=float(a);
+void nexus_ecs_set_color(int64_t id, double r, double g, double b, double a) {
+    auto it = gEntities.find(id);
+    if (it != gEntities.end()) {
+        it->second.r = float(r);
+        it->second.g = float(g);
+        it->second.b = float(b);
+        it->second.a = float(a);
     }
 }
-void nexus_ecs_set_texture(int64_t id,int64_t tex){
-    auto it=gEntities.find(id);
-    if(it!=gEntities.end())it->second.texture=tex;
+void nexus_ecs_set_texture(int64_t id, int64_t tex) {
+    auto it = gEntities.find(id);
+    if (it != gEntities.end())
+        it->second.texture = tex;
 }
-void nexus_ecs_update(double dt){
-    for(auto&[id,e]:gEntities){
-        if(e.alive){
-            e.x += e.vx*float(dt);
-            e.y += e.vy*float(dt);
+void nexus_ecs_update(double dt) {
+    for (auto& [id, e] : gEntities) {
+        if (e.alive) {
+            e.x += e.vx * float(dt);
+            e.y += e.vy * float(dt);
         }
     }
 }
-void nexus_ecs_draw(){
-    if(!gGraphics)return;
-    for(auto&[id,e]:gEntities){
-        if(!e.alive)continue;
-        if(e.texture)nexus_gfx_texture_draw(e.texture,e.x,e.y,e.w,e.h,e.r,e.g,e.b,e.a);
-        else nexus_gfx_rect(e.x,e.y,e.w,e.h,e.r,e.g,e.b,e.a);
+void nexus_ecs_draw() {
+    if (!gGraphics)
+        return;
+    for (auto& [id, e] : gEntities) {
+        if (!e.alive)
+            continue;
+        if (e.texture)
+            nexus_gfx_texture_draw(e.texture, e.x, e.y, e.w, e.h, e.r, e.g, e.b, e.a);
+        else
+            nexus_gfx_rect(e.x, e.y, e.w, e.h, e.r, e.g, e.b, e.a);
     }
 }
-bool nexus_ecs_collides(int64_t a,int64_t b){
-    auto ia=gEntities.find(a),ib=gEntities.find(b);
-    if(ia==gEntities.end()||ib==gEntities.end())return false;
-    const auto&A=ia->second;
-    const auto&B=ib->second;
-    return A.x < B.x+B.w && A.x+A.w > B.x && A.y < B.y+B.h && A.y+A.h > B.y;
+bool nexus_ecs_collides(int64_t a, int64_t b) {
+    auto ia = gEntities.find(a), ib = gEntities.find(b);
+    if (ia == gEntities.end() || ib == gEntities.end())
+        return false;
+    const auto& A = ia->second;
+    const auto& B = ib->second;
+    return A.x < B.x + B.w && A.x + A.w > B.x && A.y < B.y + B.h && A.y + A.h > B.y;
 }
-double nexus_ecs_x(int64_t id){
-    auto it=gEntities.find(id);
-    return it==gEntities.end()?0:it->second.x;
+double nexus_ecs_x(int64_t id) {
+    auto it = gEntities.find(id);
+    return it == gEntities.end() ? 0 : it->second.x;
 }
-double nexus_ecs_y(int64_t id){
-    auto it=gEntities.find(id);
-    return it==gEntities.end()?0:it->second.y;
+double nexus_ecs_y(int64_t id) {
+    auto it = gEntities.find(id);
+    return it == gEntities.end() ? 0 : it->second.y;
 }
-int64_t nexus_ecs_count(){
+int64_t nexus_ecs_count() {
     return int64_t(gEntities.size());
 }
 
 // Simple OpenGL 2.1 compatible 3D backend.
-void nexus_gfx3d_begin(double fov,double nearPlane,double farPlane,double camX,double camY,double camZ,double pitch,double yaw,double roll){
-    if(!gGraphics)return;
-    if(!gOpenGL3D&&!ensure_opengl_backend())return;
-    glViewport(0,0,gWidth,gHeight);
+void nexus_gfx3d_begin(double fov,
+                       double nearPlane,
+                       double farPlane,
+                       double camX,
+                       double camY,
+                       double camZ,
+                       double pitch,
+                       double yaw,
+                       double roll) {
+    if (!gGraphics)
+        return;
+    if (!gOpenGL3D && !ensure_opengl_backend())
+        return;
+    glViewport(0, 0, gWidth, gHeight);
     glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    double aspect=double(gWidth)/double(gHeight?gHeight:1);
-    double top=nearPlane*std::tan(fov*3.14159265358979323846/360.0);
-    double right=top*aspect;
-    glFrustum(-right,right,-top,top,nearPlane,farPlane);
+    double aspect = double(gWidth) / double(gHeight ? gHeight : 1);
+    double top = nearPlane * std::tan(fov * 3.14159265358979323846 / 360.0);
+    double right = top * aspect;
+    glFrustum(-right, right, -top, top, nearPlane, farPlane);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glRotatef(float(-roll),0,0,1);
-    glRotatef(float(-pitch),1,0,0);
-    glRotatef(float(-yaw),0,1,0);
-    glTranslatef(float(-camX),float(-camY),float(-camZ));
+    glRotatef(float(-roll), 0, 0, 1);
+    glRotatef(float(-pitch), 1, 0, 0);
+    glRotatef(float(-yaw), 0, 1, 0);
+    glTranslatef(float(-camX), float(-camY), float(-camZ));
 }
-void nexus_gfx3d_cube(double x,double y,double z,double sx,double sy,double sz,double r,double g,double b,double a){
-    if(!gGraphics)return;
-    glColor4f(float(r),float(g),float(b),float(a));
-    float x0=float(x-sx/2),x1=float(x+sx/2),y0=float(y-sy/2),y1=float(y+sy/2),z0=float(z-sz/2),z1=float(z+sz/2);
+void nexus_gfx3d_cube(double x,
+                      double y,
+                      double z,
+                      double sx,
+                      double sy,
+                      double sz,
+                      double r,
+                      double g,
+                      double b,
+                      double a) {
+    if (!gGraphics)
+        return;
+    glColor4f(float(r), float(g), float(b), float(a));
+    float x0 = float(x - sx / 2), x1 = float(x + sx / 2), y0 = float(y - sy / 2),
+          y1 = float(y + sy / 2), z0 = float(z - sz / 2), z1 = float(z + sz / 2);
     glBegin(GL_QUADS);
 
-    glVertex3f(x0,y0,z1);
-    glVertex3f(x1,y0,z1);
-    glVertex3f(x1,y1,z1);
-    glVertex3f(x0,y1,z1);
-    glVertex3f(x1,y0,z0);
-    glVertex3f(x0,y0,z0);
-    glVertex3f(x0,y1,z0);
-    glVertex3f(x1,y1,z0);
-    glVertex3f(x0,y0,z0);
-    glVertex3f(x0,y0,z1);
-    glVertex3f(x0,y1,z1);
-    glVertex3f(x0,y1,z0);
-    glVertex3f(x1,y0,z1);
-    glVertex3f(x1,y0,z0);
-    glVertex3f(x1,y1,z0);
-    glVertex3f(x1,y1,z1);
-    glVertex3f(x0,y1,z1);
-    glVertex3f(x1,y1,z1);
-    glVertex3f(x1,y1,z0);
-    glVertex3f(x0,y1,z0);
-    glVertex3f(x0,y0,z0);
-    glVertex3f(x1,y0,z0);
-    glVertex3f(x1,y0,z1);
-    glVertex3f(x0,y0,z1);
+    glVertex3f(x0, y0, z1);
+    glVertex3f(x1, y0, z1);
+    glVertex3f(x1, y1, z1);
+    glVertex3f(x0, y1, z1);
+    glVertex3f(x1, y0, z0);
+    glVertex3f(x0, y0, z0);
+    glVertex3f(x0, y1, z0);
+    glVertex3f(x1, y1, z0);
+    glVertex3f(x0, y0, z0);
+    glVertex3f(x0, y0, z1);
+    glVertex3f(x0, y1, z1);
+    glVertex3f(x0, y1, z0);
+    glVertex3f(x1, y0, z1);
+    glVertex3f(x1, y0, z0);
+    glVertex3f(x1, y1, z0);
+    glVertex3f(x1, y1, z1);
+    glVertex3f(x0, y1, z1);
+    glVertex3f(x1, y1, z1);
+    glVertex3f(x1, y1, z0);
+    glVertex3f(x0, y1, z0);
+    glVertex3f(x0, y0, z0);
+    glVertex3f(x1, y0, z0);
+    glVertex3f(x1, y0, z1);
+    glVertex3f(x0, y0, z1);
     glEnd();
 }
-void nexus_gfx3d_grid(int64_t cells,double spacing,double r,double g,double b,double a){
-    if(!gGraphics)return;
-    glColor4f(float(r),float(g),float(b),float(a));
+void nexus_gfx3d_grid(int64_t cells, double spacing, double r, double g, double b, double a) {
+    if (!gGraphics)
+        return;
+    glColor4f(float(r), float(g), float(b), float(a));
     glLineWidth(1);
     glBegin(GL_LINES);
-    for(int64_t i=-cells;i<=cells;i++){
-        float p=float(i)*float(spacing);
-        glVertex3f(p,0,float(-cells*spacing));
-        glVertex3f(p,0,float(cells*spacing));
-        glVertex3f(float(-cells*spacing),0,p);
-        glVertex3f(float(cells*spacing),0,p);
+    for (int64_t i = -cells; i <= cells; i++) {
+        float p = float(i) * float(spacing);
+        glVertex3f(p, 0, float(-cells * spacing));
+        glVertex3f(p, 0, float(cells * spacing));
+        glVertex3f(float(-cells * spacing), 0, p);
+        glVertex3f(float(cells * spacing), 0, p);
     }
     glEnd();
 }
-void nexus_gfx3d_end(){
-    if(!gOpenGL3D||!gWindow||!SDL_GL_SwapWindow)return;
+void nexus_gfx3d_end() {
+    if (!gOpenGL3D || !gWindow || !SDL_GL_SwapWindow)
+        return;
     SDL_GL_SwapWindow(gWindow);
 }
 
 // Lightweight OBJ model loader for the fixed-function 3D backend.
-int64_t nexus_gfx3d_model_load(const char* path){
+int64_t nexus_gfx3d_model_load(const char* path) {
 
-    if(!path){
-        gGraphicsError="OBJ path is null";
+    if (!path) {
+        gGraphicsError = "OBJ path is null";
         return 0;
     }
     std::ifstream f(path);
-    if(!f){
-        gGraphicsError=std::string("cannot open OBJ: ")+path;
+    if (!f) {
+        gGraphicsError = std::string("cannot open OBJ: ") + path;
         return 0;
     }
-    std::vector<std::array<float,3>> pos;
+    std::vector<std::array<float, 3>> pos;
     Model3D model;
     std::string line;
 
-    while(std::getline(f,line)){
+    while (std::getline(f, line)) {
 
         std::istringstream in(line);
         std::string tag;
-        in>>tag;
+        in >> tag;
 
-        if(tag=="v"){
-            float x,y,z;
-            if(in>>x>>y>>z)pos.push_back({x,y,z
-        });
-    }
-    else if(tag=="f"){
+        if (tag == "v") {
+            float x, y, z;
+            if (in >> x >> y >> z)
+                pos.push_back({x, y, z});
+        } else if (tag == "f") {
 
-        std::vector<int> ids;
-        std::string tok;
+            std::vector<int> ids;
+            std::string tok;
 
-        while(in>>tok){
-            auto slash=tok.find('/');
-            std::string n=tok.substr(0,slash);
-            try{
-                int idx=std::stoi(n);
-                if(idx<0)idx=int(pos.size())+idx+1;
-                if(idx>0&&idx<=int(pos.size()))ids.push_back(idx-1);
+            while (in >> tok) {
+                auto slash = tok.find('/');
+                std::string n = tok.substr(0, slash);
+                try {
+                    int idx = std::stoi(n);
+                    if (idx < 0)
+                        idx = int(pos.size()) + idx + 1;
+                    if (idx > 0 && idx <= int(pos.size()))
+                        ids.push_back(idx - 1);
+                } catch (...) {}
             }
-            catch(...){
+            if (ids.size() >= 3) {
+                for (size_t i = 1; i + 1 < ids.size(); ++i) {
+                    for (int k : {ids[0], ids[i], ids[i + 1]}) {
+                        auto v = pos[size_t(k)];
+                        model.vertices.push_back(v[0]);
+                        model.vertices.push_back(v[1]);
+                        model.vertices.push_back(v[2]);
+                    }
+                }
             }
         }
-        if(ids.size()>=3){
-            for(size_t i=1;i+1<ids.size();++i){
-                for(int k:{ids[0],ids[i],ids[i+1]
-            }){
-                auto v=pos[size_t(k)];
-                model.vertices.push_back(v[0]);
-                model.vertices.push_back(v[1]);
-                model.vertices.push_back(v[2]);
-            }
-        }
     }
+    if (model.vertices.empty()) {
+        gGraphicsError = "OBJ contains no triangle faces";
+        return 0;
+    }
+    int64_t id = gNextModel++;
+    gModels[id] = std::move(model);
+    return id;
 }
-}
-if(model.vertices.empty()){
-    gGraphicsError="OBJ contains no triangle faces";
-    return 0;
-}
-int64_t id=gNextModel++;
-gModels[id]=std::move(model);
-return id;
+void nexus_gfx3d_model_draw(int64_t id,
+                            double x,
+                            double y,
+                            double z,
+                            double sx,
+                            double sy,
+                            double sz,
+                            double rx,
+                            double ry,
+                            double rz) {
 
-}
-void nexus_gfx3d_model_draw(int64_t id,double x,double y,double z,double sx,double sy,double sz,double rx,double ry,double rz){
-
-    auto it=gModels.find(id);
-    if(!gGraphics||it==gModels.end())return;
+    auto it = gModels.find(id);
+    if (!gGraphics || it == gModels.end())
+        return;
 
     glPushMatrix();
-    glTranslatef(float(x),float(y),float(z));
-    glRotatef(float(rx),1,0,0);
-    glRotatef(float(ry),0,1,0);
-    glRotatef(float(rz),0,0,1);
-    glScalef(float(sx),float(sy),float(sz));
-    glColor4f(0.75f,0.85f,1.0f,1.0f);
+    glTranslatef(float(x), float(y), float(z));
+    glRotatef(float(rx), 1, 0, 0);
+    glRotatef(float(ry), 0, 1, 0);
+    glRotatef(float(rz), 0, 0, 1);
+    glScalef(float(sx), float(sy), float(sz));
+    glColor4f(0.75f, 0.85f, 1.0f, 1.0f);
 
     glBegin(GL_TRIANGLES);
-    for(size_t i=0;i+2<it->second.vertices.size();i+=3)glVertex3f(it->second.vertices[i],it->second.vertices[i+1],it->second.vertices[i+2]);
+    for (size_t i = 0; i + 2 < it->second.vertices.size(); i += 3)
+        glVertex3f(it->second.vertices[i], it->second.vertices[i + 1], it->second.vertices[i + 2]);
     glEnd();
     glPopMatrix();
-
 }
-void nexus_gfx3d_model_unload(int64_t id){
+void nexus_gfx3d_model_unload(int64_t id) {
     gModels.erase(id);
 }
 
-int64_t nexus_gfx_particle_create(double x,double y,double vx,double vy,double life,double size,double r,double g,double b,double a){
+int64_t nexus_gfx_particle_create(double x,
+                                  double y,
+                                  double vx,
+                                  double vy,
+                                  double life,
+                                  double size,
+                                  double r,
+                                  double g,
+                                  double b,
+                                  double a) {
     Particle p;
-    p.x=float(x);
-    p.y=float(y);
-    p.vx=float(vx);
-    p.vy=float(vy);
-    p.life=float(std::max(life,0.001));
-    p.maxLife=p.life;
-    p.size=float(size);
-    p.r=float(r);
-    p.g=float(g);
-    p.b=float(b);
-    p.a=float(a);
-    int64_t id=gNextParticle++;
-    gParticles[id]=p;
+    p.x = float(x);
+    p.y = float(y);
+    p.vx = float(vx);
+    p.vy = float(vy);
+    p.life = float(std::max(life, 0.001));
+    p.maxLife = p.life;
+    p.size = float(size);
+    p.r = float(r);
+    p.g = float(g);
+    p.b = float(b);
+    p.a = float(a);
+    int64_t id = gNextParticle++;
+    gParticles[id] = p;
     return id;
 }
-bool nexus_gfx_particle_alive(int64_t id){
-    auto it=gParticles.find(id);
-    return it!=gParticles.end()&&it->second.alive;
+bool nexus_gfx_particle_alive(int64_t id) {
+    auto it = gParticles.find(id);
+    return it != gParticles.end() && it->second.alive;
 }
-void nexus_gfx_particles_update(double dt){
-    float d=float(std::max(dt,0.0));
-    for(auto&[id,p]:gParticles){
-        if(!p.alive)continue;
-        p.x+=p.vx*d;
-        p.y+=p.vy*d;
-        p.life-=d;
-        if(p.life<=0)p.alive=false;
+void nexus_gfx_particles_update(double dt) {
+    float d = float(std::max(dt, 0.0));
+    for (auto& [id, p] : gParticles) {
+        if (!p.alive)
+            continue;
+        p.x += p.vx * d;
+        p.y += p.vy * d;
+        p.life -= d;
+        if (p.life <= 0)
+            p.alive = false;
     }
 }
-void nexus_gfx_particles_draw(){
-    for(const auto&[id,p]:gParticles){
-        if(!p.alive)continue;
-        float fade=std::clamp(p.life/p.maxLife,0.0f,1.0f);
-        draw_circle(p.x,p.y,p.size,p.r,p.g,p.b,p.a*fade);
+void nexus_gfx_particles_draw() {
+    for (const auto& [id, p] : gParticles) {
+        if (!p.alive)
+            continue;
+        float fade = std::clamp(p.life / p.maxLife, 0.0f, 1.0f);
+        draw_circle(p.x, p.y, p.size, p.r, p.g, p.b, p.a * fade);
     }
 }
-void nexus_gfx_particle_destroy(int64_t id){
+void nexus_gfx_particle_destroy(int64_t id) {
     gParticles.erase(id);
 }
-void nexus_gfx_particles_clear(){
+void nexus_gfx_particles_clear() {
     gParticles.clear();
 }
 
 // WAV audio using SDL2 core audio queue. No SDL2_mixer or SDL_LoadWAV symbol is required.
-int64_t nexus_gfx_sound_load(const char*path){
+int64_t nexus_gfx_sound_load(const char* path) {
 
     gAudioError.clear();
 
-    if(!load_sdl()||!path||!SDL_OpenAudioDevice||!SDL_CloseAudioDevice||!SDL_PauseAudioDevice||!SDL_QueueAudio||!SDL_GetQueuedAudioSize){
-        gAudioError="SDL2 core audio API unavailable";
-        gGraphicsError=gAudioError;
+    if (!load_sdl() || !path || !SDL_OpenAudioDevice || !SDL_CloseAudioDevice ||
+        !SDL_PauseAudioDevice || !SDL_QueueAudio || !SDL_GetQueuedAudioSize) {
+        gAudioError = "SDL2 core audio API unavailable";
+        gGraphicsError = gAudioError;
         return 0;
     }
-    if(SDL_Init(0x00000010u)!=0){
-        gAudioError=std::string("SDL audio init failed: ")+sdl_error();
-        gGraphicsError=gAudioError;
+    if (SDL_Init(0x00000010u) != 0) {
+        gAudioError = std::string("SDL audio init failed: ") + sdl_error();
+        gGraphicsError = gAudioError;
         return 0;
     }
-    SDL_AudioSpec source{
-    };
+    SDL_AudioSpec source{};
     std::vector<uint8_t> raw;
     std::string err;
 
-    if(!load_pcm_wav(path,source,raw,err)){
-        gAudioError=err;
-        gGraphicsError=err;
+    if (!load_pcm_wav(path, source, raw, err)) {
+        gAudioError = err;
+        gGraphicsError = err;
         return 0;
     }
-    if(!ensure_audio_device(source)){
-        gGraphicsError=gAudioError;
+    if (!ensure_audio_device(source)) {
+        gGraphicsError = gAudioError;
         return 0;
     }
     std::vector<uint8_t> converted = convert_pcm(raw, source, gAudioSpec);
 
-    if(converted.empty()){
-        gAudioError="failed to convert WAV to the active audio device format";
-        gGraphicsError=gAudioError;
+    if (converted.empty()) {
+        gAudioError = "failed to convert WAV to the active audio device format";
+        gGraphicsError = gAudioError;
         return 0;
     }
     Sound s;
-    s.data=std::move(converted);
-    s.freq=gAudioSpec.freq;
-    s.format=gAudioSpec.format;
-    s.channels=gAudioSpec.channels;
-    s.samples=gAudioSpec.samples;
+    s.data = std::move(converted);
+    s.freq = gAudioSpec.freq;
+    s.format = gAudioSpec.format;
+    s.channels = gAudioSpec.channels;
+    s.samples = gAudioSpec.samples;
 
-    int64_t id=gNextSound++;
-    gSounds[id]=std::move(s);
-    gAudio=true;
+    int64_t id = gNextSound++;
+    gSounds[id] = std::move(s);
+    gAudio = true;
     return id;
-
 }
 
-void nexus_gfx_sound_tone(double frequency,int64_t durationMs,double volume){
+void nexus_gfx_sound_tone(double frequency, int64_t durationMs, double volume) {
 
     gAudioError.clear();
 
-    if(!load_sdl()||!SDL_OpenAudioDevice||!SDL_CloseAudioDevice||!SDL_PauseAudioDevice||!SDL_QueueAudio){
-        gAudioError="SDL2 audio queue API unavailable";
+    if (!load_sdl() || !SDL_OpenAudioDevice || !SDL_CloseAudioDevice || !SDL_PauseAudioDevice ||
+        !SDL_QueueAudio) {
+        gAudioError = "SDL2 audio queue API unavailable";
         return;
     }
-    if(SDL_Init(0x00000010u)!=0){
-        gAudioError=std::string("SDL audio init failed: ")+sdl_error();
+    if (SDL_Init(0x00000010u) != 0) {
+        gAudioError = std::string("SDL audio init failed: ") + sdl_error();
         return;
     }
-    SDL_AudioSpec wanted{
-    };
-    wanted.freq=48000;
-    wanted.format=0x8010u;
-    wanted.channels=2;
-    wanted.samples=1024;
+    SDL_AudioSpec wanted{};
+    wanted.freq = 48000;
+    wanted.format = 0x8010u;
+    wanted.channels = 2;
+    wanted.samples = 1024;
 
-    if(!ensure_audio_device(wanted)){
+    if (!ensure_audio_device(wanted)) {
         return;
     }
-    const double freq=std::max(20.0,std::min(20000.0,frequency));
+    const double freq = std::max(20.0, std::min(20000.0, frequency));
 
-    const int ms=std::max<int64_t>(8,std::min<int64_t>(durationMs,2000));
+    const int ms = std::max<int64_t>(8, std::min<int64_t>(durationMs, 2000));
 
-    const int frames=int((int64_t(gAudioSpec.freq)*ms)/1000);
+    const int frames = int((int64_t(gAudioSpec.freq) * ms) / 1000);
 
-    const int channels=std::max<int>(1,gAudioSpec.channels);
+    const int channels = std::max<int>(1, gAudioSpec.channels);
 
-    const int bytes=(gAudioSpec.format==0x0008u)?1:(gAudioSpec.format==0x8010u?2:0);
+    const int bytes = (gAudioSpec.format == 0x0008u) ? 1 : (gAudioSpec.format == 0x8010u ? 2 : 0);
 
-    if(bytes==0){
-        gAudioError="unsupported active audio format";
+    if (bytes == 0) {
+        gAudioError = "unsupported active audio format";
         return;
     }
-    std::vector<uint8_t> data(size_t(frames)*size_t(channels)*size_t(bytes));
+    std::vector<uint8_t> data(size_t(frames) * size_t(channels) * size_t(bytes));
 
-    double amp=std::clamp(volume,0.0,1.0);
+    double amp = std::clamp(volume, 0.0, 1.0);
 
-    for(int i=0;i<frames;++i){
+    for (int i = 0; i < frames; ++i) {
 
-        double t=double(i)/double(gAudioSpec.freq);
+        double t = double(i) / double(gAudioSpec.freq);
 
-        double fadeIn=std::min(1.0,t/0.006);
+        double fadeIn = std::min(1.0, t / 0.006);
 
-        double fadeOut=std::min(1.0,double(frames-i)/double(gAudioSpec.freq)*18.0);
+        double fadeOut = std::min(1.0, double(frames - i) / double(gAudioSpec.freq) * 18.0);
 
-        double sample=std::sin(2.0*3.141592653589793*freq*t)*amp*fadeIn*fadeOut;
+        double sample = std::sin(2.0 * 3.141592653589793 * freq * t) * amp * fadeIn * fadeOut;
 
-        for(int c=0;c<channels;++c){
+        for (int c = 0; c < channels; ++c) {
 
-            size_t at=(size_t(i)*size_t(channels)+size_t(c))*size_t(bytes);
+            size_t at = (size_t(i) * size_t(channels) + size_t(c)) * size_t(bytes);
 
-            if(bytes==2){
-                int v=int(std::lrint(sample*32767.0));
-                data[at]=uint8_t(v&0xff);
-                data[at+1]=uint8_t((uint16_t(v)>>8)&0xff);
-            }
-            else data[at]=uint8_t(std::clamp(128+int(std::lrint(sample*127.0)),0,255));
-
+            if (bytes == 2) {
+                int v = int(std::lrint(sample * 32767.0));
+                data[at] = uint8_t(v & 0xff);
+                data[at + 1] = uint8_t((uint16_t(v) >> 8) & 0xff);
+            } else
+                data[at] = uint8_t(std::clamp(128 + int(std::lrint(sample * 127.0)), 0, 255));
         }
     }
-    if(SDL_ClearQueuedAudio) SDL_ClearQueuedAudio(gAudioDevice);
+    if (SDL_ClearQueuedAudio)
+        SDL_ClearQueuedAudio(gAudioDevice);
 
-    if(SDL_QueueAudio(gAudioDevice,data.data(),uint32_t(data.size()))!=0) gAudioError="SDL_QueueAudio failed";
+    if (SDL_QueueAudio(gAudioDevice, data.data(), uint32_t(data.size())) != 0)
+        gAudioError = "SDL_QueueAudio failed";
 
-    else gAudio=true;
-
+    else
+        gAudio = true;
 }
-void nexus_gfx_sound_play(int64_t id,bool loop){
+void nexus_gfx_sound_play(int64_t id, bool loop) {
 
-    auto it=gSounds.find(id);
-    if(it==gSounds.end()){
-        gAudioError="unknown sound id";
+    auto it = gSounds.find(id);
+    if (it == gSounds.end()) {
+        gAudioError = "unknown sound id";
         return;
     }
-    if(!gAudioDevice){
-        gAudioError="audio device is not open";
+    if (!gAudioDevice) {
+        gAudioError = "audio device is not open";
         return;
     }
-    const Sound&s=it->second;
+    const Sound& s = it->second;
 
-    std::vector<uint8_t> scaled=s.data;
+    std::vector<uint8_t> scaled = s.data;
 
-    if(gAudioVolume<128){
+    if (gAudioVolume < 128) {
 
-        if(s.format==0x8010u){
+        if (s.format == 0x8010u) {
 
-            for(size_t i=0;i+1<scaled.size();i+=2){
-                int16_t sample=int16_t(uint16_t(scaled[i]) | (uint16_t(scaled[i+1])<<8));
-                sample=int16_t(std::clamp(int(sample)*gAudioVolume/128,-32768,32767));
-                scaled[i]=uint8_t(sample&0xff);
-                scaled[i+1]=uint8_t((uint16_t(sample)>>8)&0xff);
+            for (size_t i = 0; i + 1 < scaled.size(); i += 2) {
+                int16_t sample = int16_t(uint16_t(scaled[i]) | (uint16_t(scaled[i + 1]) << 8));
+                sample = int16_t(std::clamp(int(sample) * gAudioVolume / 128, -32768, 32767));
+                scaled[i] = uint8_t(sample & 0xff);
+                scaled[i + 1] = uint8_t((uint16_t(sample) >> 8) & 0xff);
             }
-        } else if(s.format==0x0008u){
+        } else if (s.format == 0x0008u) {
 
-            for(auto&v:scaled){
-                int sample=int(v)-128;
-                sample=std::clamp(sample*gAudioVolume/128,-128,127);
-                v=uint8_t(sample+128);
+            for (auto& v : scaled) {
+                int sample = int(v) - 128;
+                sample = std::clamp(sample * gAudioVolume / 128, -128, 127);
+                v = uint8_t(sample + 128);
             }
         }
     }
-    if(!SDL_QueueAudio(gAudioDevice,scaled.data(),uint32_t(scaled.size()))){
-        gAudioError="SDL_QueueAudio failed";
-        gGraphicsError=gAudioError;
+    if (!SDL_QueueAudio(gAudioDevice, scaled.data(), uint32_t(scaled.size()))) {
+        gAudioError = "SDL_QueueAudio failed";
+        gGraphicsError = gAudioError;
         return;
     }
-    if(loop){
-        for(int i=0;i<63;i++) SDL_QueueAudio(gAudioDevice,scaled.data(),uint32_t(scaled.size()));
+    if (loop) {
+        for (int i = 0; i < 63; i++)
+            SDL_QueueAudio(gAudioDevice, scaled.data(), uint32_t(scaled.size()));
     }
 }
-void nexus_gfx_sound_stop(){
-    if(gAudioDevice){
-        if(SDL_ClearQueuedAudio)SDL_ClearQueuedAudio(gAudioDevice);
+void nexus_gfx_sound_stop() {
+    if (gAudioDevice) {
+        if (SDL_ClearQueuedAudio)
+            SDL_ClearQueuedAudio(gAudioDevice);
         SDL_CloseAudioDevice(gAudioDevice);
-        gAudioDevice=0;
+        gAudioDevice = 0;
     }
-    gAudio=false;
+    gAudio = false;
 }
-void nexus_gfx_sound_unload(int64_t id){
+void nexus_gfx_sound_unload(int64_t id) {
     gSounds.erase(id);
 }
-int64_t nexus_gfx_audio_available(){
-    return (gAudioDevice!=0||load_sdl())?1:0;
+int64_t nexus_gfx_audio_available() {
+    return (gAudioDevice != 0 || load_sdl()) ? 1 : 0;
 }
-const char* nexus_gfx_audio_error(){
-    return gAudioError.empty()?"":gAudioError.c_str();
+const char* nexus_gfx_audio_error() {
+    return gAudioError.empty() ? "" : gAudioError.c_str();
 }
-void nexus_gfx_sound_volume(double v){
-    gAudioVolume=std::clamp(int(v*128.0),0,128);
+void nexus_gfx_sound_volume(double v) {
+    gAudioVolume = std::clamp(int(v * 128.0), 0, 128);
 }
-bool nexus_gfx_sound_playing(){
-    return gAudioDevice && SDL_GetQueuedAudioSize && SDL_GetQueuedAudioSize(gAudioDevice)>0;
+bool nexus_gfx_sound_playing() {
+    return gAudioDevice && SDL_GetQueuedAudioSize && SDL_GetQueuedAudioSize(gAudioDevice) > 0;
 }
 
 } // extern C

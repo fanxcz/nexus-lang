@@ -16,7 +16,8 @@ int main() {
     for (int64_t i = 0; i < 200000; ++i) {
         char* number = nexus_str_i64(i);
         char* value = nexus_str_concat(number, "-frame");
-        if (i == 199999) latest = value;
+        if (i == 199999)
+            latest = value;
     }
 
     nexus_runtime_test_collect();

@@ -33,19 +33,45 @@ namespace nexus {
         KwTrue,
         KwFalse,
         KwPrint,
-        Plus, Minus, Star, Slash, Percent,
-        PlusEqual, MinusEqual, StarEqual, SlashEqual, PercentEqual,
+        Plus,
+        Minus,
+        Star,
+        Slash,
+        Percent,
+        PlusEqual,
+        MinusEqual,
+        StarEqual,
+        SlashEqual,
+        PercentEqual,
         Range,
-        Equal, EqualEqual, BangEqual,
-        Less, LessEqual, Greater, GreaterEqual,
-        Bang, AndAnd, OrOr,
+        Equal,
+        EqualEqual,
+        BangEqual,
+        Less,
+        LessEqual,
+        Greater,
+        GreaterEqual,
+        Bang,
+        AndAnd,
+        OrOr,
         Ampersand,
-        LParen, RParen, LBrace, RBrace, LBracket, RBracket,
-        Comma, Colon, ColonColon, Dot, Arrow, FatArrow, Semicolon,
+        LParen,
+        RParen,
+        LBrace,
+        RBrace,
+        LBracket,
+        RBracket,
+        Comma,
+        Colon,
+        ColonColon,
+        Dot,
+        Arrow,
+        FatArrow,
+        Semicolon,
     };
 
     struct SourcePos {
-        std::size_t line=1, column=1, offset=0;
+        std::size_t line = 1, column = 1, offset = 0;
     };
 
     struct Token {
@@ -56,4 +82,4 @@ namespace nexus {
 
     const char* tokenName(TokenKind kind);
 
-}
+} // namespace nexus
