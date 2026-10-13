@@ -34,6 +34,10 @@ GITHUB_FILE = re.compile(
     r"^https://(?:raw\.githubusercontent\.com|github\.com)/fanxcz/nexus-lang/"
     r"(?:blob/|tree/|raw/)?main/([^?#]+)", re.I
 )
+LEGACY_URLS = (
+    re.compile(r"(?i)https?://(?:www\\.)?github\\.com/fanxcz/nexus(?:/|\\.git(?:[?#]|$)|[?#]|$)"),
+    re.compile(r"(?i)https?://fanxcz\\.github\\.io/nexus(?:/|[?#]|$)"),
+)
 
 def source_files() -> list[Path]:
     result: list[Path] = []
@@ -156,6 +160,14 @@ def main() -> int:
         for raw in BARE_URL.findall(content):
             url = raw.rstrip(".,;:!?)]}{")
             urls += 1
+            offset = content.find(raw)
+            line = content.count("\\n", 0, max(offset, 0)) + 1
+            if any(pattern.search(url) for pattern in LEGACY_URLS):
+                errors.append(
+                    f"{rel}:{line}: obsolete repository/site URL; use "
+                    f"https://github.com/fanxcz/nexus-lang or "
+                    f"https://fanxcz.github.io/nexus-lang/: {url}"
+                )
             own = repo_url_path(url)
             if own and not own[0]:
                 offset = content.find(raw)
