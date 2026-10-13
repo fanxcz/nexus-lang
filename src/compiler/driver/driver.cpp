@@ -1867,6 +1867,19 @@ namespace nexus {
             try { return static_cast<std::size_t>(std::stoull(json.substr(begin, pos - begin))); }
             catch (const std::exception&) { return std::size_t{0}; }
         };
+        const auto supportsWatchedFilesRegistration = [](const std::string& json) {
+            const auto workspace = json.find("\"workspace\"");
+            if (workspace == std::string::npos) return false;
+            const auto watchedFiles = json.find("\"didChangeWatchedFiles\"", workspace);
+            if (watchedFiles == std::string::npos) return false;
+            const auto dynamicRegistration = json.find("\"dynamicRegistration\"", watchedFiles);
+            if (dynamicRegistration == std::string::npos) return false;
+            const auto colon = json.find(':', dynamicRegistration);
+            if (colon == std::string::npos) return false;
+            const auto value = json.find_first_not_of(" \t\r\n", colon + 1);
+            return value != std::string::npos && json.compare(value, 4, "true") == 0;
+        };
+        bool clientSupportsWatchedFilesRegistration = false;
         const auto send = [](const std::string& payload) {
             std::cout << "Content-Length: " << payload.size() << "\r\n\r\n"
                       << payload << std::flush;
@@ -2585,11 +2598,20 @@ namespace nexus {
             const std::string id = extractId(body);
             if (method == "exit") break;
             if (method == "initialize" && !id.empty()) {
+                clientSupportsWatchedFilesRegistration = supportsWatchedFilesRegistration(body);
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
                     ",\"result\":{\"serverInfo\":{\"name\":\"nexus-lsp\",\"version\":\"" +
                     kVersion + "\"},\"capabilities\":{\"textDocumentSync\":1,"
                     "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":[\".\",\":\"]},"
                     "\"definitionProvider\":true,\"referencesProvider\":true,\"renameProvider\":true,\"hoverProvider\":true,\"documentFormattingProvider\":true}}}");
+            } else if (method == "initialized") {
+                if (clientSupportsWatchedFilesRegistration) {
+                    send("{\"jsonrpc\":\"2.0\",\"id\":\"nexus-register-nx-watcher\","
+                         "\"method\":\"client/registerCapability\",\"params\":{\"registrations\":[{"
+                         "\"id\":\"nexus-watch-nx-workspace\","
+                         "\"method\":\"workspace/didChangeWatchedFiles\","
+                         "\"registerOptions\":{\"watchers\":[{\"globPattern\":\"**/*.nx\",\"kind\":7}]}}]}}");
+                }
             } else if (method == "shutdown" && !id.empty()) {
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":null}");
             } else if (method == "textDocument/didOpen") {
@@ -2610,16 +2632,20 @@ namespace nexus {
             } else if (method == "textDocument/didSave") {
                 const std::string uri = extractString(body, "uri");
                 workspaceDiskCache.clear();
+                workspaceSymbolIndexCache.erase(uri);
                 const auto document = openDocuments.find(uri);
                 if (document != openDocuments.end()) publishDiagnostics(uri, document->second);
             } else if (method == "workspace/didChangeWatchedFiles") {
-                // Rebuild disk symbols after create/delete/change notifications.
+                // Rebuild source snapshots and discard stale indexes, including
+                // deleted/renamed paths no longer present in the workspace walk.
                 workspaceDiskCache.clear();
+                workspaceSymbolIndexCache.clear();
             } else if (method == "textDocument/didClose") {
                 const std::string uri = extractString(body, "uri");
                 if (!uri.empty()) {
                     openDocuments.erase(uri);
                     workspaceDiskCache.clear();
+                    workspaceSymbolIndexCache.erase(uri);
                     send("{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\","
                          "\"params\":{\"uri\":\"" + jsonEscape(uri) + "\",\"diagnostics\":[]}}");
                 }

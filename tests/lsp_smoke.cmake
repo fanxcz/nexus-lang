@@ -16,7 +16,9 @@ else()
 endif()
 set(workspace_caller_uri "${LSP_WORKSPACE_URI}/caller.nx")
 set(workspace_helper_uri "${LSP_WORKSPACE_URI}/disk_helper.nx")
-set(init "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}")
+set(init "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"capabilities\":{\"workspace\":{\"didChangeWatchedFiles\":{\"dynamicRegistration\":true}}}}}")
+set(initialized "{\"jsonrpc\":\"2.0\",\"method\":\"initialized\",\"params\":{}}")
+set(watcher_registration_response "{\"jsonrpc\":\"2.0\",\"id\":\"nexus-register-nx-watcher\",\"result\":null}")
 set(open_bad "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///broken.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn main() {\\n  print(1\\n}\\n\"}}}")
 set(change_good "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didChange\",\"params\":{\"textDocument\":{\"uri\":\"file:///broken.nx\",\"version\":2},\"contentChanges\":[{\"text\":\"fn main() {\\n  print(42)\\n}\\n\"}]}}")
 set(change_semantic "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didChange\",\"params\":{\"textDocument\":{\"uri\":\"file:///broken.nx\",\"version\":3},\"contentChanges\":[{\"text\":\"fn main() { print(unknown) }\"}]}}")
@@ -46,7 +48,7 @@ set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":n
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${shutdown}" "${exit_msg}")
+foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${shutdown}" "${exit_msg}")
   string(LENGTH "${message}" message_length)
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
@@ -63,6 +65,9 @@ if(NOT rc EQUAL 0)
   message(FATAL_ERROR "NEXUS LSP exited with ${rc}: ${err}")
 endif()
 if(NOT out MATCHES "completionProvider"
+   OR NOT out MATCHES "client/registerCapability"
+   OR NOT out MATCHES "workspace/didChangeWatchedFiles"
+   OR NOT out MATCHES "\\*\\*/\\.nx"
    OR NOT out MATCHES "\"label\":\"print\""
    OR NOT out MATCHES "\"definitionProvider\":true"
    OR NOT out MATCHES "\"uri\":\"file:///definition.nx\""
