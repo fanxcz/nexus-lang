@@ -26,6 +26,33 @@ namespace nexus {
     std::string Parser::expectIdentifier() {
         return expect(TokenKind::Identifier).text;
     }
+
+    SourcePos Parser::positionAfter(const Token& token) const {
+        SourcePos end = token.pos;
+        for (const unsigned char ch : token.text) {
+            ++end.offset;
+            if (ch == '\n') {
+                ++end.line;
+                end.column = 1;
+            } else {
+                ++end.column;
+            }
+        }
+        return end;
+    }
+
+    SourceSpan Parser::spanForTokens(std::size_t first, std::size_t afterLast) const {
+        SourceSpan span;
+        if (first >= tokens_.size())
+            return span;
+        const std::size_t last = afterLast > first
+                                     ? std::min(afterLast - 1, tokens_.size() - 1)
+                                     : first;
+        span.start = tokens_[first].pos;
+        span.end = positionAfter(tokens_[last]);
+        span.valid = true;
+        return span;
+    }
     Type Parser::parseType() {
         RecursionGuard guard(recursionDepth_);
 
@@ -92,20 +119,28 @@ namespace nexus {
                 }
                 if (accept(TokenKind::KwStruct)) {
                     --i_;
-                    p.structs.push_back(parseStruct());
+                    auto declaration = parseStruct();
+                    declaration.span = spanForTokens(declarationStart, i_);
+                    p.structs.push_back(std::move(declaration));
                     continue;
                 }
                 if (accept(TokenKind::KwEnum)) {
                     --i_;
-                    p.enums.push_back(parseEnum());
+                    auto declaration = parseEnum();
+                    declaration.span = spanForTokens(declarationStart, i_);
+                    p.enums.push_back(std::move(declaration));
                     continue;
                 }
                 if (accept(TokenKind::KwExtern)) {
                     expect(TokenKind::String);
-                    p.functions.push_back(parseFunction(true));
+                    auto declaration = parseFunction(true);
+                    declaration.span = spanForTokens(declarationStart, i_);
+                    p.functions.push_back(std::move(declaration));
                     continue;
                 }
-                p.functions.push_back(parseFunction(false));
+                auto declaration = parseFunction(false);
+                declaration.span = spanForTokens(declarationStart, i_);
+                p.functions.push_back(std::move(declaration));
             } catch (const std::exception& error) {
                 errors.emplace_back(error.what());
 
@@ -212,14 +247,24 @@ namespace nexus {
     }
     std::unique_ptr<Block> Parser::parseBlock() {
         RecursionGuard guard(recursionDepth_);
+        const std::size_t first = i_;
         expect(TokenKind::LBrace);
         auto b = std::make_unique<Block>();
         while (cur().kind != TokenKind::RBrace && cur().kind != TokenKind::End)
             b->statements.push_back(parseStmt());
         expect(TokenKind::RBrace);
+        b->span = spanForTokens(first, i_);
         return b;
     }
     Stmt::Ptr Parser::parseStmt() {
+        const std::size_t first = i_;
+        auto statement = parseStmtImpl();
+        if (statement)
+            statement->span = spanForTokens(first, i_);
+        return statement;
+    }
+
+    Stmt::Ptr Parser::parseStmtImpl() {
         RecursionGuard guard(recursionDepth_);
 
         bool isConst = accept(TokenKind::KwConst);
@@ -462,7 +507,14 @@ namespace nexus {
         }
     }
     Expr::Ptr Parser::parsePrimary() {
+        const std::size_t first = i_;
+        auto expression = parsePrimaryImpl();
+        if (expression)
+            expression->span = spanForTokens(first, i_);
+        return expression;
+    }
 
+    Expr::Ptr Parser::parsePrimaryImpl() {
         if (cur().kind == TokenKind::Integer) {
             const Token literal = expect(TokenKind::Integer);
             try {
@@ -549,6 +601,19 @@ namespace nexus {
     }
 
     Expr::Ptr Parser::parsePostfix(Expr::Ptr e) {
+        const SourcePos start = e && e->span.valid
+                                    ? e->span.start
+                                    : (i_ > 0 ? tokens_[i_ - 1].pos : cur().pos);
+        auto expression = parsePostfixImpl(std::move(e));
+        if (expression) {
+            expression->span.start = start;
+            expression->span.end = i_ > 0 ? positionAfter(tokens_[i_ - 1]) : start;
+            expression->span.valid = true;
+        }
+        return expression;
+    }
+
+    Expr::Ptr Parser::parsePostfixImpl(Expr::Ptr e) {
         for (;;) {
             if (accept(TokenKind::LParen)) {
                 std::string callee = qualifiedName(e.get());
@@ -583,6 +648,14 @@ namespace nexus {
         return e;
     }
     Expr::Ptr Parser::parseUnary() {
+        const std::size_t first = i_;
+        auto expression = parseUnaryImpl();
+        if (expression)
+            expression->span = spanForTokens(first, i_);
+        return expression;
+    }
+
+    Expr::Ptr Parser::parseUnaryImpl() {
         RecursionGuard guard(recursionDepth_);
         if (accept(TokenKind::Minus))
             return std::make_unique<UnaryExpr>(TokenKind::Minus, parseUnary());
@@ -595,6 +668,14 @@ namespace nexus {
         return parsePostfix(parsePrimary());
     }
     Expr::Ptr Parser::parseExpr(int minPrec) {
+        const std::size_t first = i_;
+        auto expression = parseExprImpl(minPrec);
+        if (expression)
+            expression->span = spanForTokens(first, i_);
+        return expression;
+    }
+
+    Expr::Ptr Parser::parseExprImpl(int minPrec) {
         RecursionGuard guard(recursionDepth_);
         auto lhs = parseUnary();
         while (true) {

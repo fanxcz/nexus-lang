@@ -50,11 +50,19 @@ namespace nexus {
 
         std::unique_ptr<Block> parseBlock();
         Stmt::Ptr parseStmt();
+        Stmt::Ptr parseStmtImpl();
 
         Expr::Ptr parseExpr(int minPrec = 0);
+        Expr::Ptr parseExprImpl(int minPrec = 0);
         Expr::Ptr parseUnary();
+        Expr::Ptr parseUnaryImpl();
         Expr::Ptr parsePostfix(Expr::Ptr);
         Expr::Ptr parsePrimary();
+        Expr::Ptr parsePrimaryImpl();
+        Expr::Ptr parsePostfixImpl(Expr::Ptr);
+
+        SourcePos positionAfter(const Token&) const;
+        SourceSpan spanForTokens(std::size_t first, std::size_t afterLast) const;
 
         int precedence(TokenKind) const;
         Type parseType();

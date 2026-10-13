@@ -82,7 +82,14 @@ namespace nexus {
         return true;
     }
 
+    struct SourceSpan {
+        SourcePos start{};
+        SourcePos end{}; // Exclusive end position.
+        bool valid = false;
+    };
+
     struct Expr {
+        SourceSpan span{};
         virtual ~Expr() = default;
         using Ptr = std::unique_ptr<Expr>;
     };
@@ -160,6 +167,7 @@ namespace nexus {
     };
 
     struct Stmt {
+        SourceSpan span{};
         virtual ~Stmt() = default;
         using Ptr = std::unique_ptr<Stmt>;
     };
@@ -234,16 +242,19 @@ namespace nexus {
     };
 
     struct StructDecl {
+        SourceSpan span{};
         std::string name;
         std::vector<StructField> fields;
     };
 
     struct EnumDecl {
+        SourceSpan span{};
         std::string name;
         std::vector<std::string> variants;
     };
 
     struct Function {
+        SourceSpan span{};
         std::string name;
         std::vector<Param> params;
         Type ret;

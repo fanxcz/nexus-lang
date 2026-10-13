@@ -359,6 +359,24 @@ int main() {
                 return 24;
             }
         }
+        {
+            const auto program = parse("fn main() { let value = 20 + 22; print(value) }");
+            if (program.functions.empty() || !program.functions.front().span.valid ||
+                program.functions.front().span.start.offset != 0 ||
+                program.functions.front().span.end.offset == 0 ||
+                program.functions.front().body->statements.empty() ||
+                !program.functions.front().body->statements.front()->span.valid) {
+                std::cerr << "AST source span regression\\n";
+                return 25;
+            }
+            const auto* binding = dynamic_cast<const nexus::LetStmt*>(
+                program.functions.front().body->statements.front().get());
+            if (!binding || !binding->init || !binding->init->span.valid ||
+                binding->init->span.end.offset <= binding->init->span.start.offset) {
+                std::cerr << "AST expression span regression\\n";
+                return 26;
+            }
+        }
         std::cout << "Nexus tests: PASS\n";
 
         return 0;
