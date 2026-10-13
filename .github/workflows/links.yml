@@ -43,7 +43,6 @@ jobs:
             --max-concurrency 3
             --exclude '^file:///.*docs/assets/downloads/'
             --exclude '^https://github\.com/fanxcz/nexus-lang/(blob|tree)/main/'
-            --exclude '^https://github\.com/fanxcz/nexus-lang/blob/main/(LICENSE|SECURITY\.md)
             --exclude '^https://raw\.githubusercontent\.com/fanxcz/nexus-lang/main/'
             --exclude '^https://github\.com/fanxcz/nexus-lang/issues/new/choose$'
             README.md
