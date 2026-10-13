@@ -413,6 +413,8 @@ namespace nexus {
             std::cout
             << "Nexus " << kVersion << "\n"
             << "Usage: nexus <command> [options]\n\n"
+            << "Interactive shell:\n"
+            << "  repl                 evaluate expressions (also starts by running nexus with no arguments)\n\n"
             << "Project commands:\n"
             << "  new <project> [--template cli|app|game|3d|paint|server|library]\n"
             << "  init [--template cli|app|game|3d|paint|server|library]\n"
@@ -751,7 +753,7 @@ namespace nexus {
         }
 
         int compileFile(const fs::path& in, const fs::path& out, const std::string& target, bool emitIR, int opt,
-            const std::string& backend = "auto") {
+            const std::string& backend = "auto", bool quiet = false) {
 
             std::set<fs::path> seen;
 
@@ -786,8 +788,10 @@ namespace nexus {
                             fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec,
                             fs::perm_options::add, ec);
 #endif
-                        std::cout << "builtin native backend: " << image.size()
-                            << " bytes -> " << out << "\n";
+                        if (!quiet) {
+                            std::cout << "builtin native backend: " << image.size()
+                                << " bytes -> " << out << "\n";
+                        }
                         return 0;
                     }
                     if (backend == "native") throw std::runtime_error(reason);
@@ -2889,6 +2893,313 @@ namespace nexus {
         return 0;
     }
 
+
+        bool replStartsWith(const std::string& value, std::string_view prefix) {
+            return value.size() >= prefix.size() &&
+                value.compare(0, prefix.size(), prefix.data(), prefix.size()) == 0;
+        }
+
+        int replBraceBalance(const std::string& source) {
+            int balance = 0;
+            bool inString = false;
+            bool escaped = false;
+
+            for (std::size_t i = 0; i < source.size(); ++i) {
+                const char ch = source[i];
+
+                if (!inString && ch == '/' && i + 1 < source.size() && source[i + 1] == '/') {
+                    break;
+                }
+                if (inString) {
+                    if (escaped) {
+                        escaped = false;
+                    } else if (ch == '\\') {
+                        escaped = true;
+                    } else if (ch == '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+                if (ch == '"') {
+                    inString = true;
+                } else if (ch == '{') {
+                    ++balance;
+                } else if (ch == '}') {
+                    --balance;
+                }
+            }
+            return balance;
+        }
+
+        bool replHasAssignment(const std::string& source) {
+            bool inString = false;
+            bool escaped = false;
+
+            for (std::size_t i = 0; i < source.size(); ++i) {
+                const char ch = source[i];
+
+                if (inString) {
+                    if (escaped) {
+                        escaped = false;
+                    } else if (ch == '\\') {
+                        escaped = true;
+                    } else if (ch == '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+                if (ch == '"') {
+                    inString = true;
+                    continue;
+                }
+                if (ch == '=' && (i + 1 == source.size() || source[i + 1] != '=') &&
+                    (i == 0 || std::string("=!<>+-*/%").find(source[i - 1]) == std::string::npos)) {
+                    return i > 0;
+                }
+            }
+            return false;
+        }
+
+        bool replIsDeclaration(const std::string& line) {
+            return replStartsWith(line, "fn ") ||
+                replStartsWith(line, "struct ") ||
+                replStartsWith(line, "enum ") ||
+                replStartsWith(line, "extern ") ||
+                replStartsWith(line, "import ");
+        }
+
+        bool replIsBlockStatement(const std::string& line) {
+            return replStartsWith(line, "if ") ||
+                replStartsWith(line, "while ") ||
+                replStartsWith(line, "for ") ||
+                replStartsWith(line, "match ") ||
+                replStartsWith(line, "unsafe ");
+        }
+
+        bool replIsStoredStatement(const std::string& line) {
+            return replStartsWith(line, "let ") ||
+                replStartsWith(line, "const ") ||
+                replHasAssignment(line);
+        }
+
+        bool replIsDirectStatement(const std::string& line) {
+            return replStartsWith(line, "print(") ||
+                replStartsWith(line, "print (") ||
+                replIsBlockStatement(line);
+        }
+
+        std::string replBindingName(const std::string& line) {
+            std::string rest;
+            if (replStartsWith(line, "let ")) {
+                rest = trim(line.substr(4));
+                if (replStartsWith(rest, "mut ")) rest = trim(rest.substr(4));
+            } else if (replStartsWith(line, "const ")) {
+                rest = trim(line.substr(6));
+            } else {
+                return {};
+            }
+
+            std::size_t end = 0;
+            while (end < rest.size()) {
+                const unsigned char ch = static_cast<unsigned char>(rest[end]);
+                if (!std::isalnum(ch) && rest[end] != '_') break;
+                ++end;
+            }
+            return rest.substr(0, end);
+        }
+
+        void replWriteIndented(std::ostream& output, const std::string& source) {
+            std::istringstream input(source);
+            std::string line;
+            while (std::getline(input, line)) {
+                output << "    " << line << '\n';
+            }
+        }
+
+        int commandRepl() {
+            std::cout
+                << "NEXUS " << kVersion << " interactive shell\n"
+                << "Enter an expression to evaluate it. Use let x = 10 to keep a value.\n"
+                << "Commands: :help, :vars, :clear, :quit\n\n";
+
+            const auto tick = std::chrono::steady_clock::now().time_since_epoch().count();
+            const fs::path tempDir = fs::temp_directory_path() /
+                ("nexus-repl-" + std::to_string(tick));
+            fs::create_directories(tempDir);
+
+            struct TempDirectoryCleanup {
+                fs::path path;
+                ~TempDirectoryCleanup() {
+                    std::error_code ec;
+                    fs::remove_all(path, ec);
+                }
+            } cleanup{tempDir};
+
+            const fs::path sourcePath = tempDir / "repl.nx";
+#ifdef _WIN32
+            const fs::path outputPath = tempDir / "repl.exe";
+#else
+            const fs::path outputPath = tempDir / "repl";
+#endif
+            std::vector<std::string> declarations;
+            std::vector<std::string> statements;
+            std::vector<std::string> variableNames;
+
+            enum class ReplMode {
+                None,
+                Expression,
+                Statement
+            };
+
+            const auto execute = [&](const std::vector<std::string>& sourceDeclarations,
+                                      const std::vector<std::string>& sourceStatements,
+                                      const std::string& currentLine,
+                                      ReplMode mode) -> bool {
+                std::ofstream source(sourcePath, std::ios::binary | std::ios::trunc);
+                if (!source) {
+                    std::cerr << "nexus: cannot write temporary REPL source\n";
+                    return false;
+                }
+
+                for (const auto& declaration : sourceDeclarations) {
+                    source << declaration << '\n';
+                }
+                source << "\nfn main() {\n";
+                for (const auto& statement : sourceStatements) {
+                    replWriteIndented(source, statement);
+                }
+                if (mode == ReplMode::Expression) {
+                    source << "    print(" << currentLine << ")\n";
+                } else if (mode == ReplMode::Statement) {
+                    replWriteIndented(source, currentLine);
+                }
+                source << "}\n";
+                source.close();
+
+                std::error_code ec;
+                fs::remove(outputPath, ec);
+                fs::path llvmIrPath = outputPath;
+                llvmIrPath += ".ll";
+                fs::remove(llvmIrPath, ec);
+
+                try {
+                    const int buildResult = compileFile(
+                        sourcePath, outputPath, "native", false, 0, "auto", true);
+                    if (buildResult != 0) return false;
+
+                    const int runResult = launchExecutable(outputPath, tempDir);
+                    if (runResult != 0) {
+                        std::cerr << "nexus: expression exited with status "
+                                  << runResult << '\n';
+                        return false;
+                    }
+                    return true;
+                } catch (const std::exception& error) {
+                    std::cerr << formatDiagnostic(error) << '\n';
+                    return false;
+                }
+            };
+
+            std::string pending;
+            std::string inputLine;
+            for (;;) {
+                std::cout << (pending.empty() ? "nexus> " : "   ... ") << std::flush;
+                if (!std::getline(std::cin, inputLine)) {
+                    if (!pending.empty()) {
+                        std::cerr << "nexus: incomplete multi-line input discarded\n";
+                    }
+                    break;
+                }
+
+                if (pending.empty()) {
+                    inputLine = trim(inputLine);
+                    if (inputLine.empty()) continue;
+
+                    if (inputLine == ":quit" || inputLine == ":q" ||
+                        inputLine == "quit" || inputLine == "quit()" ||
+                        inputLine == "exit" || inputLine == "exit()") {
+                        break;
+                    }
+                    if (inputLine == ":help") {
+                        std::cout
+                            << "Expressions: 2 + 2, (8 + 4) / 3, 2.5 * 4\n"
+                            << "Bindings:    let answer = 42\n"
+                            << "Assignment:  answer = answer + 1\n"
+                            << "Functions:   fn double(x: i64) -> i64 { return x * 2 }\n"
+                            << "State is rebuilt from saved declarations and statements for each entry.\n"
+                            << ":vars lists saved bindings; :clear resets the session; :quit exits.\n";
+                        continue;
+                    }
+                    if (inputLine == ":clear") {
+                        declarations.clear();
+                        statements.clear();
+                        variableNames.clear();
+                        std::cout << "session cleared\n";
+                        continue;
+                    }
+                    if (inputLine == ":vars") {
+                        if (variableNames.empty()) {
+                            std::cout << "no saved bindings\n";
+                        } else {
+                            for (const auto& name : variableNames) std::cout << name << '\n';
+                        }
+                        continue;
+                    }
+
+                    if ((replIsDeclaration(inputLine) || replIsBlockStatement(inputLine)) &&
+                        replBraceBalance(inputLine) > 0) {
+                        pending = inputLine;
+                        continue;
+                    }
+                } else {
+                    pending += '\n';
+                    pending += inputLine;
+                    if (replBraceBalance(pending) > 0) continue;
+                    inputLine = trim(pending);
+                    pending.clear();
+                }
+
+                if (replIsDeclaration(inputLine)) {
+                    auto candidate = declarations;
+                    candidate.push_back(inputLine);
+                    if (execute(candidate, statements, {}, ReplMode::None)) {
+                        declarations = std::move(candidate);
+                    }
+                    continue;
+                }
+
+                if (replIsStoredStatement(inputLine)) {
+                    auto candidate = statements;
+                    candidate.push_back(inputLine);
+                    if (execute(declarations, candidate, {}, ReplMode::None)) {
+                        statements = std::move(candidate);
+                        const std::string name = replBindingName(inputLine);
+                        if (!name.empty() &&
+                            std::find(variableNames.begin(), variableNames.end(), name) == variableNames.end()) {
+                            variableNames.push_back(name);
+                        }
+                    }
+                    continue;
+                }
+
+                if (replIsDirectStatement(inputLine)) {
+                    execute(declarations, statements, inputLine, ReplMode::Statement);
+                    continue;
+                }
+
+                if (!inputLine.empty() && inputLine.back() == ';') {
+                    inputLine.pop_back();
+                    inputLine = trim(inputLine);
+                }
+                if (inputLine.empty()) continue;
+                execute(declarations, statements, inputLine, ReplMode::Expression);
+            }
+
+            std::cout << '\n';
+            return 0;
+        }
+
+
 } // namespace
 
 int run(int argc, char** argv) {
@@ -2897,16 +3208,15 @@ int run(int argc, char** argv) {
 
         gExecutable = argc > 0 ? fs::absolute(argv[0]) : fs::path();
 
-        if (argc < 2) {
-            usage();
-            return 1;
-        }
+        if (argc < 2) return commandRepl();
         const std::string firstArg = argv[1];
         std::string firstExtension = fs::path(firstArg).extension().string();
         std::transform(firstExtension.begin(), firstExtension.end(), firstExtension.begin(),
             [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
         const bool directFileInvocation = (firstExtension == ".nx");
         const std::string cmd = directFileInvocation ? "run" : firstArg;
+
+        if (cmd == "repl") return commandRepl();
 
         if (cmd == "help" || cmd == "--help") {
             usage();
