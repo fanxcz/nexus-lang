@@ -4,6 +4,7 @@
 #include "semantic/semantic.hpp"
 #include "codegen/llvm_ir.hpp"
 #include "native/native.hpp"
+#include "format/formatter.hpp"
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -1235,57 +1236,17 @@ namespace nexus {
         }
 
         int commandFmt(const fs::path& file, bool checkOnly = false) {
-
             const std::string src = readFile(file);
-
-            std::istringstream in(src);
-
-            std::ostringstream out;
-
-            std::string line;
-
-            int indent = 0;
-
-            bool touched = false;
-
-            while (std::getline(in, line)) {
-
-                while (!line.empty() && (line.back()==' ' || line.back()=='\t' || line.back()=='\r')) {
-                    line.pop_back();
-                    touched=true;
-                }
-                std::string t = trim(line);
-
-                if (t.empty()) {
-                    out << '\n';
-                    continue;
-                }
-                if (!t.empty() && t.front()=='}') indent = std::max(0, indent-1);
-
-                for (int i=0;i<indent;++i) out << "    ";
-
-                out << t << '\n';
-
-                if (!t.empty() && t.back()=='{' && !(t.rfind("//",0)==0)) ++indent;
-
-                if (t.find("} else {") != std::string::npos) indent = std::max(0, indent);
-
+            const std::string formatted = formatNexusSource(src);
+            const bool touched = formatted != src;
+            if (touched && checkOnly) {
+                std::cout << "fmt: needs formatting -> " << file << '\n';
+                return 1;
             }
-            const std::string formatted = out.str();
-
-            if (formatted != src) {
-                if (checkOnly) {
-                    std::cout << "fmt: needs formatting -> " << file << '\n';
-                    return 1;
-                }
-                writeText(file, formatted);
-                touched=true;
-            }
+            if (touched) writeText(file, formatted);
             if (checkOnly) std::cout << "fmt: OK -> " << file << '\n';
             else std::cout << "fmt: " << (touched ? "updated" : "already formatted") << " -> " << file << '\n';
-
             return 0;
-
         }
 
         int commandSelfTest() {
@@ -2182,7 +2143,7 @@ namespace nexus {
                     ",\"result\":{\"serverInfo\":{\"name\":\"nexus-lsp\",\"version\":\"" +
                     kVersion + "\"},\"capabilities\":{\"textDocumentSync\":1,"
                     "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":[\".\",\":\"]},"
-                    "\"definitionProvider\":true,\"documentFormattingProvider\":false}}}");
+                    "\"definitionProvider\":true,\"documentFormattingProvider\":true}}}");
             } else if (method == "shutdown" && !id.empty()) {
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":null}");
             } else if (method == "textDocument/didOpen") {
@@ -2226,6 +2187,29 @@ namespace nexus {
                 }
                 result << "]}";
                 send(result.str());
+            } else if (method == "textDocument/formatting" && !id.empty()) {
+                const std::string uri = extractString(body, "uri");
+                const auto doc = openDocuments.find(uri);
+                std::string result = "[]";
+                if (doc != openDocuments.end()) {
+                    const std::string formatted = formatNexusSource(doc->second);
+                    if (formatted != doc->second) {
+                        const std::size_t endLine = static_cast<std::size_t>(
+                            std::count(doc->second.begin(), doc->second.end(), '\n'));
+                        std::size_t endCharacter = 0;
+                        if (!doc->second.empty() && doc->second.back() != '\n') {
+                            const auto lastNewline = doc->second.find_last_of('\n');
+                            const std::size_t lineStart =
+                                lastNewline == std::string::npos ? 0 : lastNewline + 1;
+                            endCharacter = utf16Length(doc->second.substr(lineStart));
+                        }
+                        result = "[{\"range\":{\"start\":{\"line\":0,\"character\":0},"
+                            "\"end\":{\"line\":" + std::to_string(endLine) +
+                            ",\"character\":" + std::to_string(endCharacter) +
+                            "}},\"newText\":\"" + jsonEscape(formatted) + "\"}]";
+                    }
+                }
+                send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
             } else if (method == "textDocument/definition" && !id.empty()) {
                 const std::string uri = extractString(body, "uri");
                 const auto doc = openDocuments.find(uri);

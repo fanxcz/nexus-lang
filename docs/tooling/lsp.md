@@ -9,11 +9,12 @@
 - Keyword and built-in completion items for common language constructs, standard-module imports and runtime functions.
 - Live diagnostics when a document is opened, changed, saved or closed.
 - Basic go-to-definition for functions, structs, enums, variable bindings and simple function parameters declared in the current or another open document.
+- Whole-document formatting via `textDocument/formatting`, using the same conservative formatter as `nexus fmt`.
 - A maximum protocol message size of 16 MiB.
 
 Diagnostics use the same lexer, parser and semantic analyzer as the compiler. Lexer errors use `NX1000`, parser errors use `NX1001`, and semantic errors use `NX2001`. Syntax errors include a line and column when available. Unknown-variable diagnostics point to the matching identifier token; other semantic errors currently point to the beginning of the document because semantic AST nodes do not yet preserve source spans.
 
-The definition resolver is intentionally limited: it scans currently open documents and recognizes common declaration forms. It is not a full symbol index and does not navigate into files that are not open. Hover, references, rename, code actions, inlay hints, formatting and full workspace indexing are not implemented. Live diagnostics currently publish the first compiler error per document rather than attempting parser error recovery.
+The definition resolver is intentionally limited: it scans currently open documents and recognizes common declaration forms. It is not a full symbol index and does not navigate into files that are not open. Hover, references, rename, code actions, inlay hints and full workspace indexing are not implemented. Formatting currently returns one whole-document edit and shares the CLI formatter so editor and command-line behavior stay aligned. Live diagnostics currently publish the first compiler error per document rather than attempting parser error recovery.
 
 ## Launch
 
@@ -42,7 +43,7 @@ file-types = ["nx"]
 
 ## Verification
 
-The cross-platform CTest suite sends initialize, didOpen, didChange, didClose, completion, definition, shutdown and exit messages to the actual server process:
+The cross-platform CTest suite sends initialize, didOpen, didChange, didClose, completion, definition, formatting, shutdown and exit messages to the actual server process:
 
 ```sh
 ctest --test-dir build --output-on-failure

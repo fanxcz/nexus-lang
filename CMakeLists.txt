@@ -122,6 +122,7 @@ endif()
 # ============================================================================
 set(NEXUS_SOURCES
     src/cli/main.cpp
+    src/compiler/format/formatter.cpp
     src/compiler/frontend/lexer/lexer.cpp
     src/compiler/frontend/parser/parser.cpp
     src/compiler/semantic/semantic.cpp
@@ -196,6 +197,7 @@ if (NEXUS_BUILD_TESTS)
   enable_testing()
   add_executable(nexus_tests
       tests/test_main.cpp
+      src/compiler/format/formatter.cpp
       src/compiler/frontend/lexer/lexer.cpp
       src/compiler/frontend/parser/parser.cpp
       src/compiler/semantic/semantic.cpp
