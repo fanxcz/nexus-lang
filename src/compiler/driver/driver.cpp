@@ -9,8 +9,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -3478,8 +3478,10 @@ namespace nexus {
             enum class ReplMode { None, Expression, Statement };
             enum class FastLineResult { Handled, Unsupported, Error };
 
-            const auto evalExpression = [&](const auto& self, const Expr* expression,
-                                            ReplValue& result, std::string& error) -> bool {
+            const auto evalExpression = [&](const auto& self,
+                                            const Expr* expression,
+                                            ReplValue& result,
+                                            std::string& error) -> bool {
                 if (!expression)
                     return false;
                 if (const auto* literal = dynamic_cast<const IntExpr*>(expression)) {
@@ -3546,7 +3548,8 @@ namespace nexus {
                         const auto* right = std::get_if<bool>(&rhs);
                         if (!left || !right)
                             return false;
-                        result = binary->op == TokenKind::AndAnd ? (*left && *right) : (*left || *right);
+                        result =
+                            binary->op == TokenKind::AndAnd ? (*left && *right) : (*left || *right);
                         return true;
                     }
 
@@ -3555,8 +3558,7 @@ namespace nexus {
                     const bool lhsNumber = lhsInteger || std::holds_alternative<double>(lhs);
                     const bool rhsNumber = rhsInteger || std::holds_alternative<double>(rhs);
 
-                    if (binary->op == TokenKind::Plus &&
-                        std::holds_alternative<std::string>(lhs) &&
+                    if (binary->op == TokenKind::Plus && std::holds_alternative<std::string>(lhs) &&
                         std::holds_alternative<std::string>(rhs)) {
                         result = std::get<std::string>(lhs) + std::get<std::string>(rhs);
                         return true;
@@ -3564,8 +3566,7 @@ namespace nexus {
 
                     if (lhsNumber && rhsNumber) {
                         if (binary->op == TokenKind::EqualEqual ||
-                            binary->op == TokenKind::BangEqual ||
-                            binary->op == TokenKind::Less ||
+                            binary->op == TokenKind::BangEqual || binary->op == TokenKind::Less ||
                             binary->op == TokenKind::LessEqual ||
                             binary->op == TokenKind::Greater ||
                             binary->op == TokenKind::GreaterEqual) {
@@ -3574,27 +3575,55 @@ namespace nexus {
                                 const auto left = std::get<long long>(lhs);
                                 const auto right = std::get<long long>(rhs);
                                 switch (binary->op) {
-                                case TokenKind::EqualEqual: comparison = left == right; break;
-                                case TokenKind::BangEqual: comparison = left != right; break;
-                                case TokenKind::Less: comparison = left < right; break;
-                                case TokenKind::LessEqual: comparison = left <= right; break;
-                                case TokenKind::Greater: comparison = left > right; break;
-                                case TokenKind::GreaterEqual: comparison = left >= right; break;
-                                default: return false;
+                                case TokenKind::EqualEqual:
+                                    comparison = left == right;
+                                    break;
+                                case TokenKind::BangEqual:
+                                    comparison = left != right;
+                                    break;
+                                case TokenKind::Less:
+                                    comparison = left < right;
+                                    break;
+                                case TokenKind::LessEqual:
+                                    comparison = left <= right;
+                                    break;
+                                case TokenKind::Greater:
+                                    comparison = left > right;
+                                    break;
+                                case TokenKind::GreaterEqual:
+                                    comparison = left >= right;
+                                    break;
+                                default:
+                                    return false;
                                 }
                             } else {
-                                const double left = lhsInteger ? static_cast<double>(std::get<long long>(lhs))
-                                                               : std::get<double>(lhs);
-                                const double right = rhsInteger ? static_cast<double>(std::get<long long>(rhs))
-                                                                : std::get<double>(rhs);
+                                const double left =
+                                    lhsInteger ? static_cast<double>(std::get<long long>(lhs))
+                                               : std::get<double>(lhs);
+                                const double right =
+                                    rhsInteger ? static_cast<double>(std::get<long long>(rhs))
+                                               : std::get<double>(rhs);
                                 switch (binary->op) {
-                                case TokenKind::EqualEqual: comparison = left == right; break;
-                                case TokenKind::BangEqual: comparison = left != right; break;
-                                case TokenKind::Less: comparison = left < right; break;
-                                case TokenKind::LessEqual: comparison = left <= right; break;
-                                case TokenKind::Greater: comparison = left > right; break;
-                                case TokenKind::GreaterEqual: comparison = left >= right; break;
-                                default: return false;
+                                case TokenKind::EqualEqual:
+                                    comparison = left == right;
+                                    break;
+                                case TokenKind::BangEqual:
+                                    comparison = left != right;
+                                    break;
+                                case TokenKind::Less:
+                                    comparison = left < right;
+                                    break;
+                                case TokenKind::LessEqual:
+                                    comparison = left <= right;
+                                    break;
+                                case TokenKind::Greater:
+                                    comparison = left > right;
+                                    break;
+                                case TokenKind::GreaterEqual:
+                                    comparison = left >= right;
+                                    break;
+                                default:
+                                    return false;
                                 }
                             }
                             result = comparison;
@@ -3604,7 +3633,8 @@ namespace nexus {
                         if (lhsInteger && rhsInteger) {
                             const long long left = std::get<long long>(lhs);
                             const long long right = std::get<long long>(rhs);
-                            if (binary->op == TokenKind::Slash || binary->op == TokenKind::Percent) {
+                            if (binary->op == TokenKind::Slash ||
+                                binary->op == TokenKind::Percent) {
                                 if (right == 0) {
                                     error = "division by zero";
                                     return false;
@@ -3651,10 +3681,12 @@ namespace nexus {
                             return true;
                         }
 
-                        const double left = lhsInteger ? static_cast<double>(std::get<long long>(lhs))
-                                                       : std::get<double>(lhs);
-                        const double right = rhsInteger ? static_cast<double>(std::get<long long>(rhs))
-                                                        : std::get<double>(rhs);
+                        const double left = lhsInteger
+                                                ? static_cast<double>(std::get<long long>(lhs))
+                                                : std::get<double>(lhs);
+                        const double right = rhsInteger
+                                                 ? static_cast<double>(std::get<long long>(rhs))
+                                                 : std::get<double>(rhs);
                         if (binary->op == TokenKind::Slash || binary->op == TokenKind::Percent) {
                             if (right == 0.0) {
                                 error = "division by zero";
@@ -3666,10 +3698,14 @@ namespace nexus {
                                 result = left / right;
                             return true;
                         }
-                        if (binary->op == TokenKind::Plus) result = left + right;
-                        else if (binary->op == TokenKind::Minus) result = left - right;
-                        else if (binary->op == TokenKind::Star) result = left * right;
-                        else return false;
+                        if (binary->op == TokenKind::Plus)
+                            result = left + right;
+                        else if (binary->op == TokenKind::Minus)
+                            result = left - right;
+                        else if (binary->op == TokenKind::Star)
+                            result = left * right;
+                        else
+                            return false;
                         return true;
                     }
 
@@ -3684,8 +3720,8 @@ namespace nexus {
                 return false;
             };
 
-            const auto tryFastLine = [&](const std::string& line, bool stored,
-                                         bool expression) -> FastLineResult {
+            const auto tryFastLine =
+                [&](const std::string& line, bool stored, bool expression) -> FastLineResult {
                 try {
                     const std::string wrapper = "fn __nexus_repl__() {\n" + line + "\n}\n";
                     Program program = Parser(Lexer(wrapper).tokenize()).parseProgram();
@@ -3696,11 +3732,13 @@ namespace nexus {
                     auto& statement = program.functions.front().body->statements.front();
                     if (stored) {
                         if (auto* declaration = dynamic_cast<LetStmt*>(statement.get())) {
-                            if (!declaration->init || variables.find(declaration->name) != variables.end())
+                            if (!declaration->init ||
+                                variables.find(declaration->name) != variables.end())
                                 return FastLineResult::Unsupported;
                             ReplValue value;
                             std::string error;
-                            if (!evalExpression(evalExpression, declaration->init.get(), value, error)) {
+                            if (!evalExpression(
+                                    evalExpression, declaration->init.get(), value, error)) {
                                 if (!error.empty()) {
                                     std::cerr << "nexus: " << error << '\n';
                                     return FastLineResult::Error;
@@ -3708,17 +3746,18 @@ namespace nexus {
                                 return FastLineResult::Unsupported;
                             }
                             const bool compatible = declaration->type.kind == TypeKind::Unknown ||
-                                (declaration->type.kind == TypeKind::I64 &&
-                                 std::holds_alternative<long long>(value)) ||
-                                (declaration->type.kind == TypeKind::F64 &&
-                                 std::holds_alternative<double>(value)) ||
-                                (declaration->type.kind == TypeKind::Bool &&
-                                 std::holds_alternative<bool>(value)) ||
-                                (declaration->type.kind == TypeKind::String &&
-                                 std::holds_alternative<std::string>(value));
+                                                    (declaration->type.kind == TypeKind::I64 &&
+                                                     std::holds_alternative<long long>(value)) ||
+                                                    (declaration->type.kind == TypeKind::F64 &&
+                                                     std::holds_alternative<double>(value)) ||
+                                                    (declaration->type.kind == TypeKind::Bool &&
+                                                     std::holds_alternative<bool>(value)) ||
+                                                    (declaration->type.kind == TypeKind::String &&
+                                                     std::holds_alternative<std::string>(value));
                             if (!compatible)
                                 return FastLineResult::Unsupported;
-                            variables.emplace(declaration->name, ReplBinding{std::move(value), declaration->mut});
+                            variables.emplace(declaration->name,
+                                              ReplBinding{std::move(value), declaration->mut});
                             return FastLineResult::Handled;
                         }
                         if (auto* assignment = dynamic_cast<AssignStmt*>(statement.get())) {
@@ -3727,7 +3766,8 @@ namespace nexus {
                                 return FastLineResult::Unsupported;
                             ReplValue value;
                             std::string error;
-                            if (!evalExpression(evalExpression, assignment->value.get(), value, error)) {
+                            if (!evalExpression(
+                                    evalExpression, assignment->value.get(), value, error)) {
                                 if (!error.empty()) {
                                     std::cerr << "nexus: " << error << '\n';
                                     return FastLineResult::Error;
@@ -3742,12 +3782,14 @@ namespace nexus {
                         return FastLineResult::Unsupported;
                     }
                     if (expression) {
-                        const auto* expressionStatement = dynamic_cast<const ExprStmt*>(statement.get());
+                        const auto* expressionStatement =
+                            dynamic_cast<const ExprStmt*>(statement.get());
                         if (!expressionStatement || !expressionStatement->expr)
                             return FastLineResult::Unsupported;
                         ReplValue value;
                         std::string error;
-                        if (!evalExpression(evalExpression, expressionStatement->expr.get(), value, error)) {
+                        if (!evalExpression(
+                                evalExpression, expressionStatement->expr.get(), value, error)) {
                             if (!error.empty()) {
                                 std::cerr << "nexus: " << error << '\n';
                                 return FastLineResult::Error;
@@ -3894,9 +3936,8 @@ namespace nexus {
                 }
 
                 if (replIsStoredStatement(inputLine)) {
-                    const auto fastResult = fastPathEnabled
-                        ? tryFastLine(inputLine, true, false)
-                        : FastLineResult::Unsupported;
+                    const auto fastResult = fastPathEnabled ? tryFastLine(inputLine, true, false)
+                                                            : FastLineResult::Unsupported;
                     if (fastResult == FastLineResult::Handled) {
                         statements.push_back(inputLine);
                         const std::string name = replBindingName(inputLine);
