@@ -52,7 +52,7 @@ nexus repl. Enter an expression to evaluate it immediately:
 ```text
 nexus> 2 + 2
 4
-nexus> let answer = 21
+nexus> let mut answer = 21
 nexus> answer * 2
 42
 nexus> answer = answer + 1
