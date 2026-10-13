@@ -1,5 +1,7 @@
 #include "parser/parser.hpp"
 
+#include <algorithm>
+
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
