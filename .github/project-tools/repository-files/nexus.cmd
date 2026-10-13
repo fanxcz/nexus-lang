@@ -11,11 +11,13 @@ if /I "%~1"=="build" goto buildcommand
 exit /b %ERRORLEVEL%
 
 :runfile
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -PauseOnExit -SourcePath "%~1"
+rem Command-line invocation must return to the calling terminal without waiting for interactive input.
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -SourcePath "%~1"
 exit /b %ERRORLEVEL%
 
 :runcommand
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -PauseOnExit -SourcePath "%~2"
+rem Keep run/build CLI commands non-interactive; Run-NEXUS.bat provides the optional pause for double-click usage.
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0NEXUS-Windows.ps1" -Mode Run -SourcePath "%~2"
 exit /b %ERRORLEVEL%
 
 :buildcommand
