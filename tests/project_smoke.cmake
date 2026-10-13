@@ -202,13 +202,13 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed for an unchanged local package: ${out}\\n${err}")
 endif()
 
-file(WRITE "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" "fn main() { print(\\"tampered\\") }\\n")
+file(WRITE "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" "fn main() { print(\"tampered\") }\n")
 execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 if(rc EQUAL 0 OR NOT err MATCHES "integrity mismatch")
   message(FATAL_ERROR "pkg verify did not detect modified package content: ${out}\\n${err}")
 endif()
-file(WRITE "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" "fn main() { print(\\"sample\\") }\\n")
+file(COPY "${PKG_SOURCE}/src/main.nx" DESTINATION "${SMOKE_DIR}/vendor/sample_lib/src")
 execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
