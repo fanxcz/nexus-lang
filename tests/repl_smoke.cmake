@@ -47,24 +47,24 @@ file(WRITE "${input_file}"
 ":history\n"
 ":quit\n")
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
-  INPUT_FILE "${input_file}" RESULT_VARIABLE ${rc} OUTPUT_VARIABLE ${out} ERROR_VARIABLE ${err} TIMEOUT 90)
-if(NOT ${rc} EQUAL 0 OR NOT ${out} MATCHES "let mut total = 20" OR NOT ${out} MATCHES "total = total")
+  INPUT_FILE "${input_file}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 90)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "let mut total = 20" OR NOT out MATCHES "total = total")
   message(FATAL_ERROR "REPL history write failed: ${out}\n${err}")
 endif()
 
 file(WRITE "${input_file}" ":history\n:quit\n")
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
-  INPUT_FILE "${input_file}" RESULT_VARIABLE ${rc} OUTPUT_VARIABLE ${out} ERROR_VARIABLE ${err} TIMEOUT 90)
-if(NOT ${rc} EQUAL 0 OR NOT ${out} MATCHES "let mut total = 20" OR NOT ${out} MATCHES "total = total")
+  INPUT_FILE "${input_file}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 90)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "let mut total = 20" OR NOT out MATCHES "total = total")
   message(FATAL_ERROR "REPL history was not restored by a fresh process: ${out}\n${err}")
 endif()
 
 file(WRITE "${input_file}" ":history-clear\n:history\n:quit\n")
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
-  INPUT_FILE "${input_file}" RESULT_VARIABLE ${rc} OUTPUT_VARIABLE ${out} ERROR_VARIABLE ${err} TIMEOUT 90)
-file(SIZE "${history_file}" ${history_size})
+  INPUT_FILE "${input_file}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 90)
+file(SIZE "${history_file}" history_size)
 file(REMOVE "${input_file}" "${history_file}")
-if(NOT ${rc} EQUAL 0 OR NOT ${out} MATCHES "history cleared" OR NOT ${out} MATCHES "history is empty" OR NOT ${history_size} EQUAL 0)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "history cleared" OR NOT out MATCHES "history is empty" OR NOT history_size EQUAL 0)
   message(FATAL_ERROR "REPL history clear failed: ${out}\n${err}")
 endif()
 
