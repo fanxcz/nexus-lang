@@ -62,8 +62,7 @@ if(formatting_text_pos EQUAL -1)
 endif()
 
 
-if(NOT out MATCHES "\\\\\"referencesProvider\\\\\":true"
-   OR NOT out MATCHES "\\\\\"renameProvider\\\\\":true")
+if(NOT out MATCHES "referencesProvider" OR NOT out MATCHES "renameProvider")
   message(FATAL_ERROR "NEXUS LSP did not advertise references and rename: ${out}")
 endif()
 string(FIND "${out}" "\"id\":6,\"result\":[" references_start)
