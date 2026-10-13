@@ -242,27 +242,24 @@ namespace nexus {
     };
 
     struct StructDecl {
-        SourceSpan span{}
-        SourceSpan span{};;
         std::string name;
         std::vector<StructField> fields;
+        SourceSpan span{};
     };
 
     struct EnumDecl {
-        SourceSpan span{}
-        SourceSpan span{};;
         std::string name;
         std::vector<std::string> variants;
+        SourceSpan span{};
     };
 
     struct Function {
-        SourceSpan span{}
-        SourceSpan span{};;
         std::string name;
         std::vector<Param> params;
         Type ret;
         std::unique_ptr<Block> body;
         bool external = false;
+        SourceSpan span{};
     };
 
     struct Program {
