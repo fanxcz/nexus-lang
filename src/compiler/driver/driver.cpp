@@ -2263,9 +2263,96 @@ namespace nexus {
                         extractNumber(body, "line"), extractNumber(body, "character"));
                     for (const auto& item : completions) {
                         if (item.first == identifier) {
-                            result = "{\"contents\":{\"kind\":\"markdown\",\"value\":\"**" +
-                                jsonEscape(item.first) + "**\\n\\n" + jsonEscape(item.second) + "\"}}";
+                            const std::string markdown = "**" + item.first + "**\\n\\n" + item.second;
+                            result = "{\"contents\":{\"kind\":\"markdown\",\"value\":\"" +
+                                jsonEscape(markdown) + "\"}}";
                             break;
+                        }
+                    }
+
+                    // When the cursor is on a user-defined declaration, parse the
+                    // current open buffer and show its real signature. Incomplete
+                    // editor buffers can fail to parse; hover should then fall back
+                    // to null instead of disrupting the LSP session.
+                    if (result == "null" && !identifier.empty()) {
+                        try {
+                            Program program = Parser(Lexer(document->second).tokenize()).parseProgram();
+                            const auto describeType = [&](const auto& self, const Type& type) -> std::string {
+                                switch (type.kind) {
+                                    case TypeKind::I64: return "i64";
+                                    case TypeKind::F64: return "f64";
+                                    case TypeKind::Bool: return "bool";
+                                    case TypeKind::String: return "string";
+                                    case TypeKind::Void: return "void";
+                                    case TypeKind::Pointer:
+                                        return type.pointee ? "*" + self(self, *type.pointee) : "*unknown";
+                                    case TypeKind::Struct:
+                                        return type.name.empty() ? "struct" : type.name;
+                                    case TypeKind::Enum:
+                                        return type.name.empty() ? "enum" : type.name;
+                                    case TypeKind::Array:
+                                        return type.element
+                                            ? "[" + self(self, *type.element) + "; " + std::to_string(type.arraySize) + "]"
+                                            : "[unknown]";
+                                    case TypeKind::Unknown: return "inferred";
+                                }
+                                return "unknown";
+                            };
+                            std::string markdown;
+                            for (const auto& function : program.functions) {
+                                if (function.name != identifier) continue;
+                                std::ostringstream signature;
+                                signature << "fn " << function.name << "(";
+                                for (std::size_t i = 0; i < function.params.size(); ++i) {
+                                    if (i) signature << ", ";
+                                    signature << function.params[i].name << ": "
+                                              << describeType(describeType, function.params[i].type);
+                                }
+                                signature << ") -> " << describeType(describeType, function.ret);
+                                markdown = "**" + signature.str() + "**\\n\\nUser-defined function.";
+                                break;
+                            }
+                            if (markdown.empty()) {
+                                for (const auto& declaration : program.structs) {
+                                    if (declaration.name != identifier) continue;
+                                    std::ostringstream description;
+                                    description << "**struct " << declaration.name << "**";
+                                    if (declaration.fields.empty()) {
+                                        description << "\\n\\nNo fields.";
+                                    } else {
+                                        description << "\\n\\nFields:";
+                                        for (const auto& field : declaration.fields) {
+                                            description << "\\n- \`" << field.name << "\`: \`"
+                                                << describeType(describeType, field.type) << "\`";
+                                        }
+                                    }
+                                    markdown = description.str();
+                                    break;
+                                }
+                            }
+                            if (markdown.empty()) {
+                                for (const auto& declaration : program.enums) {
+                                    if (declaration.name != identifier) continue;
+                                    std::ostringstream description;
+                                    description << "**enum " << declaration.name << "**";
+                                    if (declaration.variants.empty()) {
+                                        description << "\\n\\nNo variants.";
+                                    } else {
+                                        description << "\\n\\nVariants:";
+                                        for (const auto& variant : declaration.variants) {
+                                            description << "\\n- \`" << variant << "\`";
+                                        }
+                                    }
+                                    markdown = description.str();
+                                    break;
+                                }
+                            }
+                            if (!markdown.empty()) {
+                                result = "{\"contents\":{\"kind\":\"markdown\",\"value\":\"" +
+                                    jsonEscape(markdown) + "\"}}";
+                            }
+                        } catch (const std::exception&) {
+                            // Unsaved/incomplete source is normal while an editor is open.
                         }
                     }
                 }

@@ -7,7 +7,7 @@
 - Initialize and clean shutdown.
 - Full-document synchronization.
 - Keyword and built-in completion items for common language constructs, standard-module imports and runtime functions.
-- Hover documentation for the same built-in and keyword entries, returned as Markdown from the shared completion descriptions.
+- Hover documentation for built-in functions and keywords from the shared completion catalog, plus parsed signatures for user-defined functions, structs and enums in a syntactically valid open document.
 - Live diagnostics when a document is opened, changed, saved or closed.
 - Basic go-to-definition for functions, structs, enums, variable bindings and simple function parameters declared in the current or another open document.
 - Whole-document formatting via `textDocument/formatting`, using the same conservative formatter as `nexus fmt`.
@@ -15,7 +15,7 @@
 
 Diagnostics use the same lexer, parser and semantic analyzer as the compiler. Lexer errors use `NX1000`, parser errors use `NX1001`, and semantic errors use `NX2001`. Syntax errors include a line and column when available. Unknown-variable diagnostics point to the matching identifier token; other semantic errors currently point to the beginning of the document because semantic AST nodes do not yet preserve source spans.
 
-The definition resolver is intentionally limited: it scans currently open documents and recognizes common declaration forms. It is not a full symbol index and does not navigate into files that are not open. Type-aware hover for user-defined symbols, code actions, inlay hints and full workspace indexing are not implemented. Current hover is documentation lookup for the built-in/keyword completion catalog. References and rename are supported only as lexical matches in currently open documents; formatting returns one whole-document edit and shares the CLI formatter so editor and command-line behavior stay aligned. Live diagnostics currently publish the first compiler error per document rather than attempting parser error recovery.
+The definition resolver is intentionally limited: it scans currently open documents and recognizes common declaration forms. It is not a full symbol index and does not navigate into files that are not open. Hover shows declared parameter and return types for user-defined functions and field/variant information for structs and enums when the current open document parses. It does not infer expression types or resolve local variable types; incomplete buffers return no user-symbol hover until they parse. Code actions, inlay hints and full workspace indexing are not implemented. References and rename are supported only as lexical matches in currently open documents; formatting returns one whole-document edit and shares the CLI formatter so editor and command-line behavior stay aligned. Live diagnostics currently publish the first compiler error per document rather than attempting parser error recovery.
 
 ## Launch
 
