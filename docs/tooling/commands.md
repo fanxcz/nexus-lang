@@ -7,7 +7,11 @@ The CLI reference below matches the commands implemented by NEXUS 1.1.0. Options
 Run `nexus` with no arguments or use `nexus repl` to enter the interactive shell.
 Each expression is compiled and evaluated by NEXUS; `let`/`const` bindings and simple
 assignments remain available in subsequent entries. The shell accepts NEXUS syntax, not
-Python syntax. Use `:help`, `:vars`, `:clear`, or `:quit` inside the shell.
+Python syntax. Use `:help`, `:vars`, `:history`, `:history-clear`, `:clear`, or `:quit` inside the shell.
+
+Submitted input is persisted between launches (the most recent 500 entries). On Linux/macOS
+it defaults to `~/.nexus_repl_history`; on Windows it defaults to `%APPDATA%\\NEXUS\\repl_history.txt`.
+Set `NEXUS_HISTORY_FILE` to choose a different file, for example for an isolated project or test.
 
 ```text
 nexus> 2 + 2
@@ -85,7 +89,7 @@ nexus lint src/main.nx
 nexus doc
 ```
 
-The formatter's `--check` mode never writes to the file. The current formatter is deliberately modest; it is not yet a full syntax-aware pretty-printer and the CLI does not recursively format every file in a project. `lint` performs the current line-level checks and semantic analysis; it does not accept a configurable rule set or JSON output option.
+The formatter's `--check` mode never writes to the file. The formatter is deliberately modest; it is not yet a full syntax-aware pretty-printer. `nexus fmt --all` formats `.nx` files in the project recursively, while `nexus fmt --check --all` checks every discovered source without modifying it. Both skip `.git`, `.vscode`, `build`, `dist`, `vendor`, `node_modules`, `CMakeFiles`, `target`, and `.cache`. `lint` performs the current line-level checks and semantic analysis; it does not accept a configurable rule set or JSON output option.
 
 ## Testing and profiling
 
@@ -114,7 +118,7 @@ nexus pkg build
 nexus pkg publish
 ```
 
-The current package manager supports local vendoring and creation of a local `.nxpkg` archive. `publish` does not upload to a hosted package registry. Dependency resolution and lockfile handling remain a roadmap area.
+The current package manager supports local vendoring and creation of a local `.nxpkg` archive. `publish` does not upload to a hosted package registry. `nexus pkg verify` validates local package checksums and checks that manifest dependencies, lockfile entries, versions, and paths under `vendor/` agree.
 
 ## Language server
 

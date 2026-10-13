@@ -4192,6 +4192,74 @@ namespace nexus {
             }
         }
 
+        constexpr std::size_t kReplHistoryLimit = 500;
+        fs::path replHistoryPath() {
+            if (const char* overridePath = std::getenv("NEXUS_HISTORY_FILE")) {
+                if (*overridePath != '\0') return fs::path(overridePath);
+            }
+#ifdef _WIN32
+            if (const char* appData = std::getenv("APPDATA")) {
+                if (*appData != '\0') return fs::path(appData) / "NEXUS" / "repl_history.txt";
+            }
+            if (const char* home = std::getenv("USERPROFILE")) {
+                if (*home != '\0') return fs::path(home) / ".nexus_repl_history";
+            }
+#else
+            if (const char* home = std::getenv("HOME")) {
+                if (*home != '\0') return fs::path(home) / ".nexus_repl_history";
+            }
+#endif
+            return {};
+        }
+        std::string encodeReplHistoryEntry(const std::string& entry) {
+            std::string out;
+            for (char ch : entry) {
+                if (ch == '\\') out += "\\\\";
+                else if (ch == '\n') out += "\\n";
+                else if (ch == '\r') out += "\\r";
+                else out += ch;
+            }
+            return out;
+        }
+        std::string decodeReplHistoryEntry(const std::string& encoded) {
+            std::string out;
+            for (std::size_t i = 0; i < encoded.size(); ++i) {
+                if (encoded[i] != '\\' || i + 1 >= encoded.size()) {
+                    out += encoded[i];
+                    continue;
+                }
+                const char ch = encoded[++i];
+                if (ch == 'n') out += '\n';
+                else if (ch == 'r') out += '\r';
+                else if (ch == '\\') out += '\\';
+                else { out += '\\'; out += ch; }
+            }
+            return out;
+        }
+        std::vector<std::string> loadReplHistory(const fs::path& path) {
+            std::vector<std::string> entries;
+            if (path.empty()) return entries;
+            std::ifstream in(path, std::ios::binary);
+            std::string line;
+            while (std::getline(in, line)) {
+                entries.push_back(decodeReplHistoryEntry(line));
+                if (entries.size() > kReplHistoryLimit) entries.erase(entries.begin());
+            }
+            return entries;
+        }
+        bool saveReplHistory(const fs::path& path, const std::vector<std::string>& entries) {
+            if (path.empty()) return true;
+            try {
+                if (!path.parent_path().empty()) fs::create_directories(path.parent_path());
+                std::ofstream out(path, std::ios::binary | std::ios::trunc);
+                if (!out) return false;
+                for (const auto& entry : entries) out << encodeReplHistoryEntry(entry) << '\n';
+                return static_cast<bool>(out);
+            } catch (const std::exception&) {
+                return false;
+            }
+        }
+
         int commandRepl() {
             std::cout << "NEXUS " << kVersion << " interactive shell\n"
                       << "Enter an expression to evaluate it. Use let x = 10 to keep a value.\n"
@@ -4219,7 +4287,16 @@ namespace nexus {
             std::vector<std::string> declarations;
             std::vector<std::string> statements;
             std::vector<std::string> variableNames;
-            std::vector<std::string> history;
+            const fs::path persistentHistoryPath = replHistoryPath();
+            std::vector<std::string> history = loadReplHistory(persistentHistoryPath);
+            bool historySaveWarningShown = false;
+            const auto persistHistory = [&]() {
+                if (!saveReplHistory(persistentHistoryPath, history) && !historySaveWarningShown) {
+                    std::cerr << "nexus: warning: could not save REPL history to "
+                              << persistentHistoryPath << '\n';
+                    historySaveWarningShown = true;
+                }
+            };
 
             using ReplValue = std::variant<long long, double, bool, std::string>;
             struct ReplBinding {
@@ -4677,6 +4754,7 @@ namespace nexus {
                     }
                     if (inputLine == ":history-clear") {
                         history.clear();
+                        persistHistory();
                         std::cout << "history cleared\n";
                         continue;
                     }
@@ -4696,6 +4774,11 @@ namespace nexus {
                 }
 
                 history.push_back(inputLine);
+                if (history.size() > kReplHistoryLimit)
+                    history.erase(history.begin(), history.begin() +
+                                  static_cast<std::vector<std::string>::difference_type>(
+                                      history.size() - kReplHistoryLimit));
+                persistHistory();
 
                 if (replIsDeclaration(inputLine)) {
                     auto candidate = declarations;

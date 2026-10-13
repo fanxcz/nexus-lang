@@ -39,32 +39,40 @@ if(NOT out MATCHES "4" OR NOT out MATCHES "10" OR
 endif()
 
 set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-history-input.txt")
+set(history_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-persistent-history.txt")
+file(REMOVE "${history_file}")
 file(WRITE "${input_file}"
 "let mut total = 20\n"
 "total = total + 2\n"
 ":history\n"
-":history-clear\n"
-":history\n"
 ":quit\n")
-execute_process(
-  COMMAND "${NEXUS_BIN}"
-  INPUT_FILE "${input_file}"
-  RESULT_VARIABLE rc
-  OUTPUT_VARIABLE out
-  ERROR_VARIABLE err
-  TIMEOUT 90
-)
-file(REMOVE "${input_file}")
-if(NOT rc EQUAL 0 OR NOT out MATCHES "let mut total = 20"
-   OR NOT out MATCHES "total = total" OR NOT out MATCHES "history cleared"
-   OR NOT out MATCHES "history is empty")
-  message(FATAL_ERROR "REPL session history/clear failed: ${out}\n${err}")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
+  INPUT_FILE "${input_file}" RESULT_VARIABLE ${rc} OUTPUT_VARIABLE ${out} ERROR_VARIABLE ${err} TIMEOUT 90)
+if(NOT ${rc} EQUAL 0 OR NOT ${out} MATCHES "let mut total = 20" OR NOT ${out} MATCHES "total = total")
+  message(FATAL_ERROR "REPL history write failed: ${out}\n${err}")
+endif()
+
+file(WRITE "${input_file}" ":history\n:quit\n")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
+  INPUT_FILE "${input_file}" RESULT_VARIABLE ${rc} OUTPUT_VARIABLE ${out} ERROR_VARIABLE ${err} TIMEOUT 90)
+if(NOT ${rc} EQUAL 0 OR NOT ${out} MATCHES "let mut total = 20" OR NOT ${out} MATCHES "total = total")
+  message(FATAL_ERROR "REPL history was not restored by a fresh process: ${out}\n${err}")
+endif()
+
+file(WRITE "${input_file}" ":history-clear\n:history\n:quit\n")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
+  INPUT_FILE "${input_file}" RESULT_VARIABLE ${rc} OUTPUT_VARIABLE ${out} ERROR_VARIABLE ${err} TIMEOUT 90)
+file(SIZE "${history_file}" ${history_size})
+file(REMOVE "${input_file}" "${history_file}")
+if(NOT ${rc} EQUAL 0 OR NOT ${out} MATCHES "history cleared" OR NOT ${out} MATCHES "history is empty" OR NOT ${history_size} EQUAL 0)
+  message(FATAL_ERROR "REPL history clear failed: ${out}\n${err}")
 endif()
 
 set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-alias-input.txt")
 file(WRITE "${input_file}" "6 * 7\n:quit\n")
 execute_process(
-  COMMAND "${NEXUS_BIN}" repl
+  COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-alias-history.txt"
+          "${NEXUS_BIN}" repl
   INPUT_FILE "${input_file}"
   RESULT_VARIABLE rc
   OUTPUT_VARIABLE out
