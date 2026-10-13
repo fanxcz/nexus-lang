@@ -23,6 +23,8 @@ namespace nexus {
     private:
         Type expr(Expr* e, std::unordered_map<std::string, Symbol>& env);
 
+        Type exprImpl(Expr* e, std::unordered_map<std::string, Symbol>& env);
+
         void block(Block& b, std::unordered_map<std::string, Symbol>& env, Type ret, bool inLoop);
 
         const StructDecl& getStruct(const std::string& n) const;

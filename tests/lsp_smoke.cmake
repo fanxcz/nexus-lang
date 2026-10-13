@@ -49,11 +49,12 @@ set(field_completion "{\"jsonrpc\":\"2.0\",\"id\":18,\"method\":\"textDocument/c
 set(open_completion_enum "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_enum.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"enum Color { Red, Green }\\nfn main() { let color = Color::Red; Color:: }\"}}}")
 set(enum_completion "{\"jsonrpc\":\"2.0\",\"id\":19,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"file:///completion_enum.nx\"},\"position\":{\"line\":1,\"character\":43}}}")
 set(open_multi_syntax "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///multi_syntax.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn first( { }\\nfn second( { }\\nfn main() { }\"}}}")
+set(open_unknown_field "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///unknown_field.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"struct Person { name: string }\\nfn main() { let person: Person = Person{name: \\\"A\\\"}; print(person.age) }\"}}}")
 set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":null}")
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${shutdown}" "${exit_msg}")
+foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${shutdown}" "${exit_msg}")
   string(LENGTH "${message}" message_length)
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
@@ -217,6 +218,15 @@ string(FIND "${multi_syntax_payload}" "\"line\":0,\"character\":10" first_syntax
 string(FIND "${multi_syntax_payload}" "\"line\":1,\"character\":11" second_syntax_error_pos)
 if(multi_syntax_pos EQUAL -1 OR first_syntax_error_pos EQUAL -1 OR second_syntax_error_pos EQUAL -1)
   message(FATAL_ERROR "LSP multi-error recovery diagnostic range regression: ${multi_syntax_payload}")
+endif()
+
+
+string(FIND "${out}" "\"uri\":\"file:///unknown_field.nx\"" unknown_field_pos)
+string(SUBSTRING "${out}" ${unknown_field_pos} -1 unknown_field_payload)
+string(FIND "${unknown_field_payload}" "\"line\":1,\"character\":65" unknown_field_start_pos)
+string(FIND "${unknown_field_payload}" "\"line\":1,\"character\":68" unknown_field_end_pos)
+if(unknown_field_pos EQUAL -1 OR unknown_field_start_pos EQUAL -1 OR unknown_field_end_pos EQUAL -1)
+  message(FATAL_ERROR "LSP semantic field diagnostic should highlight the missing field name: ${unknown_field_payload}")
 endif()
 
 file(REMOVE "${LSP_INPUT}")

@@ -155,6 +155,20 @@ namespace nexus {
         }
     }
     Type SemanticAnalyzer::expr(Expr* e, std::unordered_map<std::string, Symbol>& env) {
+        try {
+            return exprImpl(e, env);
+        } catch (const std::exception& error) {
+            const std::string message = error.what();
+            if (e && e->span.valid && message.rfind(" at ") == std::string::npos) {
+                throw std::runtime_error(message + " at " +
+                                         std::to_string(e->span.start.line) + ":" +
+                                         std::to_string(e->span.start.column));
+            }
+            throw;
+        }
+    }
+
+    Type SemanticAnalyzer::exprImpl(Expr* e, std::unordered_map<std::string, Symbol>& env) {
 
         if (dynamic_cast<IntExpr*>(e))
             return Type::i64();
@@ -359,7 +373,7 @@ namespace nexus {
                                  bool inLoop) {
 
         for (auto& s : b.statements) {
-
+            try {
             if (auto* nested = dynamic_cast<Block*>(s.get())) {
                 auto localEnv = env;
                 block(*nested, localEnv, ret, inLoop);
@@ -476,6 +490,17 @@ namespace nexus {
             } else if (dynamic_cast<BreakStmt*>(s.get()) || dynamic_cast<ContinueStmt*>(s.get())) {
                 if (!inLoop)
                     throw std::runtime_error("break/continue used outside loop");
+            }
+            } catch (const std::exception& error) {
+                const std::string message = error.what();
+                if (message.rfind(" at ") != std::string::npos)
+                    throw;
+                if (s && s->span.valid) {
+                    throw std::runtime_error(message + " at " +
+                                             std::to_string(s->span.start.line) + ":" +
+                                             std::to_string(s->span.start.column));
+                }
+                throw;
             }
         }
     }

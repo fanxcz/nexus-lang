@@ -2447,6 +2447,43 @@ namespace nexus {
                         return units;
                     };
                     for (auto& diagnostic : diagnostics) {
+                        std::string target;
+                        const auto quote = diagnostic.message.find('\'');
+                        if (diagnostic.message.find("field") != std::string::npos &&
+                            quote != std::string::npos) {
+                            const auto endQuote = diagnostic.message.find('\'', quote + 1);
+                            if (endQuote != std::string::npos && endQuote > quote + 1)
+                                target = diagnostic.message.substr(quote + 1, endQuote - quote - 1);
+                        } else if (diagnostic.message.rfind("unknown enum variant: ", 0) == 0) {
+                            const auto separator = diagnostic.message.rfind("::");
+                            if (separator != std::string::npos)
+                                target = diagnostic.message.substr(separator + 2);
+                        }
+                        if (!target.empty()) {
+                            const Token* closest = nullptr;
+                            std::size_t bestDistance = std::numeric_limits<std::size_t>::max();
+                            for (const auto& token : diagnosticTokens) {
+                                if (token.kind != TokenKind::Identifier || token.text != target)
+                                    continue;
+                                const std::size_t distance =
+                                    token.pos.line == diagnostic.line + 1
+                                        ? (token.pos.column > diagnostic.character + 1
+                                               ? token.pos.column - diagnostic.character - 1
+                                               : diagnostic.character + 1 - token.pos.column)
+                                        : std::numeric_limits<std::size_t>::max() / 2 +
+                                              (token.pos.line > diagnostic.line + 1
+                                                   ? token.pos.line - diagnostic.line - 1
+                                                   : diagnostic.line + 1 - token.pos.line);
+                                if (distance < bestDistance) {
+                                    bestDistance = distance;
+                                    closest = &token;
+                                }
+                            }
+                            if (closest) {
+                                diagnostic.line = closest->pos.line - 1;
+                                diagnostic.character = closest->pos.column - 1;
+                            }
+                        }
                         for (const auto& token : diagnosticTokens) {
                             if (token.text.empty() || token.kind == TokenKind::End ||
                                 token.pos.line != diagnostic.line + 1 ||
