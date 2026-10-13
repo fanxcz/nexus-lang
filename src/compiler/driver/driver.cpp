@@ -1524,8 +1524,7 @@ namespace nexus {
                     throw std::runtime_error("cannot inspect project entry: " + ec.message());
 
                 if (fs::is_symlink(status)) {
-                    if (fs::is_directory(it->status(ec)))
-                        it.disable_recursion_pending();
+                    it.disable_recursion_pending();
                     continue;
                 }
                 if (fs::is_directory(status) &&
@@ -1548,14 +1547,11 @@ namespace nexus {
             }
 
             std::size_t failed = 0;
-            std::size_t changed = 0;
             for (const auto& file : files) {
                 try {
                     const int result = commandFmt(file, checkOnly);
                     if (result != 0)
                         ++failed;
-                    else if (!checkOnly && !readFile(file).empty())
-                        ++changed;
                 } catch (const std::exception& error) {
                     ++failed;
                     std::cerr << "fmt: " << file << ": " << error.what() << '\n';
