@@ -46,14 +46,14 @@ endif()
 
 # Declaration validation must not mask independent errors later in the file.
 set(DECLARATION_SOURCE "${DIAGNOSTIC_DIR}/declarations.nx")
-file(WRITE "${DECLARATION_SOURCE}" "struct Broken { value: MissingType, value: i64 }\\nfn main() { print(missingA); print(missingB) }\\n")
+file(WRITE "${DECLARATION_SOURCE}" "struct Broken { value: MissingType, value: i64 }\nfn main() { print(missingA); print(missingB) }\n")
 execute_process(
   COMMAND "${NEXUS_BIN}" check "${DECLARATION_SOURCE}"
   RESULT_VARIABLE rc
   OUTPUT_VARIABLE out
   ERROR_VARIABLE err
 )
-set(declaration_combined "${out}\\n${err}")
+set(declaration_combined "${out}\n${err}")
 if(rc EQUAL 0 OR NOT declaration_combined MATCHES "duplicate field 'value' in struct 'Broken'"
    OR NOT declaration_combined MATCHES "unknown type: MissingType"
    OR NOT declaration_combined MATCHES "unknown variable: missingA"
