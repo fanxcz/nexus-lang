@@ -2247,29 +2247,300 @@ namespace nexus {
             return std::string{};
         };
         const auto findIdentifierOccurrences = [&](const std::string& identifier,
-                const std::string& requestUri, const std::string& requestSource) {
+                const std::string& requestUri, const std::string& requestSource,
+                std::size_t requestedLine, std::size_t requestedCharacter) {
             std::vector<LspIdentifierOccurrence> found;
             if (identifier.empty()) return found;
-            const auto documents = collectWorkspaceDocuments(requestUri, requestSource);
-            for (const auto& document : documents) {
-                std::vector<std::string> sourceLines;
-                std::istringstream input(document.second);
-                std::string line;
-                while (std::getline(input, line)) sourceLines.push_back(line);
+
+            struct ScopeInfo {
+                std::size_t parent = static_cast<std::size_t>(-1);
+                std::size_t depth = 0;
+            };
+            struct SymbolDecl {
+                std::string name;
+                std::string identity;
+                std::string kind;
+                std::size_t tokenIndex = 0;
+                std::size_t visibleFrom = 0;
+                std::size_t scope = 0;
+                bool global = false;
+            };
+            struct DocumentIndex {
+                std::string uri;
+                std::string source;
+                std::vector<Token> tokens;
+                std::vector<std::size_t> tokenScope;
+                std::vector<std::size_t> braceScope;
+                std::vector<ScopeInfo> scopes;
+                std::vector<SymbolDecl> declarations;
+            };
+
+            std::vector<DocumentIndex> documents;
+            for (const auto& document : collectWorkspaceDocuments(requestUri, requestSource)) {
+                DocumentIndex indexed;
+                indexed.uri = document.first;
+                indexed.source = document.second;
                 try {
-                    const auto tokens = Lexer(document.second).tokenize();
-                    for (const auto& token : tokens) {
-                        if (token.kind != TokenKind::Identifier || token.text != identifier ||
-                            token.pos.line == 0 || token.pos.line > sourceLines.size()) continue;
-                        const std::string& sourceLine = sourceLines[token.pos.line - 1];
-                        const std::size_t startByte = std::min(sourceLine.size(),
-                            token.pos.column > 0 ? token.pos.column - 1 : 0);
-                        const std::size_t start = utf16Length(sourceLine.substr(0, startByte));
-                        found.push_back({document.first, token.pos.line - 1, start,
-                                         start + utf16Length(token.text)});
-                    }
+                    indexed.tokens = Lexer(indexed.source).tokenize();
                 } catch (const std::exception&) {
-                    // Do not guess ranges in a document whose lexical structure is incomplete.
+                    continue;
+                }
+                const std::size_t tokenCount = indexed.tokens.size();
+                indexed.tokenScope.assign(tokenCount, 0);
+                indexed.braceScope.assign(tokenCount, static_cast<std::size_t>(-1));
+                indexed.scopes.push_back({static_cast<std::size_t>(-1), 0});
+                std::vector<std::size_t> scopeStack{0};
+                for (std::size_t i = 0; i < tokenCount; ++i) {
+                    const TokenKind kind = indexed.tokens[i].kind;
+                    if (kind == TokenKind::LBrace) {
+                        indexed.tokenScope[i] = scopeStack.back();
+                        const std::size_t parent = scopeStack.back();
+                        const std::size_t scope = indexed.scopes.size();
+                        indexed.scopes.push_back({parent, indexed.scopes[parent].depth + 1});
+                        indexed.braceScope[i] = scope;
+                        scopeStack.push_back(scope);
+                    } else if (kind == TokenKind::RBrace) {
+                        indexed.tokenScope[i] = scopeStack.back();
+                        if (scopeStack.size() > 1) scopeStack.pop_back();
+                    } else {
+                        indexed.tokenScope[i] = scopeStack.back();
+                    }
+                }
+
+                const auto addDeclaration = [&](std::size_t tokenIndex, std::size_t visibleFrom,
+                                                std::size_t scope, const std::string& kind,
+                                                bool global) {
+                    if (tokenIndex >= tokenCount || indexed.tokens[tokenIndex].kind != TokenKind::Identifier) return;
+                    const std::string name = indexed.tokens[tokenIndex].text;
+                    const std::string identity = global
+                        ? "global:" + kind + ":" + name
+                        : "local:" + indexed.uri + ":" + std::to_string(tokenIndex);
+                    indexed.declarations.push_back(
+                        {name, identity, kind, tokenIndex, visibleFrom, scope, global});
+                };
+
+                for (std::size_t i = 1; i < tokenCount; ++i) {
+                    if (indexed.tokenScope[i] != 0 || indexed.tokens[i].kind != TokenKind::Identifier) continue;
+                    const TokenKind before = indexed.tokens[i - 1].kind;
+                    if (before == TokenKind::KwFn) addDeclaration(i, 0, 0, "function", true);
+                    else if (before == TokenKind::KwStruct) addDeclaration(i, 0, 0, "struct", true);
+                    else if (before == TokenKind::KwEnum) addDeclaration(i, 0, 0, "enum", true);
+                }
+
+                for (std::size_t i = 0; i < tokenCount; ++i) {
+                    const TokenKind kind = indexed.tokens[i].kind;
+                    if (kind == TokenKind::KwLet || kind == TokenKind::KwConst) {
+                        std::size_t nameIndex = i + 1;
+                        if (kind == TokenKind::KwLet && nameIndex < tokenCount &&
+                            indexed.tokens[nameIndex].kind == TokenKind::KwMut) ++nameIndex;
+                        if (nameIndex < tokenCount &&
+                            indexed.tokens[nameIndex].kind == TokenKind::Identifier) {
+                            addDeclaration(nameIndex, nameIndex, indexed.tokenScope[nameIndex],
+                                kind == TokenKind::KwConst ? "constant" : "variable", false);
+                        }
+                    } else if (kind == TokenKind::KwFor && i + 1 < tokenCount &&
+                               indexed.tokens[i + 1].kind == TokenKind::Identifier) {
+                        const std::size_t nameIndex = i + 1;
+                        std::size_t bodyOpen = nameIndex + 1;
+                        while (bodyOpen < tokenCount &&
+                               indexed.tokens[bodyOpen].kind != TokenKind::LBrace &&
+                               indexed.tokens[bodyOpen].kind != TokenKind::Semicolon) ++bodyOpen;
+                        if (bodyOpen < tokenCount && indexed.tokens[bodyOpen].kind == TokenKind::LBrace &&
+                            indexed.braceScope[bodyOpen] != static_cast<std::size_t>(-1)) {
+                            addDeclaration(nameIndex, bodyOpen + 1, indexed.braceScope[bodyOpen],
+                                "variable", false);
+                        }
+                    } else if (kind == TokenKind::KwFn) {
+                        std::size_t openParen = i + 1;
+                        while (openParen < tokenCount &&
+                               indexed.tokens[openParen].kind != TokenKind::LParen &&
+                               indexed.tokens[openParen].kind != TokenKind::Semicolon) ++openParen;
+                        if (openParen >= tokenCount || indexed.tokens[openParen].kind != TokenKind::LParen) continue;
+                        std::size_t closeParen = openParen + 1;
+                        std::size_t parenDepth = 1;
+                        for (; closeParen < tokenCount && parenDepth > 0; ++closeParen) {
+                            if (indexed.tokens[closeParen].kind == TokenKind::LParen) ++parenDepth;
+                            else if (indexed.tokens[closeParen].kind == TokenKind::RParen) --parenDepth;
+                        }
+                        if (parenDepth != 0) continue;
+                        --closeParen;
+                        std::size_t bodyOpen = closeParen + 1;
+                        while (bodyOpen < tokenCount &&
+                               indexed.tokens[bodyOpen].kind != TokenKind::LBrace &&
+                               indexed.tokens[bodyOpen].kind != TokenKind::Semicolon) ++bodyOpen;
+                        if (bodyOpen >= tokenCount || indexed.tokens[bodyOpen].kind != TokenKind::LBrace ||
+                            indexed.braceScope[bodyOpen] == static_cast<std::size_t>(-1)) continue;
+                        const std::size_t bodyScope = indexed.braceScope[bodyOpen];
+                        for (std::size_t param = openParen + 1; param + 1 < closeParen; ++param) {
+                            if (indexed.tokens[param].kind == TokenKind::Identifier &&
+                                indexed.tokens[param + 1].kind == TokenKind::Colon) {
+                                addDeclaration(param, bodyOpen + 1, bodyScope, "parameter", false);
+                            }
+                        }
+                    }
+                }
+                documents.push_back(std::move(indexed));
+            }
+
+            const auto isAncestorScope = [](const DocumentIndex& document,
+                                             std::size_t ancestor, std::size_t scope) {
+                while (scope != static_cast<std::size_t>(-1)) {
+                    if (scope == ancestor) return true;
+                    if (scope >= document.scopes.size()) break;
+                    scope = document.scopes[scope].parent;
+                }
+                return false;
+            };
+            const auto declarationAt = [](const DocumentIndex& document, std::size_t tokenIndex)
+                -> const SymbolDecl* {
+                for (const auto& declaration : document.declarations)
+                    if (declaration.tokenIndex == tokenIndex) return &declaration;
+                return nullptr;
+            };
+            const auto localIdentityAt = [&](const DocumentIndex& document, std::size_t tokenIndex) {
+                if (tokenIndex >= document.tokens.size()) return std::string{};
+                if (const auto* declaration = declarationAt(document, tokenIndex);
+                    declaration && !declaration->global) return declaration->identity;
+                if (document.tokens[tokenIndex].kind != TokenKind::Identifier) return std::string{};
+                const std::string& name = document.tokens[tokenIndex].text;
+                const SymbolDecl* selected = nullptr;
+                for (const auto& declaration : document.declarations) {
+                    if (declaration.global || declaration.name != name) continue;
+                    const bool isOwnDeclaration = declaration.tokenIndex == tokenIndex;
+                    const bool visible = tokenIndex >= declaration.visibleFrom &&
+                        isAncestorScope(document, declaration.scope, document.tokenScope[tokenIndex]);
+                    if (!isOwnDeclaration && !visible) continue;
+                    if (!selected ||
+                        document.scopes[declaration.scope].depth > document.scopes[selected->scope].depth ||
+                        (document.scopes[declaration.scope].depth == document.scopes[selected->scope].depth &&
+                         declaration.visibleFrom > selected->visibleFrom)) selected = &declaration;
+                }
+                return selected ? selected->identity : std::string{};
+            };
+            const auto isMemberOrFieldName = [&](const DocumentIndex& document, std::size_t tokenIndex) {
+                if (tokenIndex >= document.tokens.size()) return true;
+                const auto& tokens = document.tokens;
+                if (tokenIndex > 0 &&
+                    (tokens[tokenIndex - 1].kind == TokenKind::Dot ||
+                     tokens[tokenIndex - 1].kind == TokenKind::ColonColon)) return true;
+                if (tokenIndex + 1 < tokens.size() &&
+                    tokens[tokenIndex + 1].kind == TokenKind::Colon &&
+                    tokenIndex > 0 &&
+                    (tokens[tokenIndex - 1].kind == TokenKind::LBrace ||
+                     tokens[tokenIndex - 1].kind == TokenKind::Comma)) {
+                    const auto* declaration = declarationAt(document, tokenIndex);
+                    if (!declaration || declaration->kind != "parameter") return true;
+                }
+                return false;
+            };
+            const auto tokenAtPosition = [&](const DocumentIndex& document, std::size_t line,
+                                             std::size_t character) {
+                std::istringstream sourceStream(document.source);
+                std::vector<std::string> sourceLines;
+                std::string sourceLine;
+                while (std::getline(sourceStream, sourceLine)) sourceLines.push_back(sourceLine);
+                if (line >= sourceLines.size()) return document.tokens.size();
+                std::size_t cursor = byteOffsetForUtf16(sourceLines[line], character);
+                if (cursor > 0 && (cursor == sourceLines[line].size() ||
+                    !identifierCharacter(static_cast<unsigned char>(sourceLines[line][cursor]))) &&
+                    identifierCharacter(static_cast<unsigned char>(sourceLines[line][cursor - 1]))) --cursor;
+                for (std::size_t i = 0; i < document.tokens.size(); ++i) {
+                    const Token& token = document.tokens[i];
+                    if (token.kind != TokenKind::Identifier || token.pos.line != line + 1 ||
+                        token.text != identifier || token.pos.column == 0) continue;
+                    const std::size_t tokenStart = token.pos.column - 1;
+                    if (cursor >= tokenStart && cursor < tokenStart + token.text.size()) return i;
+                }
+                return document.tokens.size();
+            };
+
+            DocumentIndex* requestedDocument = nullptr;
+            for (auto& document : documents) {
+                if (document.uri == requestUri) {
+                    requestedDocument = &document;
+                    break;
+                }
+            }
+            if (!requestedDocument) return found;
+            const std::size_t selectedTokenIndex =
+                tokenAtPosition(*requestedDocument, requestedLine, requestedCharacter);
+            if (selectedTokenIndex >= requestedDocument->tokens.size()) return found;
+
+            const SymbolDecl* selectedDeclaration = declarationAt(*requestedDocument, selectedTokenIndex);
+            std::string targetIdentity;
+            bool targetIsGlobal = false;
+            std::string targetKind;
+            if (selectedDeclaration) {
+                targetIdentity = selectedDeclaration->identity;
+                targetIsGlobal = selectedDeclaration->global;
+                targetKind = selectedDeclaration->kind;
+            } else {
+                targetIdentity = localIdentityAt(*requestedDocument, selectedTokenIndex);
+                if (targetIdentity.empty() &&
+                    !isMemberOrFieldName(*requestedDocument, selectedTokenIndex)) {
+                    const auto& tokens = requestedDocument->tokens;
+                    std::string preferredKind;
+                    if (selectedTokenIndex + 1 < tokens.size() &&
+                        tokens[selectedTokenIndex + 1].kind == TokenKind::LParen) preferredKind = "function";
+                    else if (selectedTokenIndex + 1 < tokens.size() &&
+                             tokens[selectedTokenIndex + 1].kind == TokenKind::LBrace) preferredKind = "struct";
+                    else if (selectedTokenIndex + 1 < tokens.size() &&
+                             tokens[selectedTokenIndex + 1].kind == TokenKind::ColonColon) preferredKind = "enum";
+                    const SymbolDecl* global = nullptr;
+                    for (const auto& document : documents) {
+                        for (const auto& declaration : document.declarations) {
+                            if (!declaration.global || declaration.name != identifier) continue;
+                            if (!preferredKind.empty() && declaration.kind != preferredKind) continue;
+                            if (!global) global = &declaration;
+                        }
+                        if (global) break;
+                    }
+                    if (global) {
+                        targetIdentity = global->identity;
+                        targetIsGlobal = true;
+                        targetKind = global->kind;
+                    }
+                }
+            }
+            if (targetIdentity.empty()) return found;
+
+            for (const auto& document : documents) {
+                for (std::size_t i = 0; i < document.tokens.size(); ++i) {
+                    const Token& token = document.tokens[i];
+                    if (token.kind != TokenKind::Identifier || token.text != identifier) continue;
+                    const SymbolDecl* declaration = declarationAt(document, i);
+                    bool matches = false;
+                    if (!targetIsGlobal) {
+                        matches = document.uri == requestedDocument->uri &&
+                            localIdentityAt(document, i) == targetIdentity;
+                    } else {
+                        if (declaration && declaration->global) {
+                            matches = declaration->identity == targetIdentity;
+                        } else if (!isMemberOrFieldName(document, i) &&
+                                   localIdentityAt(document, i).empty()) {
+                            matches = true;
+                        }
+                    }
+                    if (!matches) continue;
+                    if (document.uri == requestedDocument->uri && i == selectedTokenIndex) {
+                        // Keep the cursor token even for unusual valid syntax.
+                    }
+                    std::istringstream sourceStream(document.source);
+                    std::string sourceLine;
+                    for (std::size_t currentLine = 1;
+                         currentLine < token.pos.line && std::getline(sourceStream, sourceLine);
+                         ++currentLine) {}
+                    if (token.pos.line == 0) continue;
+                    const std::size_t lineIndex = token.pos.line - 1;
+                    const std::size_t startByte = token.pos.column > 0 ? token.pos.column - 1 : 0;
+                    sourceLine.clear();
+                    std::istringstream lineStream(document.source);
+                    for (std::size_t currentLine = 0; currentLine <= lineIndex && std::getline(lineStream, sourceLine); ++currentLine) {
+                        if (currentLine == lineIndex) break;
+                    }
+                    const std::size_t startCharacter = utf16Length(sourceLine.substr(0, std::min(startByte, sourceLine.size())));
+                    found.push_back({document.uri, lineIndex, startCharacter,
+                                     startCharacter + utf16Length(token.text)});
                 }
             }
             return found;
@@ -2551,7 +2822,8 @@ namespace nexus {
                 if (document != openDocuments.end()) {
                     const std::string identifier = identifierAtPosition(document->second,
                         extractNumber(body, "line"), extractNumber(body, "character"));
-                    const auto occurrences = findIdentifierOccurrences(identifier, uri, document->second);
+                    const auto occurrences = findIdentifierOccurrences(identifier, uri, document->second,
+                        extractNumber(body, "line"), extractNumber(body, "character"));
                     std::ostringstream payload;
                     payload << "[";
                     for (std::size_t i = 0; i < occurrences.size(); ++i) {
@@ -2579,7 +2851,8 @@ namespace nexus {
                     if (document != openDocuments.end()) {
                         const std::string identifier = identifierAtPosition(document->second,
                             extractNumber(body, "line"), extractNumber(body, "character"));
-                        occurrences = findIdentifierOccurrences(identifier, uri, document->second);
+                        occurrences = findIdentifierOccurrences(identifier, uri, document->second,
+                            extractNumber(body, "line"), extractNumber(body, "character"));
                     }
                     std::set<std::string> uris;
                     for (const auto& occurrence : occurrences) uris.insert(occurrence.uri);
