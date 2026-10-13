@@ -5,7 +5,7 @@ endif()
 set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-smoke-input.txt")
 file(WRITE "${input_file}"
 "2 + 2\n"
-"let value = 21\n"
+"let mut value = 21\n"
 "value * 2\n"
 "value = value + 1\n"
 "value\n"
