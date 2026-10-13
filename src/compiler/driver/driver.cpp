@@ -3491,7 +3491,8 @@ namespace nexus {
                          "\".\",\":\"]},"
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
                          "\"renameProvider\":true,\"hoverProvider\":true,"
-                         "\"documentFormattingProvider\":true}}}");
+                         "\"documentFormattingProvider\":true,"
+                         "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}");
                 } else if (method == "initialized") {
                     if (clientSupportsWatchedFilesRegistration) {
                         send("{\"jsonrpc\":\"2.0\",\"id\":\"nexus-register-nx-watcher\","
@@ -3865,6 +3866,98 @@ namespace nexus {
                     }
                     send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
 
+                } else if (method == "textDocument/codeAction" && !id.empty()) {
+                    const std::string uri = extractString(body, "uri");
+                    const auto document = openDocuments.find(uri);
+                    std::ostringstream actions;
+                    actions << '[';
+                    bool firstAction = true;
+                    if (document != openDocuments.end()) {
+                        try {
+                            const auto program =
+                                Parser(Lexer(document->second).tokenize()).parseProgram();
+                            const auto diagnostics = collectDiagnostics(document->second);
+                            const auto editDistance = [](const std::string& left,
+                                                         const std::string& right) {
+                                std::vector<std::size_t> previous(right.size() + 1);
+                                for (std::size_t j = 0; j <= right.size(); ++j)
+                                    previous[j] = j;
+                                for (std::size_t i = 1; i <= left.size(); ++i) {
+                                    std::vector<std::size_t> current(right.size() + 1);
+                                    current[0] = i;
+                                    for (std::size_t j = 1; j <= right.size(); ++j) {
+                                        const std::size_t substitution =
+                                            previous[j - 1] + (left[i - 1] == right[j - 1] ? 0 : 1);
+                                        current[j] = std::min({previous[j] + 1,
+                                                               current[j - 1] + 1,
+                                                               substitution});
+                                    }
+                                    previous.swap(current);
+                                }
+                                return previous.back();
+                            };
+
+                            for (const auto& diagnostic : diagnostics) {
+                                if (diagnostic.code != "NX2001")
+                                    continue;
+                                const std::string prefix = "unknown field '";
+                                const auto start = diagnostic.message.find(prefix);
+                                if (start == std::string::npos)
+                                    continue;
+                                const auto nameStart = start + prefix.size();
+                                const auto nameEnd = diagnostic.message.find('\'', nameStart);
+                                if (nameEnd == std::string::npos || nameEnd == nameStart)
+                                    continue;
+                                const std::string misspelled =
+                                    diagnostic.message.substr(nameStart, nameEnd - nameStart);
+                                std::string requiredType;
+                                const auto onType = diagnostic.message.rfind(" on ");
+                                if (onType != std::string::npos)
+                                    requiredType = diagnostic.message.substr(onType + 4);
+
+                                std::string bestField;
+                                std::size_t bestDistance = std::numeric_limits<std::size_t>::max();
+                                bool ambiguous = false;
+                                for (const auto& structure : program.structs) {
+                                    if (!requiredType.empty() && structure.name != requiredType)
+                                        continue;
+                                    for (const auto& field : structure.fields) {
+                                        const auto distance = editDistance(misspelled, field.name);
+                                        if (distance < bestDistance) {
+                                            bestDistance = distance;
+                                            bestField = field.name;
+                                            ambiguous = false;
+                                        } else if (distance == bestDistance && field.name != bestField) {
+                                            ambiguous = true;
+                                        }
+                                    }
+                                }
+                                const std::size_t maxDistance = misspelled.size() <= 4 ? 1 : 2;
+                                if (bestField.empty() || bestField == misspelled || ambiguous ||
+                                    bestDistance > maxDistance)
+                                    continue;
+
+                                if (!firstAction)
+                                    actions << ',';
+                                firstAction = false;
+                                const std::size_t length = std::max<std::size_t>(1, diagnostic.length);
+                                actions << "{\"title\":\"Replace '" << jsonEscape(misspelled)
+                                        << "' with '" << jsonEscape(bestField)
+                                        << "'\",\"kind\":\"quickfix\",\"edit\":{\"changes\":{\""
+                                        << jsonEscape(uri) << "\":[{\"range\":{\"start\":{\"line\":"
+                                        << diagnostic.line << ",\"character\":" << diagnostic.character
+                                        << "},\"end\":{\"line\":" << diagnostic.line
+                                        << ",\"character\":" << diagnostic.character + length
+                                        << "}},\"newText\":\"" << jsonEscape(bestField) << "\"}]}}}";
+                            }
+                        } catch (const std::exception&) {
+                            // Quick fixes are best-effort; malformed or incomplete source
+                            // must not crash the language server.
+                        }
+                    }
+                    actions << ']';
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
+                         ",\"result\":" + actions.str() + "}");
                 } else if (method == "textDocument/references" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);
