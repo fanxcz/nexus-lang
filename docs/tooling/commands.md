@@ -12,7 +12,7 @@ Python syntax. Use `:help`, `:vars`, `:clear`, or `:quit` inside the shell.
 ```text
 nexus> 2 + 2
 4
-nexus> let answer = 21
+nexus> let mut answer = 21
 nexus> answer * 2
 42
 ```
