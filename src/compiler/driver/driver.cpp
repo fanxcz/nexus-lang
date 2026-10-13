@@ -2134,80 +2134,12 @@ namespace nexus {
             return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
                 (ch >= '0' && ch <= '9') || ch == '_';
         };
-        const auto resolveDefinition = [&](const std::string& requestUri, const std::string& source,
-                std::size_t requestedLine, std::size_t requestedCharacter) {
-            std::istringstream sourceStream(source);
-            std::vector<std::string> sourceLines;
-            std::string line;
-            while (std::getline(sourceStream, line)) sourceLines.push_back(line);
-            if (requestedLine >= sourceLines.size()) return std::string("null");
-            const std::string& selected = sourceLines[requestedLine];
-            std::size_t cursor = byteOffsetForUtf16(selected, requestedCharacter);
-            if (cursor > 0 && (cursor == selected.size() ||
-                    !identifierCharacter(static_cast<unsigned char>(selected[cursor]))) &&
-                    identifierCharacter(static_cast<unsigned char>(selected[cursor - 1]))) --cursor;
-            std::size_t first = cursor;
-            while (first > 0 && identifierCharacter(static_cast<unsigned char>(selected[first - 1]))) --first;
-            std::size_t last = cursor;
-            while (last < selected.size() && identifierCharacter(static_cast<unsigned char>(selected[last]))) ++last;
-            if (first == last) return std::string("null");
-            const std::string word = selected.substr(first, last - first);
-            if (std::isdigit(static_cast<unsigned char>(word.front()))) return std::string("null");
-            const auto documents = collectWorkspaceDocuments(requestUri, source);
-
-            for (const auto& doc : documents) {
-                std::istringstream linesStream(doc.second);
-                std::string sourceLine;
-                std::size_t lineNumber = 0;
-                while (std::getline(linesStream, sourceLine)) {
-                    const std::string trimmedLine = trim(sourceLine);
-                    std::size_t from = 0;
-                    while ((from = sourceLine.find(word, from)) != std::string::npos) {
-                        const std::size_t pos = from;
-                        from += word.size();
-                        if (pos > 0 && identifierCharacter(static_cast<unsigned char>(sourceLine[pos - 1]))) continue;
-                        if (from < sourceLine.size() && identifierCharacter(static_cast<unsigned char>(sourceLine[from]))) continue;
-                        const std::string prefix = trim(sourceLine.substr(0, pos));
-                        bool declared = prefix == "fn" || prefix == "struct" || prefix == "enum" ||
-                            prefix == "let" || prefix == "let mut" || prefix == "const";
-                        const auto endsWith = [](const std::string& value, const std::string& tail) {
-                            return value.size() >= tail.size() &&
-                                value.compare(value.size() - tail.size(), tail.size(), tail) == 0;
-                        };
-                        declared = declared || endsWith(prefix, " let") ||
-                            endsWith(prefix, " let mut") || endsWith(prefix, " const");
-                        if (!declared && trimmedLine.rfind("fn ", 0) == 0) {
-                            const auto open = sourceLine.rfind('(', pos);
-                            const auto close = sourceLine.find(')', pos);
-                            const std::string suffix = trim(sourceLine.substr(pos + word.size()));
-                            if (open != std::string::npos && (close == std::string::npos || pos < close) &&
-                                    suffix.rfind(":", 0) == 0) {
-                                const std::string before = trim(sourceLine.substr(open + 1, pos - open - 1));
-                                const auto comma = before.rfind(',');
-                                declared = (comma == std::string::npos ? before : trim(before.substr(comma + 1))).empty();
-                            }
-                        }
-                        if (!declared) continue;
-                        const std::size_t startChar = utf16Length(sourceLine.substr(0, pos));
-                        const std::size_t endChar = startChar + utf16Length(word);
-                        std::ostringstream location;
-                        location << "{\"uri\":\"" << jsonEscape(doc.first)
-                                 << "\",\"range\":{\"start\":{\"line\":" << lineNumber
-                                 << ",\"character\":" << startChar << "},\"end\":{\"line\":" << lineNumber
-                                 << ",\"character\":" << endChar << "}}}";
-                        return location.str();
-                    }
-                    ++lineNumber;
-                }
-            }
-            return std::string("null");
-        };
-
         struct LspIdentifierOccurrence {
             std::string uri;
             std::size_t line = 0;
             std::size_t startCharacter = 0;
             std::size_t endCharacter = 0;
+            bool isDeclaration = false;
         };
         const auto identifierAtPosition = [&](const std::string& source,
                 std::size_t requestedLine, std::size_t requestedCharacter) {
@@ -2539,8 +2471,11 @@ namespace nexus {
                         if (currentLine == lineIndex) break;
                     }
                     const std::size_t startCharacter = utf16Length(sourceLine.substr(0, std::min(startByte, sourceLine.size())));
+                    const SymbolDecl* occurrenceDeclaration = declarationAt(document, i);
+                    const bool isDeclaration = occurrenceDeclaration &&
+                        occurrenceDeclaration->identity == targetIdentity;
                     found.push_back({document.uri, lineIndex, startCharacter,
-                                     startCharacter + utf16Length(token.text)});
+                                     startCharacter + utf16Length(token.text), isDeclaration});
                 }
             }
             return found;
@@ -2884,8 +2819,25 @@ namespace nexus {
                 const std::string uri = extractString(body, "uri");
                 const auto doc = openDocuments.find(uri);
                 std::string result = "null";
-                if (doc != openDocuments.end())
-                    result = resolveDefinition(uri, doc->second, extractNumber(body, "line"), extractNumber(body, "character"));
+                const std::size_t requestedLine = extractNumber(body, "line");
+                const std::size_t requestedCharacter = extractNumber(body, "character");
+                if (doc != openDocuments.end()) {
+                    const std::string identifier = identifierAtPosition(
+                        doc->second, requestedLine, requestedCharacter);
+                    const auto occurrences = findIdentifierOccurrences(
+                        identifier, uri, doc->second, requestedLine, requestedCharacter);
+                    for (const auto& occurrence : occurrences) {
+                        if (!occurrence.isDeclaration) continue;
+                        std::ostringstream location;
+                        location << "{\"uri\":\"" << jsonEscape(occurrence.uri)
+                                 << "\",\"range\":{\"start\":{\"line\":" << occurrence.line
+                                 << ",\"character\":" << occurrence.startCharacter
+                                 << "},\"end\":{\"line\":" << occurrence.line
+                                 << ",\"character\":" << occurrence.endCharacter << "}}}";
+                        result = location.str();
+                        break;
+                    }
+                }
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
             } else if (!method.empty() && !id.empty()) {
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
