@@ -27,7 +27,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 1. Benchmark cache refresh behavior on larger repositories and add regression coverage for file-watcher invalidation after external edits, renames, and deletions.
 2. Extend semantic resolution to struct fields, enum variants, imported aliases and inferred types; add range formatting and richer editor actions with regression tests.
 3. Keep atomic lockfile writes, preserve unrelated manifest entries, and add malformed-manifest regressions.
-4. Verify local vendored packages against SHA-256 tree checksums, including path containment and transient-file exclusions; registry trust and signed packages remain future work.
+4. Verify local vendored packages against SHA-256 tree checksums; `pkg verify` cross-checks manifest/lockfile dependencies and versions, rejects stale records, and confines resolved paths to the project's `vendor/` directory. Registry trust and signed packages remain future work.
 5. Expand diagnostics with stable error codes and semantic error recovery. AST source spans and top-level multi-error syntax recovery are now implemented.
 
 **Completion criterion:** editor navigation and package operations have deterministic behavior covered by tests.

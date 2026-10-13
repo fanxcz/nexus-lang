@@ -2129,12 +2129,11 @@ namespace nexus {
             }
             if (sub == "verify") {
                 const std::string lock = readFile(cfg.root / "nexus.lock");
+                const auto manifestDependencies =
+                    readTomlSection(readFile(cfg.root / "nexus.toml"), "dependencies");
+                const auto lockedDependencies = readTomlSection(lock, "dependencies");
                 const auto sources = readTomlSection(lock, "sources");
                 const auto integrities = readTomlSection(lock, "integrity");
-                if (sources.empty() && integrities.empty()) {
-                    std::cout << "pkg verify: no checksummed local dependencies\n";
-                    return 0;
-                }
 
                 bool failed = false;
                 std::size_t verified = 0;
@@ -2142,6 +2141,53 @@ namespace nexus {
                 const fs::path canonicalRoot = fs::weakly_canonical(cfg.root, rootError);
                 if (rootError)
                     throw std::runtime_error("cannot resolve project root for package verification");
+
+                // Reject stale lockfiles even if every previously locked package
+                // still hashes correctly.
+                for (const auto& [name, value] : manifestDependencies) {
+                    (void)value;
+                    if (!lockedDependencies.contains(name)) {
+                        std::cerr << "pkg verify: lockfile mismatch: dependency '" << name
+                                  << "' is absent from nexus.lock\n";
+                        failed = true;
+                    }
+                }
+                for (const auto& [name, version] : lockedDependencies) {
+                    (void)version;
+                    if (!manifestDependencies.contains(name)) {
+                        std::cerr << "pkg verify: lockfile mismatch: stale dependency '" << name
+                                  << "' is not declared in nexus.toml\n";
+                        failed = true;
+                    }
+                }
+
+                // Dependencies whose manifest path is inside vendor/ are local
+                // packages and require source and integrity records.
+                for (const auto& [name, value] : manifestDependencies) {
+                    const fs::path declared(value);
+                    const fs::path normalized = declared.lexically_normal();
+                    if (!declared.is_absolute() && normalized.begin() != normalized.end() &&
+                        *normalized.begin() == "vendor") {
+                        if (!sources.contains(name)) {
+                            std::cerr << "pkg verify: lockfile mismatch: missing source for local "
+                                      << "dependency '" << name << "'\n";
+                            failed = true;
+                        }
+                        if (!integrities.contains(name)) {
+                            std::cerr << "pkg verify: lockfile mismatch: missing checksum for local "
+                                      << "dependency '" << name << "'\n";
+                            failed = true;
+                        }
+                        const fs::path localRoot = (cfg.root / normalized).lexically_normal();
+                        std::error_code localError;
+                        if (!fs::is_regular_file(localRoot / "nexus.toml", localError)) {
+                            std::cerr << "pkg verify: missing local package for dependency '"
+                                      << name << "'\n";
+                            failed = true;
+                        }
+                    }
+                }
+
                 for (const auto& [name, source] : sources) {
                     const auto integrity = integrities.find(name);
                     if (integrity == integrities.end()) {
@@ -2149,13 +2195,44 @@ namespace nexus {
                         failed = true;
                         continue;
                     }
-                    const fs::path relative(source);
-                    if (relative.is_absolute() || relative.empty() ||
-                        relative.begin() == relative.end() || *relative.begin() != "vendor") {
-                        std::cerr << "pkg verify: unsafe source path for " << name << "\n";
+                    const auto declaredDependency = manifestDependencies.find(name);
+                    if (declaredDependency == manifestDependencies.end()) {
+                        std::cerr << "pkg verify: lockfile mismatch: source for undeclared dependency '"
+                                  << name << "'\n";
                         failed = true;
                         continue;
                     }
+
+                    const fs::path relative(source);
+                    const fs::path declared(declaredDependency->second);
+                    if (relative.is_absolute() || relative.empty() ||
+                        relative.begin() == relative.end() || *relative.begin() != "vendor" ||
+                        declared.is_absolute() ||
+                        declared.lexically_normal().generic_string() !=
+                            relative.lexically_normal().generic_string()) {
+                        std::cerr << "pkg verify: unsafe or stale source path for " << name << "\n";
+                        failed = true;
+                        continue;
+                    }
+
+                    std::error_code vendorError;
+                    const fs::path canonicalVendor =
+                        fs::weakly_canonical(canonicalRoot / "vendor", vendorError);
+                    if (vendorError) {
+                        std::cerr << "pkg verify: cannot resolve vendor directory for " << name
+                                  << "\n";
+                        failed = true;
+                        continue;
+                    }
+                    const fs::path vendorInsideRoot =
+                        canonicalVendor.lexically_relative(canonicalRoot);
+                    if (vendorInsideRoot.empty() || *vendorInsideRoot.begin() == "..") {
+                        std::cerr << "pkg verify: vendor directory escapes project for " << name
+                                  << "\n";
+                        failed = true;
+                        continue;
+                    }
+
                     const fs::path dependency = (canonicalRoot / relative).lexically_normal();
                     std::error_code dependencyError;
                     const fs::path canonicalDependency =
@@ -2166,12 +2243,37 @@ namespace nexus {
                         failed = true;
                         continue;
                     }
-                    const fs::path inside = canonicalDependency.lexically_relative(canonicalRoot);
-                    if (inside.empty() || *inside.begin() == "..") {
-                        std::cerr << "pkg verify: package path escapes project for " << name << "\n";
+
+                    // Project-root containment is insufficient: vendor/../other is
+                    // still inside the project. Require the resolved path to remain
+                    // strictly below the canonical vendor directory (also rejecting
+                    // a vendor symlink that points outside the project).
+                    const fs::path insideVendor =
+                        canonicalDependency.lexically_relative(canonicalVendor);
+                    if (insideVendor.empty() || *insideVendor.begin() == ".." ||
+                        *insideVendor.begin() == ".") {
+                        std::cerr << "pkg verify: package path escapes vendor for " << name << "\n";
                         failed = true;
                         continue;
                     }
+
+                    try {
+                        const auto dependencyConfig = loadProject(canonicalDependency);
+                        const auto lockedVersion = lockedDependencies.find(name);
+                        if (lockedVersion == lockedDependencies.end() ||
+                            dependencyConfig.version != lockedVersion->second) {
+                            std::cerr << "pkg verify: lockfile mismatch: version changed for "
+                                      << name << "\n";
+                            failed = true;
+                            continue;
+                        }
+                    } catch (const std::exception& error) {
+                        std::cerr << "pkg verify: invalid package '" << name << "': "
+                                  << error.what() << "\n";
+                        failed = true;
+                        continue;
+                    }
+
                     const std::string actual = packageTreeSha256(canonicalDependency);
                     if (actual != integrity->second) {
                         std::cerr << "pkg verify: integrity mismatch for " << name << "\n";
@@ -2188,8 +2290,16 @@ namespace nexus {
                         failed = true;
                     }
                 }
+                if (sources.size() != integrities.size()) {
+                    std::cerr << "pkg verify: source/checksum records are inconsistent\n";
+                    failed = true;
+                }
                 if (failed)
                     return 1;
+                if (sources.empty() && integrities.empty()) {
+                    std::cout << "pkg verify: no checksummed local dependencies\n";
+                    return 0;
+                }
                 std::cout << "pkg verify: OK (" << verified << " local package(s))\n";
                 return 0;
             }

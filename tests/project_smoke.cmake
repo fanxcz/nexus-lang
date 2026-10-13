@@ -214,6 +214,41 @@ execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR
 if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed after restoring package content: ${out}\\n${err}")
 endif()
+
+# The package bytes may still match, but a manifest edit must invalidate the lock.
+file(READ "${SMOKE_DIR}/nexus.toml" manifest_locked)
+string(REPLACE "vendor/sample_lib" "vendor/missing_lib" stale_manifest "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${stale_manifest}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(rc EQUAL 0 OR NOT err MATCHES "lockfile mismatch|missing local package")
+  message(FATAL_ERROR "pkg verify did not reject stale dependency metadata: ${out}\\n${err}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_locked}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after restoring the manifest: ${out}\\n${err}")
+endif()
+
+# Corrupt both sides consistently: an in-project path must still be rejected
+# if it traverses above vendor/.
+string(REPLACE "vendor/sample_lib" "vendor/../package-source" crafted_manifest "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${crafted_manifest}")
+string(REPLACE "vendor/sample_lib" "vendor/../package-source" crafted_lock "${lock_after_add}")
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${crafted_lock}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(rc EQUAL 0 OR NOT err MATCHES "escapes vendor")
+  message(FATAL_ERROR "pkg verify accepted a source path escaping vendor/: ${out}\\n${err}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after restoring dependency metadata: ${out}\\n${err}")
+endif()
 file(WRITE "${SMOKE_DIR}/outside-sentinel.txt" "keep")
 execute_process(COMMAND "${NEXUS_BIN}" pkg remove ../outside-sentinel.txt WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 if(rc EQUAL 0 OR NOT EXISTS "${SMOKE_DIR}/outside-sentinel.txt")
