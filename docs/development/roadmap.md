@@ -25,7 +25,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 ## Priority 2 — Language-server and package reliability
 
 1. Extend the current declaration resolver and open-document reference/rename support into a real symbol index covering open and unopened files, with scope-aware navigation.
-2. Add hover/type information, scope-aware references/rename, range formatting and workspace-wide symbol indexing to the LSP, with regression tests. Lexical references/rename in open documents and whole-document formatting are implemented and covered by integration tests.
+2. Add type-aware hover, scope-aware references/rename, range formatting and workspace-wide symbol indexing to the LSP, with regression tests. Built-in/keyword documentation hover, lexical references/rename in open documents and whole-document formatting are covered by integration tests.
 3. Strengthen lockfile behavior with atomic writes, preserved unrelated entries and tests for malformed manifests.
 4. Add integrity checksums and reproducible vendoring while keeping package path validation and transient-file exclusions.
 5. Expand diagnostics with stable error codes, precise source spans and multi-error recovery.

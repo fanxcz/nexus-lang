@@ -2215,7 +2215,7 @@ namespace nexus {
                     ",\"result\":{\"serverInfo\":{\"name\":\"nexus-lsp\",\"version\":\"" +
                     kVersion + "\"},\"capabilities\":{\"textDocumentSync\":1,"
                     "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":[\".\",\":\"]},"
-                    "\"definitionProvider\":true,\"referencesProvider\":true,\"renameProvider\":true,\"documentFormattingProvider\":true}}}");
+                    "\"definitionProvider\":true,\"referencesProvider\":true,\"renameProvider\":true,\"hoverProvider\":true,\"documentFormattingProvider\":true}}}");
             } else if (method == "shutdown" && !id.empty()) {
                 send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":null}");
             } else if (method == "textDocument/didOpen") {
@@ -2244,6 +2244,23 @@ namespace nexus {
                     send("{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\","
                          "\"params\":{\"uri\":\"" + jsonEscape(uri) + "\",\"diagnostics\":[]}}");
                 }
+
+            } else if (method == "textDocument/hover" && !id.empty()) {
+                const std::string uri = extractString(body, "uri");
+                const auto document = openDocuments.find(uri);
+                std::string result = "null";
+                if (document != openDocuments.end()) {
+                    const std::string identifier = identifierAtPosition(document->second,
+                        extractNumber(body, "line"), extractNumber(body, "character"));
+                    for (const auto& item : completions) {
+                        if (item.first == identifier) {
+                            result = "{\"contents\":{\"kind\":\"markdown\",\"value\":\"**" +
+                                jsonEscape(item.first) + "**\\n\\n" + jsonEscape(item.second) + "\"}}";
+                            break;
+                        }
+                    }
+                }
+                send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
             } else if ((method == "textDocument/completion" || method == "completion") && !id.empty()) {
                 std::ostringstream result;
                 result << "{\"jsonrpc\":\"2.0\",\"id\":" << id << ",\"result\":[";
