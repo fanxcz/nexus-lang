@@ -83,6 +83,25 @@ namespace nexus {
 
         std::string formatDiagnostic(const std::exception& error) {
             const std::string raw = error.what();
+            if (raw.rfind("NEXUS found ", 0) == 0 &&
+                raw.find(" syntax error") != std::string::npos) {
+                std::istringstream input(raw);
+                std::string line;
+                std::getline(input, line); // The first line is the summary count.
+                std::ostringstream combined;
+                bool first = true;
+                while (std::getline(input, line)) {
+                    if (line.rfind("  - ", 0) != 0)
+                        continue;
+                    const std::runtime_error one(line.substr(4));
+                    if (!first)
+                        combined << '\n';
+                    combined << formatDiagnostic(one);
+                    first = false;
+                }
+                if (!first)
+                    return combined.str();
+            }
             const auto marker = raw.rfind(" at ");
             if (marker != std::string::npos) {
                 const std::string_view location(raw.data() + marker + 4, raw.size() - marker - 4);
@@ -1350,6 +1369,52 @@ namespace nexus {
             f << data;
         }
 
+        // Write to a sibling temporary file and replace the destination only after
+        // a successful flush. An interrupted write must not truncate package metadata.
+        void writeTextAtomically(const fs::path& p, const std::string& data) {
+            const fs::path parent = p.parent_path().empty() ? fs::current_path() : p.parent_path();
+            fs::create_directories(parent);
+            const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+            fs::path temporary = p;
+            temporary += ".tmp-" + std::to_string(stamp);
+
+            {
+                std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+                if (!out)
+                    throw std::runtime_error("cannot create temporary metadata file " +
+                                             temporary.string());
+                out.write(data.data(), static_cast<std::streamsize>(data.size()));
+                out.flush();
+                if (!out) {
+                    out.close();
+                    std::error_code cleanup;
+                    fs::remove(temporary, cleanup);
+                    throw std::runtime_error("cannot finish writing temporary metadata file " +
+                                             temporary.string());
+                }
+            }
+
+#ifdef _WIN32
+            if (!MoveFileExW(temporary.c_str(), p.c_str(),
+                             MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+                const DWORD error = GetLastError();
+                std::error_code cleanup;
+                fs::remove(temporary, cleanup);
+                throw std::runtime_error("cannot atomically replace " + p.string() +
+                                         " (Windows error " + std::to_string(error) + ")");
+            }
+#else
+            std::error_code ec;
+            fs::rename(temporary, p, ec);
+            if (ec) {
+                std::error_code cleanup;
+                fs::remove(temporary, cleanup);
+                throw std::runtime_error("cannot atomically replace " + p.string() + ": " +
+                                         ec.message());
+            }
+#endif
+        }
+
         int commandFmt(const fs::path& file, bool checkOnly = false) {
             const std::string src = readFile(file);
             const std::string formatted = formatNexusSource(src);
@@ -1767,7 +1832,7 @@ namespace nexus {
             std::ostringstream output;
             for (const auto& entry : lines)
                 output << entry << '\n';
-            writeText(manifest, output.str());
+            writeTextAtomically(manifest, output.str());
         }
 
         void refreshLockfile(const ProjectConfig& cfg) {
@@ -1817,7 +1882,7 @@ namespace nexus {
                 for (const auto& dep : dependencies)
                     lock << dep.first << " = \"" << dep.second << "\"\n";
             }
-            writeText(cfg.root / "nexus.lock", lock.str());
+            writeTextAtomically(cfg.root / "nexus.lock", lock.str());
         }
 
         void copyPackageTree(const fs::path& source, const fs::path& destination) {
@@ -2200,7 +2265,23 @@ namespace nexus {
                 try {
                     program = Parser(std::move(tokens)).parseProgram();
                 } catch (const std::exception& error) {
-                    add(error, "NX1001");
+                    const std::string message = error.what();
+                    if (message.rfind("NEXUS found ", 0) == 0 &&
+                        message.find(" syntax error") != std::string::npos) {
+                        std::istringstream errors(message);
+                        std::string line;
+                        std::getline(errors, line); // Skip the aggregate summary.
+                        while (std::getline(errors, line)) {
+                            if (line.rfind("  - ", 0) != 0)
+                                continue;
+                            const std::runtime_error one(line.substr(4));
+                            add(one, "NX1001");
+                        }
+                        if (diagnostics.empty())
+                            add(error, "NX1001");
+                    } else {
+                        add(error, "NX1001");
+                    }
                     return diagnostics;
                 }
                 try {
@@ -3442,7 +3523,7 @@ namespace nexus {
         int commandRepl() {
             std::cout << "NEXUS " << kVersion << " interactive shell\n"
                       << "Enter an expression to evaluate it. Use let x = 10 to keep a value.\n"
-                      << "Commands: :help, :vars, :clear, :quit\n\n";
+                      << "Commands: :help, :vars, :history, :history-clear, :clear, :quit\n\n";
 
             const auto tick = std::chrono::steady_clock::now().time_since_epoch().count();
             const fs::path tempDir =
@@ -3466,6 +3547,7 @@ namespace nexus {
             std::vector<std::string> declarations;
             std::vector<std::string> statements;
             std::vector<std::string> variableNames;
+            std::vector<std::string> history;
 
             using ReplValue = std::variant<long long, double, bool, std::string>;
             struct ReplBinding {
@@ -3889,8 +3971,9 @@ namespace nexus {
                                   << "Functions:   fn double(x: i64) -> i64 { return x * 2 }\n"
                                   << "State is rebuilt from saved declarations and statements for "
                                      "each entry.\n"
-                                  << ":vars lists saved bindings; :clear resets the session; :quit "
-                                     "exits.\n";
+                                  << ":vars lists bindings; :history shows this session's input; "
+                                     ":history-clear clears it.\n"
+                                  << ":clear resets code and bindings; :quit exits.\n";
                         continue;
                     }
                     if (inputLine == ":clear") {
@@ -3911,6 +3994,20 @@ namespace nexus {
                         }
                         continue;
                     }
+                    if (inputLine == ":history") {
+                        if (history.empty()) {
+                            std::cout << "history is empty\n";
+                        } else {
+                            for (std::size_t i = 0; i < history.size(); ++i)
+                                std::cout << (i + 1) << "  " << history[i] << '\n';
+                        }
+                        continue;
+                    }
+                    if (inputLine == ":history-clear") {
+                        history.clear();
+                        std::cout << "history cleared\n";
+                        continue;
+                    }
 
                     if ((replIsDeclaration(inputLine) || replIsBlockStatement(inputLine)) &&
                         replBraceBalance(inputLine) > 0) {
@@ -3925,6 +4022,8 @@ namespace nexus {
                     inputLine = trim(pending);
                     pending.clear();
                 }
+
+                history.push_back(inputLine);
 
                 if (replIsDeclaration(inputLine)) {
                     auto candidate = declarations;
