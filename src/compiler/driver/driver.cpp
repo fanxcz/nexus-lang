@@ -2953,7 +2953,7 @@ namespace nexus {
                     continue;
                 }
                 if (ch == '=' && (i + 1 == source.size() || source[i + 1] != '=') &&
-                    (i == 0 || std::string("=!<>+-*/%").find(source[i - 1]) == std::string::npos)) {
+                    (i == 0 || std::string("=!<>").find(source[i - 1]) == std::string::npos)) {
                     return i > 0;
                 }
             }
