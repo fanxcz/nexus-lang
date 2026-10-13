@@ -240,6 +240,19 @@ if (NEXUS_BUILD_TESTS)
   add_test(NAME nexus_runtime_args_test
       COMMAND nexus_runtime_args_test alpha "beta gamma" omega)
 
+  add_executable(nexus_frontend_fuzz_smoke
+      tests/frontend_fuzz_smoke.cpp
+      src/compiler/frontend/lexer/lexer.cpp
+      src/compiler/frontend/parser/parser.cpp
+  )
+  target_include_directories(nexus_frontend_fuzz_smoke PRIVATE
+      src/compiler
+      src/compiler/frontend)
+  target_compile_features(nexus_frontend_fuzz_smoke PRIVATE cxx_std_20)
+  target_compile_options(nexus_frontend_fuzz_smoke PRIVATE ${NEXUS_COMPILE_OPTIONS})
+  add_test(NAME nexus_frontend_fuzz_smoke COMMAND nexus_frontend_fuzz_smoke)
+  set_tests_properties(nexus_frontend_fuzz_smoke PROPERTIES TIMEOUT 30)
+
   add_test(NAME nexus_tests COMMAND nexus_tests)
   add_test(NAME nexus_version_smoke COMMAND $<TARGET_FILE:nexus> --version)
   set_tests_properties(nexus_version_smoke PROPERTIES PASS_REGULAR_EXPRESSION "Nexus ${PROJECT_VERSION}")

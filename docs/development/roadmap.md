@@ -9,11 +9,12 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 - Project templates and CLI workflows for creating, checking, building, running, testing, formatting, linting, exporting, and packaging projects.
 - Runtime modules for file and input operations, networking helpers, JSON field extraction, SQLite access, SHA-256, memory helpers, SDL-based graphics, and audio. APIs remain limited to what is implemented in the runtime.
 - LSP transport with diagnostics/basic completion and a limited go-to-definition resolver for declarations in currently open documents; there is no global workspace index yet.
-- This release's environment doctor, JSON diagnostic output, built-in compile/run self-test, and non-mutating formatter check.
+- This release's environment doctor, JSON diagnostic output, built-in compile/run self-test, shared CLI/LSP whole-document formatter, and deterministic frontend fuzz smoke test.
+- The GitHub Actions matrix builds/tests Ubuntu, Windows, and macOS hosts. A separate Linux workflow runs ASan/UBSan on compiler and runtime tests; refer to the [platform support matrix](platform-support.md) for output-target boundaries.
 
 ## Priority 1 — Trustworthy development workflow
 
-1. Run the complete test suite on clean Linux and Windows runners for every change.
+1. Keep the full test suite green on clean Linux, Windows, and macOS runners; run the sanitizer workflow for frontend/runtime changes.
 2. Make `nexus doctor` verify the actual packaged compiler/runtime/stdlib/template layout on each platform.
 3. Extend tests for paths with spaces, clean installs, missing optional tools, malformed source, and repeatable builds.
 4. Make formatter and linter behavior deterministic, then support project-wide file discovery with explicit exclusions.

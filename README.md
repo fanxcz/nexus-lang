@@ -176,6 +176,7 @@ Linux/macOS builds use the corresponding executable path (for example, `./build/
 - `examples/` — example programs, assets, and project templates
 - `tests/` — regression and runtime tests
 - `docs/` — user and developer documentation
+- [Platform support matrix](https://fanxcz.github.io/nexus-lang/development/platform-support/) — tested hosts, native backend targets, and runtime limitations
 - `.github/workflows/` — CI, packaging, and documentation deployment
 - `.github/project-tools/` — repository automation, Windows packaging, installer definition, and editor tooling
 

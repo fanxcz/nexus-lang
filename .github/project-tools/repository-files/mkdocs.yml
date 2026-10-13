@@ -172,6 +172,7 @@ nav:
       - Contributing: development/contributing.md
       - Building from Source: development/building.md
       - Testing: development/testing.md
+      - Platform Support Matrix: development/platform-support.md
       - Debugging: development/debugging.md
       - Roadmap: development/roadmap.md
 
