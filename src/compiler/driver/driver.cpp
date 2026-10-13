@@ -2263,7 +2263,7 @@ namespace nexus {
                         extractNumber(body, "line"), extractNumber(body, "character"));
                     for (const auto& item : completions) {
                         if (item.first == identifier) {
-                            const std::string markdown = "**" + item.first + "**\\n\\n" + item.second;
+                            const std::string markdown = "**" + item.first + "**\n\n" + item.second;
                             result = "{\"contents\":{\"kind\":\"markdown\",\"value\":\"" +
                                 jsonEscape(markdown) + "\"}}";
                             break;
@@ -2309,7 +2309,7 @@ namespace nexus {
                                               << describeType(describeType, function.params[i].type);
                                 }
                                 signature << ") -> " << describeType(describeType, function.ret);
-                                markdown = "**" + signature.str() + "**\\n\\nUser-defined function.";
+                                markdown = "**" + signature.str() + "**\n\nUser-defined function.";
                                 break;
                             }
                             if (markdown.empty()) {
@@ -2318,12 +2318,12 @@ namespace nexus {
                                     std::ostringstream description;
                                     description << "**struct " << declaration.name << "**";
                                     if (declaration.fields.empty()) {
-                                        description << "\\n\\nNo fields.";
+                                        description << "\n\nNo fields.";
                                     } else {
-                                        description << "\\n\\nFields:";
+                                        description << "\n\nFields:";
                                         for (const auto& field : declaration.fields) {
-                                            description << "\\n- \`" << field.name << "\`: \`"
-                                                << describeType(describeType, field.type) << "\`";
+                                            description << "\n- `" << field.name << "`: `"`
+                                                << describeType(describeType, field.type) << "`";
                                         }
                                     }
                                     markdown = description.str();
@@ -2336,11 +2336,11 @@ namespace nexus {
                                     std::ostringstream description;
                                     description << "**enum " << declaration.name << "**";
                                     if (declaration.variants.empty()) {
-                                        description << "\\n\\nNo variants.";
+                                        description << "\n\nNo variants.";
                                     } else {
-                                        description << "\\n\\nVariants:";
+                                        description << "\n\nVariants:";
                                         for (const auto& variant : declaration.variants) {
-                                            description << "\\n- \`" << variant << "\`";
+                                            description << "\n- `" << variant << "`";
                                         }
                                     }
                                     markdown = description.str();
