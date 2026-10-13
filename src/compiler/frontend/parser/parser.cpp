@@ -1,6 +1,7 @@
 #include "parser/parser.hpp"
 #include <stdexcept>
 #include <cstdlib>
+#include <limits>
 namespace nexus {
 
     const Token& Parser::cur()const{
@@ -18,15 +19,28 @@ namespace nexus {
         return expect(TokenKind::Identifier).text;
     }
     Type Parser::parseType(){
+        RecursionGuard guard(recursionDepth_);
 
         if(accept(TokenKind::Star)) return Type::ptr(parseType());
 
         if(accept(TokenKind::LBracket)){
             auto elem=parseType();
             expect(TokenKind::Semicolon);
-            auto n=std::stoull(expect(TokenKind::Integer).text);
+            const Token lengthToken = expect(TokenKind::Integer);
+            std::size_t length = 0;
+            try {
+                const auto parsed = std::stoull(lengthToken.text);
+                if (parsed > std::numeric_limits<std::size_t>::max()) {
+                    throw std::out_of_range("array length");
+                }
+                length = static_cast<std::size_t>(parsed);
+            } catch (const std::exception&) {
+                throw std::runtime_error("array length out of range at " +
+                    std::to_string(lengthToken.pos.line) + ":" +
+                    std::to_string(lengthToken.pos.column));
+            }
             expect(TokenKind::RBracket);
-            return Type::array(std::move(elem),n);
+            return Type::array(std::move(elem),length);
         }
         auto t=expectIdentifier();
 
@@ -133,6 +147,7 @@ return {
 };
 }
 std::unique_ptr<Block> Parser::parseBlock(){
+    RecursionGuard guard(recursionDepth_);
     expect(TokenKind::LBrace);
     auto b=std::make_unique<Block>();
     while(cur().kind!=TokenKind::RBrace&&cur().kind!=TokenKind::End)b->statements.push_back(parseStmt());
@@ -140,6 +155,7 @@ std::unique_ptr<Block> Parser::parseBlock(){
     return b;
 }
 Stmt::Ptr Parser::parseStmt(){
+    RecursionGuard guard(recursionDepth_);
 
     bool isConst=accept(TokenKind::KwConst);
     if(isConst||accept(TokenKind::KwLet)){
@@ -368,12 +384,24 @@ int Parser::precedence(TokenKind k)const{
 Expr::Ptr Parser::parsePrimary(){
 
     if(cur().kind==TokenKind::Integer){
-        auto x=std::stoll(expect(TokenKind::Integer).text);
-        return std::make_unique<IntExpr>(x);
+        const Token literal = expect(TokenKind::Integer);
+        try {
+            return std::make_unique<IntExpr>(std::stoll(literal.text));
+        } catch (const std::exception&) {
+            throw std::runtime_error("integer literal out of range at " +
+                std::to_string(literal.pos.line) + ":" +
+                std::to_string(literal.pos.column));
+        }
     }
     if(cur().kind==TokenKind::Float){
-        auto x=std::stod(expect(TokenKind::Float).text);
-        return std::make_unique<FloatExpr>(x);
+        const Token literal = expect(TokenKind::Float);
+        try {
+            return std::make_unique<FloatExpr>(std::stod(literal.text));
+        } catch (const std::exception&) {
+            throw std::runtime_error("floating-point literal out of range at " +
+                std::to_string(literal.pos.line) + ":" +
+                std::to_string(literal.pos.column));
+        }
     }
     if(cur().kind==TokenKind::String){
         return std::make_unique<StringExpr>(expect(TokenKind::String).text);
@@ -463,6 +491,7 @@ Expr::Ptr Parser::parsePostfix(Expr::Ptr e){
     return e;
 }
 Expr::Ptr Parser::parseUnary(){
+    RecursionGuard guard(recursionDepth_);
     if(accept(TokenKind::Minus))return std::make_unique<UnaryExpr>(TokenKind::Minus,parseUnary());
     if(accept(TokenKind::Bang))return std::make_unique<UnaryExpr>(TokenKind::Bang,parseUnary());
     if(accept(TokenKind::Ampersand))return std::make_unique<UnaryExpr>(TokenKind::Ampersand,parseUnary());
@@ -470,6 +499,7 @@ Expr::Ptr Parser::parseUnary(){
     return parsePostfix(parsePrimary());
 }
 Expr::Ptr Parser::parseExpr(int minPrec){
+    RecursionGuard guard(recursionDepth_);
     auto lhs=parseUnary();
     while(true){
         int p=precedence(cur().kind);

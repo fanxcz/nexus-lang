@@ -1,5 +1,8 @@
 #pragma once
 #include "ast/ast.hpp"
+#include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 namespace nexus {
 
@@ -11,8 +14,26 @@ namespace nexus {
         Program parseProgram();
 
         private:
+        // Bound recursive descent on untrusted source so malformed nesting
+        // fails with a diagnostic rather than exhausting the process stack.
+        class RecursionGuard {
+            std::size_t& depth_;
+            static constexpr std::size_t maxDepth_ = 256;
+        public:
+            explicit RecursionGuard(std::size_t& depth) : depth_(depth) {
+                if (depth_ >= maxDepth_) {
+                    throw std::runtime_error("maximum parser nesting depth (256) exceeded");
+                }
+                ++depth_;
+            }
+            ~RecursionGuard() { --depth_; }
+            RecursionGuard(const RecursionGuard&) = delete;
+            RecursionGuard& operator=(const RecursionGuard&) = delete;
+        };
+
         std::vector<Token> tokens_;
         size_t i_=0;
+        std::size_t recursionDepth_ = 0;
 
         const Token& cur()const;
         bool accept(TokenKind);
