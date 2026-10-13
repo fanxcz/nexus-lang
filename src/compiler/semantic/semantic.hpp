@@ -1,7 +1,9 @@
 #pragma once
 #include "ast/ast.hpp"
 
+#include <string>
 #include <unordered_map>
+#include <vector>
 namespace nexus {
 
     struct Symbol {
@@ -16,6 +18,8 @@ namespace nexus {
         std::unordered_map<std::string, StructDecl*> structs_;
 
         std::unordered_map<std::string, EnumDecl*> enums_;
+
+        std::vector<std::string> diagnostics_;
 
     public:
         void analyze(Program& p);

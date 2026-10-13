@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <stdexcept>
+#include <sstream>
 #include <unordered_map>
 namespace nexus {
 
@@ -91,6 +92,7 @@ namespace nexus {
 
     void SemanticAnalyzer::analyze(Program& p) {
 
+        diagnostics_.clear();
         funcs_.clear();
         structs_.clear();
         enums_.clear();
@@ -148,10 +150,23 @@ namespace nexus {
             if (f.body) {
                 block(*f.body, env, f.ret, false);
                 if (f.ret.kind != TypeKind::Void && !blockAlwaysReturns(*f.body)) {
-                    throw std::runtime_error("function may exit without returning a value: " +
-                                             f.name);
+                    std::string message =
+                        "function may exit without returning a value: " + f.name;
+                    if (f.span.valid)
+                        message += " at " + std::to_string(f.span.start.line) + ":" +
+                                   std::to_string(f.span.start.column);
+                    diagnostics_.push_back(std::move(message));
                 }
             }
+        }
+
+        if (!diagnostics_.empty()) {
+            std::ostringstream summary;
+            summary << "NEXUS found " << diagnostics_.size() << " semantic error"
+                    << (diagnostics_.size() == 1 ? "" : "s") << ":\n";
+            for (const auto& diagnostic : diagnostics_)
+                summary << "  - " << diagnostic << "\n";
+            throw std::runtime_error(summary.str());
         }
     }
     Type SemanticAnalyzer::expr(Expr* e, std::unordered_map<std::string, Symbol>& env) {
@@ -492,15 +507,11 @@ namespace nexus {
                     throw std::runtime_error("break/continue used outside loop");
             }
             } catch (const std::exception& error) {
-                const std::string message = error.what();
-                if (message.rfind(" at ") != std::string::npos)
-                    throw;
-                if (s && s->span.valid) {
-                    throw std::runtime_error(message + " at " +
-                                             std::to_string(s->span.start.line) + ":" +
-                                             std::to_string(s->span.start.column));
-                }
-                throw;
+                std::string diagnostic = error.what();
+                if (diagnostic.rfind(" at ") == std::string::npos && s && s->span.valid)
+                    diagnostic += " at " + std::to_string(s->span.start.line) + ":" +
+                                  std::to_string(s->span.start.column);
+                diagnostics_.push_back(std::move(diagnostic));
             }
         }
     }

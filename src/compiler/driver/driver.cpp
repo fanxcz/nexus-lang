@@ -2559,8 +2559,10 @@ namespace nexus {
                     for (auto& diagnostic : diagnostics) {
                         std::string target;
                         const auto quote = diagnostic.message.find('\'');
-                        if (diagnostic.message.find("field") != std::string::npos &&
-                            quote != std::string::npos) {
+                        if (diagnostic.message.rfind("unknown variable: ", 0) == 0) {
+                            target = diagnostic.message.substr(std::string("unknown variable: ").size());
+                        } else if (diagnostic.message.find("field") != std::string::npos &&
+                                   quote != std::string::npos) {
                             const auto endQuote = diagnostic.message.find('\'', quote + 1);
                             if (endQuote != std::string::npos && endQuote > quote + 1)
                                 target = diagnostic.message.substr(quote + 1, endQuote - quote - 1);
@@ -2637,23 +2639,22 @@ namespace nexus {
                 try {
                     SemanticAnalyzer().analyze(program);
                 } catch (const std::exception& error) {
-                    add(error, "NX2001");
                     const std::string message = error.what();
-                    const std::string prefix = "unknown variable: ";
-                    if (message.rfind(prefix, 0) == 0) {
-                        const std::string unknownName = message.substr(prefix.size());
-                        for (auto token = diagnosticTokens.rbegin();
-                             token != diagnosticTokens.rend();
-                             ++token) {
-                            if (token->kind == TokenKind::Identifier &&
-                                token->text == unknownName) {
-                                diagnostics.back().line =
-                                    token->pos.line > 0 ? token->pos.line - 1 : 0;
-                                diagnostics.back().character =
-                                    token->pos.column > 0 ? token->pos.column - 1 : 0;
-                                break;
-                            }
+                    if (message.rfind("NEXUS found ", 0) == 0 &&
+                        message.find(" semantic error") != std::string::npos) {
+                        std::istringstream errors(message);
+                        std::string line;
+                        std::getline(errors, line);
+                        while (std::getline(errors, line)) {
+                            if (line.rfind("  - ", 0) != 0)
+                                continue;
+                            const std::runtime_error one(line.substr(4));
+                            add(one, "NX2001");
                         }
+                        if (diagnostics.empty())
+                            add(error, "NX2001");
+                    } else {
+                        add(error, "NX2001");
                     }
                 }
                 applyTokenRanges();
