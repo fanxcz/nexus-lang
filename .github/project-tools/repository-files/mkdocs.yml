@@ -23,18 +23,9 @@ theme:
   logo: assets/images/nexus-mark.svg
   favicon: assets/images/nexus-mark.svg
   palette:
-    - scheme: default
-      primary: deep purple
-      accent: purple
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
     - scheme: slate
       primary: deep purple
       accent: purple
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
   features:
     - navigation.tabs
     - navigation.sections
