@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
+#include <sstream>
 namespace nexus {
 
     const Token& Parser::cur() const {
@@ -66,38 +67,91 @@ namespace nexus {
     }
     Program Parser::parseProgram() {
         Program p;
-        while (cur().kind != TokenKind::End) {
+        std::vector<std::string> errors;
 
-            if (accept(TokenKind::KwImport)) {
-                if (cur().kind == TokenKind::String) {
-                    p.imports.push_back(expect(TokenKind::String).text);
-                } else {
-                    std::string s = expectIdentifier();
-                    while (accept(TokenKind::Dot)) {
-                        s += "." + expectIdentifier();
+        const auto isDeclarationStart = [](TokenKind kind) {
+            return kind == TokenKind::KwFn || kind == TokenKind::KwStruct ||
+                   kind == TokenKind::KwEnum || kind == TokenKind::KwImport ||
+                   kind == TokenKind::KwExtern;
+        };
+
+        while (cur().kind != TokenKind::End) {
+            const std::size_t declarationStart = i_;
+            try {
+                if (accept(TokenKind::KwImport)) {
+                    if (cur().kind == TokenKind::String) {
+                        p.imports.push_back(expect(TokenKind::String).text);
+                    } else {
+                        std::string name = expectIdentifier();
+                        while (accept(TokenKind::Dot))
+                            name += "." + expectIdentifier();
+                        p.imports.push_back(std::move(name));
                     }
-                    p.imports.push_back(s);
+                    accept(TokenKind::Semicolon);
+                    continue;
                 }
-                accept(TokenKind::Semicolon);
-                continue;
+                if (accept(TokenKind::KwStruct)) {
+                    --i_;
+                    p.structs.push_back(parseStruct());
+                    continue;
+                }
+                if (accept(TokenKind::KwEnum)) {
+                    --i_;
+                    p.enums.push_back(parseEnum());
+                    continue;
+                }
+                if (accept(TokenKind::KwExtern)) {
+                    expect(TokenKind::String);
+                    p.functions.push_back(parseFunction(true));
+                    continue;
+                }
+                p.functions.push_back(parseFunction(false));
+            } catch (const std::exception& error) {
+                errors.emplace_back(error.what());
+
+                // Synchronize at the next declaration instead of abandoning the
+                // entire file at the first syntax error. NEXUS does not allow
+                // nested function/type declarations, so these keywords form a
+                // safe recovery set for malformed top-level declarations.
+                std::size_t candidate = i_;
+                if (candidate <= declarationStart)
+                    candidate = declarationStart + 1;
+                while (candidate < tokens_.size() &&
+                       tokens_[candidate].kind != TokenKind::End &&
+                       !isDeclarationStart(tokens_[candidate].kind)) {
+                    ++candidate;
+                }
+
+                if (candidate >= tokens_.size() ||
+                    tokens_[candidate].kind == TokenKind::End) {
+                    i_ = tokens_.size() - 1;
+                    break;
+                }
+
+                // Avoid repeatedly retrying the token that produced this error.
+                if (candidate <= declarationStart) {
+                    ++candidate;
+                    while (candidate < tokens_.size() &&
+                           tokens_[candidate].kind != TokenKind::End &&
+                           !isDeclarationStart(tokens_[candidate].kind)) {
+                        ++candidate;
+                    }
+                }
+                i_ = candidate;
             }
-            if (accept(TokenKind::KwStruct)) {
-                --i_;
-                p.structs.push_back(parseStruct());
-                continue;
-            }
-            if (accept(TokenKind::KwEnum)) {
-                --i_;
-                p.enums.push_back(parseEnum());
-                continue;
-            }
-            if (accept(TokenKind::KwExtern)) {
-                expect(TokenKind::String);
-                p.functions.push_back(parseFunction(true));
-                continue;
-            }
-            p.functions.push_back(parseFunction(false));
         }
+
+        if (!errors.empty()) {
+            std::ostringstream message;
+            message << "NEXUS found " << errors.size() << " syntax error";
+            if (errors.size() != 1)
+                message << 's';
+            message << ':';
+            for (const auto& error : errors)
+                message << "\n  - " << error;
+            throw std::runtime_error(message.str());
+        }
+
         return p;
     }
     StructDecl Parser::parseStruct() {

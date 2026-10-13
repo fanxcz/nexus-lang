@@ -322,6 +322,25 @@ int main() {
                 return 21;
             }
         }
+        {
+            bool reportedMultiple = false;
+            try {
+                auto invalid = parse(
+                    "fn broken( { }\n"
+                    "fn also_broken( { }\n"
+                    "fn main() { }\n");
+                (void)invalid;
+            } catch (const std::exception& error) {
+                const std::string message = error.what();
+                reportedMultiple =
+                    message.find("NEXUS found 2 syntax errors") != std::string::npos &&
+                    message.find("expected identifier") != std::string::npos;
+            }
+            if (!reportedMultiple) {
+                std::cerr << "parser multi-error recovery regression\n";
+                return 22;
+            }
+        }
         std::cout << "Nexus tests: PASS\n";
 
         return 0;
