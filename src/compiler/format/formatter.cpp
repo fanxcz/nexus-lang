@@ -180,8 +180,11 @@ bool needsSpace(const std::vector<Lexeme>& tokens, std::size_t index) {
 
     if (current == "{" || prev == "{")
         return prev != "{" || current != "}";
-    if (current == "}" || prev == "}")
-        return current != "}" && prev != "(";
+    if (current == "}" || prev == "}") {
+        if (current == "}")
+            return prev != "{";
+        return prev != "(";
+    }
 
     if (current == "(") {
         return prev == "if" || prev == "while" || prev == "match";

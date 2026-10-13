@@ -341,6 +341,14 @@ int main() {
                 return 22;
             }
         }
+        {
+            const std::string input = "fn main() { print(1) }\n";
+            const std::string expected = "fn main() { print(1) }\n";
+            if (nexus::formatNexusSource(input) != expected) {
+                std::cerr << "formatter compact-block regression\n";
+                return 23;
+            }
+        }
         std::cout << "Nexus tests: PASS\n";
 
         return 0;
