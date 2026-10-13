@@ -2013,75 +2013,90 @@ namespace nexus {
             }
             return std::string("file://") + encoded;
         };
+        // Cache disk-backed source files per workspace. Open buffers overlay this
+        // cache, so typing does not trigger a directory walk for every LSP request.
+        std::map<std::string, std::map<std::string, std::string>> workspaceDiskCache;
+        const auto workspaceRootForUri = [&](const std::string& uri) -> fs::path {
+            const fs::path documentPath = pathFromUri(uri);
+            if (documentPath.empty()) return {};
+            const fs::path projectRoot = findProjectRoot(documentPath);
+            return projectRoot.empty() ? documentPath.parent_path() : projectRoot;
+        };
+        const auto workspaceCacheKeyForUri = [&](const std::string& uri) {
+            const fs::path root = workspaceRootForUri(uri);
+            if (root.empty() || root == root.root_path()) return std::string{};
+            std::error_code ec;
+            const fs::path normalized = fs::weakly_canonical(root, ec);
+            return (ec ? root.lexically_normal() : normalized).generic_string();
+        };
         const auto collectWorkspaceDocuments = [&](const std::string& requestUri,
                 const std::string& requestSource) {
-            // Unsaved buffers override disk files. Rebuilding this bounded index
-            // per request avoids stale symbols while workspace edits are in flight.
             std::map<std::string, std::string> byUri;
-            byUri[requestUri] = requestSource;
-            for (const auto& opened : openDocuments) {
-                if (opened.first != requestUri) byUri[opened.first] = opened.second;
-            }
-
             const fs::path documentPath = pathFromUri(requestUri);
-            if (documentPath.empty()) {
-                std::vector<std::pair<std::string, std::string>> result;
-                for (const auto& item : byUri) result.push_back(item);
-                return result;
-            }
-            const fs::path projectRoot = findProjectRoot(documentPath);
+            const fs::path projectRoot = documentPath.empty() ? fs::path{} : findProjectRoot(documentPath);
             const bool hasProjectManifest = !projectRoot.empty();
-            const fs::path root = hasProjectManifest ? projectRoot : documentPath.parent_path();
-            // Virtual or test URIs at the filesystem root must not recursively
-            // scan the entire machine.
-            if (root.empty() || root == root.root_path()) {
-                std::vector<std::pair<std::string, std::string>> result;
-                for (const auto& item : byUri) result.push_back(item);
-                return result;
+            const fs::path root = documentPath.empty() ? fs::path{} :
+                (hasProjectManifest ? projectRoot : documentPath.parent_path());
+
+            // Virtual editor URIs and root-level paths only participate through
+            // currently open buffers. Never walk the filesystem root.
+            const bool canScan = !root.empty() && root != root.root_path();
+            const std::string cacheKey = canScan ? workspaceCacheKeyForUri(requestUri) : std::string{};
+            if (canScan && !cacheKey.empty()) {
+                auto cached = workspaceDiskCache.find(cacheKey);
+                if (cached == workspaceDiskCache.end()) {
+                    std::map<std::string, std::string> diskDocuments;
+                    std::size_t indexedFiles = 0;
+                    constexpr std::size_t maxWorkspaceFiles = 10000;
+                    std::error_code ec;
+                    const auto addFile = [&](const fs::path& path) {
+                        if (indexedFiles >= maxWorkspaceFiles || path.extension() != ".nx") return;
+                        const std::string fileUri = uriFromPath(path);
+                        if (diskDocuments.find(fileUri) != diskDocuments.end()) return;
+                        try {
+                            diskDocuments.emplace(fileUri, readFile(path));
+                            ++indexedFiles;
+                        } catch (const std::exception&) {
+                            // An unreadable or transiently removed file is not fatal.
+                        }
+                    };
+                    if (hasProjectManifest) {
+                        const auto options = fs::directory_options::skip_permission_denied;
+                        fs::recursive_directory_iterator it(root, options, ec), end;
+                        while (!ec && it != end && indexedFiles < maxWorkspaceFiles) {
+                            const fs::path current = it->path();
+                            if (it->is_directory(ec)) {
+                                const std::string name = current.filename().string();
+                                if (name == ".git" || name == "build" || name == "dist" ||
+                                    name == "target" || name == "node_modules" || name == ".nexus") {
+                                    it.disable_recursion_pending();
+                                }
+                            } else if (it->is_regular_file(ec)) {
+                                addFile(current);
+                            }
+                            it.increment(ec);
+                        }
+                    } else {
+                        // Without nexus.toml, discover only direct .nx siblings.
+                        fs::directory_iterator it(root, fs::directory_options::skip_permission_denied, ec), end;
+                        while (!ec && it != end && indexedFiles < maxWorkspaceFiles) {
+                            if (it->is_regular_file(ec)) addFile(it->path());
+                            it.increment(ec);
+                        }
+                    }
+                    cached = workspaceDiskCache.emplace(cacheKey, std::move(diskDocuments)).first;
+                }
+                byUri = cached->second;
             }
 
-            std::size_t indexedFiles = 0;
-            constexpr std::size_t maxWorkspaceFiles = 10000;
-            std::error_code ec;
-            const auto addFile = [&](const fs::path& path) {
-                if (indexedFiles >= maxWorkspaceFiles || path.extension() != ".nx") return;
-                const std::string fileUri = uriFromPath(path);
-                if (byUri.find(fileUri) != byUri.end()) return;
-                try {
-                    byUri.emplace(fileUri, readFile(path));
-                    ++indexedFiles;
-                } catch (const std::exception&) {
-                    // An unreadable or transiently removed file is not fatal.
-                }
-            };
-            if (hasProjectManifest) {
-                const auto options = fs::directory_options::skip_permission_denied;
-                fs::recursive_directory_iterator it(root, options, ec), end;
-                while (!ec && it != end && indexedFiles < maxWorkspaceFiles) {
-                    const fs::path current = it->path();
-                    if (it->is_directory(ec)) {
-                        const std::string name = current.filename().string();
-                        if (name == ".git" || name == "build" || name == "dist" ||
-                            name == "target" || name == "node_modules" || name == ".nexus") {
-                            it.disable_recursion_pending();
-                        }
-                    } else if (it->is_regular_file(ec)) {
-                        addFile(current);
-                    }
-                    it.increment(ec);
-                }
-            } else {
-                // Projects without nexus.toml are limited to a shallow sibling scan.
-                fs::directory_iterator it(root, fs::directory_options::skip_permission_denied, ec), end;
-                while (!ec && it != end && indexedFiles < maxWorkspaceFiles) {
-                    if (it->is_regular_file(ec)) addFile(it->path());
-                    it.increment(ec);
-                }
-            }
+            // Unsaved editor buffers override cached disk content. Include all
+            // open buffers so cross-file navigation also works for virtual docs.
+            for (const auto& opened : openDocuments) byUri[opened.first] = opened.second;
+            byUri[requestUri] = requestSource;
 
             std::vector<std::pair<std::string, std::string>> result;
             result.reserve(byUri.size());
-            for (auto& item : byUri) result.push_back(item);
+            for (const auto& item : byUri) result.push_back(item);
             return result;
         };
         const auto utf16Length = [](const std::string& text) {
@@ -2372,12 +2387,17 @@ namespace nexus {
                 }
             } else if (method == "textDocument/didSave") {
                 const std::string uri = extractString(body, "uri");
+                workspaceDiskCache.clear();
                 const auto document = openDocuments.find(uri);
                 if (document != openDocuments.end()) publishDiagnostics(uri, document->second);
+            } else if (method == "workspace/didChangeWatchedFiles") {
+                // Rebuild disk symbols after create/delete/change notifications.
+                workspaceDiskCache.clear();
             } else if (method == "textDocument/didClose") {
                 const std::string uri = extractString(body, "uri");
                 if (!uri.empty()) {
                     openDocuments.erase(uri);
+                    workspaceDiskCache.clear();
                     send("{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\","
                          "\"params\":{\"uri\":\"" + jsonEscape(uri) + "\",\"diagnostics\":[]}}");
                 }
