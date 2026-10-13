@@ -151,7 +151,7 @@ if(workspace_disk_reference_pos EQUAL -1 OR workspace_caller_reference_pos EQUAL
   message(FATAL_ERROR "Expected references in the unopened declaration and open caller file: ${workspace_references_payload}")
 endif()
 string(SUBSTRING "${out}" ${workspace_rename_pos} -1 workspace_rename_payload)
-string(FIND "${workspace_rename_payload}" "\"uri\":\"${workspace_helper_uri}\"" workspace_disk_rename_pos)
+string(FIND "${workspace_rename_payload}" "disk_helper.nx" workspace_disk_rename_pos)
 string(FIND "${workspace_rename_payload}" "\"newText\":\"renamed_disk_helper\"" workspace_rename_text_pos)
 if(workspace_disk_rename_pos EQUAL -1 OR workspace_rename_text_pos EQUAL -1)
   message(FATAL_ERROR "Workspace rename did not include unopened file edits: ${workspace_rename_payload}")
