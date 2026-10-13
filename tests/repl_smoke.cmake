@@ -3,6 +3,8 @@ if(NOT DEFINED NEXUS_BIN)
 endif()
 
 set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-smoke-input.txt")
+set(repl_main_history "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-main-history.txt")
+file(REMOVE "${repl_main_history}")
 file(WRITE "${input_file}"
 "2 + 2\n"
 "(8 + 4) / 3\n"
@@ -17,7 +19,7 @@ file(WRITE "${input_file}"
 ":quit\n")
 
 execute_process(
-  COMMAND "${NEXUS_BIN}"
+  COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${repl_main_history}" "${NEXUS_BIN}"
   INPUT_FILE "${input_file}"
   RESULT_VARIABLE rc
   OUTPUT_VARIABLE out
@@ -25,7 +27,7 @@ execute_process(
   TIMEOUT 90
 )
 
-file(REMOVE "${input_file}")
+file(REMOVE "${input_file}" "${repl_main_history}")
 
 if(NOT rc EQUAL 0)
   message(FATAL_ERROR "NEXUS default interactive shell exited with ${rc}: ${err}\n${out}")
