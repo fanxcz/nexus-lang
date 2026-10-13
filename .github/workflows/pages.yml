@@ -569,7 +569,12 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published pages and downloadable assets
+      - name: Checkout source tree for complete route verification
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify every published documentation page and downloadable asset
         shell: bash
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
@@ -595,19 +600,39 @@ jobs:
             return 1
           }
 
-          for route in \
-            "" \
-            "downloads/" \
-            "getting-started/quickstart/" \
-            "tooling/commands/" \
-            "development/roadmap/" \
-            "language/overview/" \
-            "runtime/overview/" \
-            "assets/downloads/NEXUS-Setup-1.1.0.exe" \
-            "assets/downloads/NEXUS_Windows_Portable.zip" \
-            "assets/downloads/NEXUS-Language-1.1.0.vsix" \
-            "assets/downloads/NEXUS-Paint-Windows-x64.exe" \
-            "assets/downloads/NEXUS-Paint-Windows-x64.zip"; do
+          # Derive URLs from the exact Markdown files MkDocs publishes. This
+          # checks every page, not just a hand-picked sample, and handles index.md.
+          while IFS= read -r file; do
+            rel="${file#docs/}"
+            if [[ "$rel" == "assets/screenshots/README.md" ]]; then
+              continue
+            fi
+            if [[ "$rel" == "index.md" ]]; then
+              route=""
+            elif [[ "$rel" == */index.md ]]; then
+              route="${rel%index.md}"
+            else
+              route="${rel%.md}/"
+            fi
+            echo "Checking documentation page: $route"
             check_url "$route"
+          done < <(find docs -type f -name '*.md' -print | sort)
+
+          assets=(
+            'NEXUS-Setup-1.1.0.exe'
+            'NEXUS-Setup-1.1.0.exe.sha256.txt'
+            'NEXUS_Windows_Portable.zip'
+            'NEXUS_Windows_Portable.zip.sha256.txt'
+            'NEXUS-Language-1.1.0.vsix'
+            'NEXUS-Language-1.1.0.vsix.sha256.txt'
+            'NEXUS-Paint-Windows-x64.exe'
+            'NEXUS-Paint-Windows-x64.exe.sha256.txt'
+            'NEXUS-Paint-Windows-x64.zip'
+            'NEXUS-Paint-Windows-x64.zip.sha256.txt'
+          )
+          for asset in "${assets[@]}"; do
+            check_url "assets/downloads/$asset"
           done
+
+          echo 'PASS: every published documentation route and packaged download URL responds successfully.'
 
