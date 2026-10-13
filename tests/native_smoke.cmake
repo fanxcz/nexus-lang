@@ -58,7 +58,7 @@ check_native(loops "64\n8\n5")
 check_native(wide_frame "21\n210\n-9223372036854775807\n0")
 check_native(print_types "literal line\ntrue\nfalse\ntrue\n42")
 check_native(strings_full "\nabc\nHello, Nexus!\ntrue\nfalse\nfalse\ntrue\n-12345\n0\nanswer: 42")
-check_native(string_edges "5\n72\n0\n0")
+check_native(string_edges "string.len: 5\nstring.byte_at: 72\nstring.byte_at OOB: -1\nstring.byte_at neg: -1")
 
 # input.nx reads one line from stdin; pipe a fixed name in.
 if(WIN32)
