@@ -1938,7 +1938,7 @@ namespace nexus {
                     const fs::path dependencyRoot = (cfg.root / local).lexically_normal();
                     const fs::path rel = dependencyRoot.lexically_relative(cfg.root);
                     std::error_code ec;
-                    if (!rel.empty() && *rel.begin() != ".." &&
+                    if (!rel.empty() && *rel.begin() == "vendor" &&
                         fs::is_regular_file(dependencyRoot / "nexus.toml", ec)) {
                         try {
                             const auto dep = loadProject(dependencyRoot);
@@ -2132,7 +2132,7 @@ namespace nexus {
                 const auto sources = readTomlSection(lock, "sources");
                 const auto integrities = readTomlSection(lock, "integrity");
                 if (sources.empty() && integrities.empty()) {
-                    std::cout << "pkg verify: no checksummed local dependencies\\n";
+                    std::cout << "pkg verify: no checksummed local dependencies\n";
                     return 0;
                 }
 
@@ -2145,14 +2145,14 @@ namespace nexus {
                 for (const auto& [name, source] : sources) {
                     const auto integrity = integrities.find(name);
                     if (integrity == integrities.end()) {
-                        std::cerr << "pkg verify: missing checksum for " << name << "\\n";
+                        std::cerr << "pkg verify: missing checksum for " << name << "\n";
                         failed = true;
                         continue;
                     }
                     const fs::path relative(source);
                     if (relative.is_absolute() || relative.empty() ||
                         relative.begin() == relative.end() || *relative.begin() != "vendor") {
-                        std::cerr << "pkg verify: unsafe source path for " << name << "\\n";
+                        std::cerr << "pkg verify: unsafe source path for " << name << "\n";
                         failed = true;
                         continue;
                     }
@@ -2162,35 +2162,35 @@ namespace nexus {
                         fs::weakly_canonical(dependency, dependencyError);
                     if (dependencyError || !fs::is_directory(canonicalDependency) ||
                         !fs::is_regular_file(canonicalDependency / "nexus.toml")) {
-                        std::cerr << "pkg verify: missing local package " << name << "\\n";
+                        std::cerr << "pkg verify: missing local package " << name << "\n";
                         failed = true;
                         continue;
                     }
                     const fs::path inside = canonicalDependency.lexically_relative(canonicalRoot);
                     if (inside.empty() || *inside.begin() == "..") {
-                        std::cerr << "pkg verify: package path escapes project for " << name << "\\n";
+                        std::cerr << "pkg verify: package path escapes project for " << name << "\n";
                         failed = true;
                         continue;
                     }
                     const std::string actual = packageTreeSha256(canonicalDependency);
                     if (actual != integrity->second) {
-                        std::cerr << "pkg verify: integrity mismatch for " << name << "\\n";
+                        std::cerr << "pkg verify: integrity mismatch for " << name << "\n";
                         failed = true;
                         continue;
                     }
                     ++verified;
-                    std::cout << "  verified " << name << " [" << actual << "]\\n";
+                    std::cout << "  verified " << name << " [" << actual << "]\n";
                 }
                 for (const auto& [name, checksum] : integrities) {
                     (void)checksum;
                     if (!sources.contains(name)) {
-                        std::cerr << "pkg verify: checksum has no source entry for " << name << "\\n";
+                        std::cerr << "pkg verify: checksum has no source entry for " << name << "\n";
                         failed = true;
                     }
                 }
                 if (failed)
                     return 1;
-                std::cout << "pkg verify: OK (" << verified << " local package(s))\\n";
+                std::cout << "pkg verify: OK (" << verified << " local package(s))\n";
                 return 0;
             }
             if (sub == "build") {
