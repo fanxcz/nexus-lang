@@ -1,10 +1,10 @@
 # Formatter
 
-`nexus fmt` applies the current NEXUS source formatting rules to one file. With no file argument, it resolves the current project's configured entry source.
+\`nexus fmt\` formats a NEXUS source file. With no file argument, it resolves the current project's configured entry source.
 
 ## Usage
 
-```bash
+\`\`\`bash
 # Format the project's configured entry source
 nexus fmt
 
@@ -13,19 +13,21 @@ nexus fmt src/main.nx
 
 # Check formatting without modifying the file
 nexus fmt --check src/main.nx
-```
+\`\`\`
 
-The check command exits with status 0 when the file is already formatted, and a nonzero status when the formatter would change it. It intentionally does not write in check mode, making it suitable for CI and pre-commit hooks.
+The check command exits with status 0 when the file is already formatted, and a nonzero status when the formatter would change it. Check mode does not write to disk and is suitable for CI or a pre-commit hook.
 
-## Current behavior and limits
+## Formatting rules
 
-The formatter currently trims trailing whitespace and applies a line-based indentation heuristic around braces. It is **not yet a syntax-aware pretty-printer**: it does not normalize spaces around every token, wrap long expressions, or recursively discover all source files. Review formatting changes for complex single-line blocks and comments.
+The formatter now tokenizes each line while respecting quoted strings, line comments and multi-line block comments. It normalizes spacing around operators and common punctuation, removes trailing whitespace, and applies four-space indentation based on braces found in code (not braces inside strings or comments). It preserves original line breaks and comments instead of reconstructing a file from an AST.
 
-For a local hook, use a small script that checks the entry file:
+This is a conservative source formatter, not a full AST pretty-printer. It does not wrap long expressions, split multiple statements written on one line, or automatically discover every source file in a project. Review formatting changes for deliberately unusual layouts.
 
-```sh
+For a local hook, run the check for the project's source files explicitly:
+
+\`\`\`sh
 #!/bin/sh
 nexus fmt --check src/main.nx
-```
+\`\`\`
 
-The formatter will be expanded after parser-aware formatting rules and regression fixtures are in place. See the [roadmap](../development/roadmap.md).
+See the [roadmap](../development/roadmap.md) for planned range and project-wide formatting support.

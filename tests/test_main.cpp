@@ -1,3 +1,4 @@
+#include "format/formatter.hpp"
 #include "lexer/lexer.hpp"
 #include "native/native.hpp"
 #include "parser/parser.hpp"
@@ -282,6 +283,44 @@ int main() {
             nexus::SemanticAnalyzer().analyze(s);
             if (!nexus::native::supports(s, reason))
                 return 10;
+        }
+        {
+            const std::string input =
+                "fn main(){\n"
+                "let text=\"{\"; // }\n"
+                "if true {\n"
+                "print(text)  \n"
+                "}\n"
+                "}\n";
+            const std::string expected =
+                "fn main() {\n"
+                "    let text = \"{\"; // }\n"
+                "    if true {\n"
+                "        print(text)\n"
+                "    }\n"
+                "}\n";
+            const auto actual = nexus::formatNexusSource(input);
+            if (actual != expected) {
+                std::cerr << "formatter string/comment/indent regression\n"
+                          << "Expected:\n" << expected << "Actual:\n" << actual;
+                return 20;
+            }
+        }
+        {
+            const std::string input =
+                "fn sum(a:i64,b:i64)->i64{\n"
+                "return a+b\n"
+                "}\n";
+            const std::string expected =
+                "fn sum(a: i64, b: i64) -> i64 {\n"
+                "    return a + b\n"
+                "}\n";
+            const auto actual = nexus::formatNexusSource(input);
+            if (actual != expected) {
+                std::cerr << "formatter token-spacing regression\n"
+                          << "Expected:\n" << expected << "Actual:\n" << actual;
+                return 21;
+            }
         }
         std::cout << "Nexus tests: PASS\n";
 
