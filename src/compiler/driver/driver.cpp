@@ -2141,6 +2141,33 @@ namespace nexus {
             std::size_t endCharacter = 0;
             bool isDeclaration = false;
         };
+
+        // The LSP keeps per-file lexical indexes and rebuilds only files whose
+        // source text changed. These are intentionally syntax/lexical indexes,
+        // not substitutes for semantic analysis in the compiler.
+        struct LspScopeInfo {
+            std::size_t parent = static_cast<std::size_t>(-1);
+            std::size_t depth = 0;
+        };
+        struct LspSymbolDecl {
+            std::string name;
+            std::string identity;
+            std::string kind;
+            std::size_t tokenIndex = 0;
+            std::size_t visibleFrom = 0;
+            std::size_t scope = 0;
+            bool global = false;
+        };
+        struct LspDocumentIndex {
+            std::string uri;
+            std::string source;
+            std::vector<Token> tokens;
+            std::vector<std::size_t> tokenScope;
+            std::vector<std::size_t> braceScope;
+            std::vector<LspScopeInfo> scopes;
+            std::vector<LspSymbolDecl> declarations;
+        };
+        std::map<std::string, LspDocumentIndex> workspaceSymbolIndexCache;
         const auto identifierAtPosition = [&](const std::string& source,
                 std::size_t requestedLine, std::size_t requestedCharacter) {
             std::istringstream input(source);
@@ -2184,37 +2211,22 @@ namespace nexus {
             std::vector<LspIdentifierOccurrence> found;
             if (identifier.empty()) return found;
 
-            struct ScopeInfo {
-                std::size_t parent = static_cast<std::size_t>(-1);
-                std::size_t depth = 0;
-            };
-            struct SymbolDecl {
-                std::string name;
-                std::string identity;
-                std::string kind;
-                std::size_t tokenIndex = 0;
-                std::size_t visibleFrom = 0;
-                std::size_t scope = 0;
-                bool global = false;
-            };
-            struct DocumentIndex {
-                std::string uri;
-                std::string source;
-                std::vector<Token> tokens;
-                std::vector<std::size_t> tokenScope;
-                std::vector<std::size_t> braceScope;
-                std::vector<ScopeInfo> scopes;
-                std::vector<SymbolDecl> declarations;
-            };
-
-            std::vector<DocumentIndex> documents;
+            std::vector<LspDocumentIndex*> documents;
             for (const auto& document : collectWorkspaceDocuments(requestUri, requestSource)) {
-                DocumentIndex indexed;
+                auto cachedIndex = workspaceSymbolIndexCache.find(document.first);
+                if (cachedIndex != workspaceSymbolIndexCache.end() &&
+                    cachedIndex->second.source == document.second) {
+                    documents.push_back(&cachedIndex->second);
+                    continue;
+                }
+
+                LspDocumentIndex indexed;
                 indexed.uri = document.first;
                 indexed.source = document.second;
                 try {
                     indexed.tokens = Lexer(indexed.source).tokenize();
                 } catch (const std::exception&) {
+                    workspaceSymbolIndexCache.erase(document.first);
                     continue;
                 }
                 const std::size_t tokenCount = indexed.tokens.size();
@@ -2311,10 +2323,12 @@ namespace nexus {
                         }
                     }
                 }
-                documents.push_back(std::move(indexed));
+                auto indexedEntry = workspaceSymbolIndexCache.insert_or_assign(
+                    indexed.uri, std::move(indexed)).first;
+                documents.push_back(&indexedEntry->second);
             }
 
-            const auto isAncestorScope = [](const DocumentIndex& document,
+            const auto isAncestorScope = [](const LspDocumentIndex& document,
                                              std::size_t ancestor, std::size_t scope) {
                 while (scope != static_cast<std::size_t>(-1)) {
                     if (scope == ancestor) return true;
@@ -2323,19 +2337,19 @@ namespace nexus {
                 }
                 return false;
             };
-            const auto declarationAt = [](const DocumentIndex& document, std::size_t tokenIndex)
-                -> const SymbolDecl* {
+            const auto declarationAt = [](const LspDocumentIndex& document, std::size_t tokenIndex)
+                -> const LspSymbolDecl* {
                 for (const auto& declaration : document.declarations)
                     if (declaration.tokenIndex == tokenIndex) return &declaration;
                 return nullptr;
             };
-            const auto localIdentityAt = [&](const DocumentIndex& document, std::size_t tokenIndex) {
+            const auto localIdentityAt = [&](const LspDocumentIndex& document, std::size_t tokenIndex) {
                 if (tokenIndex >= document.tokens.size()) return std::string{};
                 if (const auto* declaration = declarationAt(document, tokenIndex);
                     declaration && !declaration->global) return declaration->identity;
                 if (document.tokens[tokenIndex].kind != TokenKind::Identifier) return std::string{};
                 const std::string& name = document.tokens[tokenIndex].text;
-                const SymbolDecl* selected = nullptr;
+                const LspSymbolDecl* selected = nullptr;
                 for (const auto& declaration : document.declarations) {
                     if (declaration.global || declaration.name != name) continue;
                     const bool isOwnDeclaration = declaration.tokenIndex == tokenIndex;
@@ -2349,7 +2363,7 @@ namespace nexus {
                 }
                 return selected ? selected->identity : std::string{};
             };
-            const auto isMemberOrFieldName = [&](const DocumentIndex& document, std::size_t tokenIndex) {
+            const auto isMemberOrFieldName = [&](const LspDocumentIndex& document, std::size_t tokenIndex) {
                 if (tokenIndex >= document.tokens.size()) return true;
                 const auto& tokens = document.tokens;
                 if (tokenIndex > 0 &&
@@ -2365,7 +2379,7 @@ namespace nexus {
                 }
                 return false;
             };
-            const auto tokenAtPosition = [&](const DocumentIndex& document, std::size_t line,
+            const auto tokenAtPosition = [&](const LspDocumentIndex& document, std::size_t line,
                                              std::size_t character) {
                 std::istringstream sourceStream(document.source);
                 std::vector<std::string> sourceLines;
@@ -2386,10 +2400,10 @@ namespace nexus {
                 return document.tokens.size();
             };
 
-            DocumentIndex* requestedDocument = nullptr;
-            for (auto& document : documents) {
-                if (document.uri == requestUri) {
-                    requestedDocument = &document;
+            LspDocumentIndex* requestedDocument = nullptr;
+            for (auto* document : documents) {
+                if (document->uri == requestUri) {
+                    requestedDocument = document;
                     break;
                 }
             }
@@ -2398,7 +2412,7 @@ namespace nexus {
                 tokenAtPosition(*requestedDocument, requestedLine, requestedCharacter);
             if (selectedTokenIndex >= requestedDocument->tokens.size()) return found;
 
-            const SymbolDecl* selectedDeclaration = declarationAt(*requestedDocument, selectedTokenIndex);
+            const LspSymbolDecl* selectedDeclaration = declarationAt(*requestedDocument, selectedTokenIndex);
             std::string targetIdentity;
             bool targetIsGlobal = false;
             std::string targetKind;
@@ -2418,8 +2432,9 @@ namespace nexus {
                              tokens[selectedTokenIndex + 1].kind == TokenKind::LBrace) preferredKind = "struct";
                     else if (selectedTokenIndex + 1 < tokens.size() &&
                              tokens[selectedTokenIndex + 1].kind == TokenKind::ColonColon) preferredKind = "enum";
-                    const SymbolDecl* global = nullptr;
-                    for (const auto& document : documents) {
+                    const LspSymbolDecl* global = nullptr;
+                    for (const auto* documentPointer : documents) {
+                        const auto& document = *documentPointer;
                         for (const auto& declaration : document.declarations) {
                             if (!declaration.global || declaration.name != identifier) continue;
                             if (!preferredKind.empty() && declaration.kind != preferredKind) continue;
@@ -2436,11 +2451,12 @@ namespace nexus {
             }
             if (targetIdentity.empty()) return found;
 
-            for (const auto& document : documents) {
+            for (const auto* documentPointer : documents) {
+                const auto& document = *documentPointer;
                 for (std::size_t i = 0; i < document.tokens.size(); ++i) {
                     const Token& token = document.tokens[i];
                     if (token.kind != TokenKind::Identifier || token.text != identifier) continue;
-                    const SymbolDecl* declaration = declarationAt(document, i);
+                    const LspSymbolDecl* declaration = declarationAt(document, i);
                     bool matches = false;
                     if (!targetIsGlobal) {
                         matches = document.uri == requestedDocument->uri &&
@@ -2471,7 +2487,7 @@ namespace nexus {
                         if (currentLine == lineIndex) break;
                     }
                     const std::size_t startCharacter = utf16Length(sourceLine.substr(0, std::min(startByte, sourceLine.size())));
-                    const SymbolDecl* occurrenceDeclaration = declarationAt(document, i);
+                    const LspSymbolDecl* occurrenceDeclaration = declarationAt(document, i);
                     const bool isDeclaration = occurrenceDeclaration &&
                         occurrenceDeclaration->identity == targetIdentity;
                     found.push_back({document.uri, lineIndex, startCharacter,
