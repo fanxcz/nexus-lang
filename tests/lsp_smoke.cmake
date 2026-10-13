@@ -67,7 +67,6 @@ endif()
 if(NOT out MATCHES "completionProvider"
    OR NOT out MATCHES "client/registerCapability"
    OR NOT out MATCHES "workspace/didChangeWatchedFiles"
-   OR NOT out MATCHES "\\*\\*/\\.nx"
    OR NOT out MATCHES "\"label\":\"print\""
    OR NOT out MATCHES "\"definitionProvider\":true"
    OR NOT out MATCHES "\"uri\":\"file:///definition.nx\""
@@ -79,6 +78,11 @@ if(NOT out MATCHES "completionProvider"
    OR NOT out MATCHES "\"character\":18"
    OR NOT out MATCHES "\"diagnostics\":\\[\\]")
   message(FATAL_ERROR "Expected initialize, completion, live error diagnostics, and diagnostic clearing, got: ${out}")
+endif()
+
+string(FIND "${out}" "\"globPattern\":\"**/*.nx\"" watcher_glob_position)
+if(watcher_glob_position EQUAL -1)
+  message(FATAL_ERROR "NEXUS LSP watcher registration did not include the expected .nx glob: ${out}")
 endif()
 
 if(NOT out MATCHES "\\\"documentFormattingProvider\\\":true")
