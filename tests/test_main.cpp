@@ -195,6 +195,13 @@ int main(){
                 t != nexus::native::NativeTarget::LinuxX64) return 8;
             if (nexus::native::resolveTarget("aarch64-macos", t)) return 8;
             if (nexus::native::resolveTarget("wasm32-wasi", t)) return 8;
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+            if (!nexus::native::resolveTarget("native", t) || t != nexus::native::NativeTarget::WindowsX64) return 8;
+#elif defined(__linux__) && (defined(__x86_64__) || defined(__amd64__))
+            if (!nexus::native::resolveTarget("native", t) || t != nexus::native::NativeTarget::LinuxX64) return 8;
+#else
+            if (nexus::native::resolveTarget("native", t)) return 8;
+#endif
         }
         {
             // Builtin native backend: subset accepted, image is a real PE.

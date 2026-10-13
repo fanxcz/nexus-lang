@@ -9,32 +9,6 @@
 
 namespace nexus::native {
 
-bool resolveTarget(const std::string& target, NativeTarget& out) {
-    if (target.empty() || target == "native") {
-#if defined(_WIN32)
-        out = NativeTarget::WindowsX64;
-        return true;
-#elif defined(__linux__)
-        out = NativeTarget::LinuxX64;
-        return true;
-#else
-        // macOS and other hosts have no builtin emitter yet (Mach-O support
-        // is tracked as remaining work); the driver falls back to LLVM.
-        return false;
-#endif
-    }
-    if (target == "x86_64-windows" || target == "x86_64-pc-windows-gnu" ||
-        target == "x86_64-pc-windows-msvc") {
-        out = NativeTarget::WindowsX64;
-        return true;
-    }
-    if (target == "x86_64-linux" || target == "x86_64-unknown-linux-gnu") {
-        out = NativeTarget::LinuxX64;
-        return true;
-    }
-    return false;
-}
-
 namespace detail {
 
 enum class Kind { I64, Bool, Void, Str };

@@ -128,6 +128,7 @@ set(NEXUS_SOURCES
     src/compiler/semantic/semantic.cpp
     src/compiler/backend/codegen/llvm_ir.cpp
     src/compiler/backend/native/native.cpp
+    src/compiler/backend/native/target.cpp
     src/compiler/backend/native/pe_elf.cpp
     src/compiler/driver/driver.cpp
 )
@@ -203,6 +204,7 @@ if (NEXUS_BUILD_TESTS)
       src/compiler/semantic/semantic.cpp
       src/compiler/backend/codegen/llvm_ir.cpp
       src/compiler/backend/native/native.cpp
+      src/compiler/backend/native/target.cpp
       src/compiler/backend/native/pe_elf.cpp
       src/compiler/driver/driver.cpp
   )
