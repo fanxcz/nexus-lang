@@ -380,7 +380,7 @@ int main() {
         {
             // Source spans must use raw source positions, not decoded string-value length.
             const std::string spanSource = "fn main() { let value = \"x\\t\"; }";
-            const auto program = parse(spanSource);
+            const auto program = parse(spanSource.c_str());
             const auto* binding = dynamic_cast<const nexus::LetStmt*>(
                 program.functions.front().body->statements.front().get());
             const auto* literal =
