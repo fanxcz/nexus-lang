@@ -185,24 +185,24 @@ if(signature_response_pos EQUAL -1 OR signature_active_parameter_pos EQUAL -1)
   message(FATAL_ERROR "NEXUS LSP did not resolve the active parameter for a workspace function call: ${out}")
 endif()
 
-string(FIND "${out}" "\\"id\\":31,\\"result\\":[" document_symbols_pos)
-string(FIND "${out}" "\\"id\\":32,\\"result\\":[" workspace_symbols_pos)
-string(FIND "${out}" "\\"id\\":12,\\"result\\"" workspace_definition_pos)
+string(FIND "${out}" "\"id\":31,\"result\":[" document_symbols_pos)
+string(FIND "${out}" "\"id\":32,\"result\":[" workspace_symbols_pos)
+string(FIND "${out}" "\"id\":12,\"result\"" workspace_definition_pos)
 if(document_symbols_pos EQUAL -1 OR workspace_symbols_pos EQUAL -1 OR workspace_definition_pos EQUAL -1 OR
    NOT out MATCHES "documentSymbolProvider" OR NOT out MATCHES "workspaceSymbolProvider")
   message(FATAL_ERROR "NEXUS LSP document/workspace symbol requests or capabilities are missing: ${out}")
 endif()
 math(EXPR document_symbols_length "${workspace_symbols_pos} - ${document_symbols_pos}")
 string(SUBSTRING "${out}" ${document_symbols_pos} ${document_symbols_length} document_symbols_payload)
-if(NOT document_symbols_payload MATCHES "\\"name\\":\\"Person\\"" OR
-   NOT document_symbols_payload MATCHES "\\"name\\":\\"Color\\"" OR
-   NOT document_symbols_payload MATCHES "\\"name\\":\\"add\\"")
+if(NOT document_symbols_payload MATCHES "\"name\":\"Person\"" OR
+   NOT document_symbols_payload MATCHES "\"name\":\"Color\"" OR
+   NOT document_symbols_payload MATCHES "\"name\":\"add\"")
   message(FATAL_ERROR "NEXUS LSP Outline omitted functions/structs/enums: ${document_symbols_payload}")
 endif()
 math(EXPR workspace_symbols_length "${workspace_definition_pos} - ${workspace_symbols_pos}")
 string(SUBSTRING "${out}" ${workspace_symbols_pos} ${workspace_symbols_length} workspace_symbols_payload)
-if(NOT workspace_symbols_payload MATCHES "\\"name\\":\\"ExternalPerson\\"" OR
-   NOT workspace_symbols_payload MATCHES "\\"name\\":\\"ExternalColor\\"")
+if(NOT workspace_symbols_payload MATCHES "\"name\":\"ExternalPerson\"" OR
+   NOT workspace_symbols_payload MATCHES "\"name\":\"ExternalColor\"")
   message(FATAL_ERROR "NEXUS LSP workspace/symbol did not find matching declarations in closed files: ${workspace_symbols_payload}")
 endif()
 
