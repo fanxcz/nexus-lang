@@ -128,8 +128,15 @@ namespace nexus {
                     };
                     std::size_t line = 0;
                     std::size_t column = 0;
+                    std::size_t columnEnd = separator + 1;
+                    while (columnEnd < location.size() &&
+                           location[columnEnd] >= '0' && location[columnEnd] <= '9') {
+                        ++columnEnd;
+                    }
                     if (parseNumber(location.substr(0, separator), line) &&
-                        parseNumber(location.substr(separator + 1), column) &&
+                        parseNumber(location.substr(separator + 1,
+                                                    columnEnd - separator - 1),
+                                    column) &&
                         !gDiagnosticSource.empty()) {
                         std::ostringstream out;
                         out << gDiagnosticSource.string() << ":" << line << ":" << column
