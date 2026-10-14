@@ -19,6 +19,7 @@ set(workspace_caller_uri "${LSP_WORKSPACE_URI}/caller.nx")
 set(workspace_helper_uri "${LSP_WORKSPACE_URI}/disk_helper.nx")
 set(workspace_member_uri "${LSP_WORKSPACE_URI}/member_caller.nx")
 set(workspace_enum_uri "${LSP_WORKSPACE_URI}/enum_caller.nx")
+set(workspace_hover_uri "${LSP_WORKSPACE_URI}/hover_external.nx")
 set(init "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"capabilities\":{\"workspace\":{\"didChangeWatchedFiles\":{\"dynamicRegistration\":true}}}}}")
 set(initialized "{\"jsonrpc\":\"2.0\",\"method\":\"initialized\",\"params\":{}}")
 set(watcher_registration_response "{\"jsonrpc\":\"2.0\",\"id\":\"nexus-register-nx-watcher\",\"result\":null}")
@@ -47,8 +48,10 @@ set(workspace_references "{\"jsonrpc\":\"2.0\",\"id\":13,\"method\":\"textDocume
 set(workspace_rename "{\"jsonrpc\":\"2.0\",\"id\":14,\"method\":\"textDocument/rename\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_caller_uri}\"},\"position\":{\"line\":0,\"character\":16},\"newName\":\"renamed_disk_helper\"}}}")
 set(open_workspace_completion "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_member_uri}\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn caller() { let person = make_person(); person. }\\n\"}}}")
 set(open_workspace_enum_completion "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_enum_uri}\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn color() { ExternalColor:: }\\n\"}}}")
+set(open_workspace_hover "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_hover_uri}\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn caller() { make_person() }\\n\"}}}")
 set(workspace_member_completion "{\"jsonrpc\":\"2.0\",\"id\":23,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_member_uri}\"},\"position\":{\"line\":0,\"character\":49}}}")
 set(workspace_enum_completion "{\"jsonrpc\":\"2.0\",\"id\":24,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_enum_uri}\"},\"position\":{\"line\":0,\"character\":28}}}")
+set(workspace_hover "{\"jsonrpc\":\"2.0\",\"id\":25,\"method\":\"textDocument/hover\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_hover_uri}\"},\"position\":{\"line\":0,\"character\":18}}}")
 set(open_scope "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn main() {\\n    let value = 1\\n    if true {\\n        let value = 2\\n        print(value)\\n    }\\n    print(value)\\n}\\nfn other() { let value = 3; print(value) }\\n\"}}}")
 set(scope_references "{\"jsonrpc\":\"2.0\",\"id\":15,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14},\"context\":{\"includeDeclaration\":true}}}")
 set(scope_rename "{\"jsonrpc\":\"2.0\",\"id\":16,\"method\":\"textDocument/rename\",\"params\":{\"textDocument\":{\"uri\":\"file:///scope.nx\"},\"position\":{\"line\":4,\"character\":14},\"newName\":\"innerValue\"}}")
@@ -67,7 +70,7 @@ set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":n
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_enum_completion}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_enum_completion}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
+foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_enum_completion}" "${open_workspace_hover}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_enum_completion}" "${workspace_hover}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
   string(LENGTH "${message}" message_length)
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
@@ -286,6 +289,13 @@ endif()
 file(REMOVE "${LSP_INPUT}")
 message(STATUS "NEXUS LSP live diagnostics smoke test: PASS")
 
+
+
+# Hover over an external function must show its parsed signature.
+string(FIND "${out}" "\"id\":25,\"result\":{\"contents\":{\"kind\":\"markdown\",\"value\":\"**fn make_person() -> ExternalPerson**" workspace_hover_pos)
+if(workspace_hover_pos EQUAL -1)
+  message(FATAL_ERROR "NEXUS LSP did not show a cross-file function signature on hover: ${out}")
+endif()
 
 # Workspace-only declarations must be offered in contextual field and enum completion.
 string(FIND "${out}" "\"id\":23,\"result\":[" workspace_member_completion_pos)
