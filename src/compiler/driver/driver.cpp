@@ -4407,6 +4407,107 @@ namespace nexus {
                    replIsBlockStatement(line);
         }
 
+        bool replBareFunctionCall(const std::string& source, std::string& functionName) {
+            std::string line = trim(source);
+            if (!line.empty() && line.back() == ';') {
+                line.pop_back();
+                line = trim(line);
+            }
+            if (line.empty() ||
+                !(std::isalpha(static_cast<unsigned char>(line.front())) ||
+                  line.front() == '_'))
+                return false;
+
+            std::size_t nameEnd = 1;
+            while (nameEnd < line.size()) {
+                const unsigned char ch = static_cast<unsigned char>(line[nameEnd]);
+                if (!std::isalnum(ch) && ch != '_')
+                    break;
+                ++nameEnd;
+            }
+            functionName = line.substr(0, nameEnd);
+            std::size_t open = nameEnd;
+            while (open < line.size() &&
+                   std::isspace(static_cast<unsigned char>(line[open])))
+                ++open;
+            if (open >= line.size() || line[open] != '(')
+                return false;
+
+            std::size_t depth = 0;
+            bool inString = false;
+            bool escaped = false;
+            for (std::size_t i = open; i < line.size(); ++i) {
+                const char ch = line[i];
+                const bool hasNext = i + 1 < line.size();
+                const char next = hasNext ? line[i + 1] : '\0';
+                if (inString) {
+                    if (escaped)
+                        escaped = false;
+                    else if (ch == '\\')
+                        escaped = true;
+                    else if (ch == '"')
+                        inString = false;
+                    continue;
+                }
+                if (ch == '/' && next == '/')
+                    return trim(line.substr(i)).empty();
+                if (ch == '/' && next == '*') {
+                    const auto close = line.find("*/", i + 2);
+                    if (close == std::string::npos)
+                        return false;
+                    i = close + 1;
+                    continue;
+                }
+                if (ch == '"') {
+                    inString = true;
+                } else if (ch == '(') {
+                    ++depth;
+                } else if (ch == ')') {
+                    if (depth == 0)
+                        return false;
+                    --depth;
+                    if (depth == 0)
+                        return trim(line.substr(i + 1)).empty();
+                }
+            }
+            return false;
+        }
+
+        bool replIsVoidFunctionCall(const std::string& line,
+                                    const std::vector<std::string>& declarations) {
+            std::string calledName;
+            if (!replBareFunctionCall(line, calledName))
+                return false;
+
+            for (const auto& declaration : declarations) {
+                const std::string header = trim(declaration);
+                if (!replStartsWith(header, "fn "))
+                    continue;
+                std::size_t nameStart = 3;
+                while (nameStart < header.size() &&
+                       std::isspace(static_cast<unsigned char>(header[nameStart])))
+                    ++nameStart;
+                std::size_t nameEnd = nameStart;
+                while (nameEnd < header.size()) {
+                    const unsigned char ch = static_cast<unsigned char>(header[nameEnd]);
+                    if (!std::isalnum(ch) && ch != '_')
+                        break;
+                    ++nameEnd;
+                }
+                if (header.substr(nameStart, nameEnd - nameStart) != calledName)
+                    continue;
+                const auto bodyStart = header.find('{', nameEnd);
+                const auto declarationEnd =
+                    bodyStart == std::string::npos ? header.find(';', nameEnd) : bodyStart;
+                const std::string signature = header.substr(
+                    nameEnd,
+                    declarationEnd == std::string::npos ? std::string::npos
+                                                        : declarationEnd - nameEnd);
+                return signature.find("->") == std::string::npos;
+            }
+            return false;
+        }
+
         std::string replBindingName(const std::string& line) {
             std::string rest;
             if (replStartsWith(line, "let ")) {
@@ -5101,7 +5202,8 @@ namespace nexus {
                     continue;
                 }
 
-                if (replIsDirectStatement(inputLine)) {
+                if (replIsDirectStatement(inputLine) ||
+                    replIsVoidFunctionCall(inputLine, declarations)) {
                     const bool mayChangeBindings = replIsBlockStatement(inputLine);
                     if (execute(declarations, statements, inputLine, ReplMode::Statement) &&
                         mayChangeBindings) {

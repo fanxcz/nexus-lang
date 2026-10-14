@@ -110,4 +110,27 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "BRACE_REPL_OK" OR
   message(FATAL_ERROR "REPL multiline detection counted braces inside strings/comments: ${out}\\n${err}")
 endif()
 
+
+set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-brace-input.txt")
+set(brace_history "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-brace-history.txt")
+file(REMOVE "${brace_history}")
+file(WRITE "${input_file}"
+"fn brace_text() { print(\"BRACE_REPL_OK{\") }\n"
+"brace_text()\n"
+"fn block_comment_text() { /* { ignored */ print(\"BLOCK_COMMENT_REPL_OK\") }\n"
+"block_comment_text()\n"
+"fn line_comment_text() { // } ignored\n"
+"  print(\"LINE_COMMENT_REPL_OK\")\n"
+"}\n"
+"line_comment_text()\n"
+":quit\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${brace_history}" "${NEXUS_BIN}"
+  INPUT_FILE "${input_file}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 90)
+file(REMOVE "${input_file}" "${brace_history}")
+if(NOT rc EQUAL 0 OR NOT out MATCHES "BRACE_REPL_OK" OR
+   NOT out MATCHES "BLOCK_COMMENT_REPL_OK" OR NOT out MATCHES "LINE_COMMENT_REPL_OK")
+  message(FATAL_ERROR "REPL multiline detection counted braces inside strings/comments: ${out}\\n${err}")
+endif()
+
 message(STATUS "NEXUS interactive shell smoke test: PASS")
