@@ -161,13 +161,18 @@ def main() -> int:
         caller.write_text(caller_text, encoding="utf-8")
         old_helper.write_text("fn disk_helper() {}\n", encoding="utf-8")
 
-        caller_uri, old_uri, new_uri = caller.as_uri(), old_helper.as_uri(), new_helper.as_uri()
+        # The server canonicalizes workspace roots (for example, /var -> /private/var
+        # on macOS and 8.3 paths -> long paths on Windows), so compare canonical URIs.
+        workspace_uri = workspace.resolve().as_uri()
+        caller_uri = caller.resolve().as_uri()
+        old_uri = old_helper.resolve().as_uri()
+        new_uri = new_helper.resolve().as_uri()
         client = LspClient(executable, workspace)
         try:
             client.send({
                 "jsonrpc": "2.0", "id": 1, "method": "initialize",
                 "params": {
-                    "rootUri": workspace.as_uri(),
+                    "rootUri": workspace_uri,
                     "capabilities": {
                         "workspace": {"didChangeWatchedFiles": {"dynamicRegistration": True}}
                     },
