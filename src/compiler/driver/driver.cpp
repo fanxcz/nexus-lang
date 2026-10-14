@@ -3182,6 +3182,10 @@ namespace nexus {
             // Cache disk-backed source files per workspace. Open buffers overlay this
             // cache, so typing does not trigger a directory walk for every LSP request.
             std::map<std::string, std::map<std::string, std::string>> workspaceDiskCache;
+            struct LspFunctionSignatureInfo {
+                std::string label;
+                std::vector<std::string> parameters;
+            };
             struct LspTypeDeclarationIndex {
                 std::string source;
                 std::set<std::string> structNames;
@@ -3191,6 +3195,7 @@ namespace nexus {
                 std::vector<EnumDecl> enums;
                 std::map<std::string, std::string> functionReturnTypes;
                 std::map<std::string, std::string> functionHoverMarkdown;
+                std::map<std::string, LspFunctionSignatureInfo> functionSignatures;
                 bool declarationsParsed = false;
             };
             std::map<std::string, LspTypeDeclarationIndex> workspaceTypeDeclarationCache;
@@ -3447,6 +3452,16 @@ namespace nexus {
                         index.functionHoverMarkdown.insert_or_assign(
                             function.name,
                             "**" + signature.str() + "**\n\nUser-defined function.");
+
+                        LspFunctionSignatureInfo signatureInfo;
+                        signatureInfo.label = signature.str();
+                        for (const auto& parameter : function.params) {
+                            signatureInfo.parameters.push_back(
+                                parameter.name + ": " +
+                                describeIndexedType(describeIndexedType, parameter.type));
+                        }
+                        index.functionSignatures.insert_or_assign(
+                            function.name, std::move(signatureInfo));
                         if (function.ret.kind == TypeKind::Struct &&
                             !function.ret.name.empty()) {
                             index.functionReturnTypes.insert_or_assign(
@@ -3459,6 +3474,7 @@ namespace nexus {
                     index.enums.clear();
                     index.functionReturnTypes.clear();
                     index.functionHoverMarkdown.clear();
+                    index.functionSignatures.clear();
                 }
                 index.declarationsParsed = true;
             };
@@ -3967,6 +3983,167 @@ namespace nexus {
                 payload << "]}}";
                 send(payload.str());
             };
+
+            const auto signatureHelpResult = [&](const std::string& uri,
+                                                 const std::string& source,
+                                                 std::size_t requestedLine,
+                                                 std::size_t requestedCharacter) {
+                std::size_t lineStart = 0;
+                for (std::size_t line = 0; line < requestedLine; ++line) {
+                    const auto newline = source.find('\n', lineStart);
+                    if (newline == std::string::npos)
+                        return std::string("null");
+                    lineStart = newline + 1;
+                }
+                if (lineStart > source.size())
+                    return std::string("null");
+                const auto lineEnd = source.find('\n', lineStart);
+                const std::string lineText =
+                    source.substr(lineStart, lineEnd == std::string::npos
+                                                 ? std::string::npos
+                                                 : lineEnd - lineStart);
+                const std::size_t cursorOffset =
+                    lineStart + byteOffsetForUtf16(lineText, requestedCharacter);
+
+                std::vector<Token> tokens;
+                try {
+                    tokens = Lexer(source).tokenize();
+                } catch (const std::exception&) {
+                    return std::string("null");
+                }
+
+                struct DelimiterFrame {
+                    TokenKind opening = TokenKind::LParen;
+                    std::string functionName;
+                    std::size_t activeParameter = 0;
+                    bool isCall = false;
+                };
+                std::vector<DelimiterFrame> delimiters;
+                for (std::size_t i = 0; i < tokens.size(); ++i) {
+                    const Token& token = tokens[i];
+                    if (token.kind == TokenKind::End || token.pos.offset >= cursorOffset)
+                        break;
+
+                    if (token.kind == TokenKind::LParen) {
+                        std::string functionName;
+                        if (i > 0 && tokens[i - 1].kind == TokenKind::Identifier) {
+                            std::size_t begin = i - 1;
+                            while (begin >= 2 && tokens[begin - 1].kind == TokenKind::Dot &&
+                                   tokens[begin - 2].kind == TokenKind::Identifier) {
+                                begin -= 2;
+                            }
+                            for (std::size_t part = begin; part < i; ++part)
+                                functionName += tokens[part].text;
+                        }
+                        delimiters.push_back(
+                            {TokenKind::LParen, functionName, 0, !functionName.empty()});
+                    } else if (token.kind == TokenKind::LBracket) {
+                        delimiters.push_back({TokenKind::LBracket, {}, 0, false});
+                    } else if (token.kind == TokenKind::LBrace) {
+                        delimiters.push_back({TokenKind::LBrace, {}, 0, false});
+                    } else if (token.kind == TokenKind::Comma) {
+                        if (!delimiters.empty() &&
+                            delimiters.back().opening == TokenKind::LParen &&
+                            delimiters.back().isCall) {
+                            ++delimiters.back().activeParameter;
+                        }
+                    } else if ((token.kind == TokenKind::RParen ||
+                                token.kind == TokenKind::RBracket ||
+                                token.kind == TokenKind::RBrace) &&
+                               !delimiters.empty()) {
+                        const TokenKind expected =
+                            token.kind == TokenKind::RParen
+                                ? TokenKind::LParen
+                                : (token.kind == TokenKind::RBracket
+                                       ? TokenKind::LBracket
+                                       : TokenKind::LBrace);
+                        if (delimiters.back().opening == expected)
+                            delimiters.pop_back();
+                    }
+                }
+
+                const DelimiterFrame* activeCall = nullptr;
+                for (auto it = delimiters.rbegin(); it != delimiters.rend(); ++it) {
+                    if (it->isCall) {
+                        activeCall = &*it;
+                        break;
+                    }
+                }
+                if (!activeCall)
+                    return std::string("null");
+
+                const auto describeType = [&](const auto& self, const Type& type) -> std::string {
+                    switch (type.kind) {
+                    case TypeKind::I64: return "i64";
+                    case TypeKind::F64: return "f64";
+                    case TypeKind::Bool: return "bool";
+                    case TypeKind::String: return "string";
+                    case TypeKind::Void: return "void";
+                    case TypeKind::Unknown: return "unknown";
+                    case TypeKind::Struct: return type.name;
+                    case TypeKind::Enum: return "enum " + type.name;
+                    case TypeKind::Pointer:
+                        return type.pointee ? "*" + self(self, *type.pointee) : "*unknown";
+                    case TypeKind::Array:
+                        return type.element
+                                   ? "[" + self(self, *type.element) + "; " +
+                                         std::to_string(type.arraySize) + "]"
+                                   : "[unknown]";
+                    }
+                    return "unknown";
+                };
+
+                LspFunctionSignatureInfo signature;
+                bool foundSignature = false;
+                if (const auto builtin = builtinSignature(activeCall->functionName)) {
+                    signature.label = activeCall->functionName + "(";
+                    for (std::size_t i = 0; i < builtin->params.size(); ++i) {
+                        if (i)
+                            signature.label += ", ";
+                        const std::string parameter =
+                            "arg" + std::to_string(i + 1) + ": " +
+                            describeType(describeType, builtin->params[i]);
+                        signature.parameters.push_back(parameter);
+                        signature.label += parameter;
+                    }
+                    signature.label += ") -> " + describeType(describeType, builtin->ret);
+                    foundSignature = true;
+                } else {
+                    for (const auto& document : collectWorkspaceDocuments(uri, source)) {
+                        auto& index = workspaceTypeIndexFor(document.first, document.second);
+                        if (!index.functionNames.contains(activeCall->functionName))
+                            continue;
+                        parseWorkspaceTypeIndex(index);
+                        const auto found = index.functionSignatures.find(activeCall->functionName);
+                        if (found == index.functionSignatures.end())
+                            continue;
+                        signature = found->second;
+                        foundSignature = true;
+                        break;
+                    }
+                }
+                if (!foundSignature)
+                    return std::string("null");
+
+                std::ostringstream response;
+                response << "{\"signatures\":[{\"label\":\""
+                         << jsonEscape(signature.label) << "\",\"parameters\":[";
+                for (std::size_t i = 0; i < signature.parameters.size(); ++i) {
+                    if (i)
+                        response << ',';
+                    response << "{\"label\":\"" << jsonEscape(signature.parameters[i])
+                             << "\"}";
+                }
+                response << "]}],\"activeSignature\":0";
+                if (!signature.parameters.empty()) {
+                    const std::size_t activeParameter =
+                        std::min(activeCall->activeParameter, signature.parameters.size() - 1);
+                    response << ",\"activeParameter\":" << activeParameter;
+                }
+                response << '}';
+                return response.str();
+            };
+
             const std::vector<std::pair<std::string, std::string>> completions = {
                 {"fn", "Function declaration"},
                 {"let", "Variable declaration"},
@@ -4036,6 +4213,7 @@ namespace nexus {
                          "\"},\"capabilities\":{\"textDocumentSync\":1,"
                          "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":["
                          "\".\",\":\"]},"
+                         "\"signatureHelpProvider\":{\"triggerCharacters\":[\"(\",\",\"]},"
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
                          "\"renameProvider\":true,\"hoverProvider\":true,"
                          "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":true,"
@@ -4093,6 +4271,17 @@ namespace nexus {
                              jsonEscape(uri) + "\",\"diagnostics\":[]}}");
                     }
 
+                } else if (method == "textDocument/signatureHelp" && !id.empty()) {
+                    const std::string uri = extractString(body, "uri");
+                    const auto document = openDocuments.find(uri);
+                    std::string result = "null";
+                    if (document != openDocuments.end()) {
+                        result = signatureHelpResult(document->first, document->second,
+                                                      extractNumber(body, "line"),
+                                                      extractNumber(body, "character"));
+                    }
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" +
+                         result + "}");
                 } else if (method == "textDocument/hover" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);

@@ -147,3 +147,8 @@ REPL history persists between launches (up to 500 entries); `:history-clear` rem
 
 
 State is rebuilt from saved declarations and statements for each entry. Pure `if`, `while`, `for`, and `match` blocks that only use local expressions and assignments are retained so their binding changes persist. Blocks containing function calls or unsupported operations run once but are not replayed; the shell prints a note because mutations inside those blocks cannot currently be retained.
+
+
+## LSP signature help
+
+The language server provides function signatures while the cursor is inside a call. It reports parameter names and types for user-defined functions across the current workspace, and type-based parameter hints for built-ins whose signatures are defined by the runtime. Nested parentheses, array expressions, and struct literals do not incorrectly increase the outer call's active parameter.
