@@ -9,7 +9,7 @@
 - Hover for language/built-in documentation and parsed function/type declarations in the current valid buffer.
 - Go-to-definition, references and rename for indexed declarations, references and scoped local bindings, including functions/types across discoverable workspace files.
 - Whole-document formatting with `textDocument/formatting` and selected-line formatting with `textDocument/rangeFormatting`. Both use the same conservative formatter as `nexus fmt`.
-- Quick-fix code actions for supported semantic mistakes, including close struct-field-name suggestions.
+- Quick-fix code actions for close struct-field-name suggestions and uniquely matching visible variable/parameter names.
 - A maximum protocol message size of 16 MiB.
 
 ## Workspace indexing

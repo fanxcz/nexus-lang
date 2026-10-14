@@ -4128,6 +4128,103 @@ namespace nexus {
                             for (const auto& diagnostic : diagnostics) {
                                 if (diagnostic.code != "NX2001")
                                     continue;
+
+                                const std::string variablePrefix = "unknown variable: ";
+                                if (diagnostic.message.rfind(variablePrefix, 0) == 0) {
+                                    const std::string misspelled =
+                                        trim(diagnostic.message.substr(variablePrefix.size()));
+                                    (void)findIdentifierOccurrences(misspelled,
+                                                                    uri,
+                                                                    document->second,
+                                                                    diagnostic.line,
+                                                                    diagnostic.character);
+                                    const auto cached = workspaceSymbolIndexCache.find(uri);
+                                    if (cached != workspaceSymbolIndexCache.end() &&
+                                        cached->second.source == document->second) {
+                                        const auto& index = cached->second;
+                                        std::size_t useToken = index.tokens.size();
+                                        for (std::size_t i = 0; i < index.tokens.size(); ++i) {
+                                            const auto& token = index.tokens[i];
+                                            if (token.kind == TokenKind::Identifier &&
+                                                token.text == misspelled &&
+                                                token.pos.line == diagnostic.line + 1 &&
+                                                token.pos.column > 0 &&
+                                                token.pos.column - 1 == diagnostic.character) {
+                                                useToken = i;
+                                                break;
+                                            }
+                                        }
+
+                                        if (useToken < index.tokens.size()) {
+                                            const auto isAncestor = [&](std::size_t ancestor,
+                                                                        std::size_t scope) {
+                                                while (scope != static_cast<std::size_t>(-1) &&
+                                                       scope < index.scopes.size()) {
+                                                    if (scope == ancestor)
+                                                        return true;
+                                                    scope = index.scopes[scope].parent;
+                                                }
+                                                return false;
+                                            };
+                                            std::set<std::string> candidates;
+                                            const std::size_t useScope = index.tokenScope[useToken];
+                                            for (const auto& declaration : index.declarations) {
+                                                if (declaration.global ||
+                                                    (declaration.kind != "variable" &&
+                                                     declaration.kind != "constant" &&
+                                                     declaration.kind != "parameter") ||
+                                                    declaration.name == misspelled ||
+                                                    declaration.visibleFrom > useToken ||
+                                                    !isAncestor(declaration.scope, useScope))
+                                                    continue;
+                                                candidates.insert(declaration.name);
+                                            }
+
+                                            std::string bestName;
+                                            std::size_t bestDistance =
+                                                std::numeric_limits<std::size_t>::max();
+                                            bool ambiguous = false;
+                                            for (const auto& candidate : candidates) {
+                                                const std::size_t distance =
+                                                    editDistance(misspelled, candidate);
+                                                if (distance < bestDistance) {
+                                                    bestDistance = distance;
+                                                    bestName = candidate;
+                                                    ambiguous = false;
+                                                } else if (distance == bestDistance &&
+                                                           candidate != bestName) {
+                                                    ambiguous = true;
+                                                }
+                                            }
+                                            const std::size_t maxDistance =
+                                                misspelled.size() <= 4 ? 1 : 2;
+                                            if (!bestName.empty() && bestName != misspelled &&
+                                                !ambiguous && bestDistance <= maxDistance) {
+                                                if (!firstAction)
+                                                    actions << ',';
+                                                firstAction = false;
+                                                const std::size_t length =
+                                                    std::max<std::size_t>(1, diagnostic.length);
+                                                actions << "{\"title\":\"Replace '"
+                                                        << jsonEscape(misspelled) << "' with '"
+                                                        << jsonEscape(bestName)
+                                                        << "'\",\"kind\":\"quickfix\",\"edit\":{"
+                                                           "\"changes\":{\""
+                                                        << jsonEscape(uri)
+                                                        << "\":[{\"range\":{\"start\":{\"line\":"
+                                                        << diagnostic.line << ",\"character\":"
+                                                        << diagnostic.character
+                                                        << "},\"end\":{\"line\":"
+                                                        << diagnostic.line << ",\"character\":"
+                                                        << diagnostic.character + length
+                                                        << "}},\"newText\":\""
+                                                        << jsonEscape(bestName) << "\"}]}}}";
+                                            }
+                                        }
+                                    }
+                                    continue;
+                                }
+
                                 const std::string prefix = "unknown field '";
                                 const auto start = diagnostic.message.find(prefix);
                                 if (start == std::string::npos)
