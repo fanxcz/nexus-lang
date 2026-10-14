@@ -4003,6 +4003,31 @@ namespace nexus {
                                                        occurrence.uri != uri;
                                             });
                             if (declaredElsewhere) {
+                                const auto describeWorkspaceHoverType =
+                                    [&](const auto& self, const Type& type) -> std::string {
+                                        switch (type.kind) {
+                                        case TypeKind::I64: return "i64";
+                                        case TypeKind::F64: return "f64";
+                                        case TypeKind::Bool: return "bool";
+                                        case TypeKind::String: return "string";
+                                        case TypeKind::Void: return "void";
+                                        case TypeKind::Pointer:
+                                            return type.pointee
+                                                       ? "*" + self(self, *type.pointee)
+                                                       : "*unknown";
+                                        case TypeKind::Struct:
+                                            return type.name.empty() ? "struct" : type.name;
+                                        case TypeKind::Enum:
+                                            return type.name.empty() ? "enum" : type.name;
+                                        case TypeKind::Array:
+                                            return type.element
+                                                       ? "[" + self(self, *type.element) + "; " +
+                                                             std::to_string(type.arraySize) + "]"
+                                                       : "[unknown]";
+                                        case TypeKind::Unknown: return "inferred";
+                                        }
+                                        return "unknown";
+                                    };
                                 for (const auto& [candidateUri, candidateSource] :
                                      collectWorkspaceDocuments(uri, document->second)) {
                                     if (candidateUri == uri)
@@ -4036,7 +4061,7 @@ namespace nexus {
                                                                 << static_cast<char>(96)
                                                                 << field.name << static_cast<char>(96)
                                                                 << ": "
-                                                                << describeType(describeType,
+                                                                << describeWorkspaceHoverType(describeWorkspaceHoverType,
                                                                                 field.type);
                                                 }
                                             }
