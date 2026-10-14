@@ -305,6 +305,14 @@ if (NEXUS_BUILD_TESTS)
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -P ${CMAKE_SOURCE_DIR}/tests/lsp_smoke.cmake)
+  find_package(Python3 COMPONENTS Interpreter QUIET)
+  if (Python3_Interpreter_FOUND)
+    add_test(NAME nexus_lsp_watched_files_smoke
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tests/lsp_watched_files_smoke.py
+            --nexus $<TARGET_FILE:nexus>)
+    set_tests_properties(nexus_lsp_watched_files_smoke PROPERTIES TIMEOUT 45)
+  endif()
   add_test(NAME nexus_regression_check
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
