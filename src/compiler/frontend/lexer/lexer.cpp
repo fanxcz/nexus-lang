@@ -230,7 +230,7 @@ namespace nexus {
             k = TokenKind::KwFalse;
         else if (s == "print")
             k = TokenKind::KwPrint;
-        return {k, s, p};
+        return {k, s, p, pos_, true};
     }
     Token Lexer::number() {
         auto p = pos_;
@@ -241,9 +241,9 @@ namespace nexus {
             s += take();
             while (std::isdigit(static_cast<unsigned char>(peek())))
                 s += take();
-            return {TokenKind::Float, s, p};
+            return {TokenKind::Float, s, p, pos_, true};
         }
-        return {TokenKind::Integer, s, p};
+        return {TokenKind::Integer, s, p, pos_, true};
     }
     Token Lexer::string() {
         auto p = pos_;
@@ -281,7 +281,7 @@ namespace nexus {
             throw std::runtime_error("unterminated string at " + std::to_string(pos_.line) + ":" +
                                      std::to_string(pos_.column));
         take();
-        return {TokenKind::String, s, p};
+        return {TokenKind::String, s, p, pos_, true};
     }
     std::vector<Token> Lexer::tokenize() {
         std::vector<Token> out;
@@ -290,7 +290,7 @@ namespace nexus {
             auto p = pos_;
             char c = peek();
             if (!c) {
-                out.push_back({TokenKind::End, "", p});
+                out.push_back({TokenKind::End, "", p, pos_, true});
                 break;
             }
             if (std::isalpha(static_cast<unsigned char>(c)) || c == '_') {
@@ -310,124 +310,124 @@ namespace nexus {
             case '+':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::PlusEqual, "+=", p});
+                    out.push_back({TokenKind::PlusEqual, "+=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Plus, "+", p});
+                    out.push_back({TokenKind::Plus, "+", p, pos_, true});
                 break;
             case '-':
                 if (peek() == '>') {
                     take();
-                    out.push_back({TokenKind::Arrow, "->", p});
+                    out.push_back({TokenKind::Arrow, "->", p, pos_, true});
                 } else if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::MinusEqual, "-=", p});
+                    out.push_back({TokenKind::MinusEqual, "-=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Minus, "-", p});
+                    out.push_back({TokenKind::Minus, "-", p, pos_, true});
                 break;
             case '*':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::StarEqual, "*=", p});
+                    out.push_back({TokenKind::StarEqual, "*=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Star, "*", p});
+                    out.push_back({TokenKind::Star, "*", p, pos_, true});
                 break;
             case '/':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::SlashEqual, "/=", p});
+                    out.push_back({TokenKind::SlashEqual, "/=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Slash, "/", p});
+                    out.push_back({TokenKind::Slash, "/", p, pos_, true});
                 break;
             case '%':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::PercentEqual, "%=", p});
+                    out.push_back({TokenKind::PercentEqual, "%=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Percent, "%", p});
+                    out.push_back({TokenKind::Percent, "%", p, pos_, true});
                 break;
             case '=':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::EqualEqual, "==", p});
+                    out.push_back({TokenKind::EqualEqual, "==", p, pos_, true});
                 } else if (peek() == '>') {
                     take();
-                    out.push_back({TokenKind::FatArrow, "=>", p});
+                    out.push_back({TokenKind::FatArrow, "=>", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Equal, "=", p});
+                    out.push_back({TokenKind::Equal, "=", p, pos_, true});
                 break;
             case '!':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::BangEqual, "!=", p});
+                    out.push_back({TokenKind::BangEqual, "!=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Bang, "!", p});
+                    out.push_back({TokenKind::Bang, "!", p, pos_, true});
                 break;
             case '<':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::LessEqual, "<=", p});
+                    out.push_back({TokenKind::LessEqual, "<=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Less, "<", p});
+                    out.push_back({TokenKind::Less, "<", p, pos_, true});
                 break;
             case '>':
                 if (peek() == '=') {
                     take();
-                    out.push_back({TokenKind::GreaterEqual, ">=", p});
+                    out.push_back({TokenKind::GreaterEqual, ">=", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Greater, ">", p});
+                    out.push_back({TokenKind::Greater, ">", p, pos_, true});
                 break;
             case '&':
                 if (peek() == '&') {
                     take();
-                    out.push_back({TokenKind::AndAnd, "&&", p});
+                    out.push_back({TokenKind::AndAnd, "&&", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Ampersand, "&", p});
+                    out.push_back({TokenKind::Ampersand, "&", p, pos_, true});
                 break;
             case '|':
                 if (peek() == '|') {
                     take();
-                    out.push_back({TokenKind::OrOr, "||", p});
+                    out.push_back({TokenKind::OrOr, "||", p, pos_, true});
                 } else
                     throw std::runtime_error("expected '|' or '||' at " + std::to_string(p.line) +
                                              ":" + std::to_string(p.column));
                 break;
             case '(':
-                out.push_back({TokenKind::LParen, "(", p});
+                out.push_back({TokenKind::LParen, "(", p, pos_, true});
                 break;
             case ')':
-                out.push_back({TokenKind::RParen, ")", p});
+                out.push_back({TokenKind::RParen, ")", p, pos_, true});
                 break;
             case '{':
-                out.push_back({TokenKind::LBrace, "{", p});
+                out.push_back({TokenKind::LBrace, "{", p, pos_, true});
                 break;
             case '}':
-                out.push_back({TokenKind::RBrace, "}", p});
+                out.push_back({TokenKind::RBrace, "}", p, pos_, true});
                 break;
             case '[':
-                out.push_back({TokenKind::LBracket, "[", p});
+                out.push_back({TokenKind::LBracket, "[", p, pos_, true});
                 break;
             case ']':
-                out.push_back({TokenKind::RBracket, "]", p});
+                out.push_back({TokenKind::RBracket, "]", p, pos_, true});
                 break;
             case ',':
-                out.push_back({TokenKind::Comma, ",", p});
+                out.push_back({TokenKind::Comma, ",", p, pos_, true});
                 break;
             case ':':
                 if (peek() == ':') {
                     take();
-                    out.push_back({TokenKind::ColonColon, "::", p});
+                    out.push_back({TokenKind::ColonColon, "::", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Colon, ":", p});
+                    out.push_back({TokenKind::Colon, ":", p, pos_, true});
                 break;
             case '.':
                 if (peek() == '.') {
                     take();
-                    out.push_back({TokenKind::Range, "..", p});
+                    out.push_back({TokenKind::Range, "..", p, pos_, true});
                 } else
-                    out.push_back({TokenKind::Dot, ".", p});
+                    out.push_back({TokenKind::Dot, ".", p, pos_, true});
                 break;
             case ';':
-                out.push_back({TokenKind::Semicolon, ";", p});
+                out.push_back({TokenKind::Semicolon, ";", p, pos_, true});
                 break;
             default:
                 throw std::runtime_error(std::string("unexpected character '") + c + "' at " +

@@ -30,6 +30,9 @@ namespace nexus {
     }
 
     SourcePos Parser::positionAfter(const Token& token) const {
+        if (token.hasEndPos)
+            return token.endPos;
+
         SourcePos end = token.pos;
         for (const unsigned char ch : token.text) {
             ++end.offset;

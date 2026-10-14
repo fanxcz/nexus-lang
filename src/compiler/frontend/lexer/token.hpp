@@ -78,6 +78,9 @@ namespace nexus {
         TokenKind kind;
         std::string text;
         SourcePos pos;
+        // Lexer-recorded exclusive end; token.text may be decoded (for example, strings).
+        SourcePos endPos{0, 0, 0};
+        bool hasEndPos = false;
     };
 
     const char* tokenName(TokenKind kind);

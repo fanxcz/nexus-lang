@@ -377,6 +377,22 @@ int main() {
                 return 26;
             }
         }
+        {
+            // Source spans must use raw source positions, not decoded string-value length.
+            const std::string spanSource = "fn main() { let value = \"x\\t\"; }";
+            const auto program = parse(spanSource);
+            const auto* binding = dynamic_cast<const nexus::LetStmt*>(
+                program.functions.front().body->statements.front().get());
+            const auto* literal =
+                binding ? dynamic_cast<const nexus::StringExpr*>(binding->init.get()) : nullptr;
+            const auto literalStart = spanSource.find("\"x\\t\"");
+            if (!literal || literalStart == std::string::npos || !literal->span.valid ||
+                literal->span.start.offset != literalStart ||
+                literal->span.end.offset != literalStart + 5) {
+                std::cerr << "escaped-string source span regression\n";
+                return 27;
+            }
+        }
         std::cout << "Nexus tests: PASS\n";
 
         return 0;
