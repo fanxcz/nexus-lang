@@ -133,4 +133,38 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "BRACE_REPL_OK" OR
   message(FATAL_ERROR "REPL multiline detection counted braces inside strings/comments: ${out}\\n${err}")
 endif()
 
+# Pure control-flow blocks that mutate bindings must remain part of the
+# reconstructed session state without having to execute the block twice per input.
+set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-if-state-input.txt")
+set(history_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-if-state-history.txt")
+file(REMOVE "${history_file}")
+file(WRITE "${input_file}"
+"let mut total = 1\n"
+"if true { total = total + 41 }\n"
+"total\n"
+":quit\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
+  INPUT_FILE "${input_file}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 90)
+file(REMOVE "${input_file}" "${history_file}")
+if(NOT rc EQUAL 0 OR NOT out MATCHES "42" OR err MATCHES "will not persist")
+  message(FATAL_ERROR "REPL did not preserve state from a pure if block: ${out}\n${err}")
+endif()
+
+set(input_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-while-state-input.txt")
+set(history_file "${CMAKE_CURRENT_BINARY_DIR}/nexus-repl-while-state-history.txt")
+file(REMOVE "${history_file}")
+file(WRITE "${input_file}"
+"let mut steps = 0\n"
+"while steps < 3 { steps = steps + 1 }\n"
+"steps\n"
+":quit\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E env "NEXUS_HISTORY_FILE=${history_file}" "${NEXUS_BIN}"
+  INPUT_FILE "${input_file}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 90)
+file(REMOVE "${input_file}" "${history_file}")
+if(NOT rc EQUAL 0 OR NOT out MATCHES "3" OR err MATCHES "will not persist")
+  message(FATAL_ERROR "REPL did not preserve state from a pure while block: ${out}\n${err}")
+endif()
+
 message(STATUS "NEXUS interactive shell smoke test: PASS")

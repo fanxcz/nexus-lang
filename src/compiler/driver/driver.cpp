@@ -4536,6 +4536,106 @@ namespace nexus {
                    replStartsWith(line, "unsafe ");
         }
 
+        bool replExpressionIsReplaySafe(const Expr* expression) {
+            if (!expression)
+                return true;
+            if (dynamic_cast<const IntExpr*>(expression) ||
+                dynamic_cast<const FloatExpr*>(expression) ||
+                dynamic_cast<const BoolExpr*>(expression) ||
+                dynamic_cast<const StringExpr*>(expression) ||
+                dynamic_cast<const VarExpr*>(expression) ||
+                dynamic_cast<const EnumVariantExpr*>(expression))
+                return true;
+            if (const auto* array = dynamic_cast<const ArrayExpr*>(expression)) {
+                for (const auto& element : array->elements)
+                    if (!replExpressionIsReplaySafe(element.get()))
+                        return false;
+                return true;
+            }
+            if (const auto* index = dynamic_cast<const IndexExpr*>(expression))
+                return replExpressionIsReplaySafe(index->object.get()) &&
+                       replExpressionIsReplaySafe(index->index.get());
+            if (const auto* unary = dynamic_cast<const UnaryExpr*>(expression))
+                return replExpressionIsReplaySafe(unary->rhs.get());
+            if (const auto* binary = dynamic_cast<const BinaryExpr*>(expression))
+                return replExpressionIsReplaySafe(binary->lhs.get()) &&
+                       replExpressionIsReplaySafe(binary->rhs.get());
+            if (const auto* member = dynamic_cast<const MemberExpr*>(expression))
+                return replExpressionIsReplaySafe(member->object.get());
+            if (const auto* initializer = dynamic_cast<const StructInitExpr*>(expression)) {
+                for (const auto& field : initializer->fields)
+                    if (!replExpressionIsReplaySafe(field.second.get()))
+                        return false;
+                return true;
+            }
+
+            // Calls are intentionally excluded: built-ins and user functions can
+            // perform I/O or otherwise change external state when replayed.
+            return false;
+        }
+
+        bool replStatementIsReplaySafe(const Stmt* statement) {
+            if (!statement)
+                return false;
+            if (const auto* block = dynamic_cast<const Block*>(statement)) {
+                for (const auto& nested : block->statements)
+                    if (!replStatementIsReplaySafe(nested.get()))
+                        return false;
+                return true;
+            }
+            if (const auto* declaration = dynamic_cast<const LetStmt*>(statement))
+                return replExpressionIsReplaySafe(declaration->init.get());
+            if (const auto* assignment = dynamic_cast<const AssignStmt*>(statement))
+                return replExpressionIsReplaySafe(assignment->value.get());
+            if (const auto* assignment = dynamic_cast<const MemberAssignStmt*>(statement))
+                return replExpressionIsReplaySafe(assignment->object.get()) &&
+                       replExpressionIsReplaySafe(assignment->value.get());
+            if (const auto* assignment = dynamic_cast<const IndexAssignStmt*>(statement))
+                return replExpressionIsReplaySafe(assignment->object.get()) &&
+                       replExpressionIsReplaySafe(assignment->index.get()) &&
+                       replExpressionIsReplaySafe(assignment->value.get());
+            if (const auto* expression = dynamic_cast<const ExprStmt*>(statement))
+                return replExpressionIsReplaySafe(expression->expr.get());
+            if (const auto* branch = dynamic_cast<const IfStmt*>(statement))
+                return replExpressionIsReplaySafe(branch->cond.get()) &&
+                       replStatementIsReplaySafe(branch->thenBlock.get()) &&
+                       (!branch->elseBlock || replStatementIsReplaySafe(branch->elseBlock.get()));
+            if (const auto* loop = dynamic_cast<const WhileStmt*>(statement))
+                return replExpressionIsReplaySafe(loop->cond.get()) &&
+                       replStatementIsReplaySafe(loop->body.get());
+            if (const auto* match = dynamic_cast<const MatchStmt*>(statement)) {
+                if (!replExpressionIsReplaySafe(match->value.get()))
+                    return false;
+                for (const auto& arm : match->arms) {
+                    if ((!arm.wildcard && !replExpressionIsReplaySafe(arm.pattern.get())) ||
+                        !replStatementIsReplaySafe(arm.body.get()))
+                        return false;
+                }
+                return true;
+            }
+            if (dynamic_cast<const BreakStmt*>(statement) ||
+                dynamic_cast<const ContinueStmt*>(statement))
+                return true;
+
+            // Return statements and unknown statement kinds can change the control
+            // flow of later replayed entries, so do not persist them.
+            return false;
+        }
+
+        bool replIsReplaySafeBlock(const std::string& line) {
+            try {
+                const std::string wrapper = "fn __nexus_repl__() {\n" + line + "\n}\n";
+                Program program = Parser(Lexer(wrapper).tokenize()).parseProgram();
+                if (program.functions.size() != 1 || !program.functions.front().body ||
+                    program.functions.front().body->statements.size() != 1)
+                    return false;
+                return replStatementIsReplaySafe(
+                    program.functions.front().body->statements.front().get());
+            } catch (const std::exception&) {
+                return false;
+            }
+        }
+
         bool replIsStoredStatement(const std::string& line) {
             return replStartsWith(line, "let ") || replStartsWith(line, "const ") ||
                    replHasAssignment(line);
@@ -5343,10 +5443,22 @@ namespace nexus {
 
                 if (replIsDirectStatement(inputLine) ||
                     replIsVoidFunctionCall(inputLine, declarations)) {
-                    const bool mayChangeBindings = replIsBlockStatement(inputLine);
+                    const bool isControlBlock = replIsBlockStatement(inputLine);
+                    const bool replaySafeBlock =
+                        isControlBlock && replIsReplaySafeBlock(inputLine);
                     if (execute(declarations, statements, inputLine, ReplMode::Statement) &&
-                        mayChangeBindings) {
+                        isControlBlock) {
                         fastPathEnabled = false;
+                        if (replaySafeBlock) {
+                            // Pure state-changing blocks must be replayed after
+                            // declarations/assignments so later entries see the same state.
+                            statements.push_back(inputLine);
+                        } else {
+                            std::cerr
+                                << "nexus: note: this control-flow block contains calls or "
+                                   "unsupported operations, so it is not replayed in later entries; "
+                                   "variable changes made inside it will not persist.\n";
+                        }
                     }
                     continue;
                 }
