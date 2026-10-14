@@ -4993,15 +4993,14 @@ namespace nexus {
                 return true;
 
             try {
-                if (!path.parent_path().empty())
-                    fs::create_directories(path.parent_path());
-
-                std::ofstream out(path, std::ios::binary | std::ios::trunc);
-                if (!out)
-                    return false;
+                std::ostringstream serialized;
                 for (const auto& entry : entries)
-                    out << encodeReplHistoryEntry(entry) << '\n';
-                return static_cast<bool>(out);
+                    serialized << encodeReplHistoryEntry(entry) << '\n';
+
+                // Keep the last valid history file if the process is interrupted
+                // while writing the next version.
+                writeTextAtomically(path, serialized.str());
+                return true;
             } catch (const std::exception&) {
                 return false;
             }
