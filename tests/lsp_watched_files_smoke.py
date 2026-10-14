@@ -128,8 +128,10 @@ class LspClient:
 
 
 def assert_definition(result: Any, expected_uri: str, context: str) -> None:
-    if not isinstance(result, list) or not any(
-        isinstance(location, dict) and location.get("uri") == expected_uri for location in result
+    # LSP permits either a Location object or a list of Location objects.
+    locations = result if isinstance(result, list) else [result] if isinstance(result, dict) else []
+    if not any(
+        isinstance(location, dict) and location.get("uri") == expected_uri for location in locations
     ):
         raise AssertionError(f"{context}: expected definition in {expected_uri}, got {result!r}")
 
@@ -190,7 +192,7 @@ def main() -> int:
                 })
                 result = client.response(request_id)["result"]
                 if expected_uri is None:
-                    if result != []:
+                    if result not in ([], None):
                         raise AssertionError(f"Deleted helper still resolves: {result!r}")
                 else:
                     assert_definition(result, expected_uri, f"Definition lookup {request_id} failed")
