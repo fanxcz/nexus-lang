@@ -2959,8 +2959,10 @@ namespace nexus {
                 std::string source;
                 std::set<std::string> structNames;
                 std::set<std::string> enumNames;
+                std::set<std::string> functionNames;
                 std::vector<StructDecl> structs;
                 std::vector<EnumDecl> enums;
+                std::map<std::string, std::string> functionReturnTypes;
                 bool declarationsParsed = false;
             };
             std::map<std::string, LspTypeDeclarationIndex> workspaceTypeDeclarationCache;
@@ -3141,8 +3143,61 @@ namespace nexus {
                 std::vector<LspSymbolDecl> declarations;
             };
             std::map<std::string, LspDocumentIndex> workspaceSymbolIndexCache;
-            // Contextual completion indexes types lazily: scanning tokens is cheap,
-            // and full parsing happens only for files declaring the requested type.
+            // Contextual completion scans tokens first, and parses only source files that
+            // declare the requested type or function. This keeps editor requests cheap.
+            const auto workspaceTypeIndexFor =
+                [&](const std::string& documentUri,
+                    const std::string& source) -> LspTypeDeclarationIndex& {
+                    auto cached = workspaceTypeDeclarationCache.find(documentUri);
+                    if (cached == workspaceTypeDeclarationCache.end() ||
+                        cached->second.source != source) {
+                        LspTypeDeclarationIndex index;
+                        index.source = source;
+                        try {
+                            const auto tokens = Lexer(source).tokenize();
+                            for (std::size_t i = 0; i + 1 < tokens.size(); ++i) {
+                                if (tokens[i + 1].kind != TokenKind::Identifier)
+                                    continue;
+                                if (tokens[i].kind == TokenKind::KwStruct)
+                                    index.structNames.insert(tokens[i + 1].text);
+                                else if (tokens[i].kind == TokenKind::KwEnum)
+                                    index.enumNames.insert(tokens[i + 1].text);
+                                else if (tokens[i].kind == TokenKind::KwFn)
+                                    index.functionNames.insert(tokens[i + 1].text);
+                            }
+                        } catch (const std::exception&) {
+                            // One incomplete workspace buffer must not break completion.
+                        }
+                        cached = workspaceTypeDeclarationCache
+                                     .insert_or_assign(documentUri, std::move(index))
+                                     .first;
+                    }
+                    return cached->second;
+                };
+            const auto parseWorkspaceTypeIndex = [&](LspTypeDeclarationIndex& index) {
+                if (index.declarationsParsed)
+                    return;
+                try {
+                    Program parsed = Parser(Lexer(index.source).tokenize()).parseProgram();
+                    index.structs = std::move(parsed.structs);
+                    index.enums = std::move(parsed.enums);
+                    for (const auto& function : parsed.functions) {
+                        // Member completion needs named struct return types. Primitive
+                        // returns intentionally do not produce field suggestions.
+                        if (function.ret.kind == TypeKind::Struct &&
+                            !function.ret.name.empty()) {
+                            index.functionReturnTypes.insert_or_assign(
+                                function.name, function.ret.name);
+                        }
+                    }
+                } catch (const std::exception&) {
+                    // A malformed source file contributes no contextual declarations.
+                    index.structs.clear();
+                    index.enums.clear();
+                    index.functionReturnTypes.clear();
+                }
+                index.declarationsParsed = true;
+            };
             const auto workspaceTypeDeclarationsFor =
                 [&](const std::string& requestUri,
                     const std::string& requestSource,
@@ -3157,49 +3212,14 @@ namespace nexus {
                         if (documentUri == requestUri)
                             continue;
 
-                        auto cached = workspaceTypeDeclarationCache.find(documentUri);
-                        if (cached == workspaceTypeDeclarationCache.end() ||
-                            cached->second.source != source) {
-                            LspTypeDeclarationIndex index;
-                            index.source = source;
-                            try {
-                                const auto tokens = Lexer(source).tokenize();
-                                for (std::size_t i = 0; i + 1 < tokens.size(); ++i) {
-                                    if (tokens[i + 1].kind != TokenKind::Identifier)
-                                        continue;
-                                    if (tokens[i].kind == TokenKind::KwStruct)
-                                        index.structNames.insert(tokens[i + 1].text);
-                                    else if (tokens[i].kind == TokenKind::KwEnum)
-                                        index.enumNames.insert(tokens[i + 1].text);
-                                }
-                            } catch (const std::exception&) {
-                                // One incomplete workspace buffer must not break completion.
-                            }
-                            cached = workspaceTypeDeclarationCache
-                                         .insert_or_assign(documentUri, std::move(index))
-                                         .first;
-                        }
-
-                        auto& index = cached->second;
+                        auto& index = workspaceTypeIndexFor(documentUri, source);
                         const bool typeExists = requestedEnum
                                                     ? index.enumNames.contains(requestedType)
                                                     : index.structNames.contains(requestedType);
                         if (!typeExists)
                             continue;
 
-                        if (!index.declarationsParsed) {
-                            try {
-                                Program parsed = Parser(Lexer(index.source).tokenize()).parseProgram();
-                                index.structs = std::move(parsed.structs);
-                                index.enums = std::move(parsed.enums);
-                            } catch (const std::exception&) {
-                                // The type is unavailable until this source parses cleanly.
-                                index.structs.clear();
-                                index.enums.clear();
-                            }
-                            index.declarationsParsed = true;
-                        }
-
+                        parseWorkspaceTypeIndex(index);
                         if (requestedEnum) {
                             for (const auto& declaration : index.enums) {
                                 if (declaration.name == requestedType)
@@ -3213,6 +3233,29 @@ namespace nexus {
                         }
                     }
                     return result;
+                };
+            const auto workspaceFunctionReturnTypeFor =
+                [&](const std::string& requestUri,
+                    const std::string& requestSource,
+                    const std::string& requestedFunction) {
+                    if (requestedFunction.empty())
+                        return std::string{};
+
+                    for (const auto& [documentUri, source] :
+                         collectWorkspaceDocuments(requestUri, requestSource)) {
+                        if (documentUri == requestUri)
+                            continue;
+
+                        auto& index = workspaceTypeIndexFor(documentUri, source);
+                        if (!index.functionNames.contains(requestedFunction))
+                            continue;
+
+                        parseWorkspaceTypeIndex(index);
+                        const auto found = index.functionReturnTypes.find(requestedFunction);
+                        if (found != index.functionReturnTypes.end())
+                            return found->second;
+                    }
+                    return std::string{};
                 };
 
             const auto identifierAtPosition = [&](const std::string& source,
@@ -4030,6 +4073,22 @@ namespace nexus {
                                                          dynamic_cast<const EnumVariantExpr*>(
                                                              declaration->init.get()))
                                                 typeName = init->enumName;
+                                            else if (const auto* call =
+                                                         dynamic_cast<const CallExpr*>(
+                                                             declaration->init.get())) {
+                                                for (const auto& function : program.functions) {
+                                                    if (function.name == call->callee &&
+                                                        function.ret.kind == TypeKind::Struct &&
+                                                        !function.ret.name.empty()) {
+                                                        typeName = function.ret.name;
+                                                        break;
+                                                    }
+                                                }
+                                                if (typeName.empty()) {
+                                                    typeName = workspaceFunctionReturnTypeFor(
+                                                        uri, document->second, call->callee);
+                                                }
+                                            }
                                             if (!typeName.empty())
                                                 variableTypes[declaration->name] = typeName;
                                         } else if (const auto* conditional =
