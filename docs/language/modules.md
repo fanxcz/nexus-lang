@@ -38,7 +38,7 @@ The repository's `examples/imports.nx` demonstrates this file-based form. The co
 - Use a file path in a quoted import for local files, for example `import "modules/math.nx"`.
 - Use `import std.NAME` for an actual file in the standard library, such as `stdlib/fs.nx` or `stdlib/crypto.nx`.
 - Imported source is compiled as part of the program; there is no separate compilation unit/visibility layer.
-- Circular imports and complex dependency graph behavior should not be assumed to work like Rust/Cargo modules.
+- Circular imports are rejected with a readable chain diagnostic; acyclic imports are loaded once per compilation. This remains source-file composition, not Rust/Cargo module semantics.
 - Package commands support local vendoring and archive creation; they do not provide a hosted registry with semver dependency resolution.
 
 ## What is not implemented

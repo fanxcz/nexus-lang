@@ -573,14 +573,46 @@ namespace nexus {
                 dst.functions.push_back(std::move(f));
         }
 
-        Program loadProgram(const fs::path& root, std::set<fs::path>& seen) {
+        struct ModuleLoadContext {
+            std::set<fs::path> active;
+            std::set<fs::path> loaded;
+            std::vector<fs::path> stack;
+        };
+
+        Program loadProgram(const fs::path& root, ModuleLoadContext& context) {
 
             const auto canon = fs::weakly_canonical(root);
 
-            if (seen.contains(canon))
+            if (context.active.contains(canon)) {
+                std::ostringstream cycle;
+                cycle << "circular import detected: ";
+                const auto begin = std::find(context.stack.begin(), context.stack.end(), canon);
+                for (auto it = begin; it != context.stack.end(); ++it) {
+                    if (it != begin)
+                        cycle << " -> ";
+                    cycle << it->generic_string();
+                }
+                if (begin != context.stack.end())
+                    cycle << " -> ";
+                cycle << canon.generic_string();
+                throw std::runtime_error(cycle.str());
+            }
+
+            if (context.loaded.contains(canon))
                 return {};
 
-            seen.insert(canon);
+            context.active.insert(canon);
+            context.stack.push_back(canon);
+            struct ModuleLoadGuard {
+                ModuleLoadContext& context;
+                fs::path path;
+                ~ModuleLoadGuard() {
+                    context.active.erase(path);
+                    if (!context.stack.empty())
+                        context.stack.pop_back();
+                }
+            } guard{context, canon};
+
             gDiagnosticSource = canon;
 
             const auto src = readFile(canon);
@@ -665,9 +697,10 @@ namespace nexus {
                             }
                     }
                 }
-                appendProgram(all, loadProgram(child, seen));
+                appendProgram(all, loadProgram(child, context));
             }
             appendProgram(all, std::move(prog));
+            context.loaded.insert(canon);
 
             return all;
         }
@@ -862,9 +895,9 @@ namespace nexus {
                         const std::string& backend = "auto",
                         bool quiet = false) {
 
-            std::set<fs::path> seen;
+            ModuleLoadContext loadContext;
 
-            auto prog = loadProgram(in, seen);
+            auto prog = loadProgram(in, loadContext);
 
             SemanticAnalyzer().analyze(prog);
 
@@ -1331,8 +1364,8 @@ namespace nexus {
         }
 
         int commandExplainBackend(const fs::path& file, const std::string& target) {
-            std::set<fs::path> seen;
-            auto program = loadProgram(file, seen);
+            ModuleLoadContext loadContext;
+            auto program = loadProgram(file, loadContext);
             SemanticAnalyzer().analyze(program);
 
             const std::string selectedTarget = target.empty() ? "native" : target;
@@ -1644,9 +1677,9 @@ namespace nexus {
                               << '\n';
                 }
             }
-            std::set<fs::path> seen;
+            ModuleLoadContext loadContext;
 
-            auto prog = loadProgram(file, seen);
+            auto prog = loadProgram(file, loadContext);
 
             SemanticAnalyzer().analyze(prog);
 
@@ -5570,9 +5603,9 @@ namespace nexus {
 
                 const auto in = resolveInput(argc >= 3 && argv[2][0] != '-' ? argv[2] : "");
 
-                std::set<fs::path> seen;
+                ModuleLoadContext loadContext;
 
-                auto prog = loadProgram(in, seen);
+                auto prog = loadProgram(in, loadContext);
 
                 SemanticAnalyzer().analyze(prog);
 

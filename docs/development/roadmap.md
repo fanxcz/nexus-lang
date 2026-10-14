@@ -4,7 +4,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 ## Available today
 
-- C++20 compiler with lexer, parser, semantic analysis, LLVM IR generation, and a Clang-based native fallback.
+- C++20 compiler with lexer, parser, semantic analysis, LLVM IR generation, and a Clang-based native fallback. Acyclic source imports load once per compilation; circular import chains are rejected with a path trace.
 - Built-in x86-64 machine-code emitter for a documented subset of programs on supported Windows/Linux hosts. It does not replace the LLVM fallback for the full language.
 - Project templates and CLI workflows for creating, checking, building, running, testing, formatting, linting, exporting, and packaging projects.
 - Runtime modules for file and input operations, networking helpers, JSON field extraction, SQLite access, SHA-256, memory helpers, SDL-based graphics, and audio. APIs remain limited to what is implemented in the runtime.
@@ -24,7 +24,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 ## Priority 2 — Language-server and package reliability
 
-1. Benchmark cache refresh behavior on larger repositories and add regression coverage for file-watcher invalidation after external edits, renames, and deletions.
+1. Benchmark cache refresh behavior on larger repositories; the LSP regression suite now exercises watcher invalidation after external edits, renames, and deletions.
 2. Extend semantic navigation to imported aliases and more inferred field types; build on the current selected-range formatter and field quick fixes with broader editor actions and regression tests.
 3. Keep atomic lockfile writes, preserve unrelated manifest entries, and add malformed-manifest regressions.
 4. Verify local vendored packages against SHA-256 tree checksums; `pkg verify` cross-checks manifest/lockfile dependencies and versions, rejects stale records, and confines resolved paths to the project's `vendor/` directory. Registry trust and signed packages remain future work.

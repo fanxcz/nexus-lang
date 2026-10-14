@@ -47,6 +47,23 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "check: OK")
   message(FATAL_ERROR "nexus check failed: ${out}\n${err}")
 endif()
 
+# Circular imports must produce a readable loader error instead of silently
+# dropping one module from the combined program.
+set(CYCLE_DIR "${SMOKE_DIR}/cycle-case")
+file(MAKE_DIRECTORY "${CYCLE_DIR}")
+file(WRITE "${CYCLE_DIR}/a.nx" "import \"b.nx\"\nfn a() {}\n")
+file(WRITE "${CYCLE_DIR}/b.nx" "import \"a.nx\"\nfn b() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${CYCLE_DIR}/a.nx"
+  RESULT_VARIABLE cycle_rc
+  OUTPUT_VARIABLE cycle_out
+  ERROR_VARIABLE cycle_err
+)
+set(cycle_diagnostic "${cycle_out}\n${cycle_err}")
+if(cycle_rc EQUAL 0 OR NOT cycle_diagnostic MATCHES "circular import detected")
+  message(FATAL_ERROR "Circular import was not diagnosed clearly: ${cycle_diagnostic}")
+endif()
+
 execute_process(
   COMMAND "${NEXUS_BIN}" build --release
   WORKING_DIRECTORY "${SMOKE_DIR}"
