@@ -2955,6 +2955,15 @@ namespace nexus {
             // Cache disk-backed source files per workspace. Open buffers overlay this
             // cache, so typing does not trigger a directory walk for every LSP request.
             std::map<std::string, std::map<std::string, std::string>> workspaceDiskCache;
+            struct LspTypeDeclarationIndex {
+                std::string source;
+                std::set<std::string> structNames;
+                std::set<std::string> enumNames;
+                std::vector<StructDecl> structs;
+                std::vector<EnumDecl> enums;
+                bool declarationsParsed = false;
+            };
+            std::map<std::string, LspTypeDeclarationIndex> workspaceTypeDeclarationCache;
             const auto workspaceRootForUri = [&](const std::string& uri) -> fs::path {
                 const fs::path documentPath = pathFromUri(uri);
                 if (documentPath.empty())
@@ -3132,6 +3141,80 @@ namespace nexus {
                 std::vector<LspSymbolDecl> declarations;
             };
             std::map<std::string, LspDocumentIndex> workspaceSymbolIndexCache;
+            // Contextual completion indexes types lazily: scanning tokens is cheap,
+            // and full parsing happens only for files declaring the requested type.
+            const auto workspaceTypeDeclarationsFor =
+                [&](const std::string& requestUri,
+                    const std::string& requestSource,
+                    const std::string& requestedType,
+                    bool requestedEnum) {
+                    std::pair<std::vector<StructDecl>, std::vector<EnumDecl>> result;
+                    if (requestedType.empty())
+                        return result;
+
+                    for (const auto& [documentUri, source] :
+                         collectWorkspaceDocuments(requestUri, requestSource)) {
+                        if (documentUri == requestUri)
+                            continue;
+
+                        auto cached = workspaceTypeDeclarationCache.find(documentUri);
+                        if (cached == workspaceTypeDeclarationCache.end() ||
+                            cached->second.source != source) {
+                            LspTypeDeclarationIndex index;
+                            index.source = source;
+                            try {
+                                const auto tokens = Lexer(source).tokenize();
+                                for (std::size_t i = 0; i + 1 < tokens.size(); ++i) {
+                                    if (tokens[i + 1].kind != TokenKind::Identifier)
+                                        continue;
+                                    if (tokens[i].kind == TokenKind::KwStruct)
+                                        index.structNames.insert(tokens[i + 1].text);
+                                    else if (tokens[i].kind == TokenKind::KwEnum)
+                                        index.enumNames.insert(tokens[i + 1].text);
+                                }
+                            } catch (const std::exception&) {
+                                // One incomplete workspace buffer must not break completion.
+                            }
+                            cached = workspaceTypeDeclarationCache
+                                         .insert_or_assign(documentUri, std::move(index))
+                                         .first;
+                        }
+
+                        auto& index = cached->second;
+                        const bool typeExists = requestedEnum
+                                                    ? index.enumNames.contains(requestedType)
+                                                    : index.structNames.contains(requestedType);
+                        if (!typeExists)
+                            continue;
+
+                        if (!index.declarationsParsed) {
+                            try {
+                                Program parsed = Parser(Lexer(index.source).tokenize()).parseProgram();
+                                index.structs = std::move(parsed.structs);
+                                index.enums = std::move(parsed.enums);
+                            } catch (const std::exception&) {
+                                // The type is unavailable until this source parses cleanly.
+                                index.structs.clear();
+                                index.enums.clear();
+                            }
+                            index.declarationsParsed = true;
+                        }
+
+                        if (requestedEnum) {
+                            for (const auto& declaration : index.enums) {
+                                if (declaration.name == requestedType)
+                                    result.second.push_back(declaration);
+                            }
+                        } else {
+                            for (const auto& declaration : index.structs) {
+                                if (declaration.name == requestedType)
+                                    result.first.push_back(declaration);
+                            }
+                        }
+                    }
+                    return result;
+                };
+
             const auto identifierAtPosition = [&](const std::string& source,
                                                   std::size_t requestedLine,
                                                   std::size_t requestedCharacter) {
@@ -3681,6 +3764,7 @@ namespace nexus {
                     const std::string uri = extractString(body, "uri");
                     workspaceDiskCache.clear();
                     workspaceSymbolIndexCache.erase(uri);
+                    workspaceTypeDeclarationCache.erase(uri);
                     const auto document = openDocuments.find(uri);
                     if (document != openDocuments.end())
                         publishDiagnostics(uri, document->second);
@@ -3689,12 +3773,14 @@ namespace nexus {
                     // deleted/renamed paths no longer present in the workspace walk.
                     workspaceDiskCache.clear();
                     workspaceSymbolIndexCache.clear();
+                    workspaceTypeDeclarationCache.clear();
                 } else if (method == "textDocument/didClose") {
                     const std::string uri = extractString(body, "uri");
                     if (!uri.empty()) {
                         openDocuments.erase(uri);
                         workspaceDiskCache.clear();
                         workspaceSymbolIndexCache.erase(uri);
+                        workspaceTypeDeclarationCache.erase(uri);
                         send("{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\","
                              "\"params\":{\"uri\":\"" +
                              jsonEscape(uri) + "\",\"diagnostics\":[]}}");
@@ -3900,7 +3986,21 @@ namespace nexus {
                             Program program = Parser(Lexer(parseSource).tokenize()).parseProgram();
 
                             if (enumContext) {
-                                for (const auto& declaration : program.enums) {
+                                std::vector<EnumDecl> enumDeclarations = program.enums;
+                                const bool hasLocalEnum =
+                                    std::any_of(enumDeclarations.begin(),
+                                                enumDeclarations.end(),
+                                                [&](const EnumDecl& declaration) {
+                                                    return declaration.name == enumName;
+                                                });
+                                if (!hasLocalEnum) {
+                                    auto workspaceTypes = workspaceTypeDeclarationsFor(
+                                        uri, document->second, enumName, true);
+                                    enumDeclarations.insert(enumDeclarations.end(),
+                                                            workspaceTypes.second.begin(),
+                                                            workspaceTypes.second.end());
+                                }
+                                for (const auto& declaration : enumDeclarations) {
                                     if (declaration.name != enumName)
                                         continue;
                                     for (const auto& variant : declaration.variants) {
@@ -3959,7 +4059,28 @@ namespace nexus {
 
                                 const auto type = variableTypes.find(objectName);
                                 if (type != variableTypes.end()) {
-                                    for (const auto& declaration : program.structs) {
+                                    std::vector<StructDecl> structureDeclarations =
+                                        program.structs;
+                                    const bool hasLocalStruct =
+                                        std::any_of(structureDeclarations.begin(),
+                                                    structureDeclarations.end(),
+                                                    [&](const StructDecl& declaration) {
+                                                        return declaration.name == type->second;
+                                                    });
+                                    const bool builtinType =
+                                        type->second == "i64" || type->second == "int" ||
+                                        type->second == "isize" || type->second == "usize" ||
+                                        type->second == "f64" || type->second == "float" ||
+                                        type->second == "bool" || type->second == "string" ||
+                                        type->second == "void";
+                                    if (!hasLocalStruct && !builtinType) {
+                                        auto workspaceTypes = workspaceTypeDeclarationsFor(
+                                            uri, document->second, type->second, false);
+                                        structureDeclarations.insert(structureDeclarations.end(),
+                                                                      workspaceTypes.first.begin(),
+                                                                      workspaceTypes.first.end());
+                                    }
+                                    for (const auto& declaration : structureDeclarations) {
                                         if (declaration.name != type->second)
                                             continue;
                                         for (const auto& field : declaration.fields) {
