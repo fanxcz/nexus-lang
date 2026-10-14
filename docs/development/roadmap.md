@@ -26,7 +26,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 1. Benchmark cache refresh behavior on larger repositories; the LSP regression suite now exercises watcher invalidation after external edits, renames, and deletions.
 2. Extend semantic navigation to imported aliases and more inferred field types; build on the current selected-range formatter and field quick fixes with broader editor actions and regression tests.
-3. Keep atomic lockfile writes, preserve unrelated manifest entries, and add malformed-manifest regressions.
+3. Keep atomic lockfile writes and preserve unrelated manifest entries. `pkg verify` now rejects malformed dependency entries, duplicate keys/tables, invalid lockfile headers, malformed lock records, and stale project metadata; keep these cases covered by smoke tests.
 4. Verify local vendored packages against SHA-256 tree checksums; `pkg verify` cross-checks manifest/lockfile dependencies and versions, rejects stale records, and confines resolved paths to the project's `vendor/` directory. Registry trust and signed packages remain future work.
 5. Expand diagnostics with stable error codes and semantic error recovery. AST expression/statement spans, aggregate syntax recovery, and multi-error semantic reporting for declarations and function bodies are implemented.
 
