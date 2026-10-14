@@ -293,6 +293,19 @@ endif()
 file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
 
 
+
+# Duplicate keys inside a lockfile table must not overwrite earlier records.
+string(REPLACE [=[sample_lib = "0.3.0"]=] [=[sample_lib = "0.3.0"
+sample_lib = "0.3.0"]=] duplicate_lock_key "${lock_after_add}")
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${duplicate_lock_key}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(duplicate_lock_key_output "${out}\n${err}")
+if(rc EQUAL 0 OR NOT duplicate_lock_key_output MATCHES "duplicate key 'sample_lib'")
+  message(FATAL_ERROR "pkg verify accepted a duplicate lockfile key: ${duplicate_lock_key_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+
 # Use an isolated project so deliberately malformed manifests never affect the
 # package fixture used by the other add/remove/rollback tests.
 set(STRICT_METADATA_DIR "${SMOKE_DIR}/strict-metadata")
@@ -366,6 +379,18 @@ execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${STRICT_ME
 set(project_lock_mismatch "${out}\n${err}")
 if(rc EQUAL 0 OR NOT project_lock_mismatch MATCHES "package name differs")
   message(FATAL_ERROR "pkg verify accepted lock metadata from another project: ${project_lock_mismatch}")
+endif()
+
+file(WRITE "${STRICT_METADATA_DIR}/nexus.lock" [=[
+# NEXUS lockfile v2 (SHA-256 content integrity)
+package = "strict_manifest"
+version = "9.9.9"
+]=])
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${STRICT_METADATA_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(project_version_mismatch "${out}\n${err}")
+if(rc EQUAL 0 OR NOT project_version_mismatch MATCHES "project version differs")
+  message(FATAL_ERROR "pkg verify accepted a stale project version in the lockfile: ${project_version_mismatch}")
 endif()
 
 file(WRITE "${STRICT_METADATA_DIR}/nexus.lock" [=[
