@@ -9,6 +9,7 @@ NEXUS currently supports **local source-package vendoring**. It does not yet pro
 - `nexus pkg remove <name>` removes the vendored package and its matching dependency entries.
 - `nexus pkg update` regenerates the lockfile and SHA-256 checksums for local dependencies; it does not resolve remote or version-range dependencies.
 - `nexus pkg verify` checks that manifest and lockfile records match, package paths stay inside `vendor/`, and recorded package contents have not changed.
+- Package operations refuse a symlinked `vendor/` root. Replacing an existing package stages a backup and restores package/manifest/lockfile state if copying or lockfile refresh fails.
 - `nexus pkg build` builds the package's configured entry source. It does not build a dependency graph.
 - `nexus pkg publish` creates a local ZIP-formatted `.nxpkg` archive in `dist/`; it does not upload the archive.
 

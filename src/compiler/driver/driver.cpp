@@ -1915,6 +1915,38 @@ namespace nexus {
             return true;
         }
 
+        void ensureSafeVendorDirectory(const ProjectConfig& cfg, bool createIfMissing) {
+            const fs::path vendor = cfg.root / "vendor";
+            std::error_code ec;
+            const auto status = fs::symlink_status(vendor, ec);
+            if (ec == std::errc::no_such_file_or_directory ||
+                (!ec && status.type() == fs::file_type::not_found)) {
+                ec.clear();
+                if (createIfMissing) {
+                    fs::create_directories(vendor, ec);
+                    if (ec)
+                        throw std::runtime_error("cannot create vendor directory: " + ec.message());
+                }
+                return;
+            }
+            if (ec)
+                throw std::runtime_error("cannot inspect vendor directory: " + ec.message());
+            if (fs::is_symlink(status))
+                throw std::runtime_error("vendor directory must not be a symlink");
+            if (!fs::is_directory(status))
+                throw std::runtime_error("vendor path exists but is not a directory");
+
+            const fs::path canonicalRoot = fs::weakly_canonical(cfg.root, ec);
+            if (ec)
+                throw std::runtime_error("cannot resolve project root: " + ec.message());
+            const fs::path canonicalVendor = fs::canonical(vendor, ec);
+            if (ec)
+                throw std::runtime_error("cannot resolve vendor directory: " + ec.message());
+            const fs::path relativeVendor = canonicalVendor.lexically_relative(canonicalRoot);
+            if (relativeVendor != fs::path("vendor"))
+                throw std::runtime_error("vendor directory resolves outside the project root");
+        }
+
         void updateDependency(const fs::path& manifest,
                               const std::string& name,
                               const std::string& value,
@@ -2109,6 +2141,10 @@ namespace nexus {
             }
             const std::string sub = args[0];
             const fs::path vendor = cfg.root / "vendor";
+            if (sub == "init" || sub == "add" || sub == "remove")
+                ensureSafeVendorDirectory(cfg, true);
+            else if (sub == "list" || sub == "update" || sub == "verify")
+                ensureSafeVendorDirectory(cfg, false);
             if (sub == "init") {
                 fs::create_directories(vendor);
                 refreshLockfile(cfg);
@@ -2152,6 +2188,8 @@ namespace nexus {
                     throw std::runtime_error(
                         "invalid package name: use letters, digits, '_' or '-'");
                 const fs::path root = fs::weakly_canonical(cfg.root, ec);
+                if (ec)
+                    throw std::runtime_error("cannot resolve project root: " + ec.message());
                 const fs::path destination = (vendor / dep.name).lexically_normal();
                 if (source == root)
                     throw std::runtime_error(
@@ -2160,18 +2198,88 @@ namespace nexus {
                 if (!relativeDestination.empty() && *relativeDestination.begin() != "..")
                     throw std::runtime_error("package source contains the vendor destination; "
                                              "choose a separate directory");
-                fs::remove_all(destination, ec);
-                if (ec)
-                    throw std::runtime_error("cannot replace vendored package: " + ec.message());
-                copyPackageTree(source, destination);
+
+                const fs::path manifestPath = cfg.root / "nexus.toml";
+                const fs::path lockPath = cfg.root / "nexus.lock";
+                const std::string manifestBefore = readFile(manifestPath);
+                const auto lockStatus = fs::symlink_status(lockPath, ec);
+                if (ec == std::errc::no_such_file_or_directory ||
+                    (!ec && lockStatus.type() == fs::file_type::not_found)) {
+                    ec.clear();
+                } else {
+                    if (ec)
+                        throw std::runtime_error("cannot inspect lockfile: " + ec.message());
+                    if (fs::is_symlink(lockStatus) || !fs::is_regular_file(lockStatus))
+                        throw std::runtime_error("nexus.lock must be a regular file, not a symlink");
+                }
+                const bool hadLockfile =
+                    !ec && lockStatus.type() != fs::file_type::not_found;
+                const std::string lockBefore = hadLockfile ? readFile(lockPath) : std::string{};
+
+                const auto stamp =
+                    std::chrono::steady_clock::now().time_since_epoch().count();
+                const fs::path backup =
+                    root / (".nexus-pkg-backup-" + dep.name + "-" + std::to_string(stamp));
+                if (fs::exists(backup, ec) || ec)
+                    throw std::runtime_error("cannot reserve package rollback path");
+                ec.clear();
+
+                const auto destinationStatus = fs::symlink_status(destination, ec);
+                const bool hadDestination =
+                    !ec && destinationStatus.type() != fs::file_type::not_found;
+                if (ec == std::errc::no_such_file_or_directory)
+                    ec.clear();
+                else if (ec)
+                    throw std::runtime_error("cannot inspect existing vendored package: " +
+                                             ec.message());
+                if (hadDestination) {
+                    fs::rename(destination, backup, ec);
+                    if (ec)
+                        throw std::runtime_error("cannot stage existing vendored package: " +
+                                                 ec.message());
+                }
+
                 try {
-                    updateDependency(
-                        cfg.root / "nexus.toml", dep.name, "vendor/" + dep.name, false);
+                    copyPackageTree(source, destination);
+                    updateDependency(manifestPath, dep.name, "vendor/" + dep.name, false);
                     refreshLockfile(cfg);
                 } catch (...) {
-                    std::error_code cleanup;
-                    fs::remove_all(destination, cleanup);
+                    std::string rollbackFailure;
+                    try {
+                        std::error_code rollbackError;
+                        fs::remove_all(destination, rollbackError);
+                        if (rollbackError)
+                            throw std::runtime_error("cannot remove failed package copy: " +
+                                                     rollbackError.message());
+                        if (hadDestination) {
+                            fs::rename(backup, destination, rollbackError);
+                            if (rollbackError)
+                                throw std::runtime_error("cannot restore previous package: " +
+                                                         rollbackError.message());
+                        }
+                        writeTextAtomically(manifestPath, manifestBefore);
+                        if (hadLockfile) {
+                            writeTextAtomically(lockPath, lockBefore);
+                        } else {
+                            fs::remove(lockPath, rollbackError);
+                            if (rollbackError)
+                                throw std::runtime_error("cannot remove failed lockfile: " +
+                                                         rollbackError.message());
+                        }
+                    } catch (const std::exception& rollbackError) {
+                        rollbackFailure = rollbackError.what();
+                    }
+                    if (!rollbackFailure.empty())
+                        throw std::runtime_error("pkg add failed and rollback was incomplete: " +
+                                                 rollbackFailure);
                     throw;
+                }
+
+                if (hadDestination) {
+                    fs::remove_all(backup, ec);
+                    if (ec)
+                        std::cerr << "pkg add: warning: old package backup remains at "
+                                  << backup << ": " << ec.message() << '\n';
                 }
                 std::cout << "pkg add: vendored " << dep.name << " " << dep.version << "\n";
                 return 0;

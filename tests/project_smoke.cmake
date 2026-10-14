@@ -245,6 +245,19 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed for an unchanged local package: ${out}\\n${err}")
 endif()
 
+# Re-adding a package replaces its contents rather than leaving stale files behind.
+file(WRITE "${SMOKE_DIR}/vendor/sample_lib/stale.txt" "stale")
+execute_process(COMMAND "${NEXUS_BIN}" pkg add "${PKG_SOURCE}"
+  WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR EXISTS "${SMOKE_DIR}/vendor/sample_lib/stale.txt")
+  message(FATAL_ERROR "pkg add did not safely replace an existing package: ${out}\\n${err}")
+endif()
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after safely replacing a package: ${out}\\n${err}")
+endif()
+
 file(WRITE "${SMOKE_DIR}/vendor/sample_lib/src/main.nx" "fn main() { print(\"tampered\") }\n")
 execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
