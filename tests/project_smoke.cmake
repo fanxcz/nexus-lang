@@ -292,30 +292,91 @@ if(rc EQUAL 0 OR NOT malformed_lock_output MATCHES "invalid lockfile entry")
 endif()
 file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
 
-file(READ "${SMOKE_DIR}/nexus.toml" manifest_valid_for_parse_tests)
-string(REPLACE [=[sample_lib = "vendor/sample_lib"]=] [=[sample_lib]=] malformed_manifest_entry "${manifest_valid_for_parse_tests}")
-file(WRITE "${SMOKE_DIR}/nexus.toml" "${malformed_manifest_entry}")
-execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING DIRECTORY "${SMOKE_DIR}"
+
+# Use an isolated project so deliberately malformed manifests never affect the
+# package fixture used by the other add/remove/rollback tests.
+set(STRICT_METADATA_DIR "${SMOKE_DIR}/strict-metadata")
+file(MAKE_DIRECTORY "${STRICT_METADATA_DIR}/src")
+file(WRITE "${STRICT_METADATA_DIR}/src/main.nx" "fn main() { print(1) }\n")
+file(WRITE "${STRICT_METADATA_DIR}/nexus.lock" [=[
+# NEXUS lockfile v2 (SHA-256 content integrity)
+package = "strict_manifest"
+version = "1.0.0"
+]=])
+
+file(WRITE "${STRICT_METADATA_DIR}/nexus.toml" [=[
+[package]
+name = "strict_manifest"
+version = "1.0.0"
+
+[build]
+entry = "src/main.nx"
+artifact = "strict_manifest"
+target = "native"
+
+[dependencies]
+broken
+]=])
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${STRICT_METADATA_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 set(malformed_manifest_output "${out}\n${err}")
 if(rc EQUAL 0 OR NOT malformed_manifest_output MATCHES "malformed entry")
   message(FATAL_ERROR "pkg verify accepted a malformed dependency entry: ${malformed_manifest_output}")
 endif()
 
-string(REPLACE [=[sample_lib = "vendor/sample_lib"]=] [=[sample_lib = "vendor/sample_lib"
-sample_lib = "vendor/sample_lib"]=] duplicate_manifest_entry "${manifest_valid_for_parse_tests}")
-file(WRITE "${SMOKE_DIR}/nexus.toml" "${duplicate_manifest_entry}")
-execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING DIRECTORY "${SMOKE_DIR}"
+file(WRITE "${STRICT_METADATA_DIR}/nexus.toml" [=[
+[package]
+name = "strict_manifest"
+version = "1.0.0"
+
+[build]
+entry = "src/main.nx"
+artifact = "strict_manifest"
+target = "native"
+
+[dependencies]
+sample_lib = "vendor/sample_lib"
+sample_lib = "vendor/sample_lib"
+]=])
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${STRICT_METADATA_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 set(duplicate_manifest_output "${out}\n${err}")
 if(rc EQUAL 0 OR NOT duplicate_manifest_output MATCHES "duplicate key 'sample_lib'")
   message(FATAL_ERROR "pkg verify accepted a duplicate dependency key: ${duplicate_manifest_output}")
 endif()
-file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_valid_for_parse_tests}")
-execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING DIRECTORY "${SMOKE_DIR}"
+
+# Project metadata in the lockfile is also part of the verification contract.
+file(WRITE "${STRICT_METADATA_DIR}/nexus.toml" [=[
+[package]
+name = "strict_manifest"
+version = "1.0.0"
+
+[build]
+entry = "src/main.nx"
+artifact = "strict_manifest"
+target = "native"
+]=])
+file(WRITE "${STRICT_METADATA_DIR}/nexus.lock" [=[
+# NEXUS lockfile v2 (SHA-256 content integrity)
+package = "different_project"
+version = "1.0.0"
+]=])
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${STRICT_METADATA_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
-if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
-  message(FATAL_ERROR "pkg verify failed after restoring valid package metadata: ${out}\n${err}")
+set(project_lock_mismatch "${out}\n${err}")
+if(rc EQUAL 0 OR NOT project_lock_mismatch MATCHES "package name differs")
+  message(FATAL_ERROR "pkg verify accepted lock metadata from another project: ${project_lock_mismatch}")
+endif()
+
+file(WRITE "${STRICT_METADATA_DIR}/nexus.lock" [=[
+# NEXUS lockfile v2 (SHA-256 content integrity)
+package = "strict_manifest"
+version = "1.0.0"
+]=])
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${STRICT_METADATA_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "no checksummed local dependencies")
+  message(FATAL_ERROR "pkg verify failed for a valid dependency-free lockfile: ${out}\n${err}")
 endif()
 
 # Re-adding a package replaces its contents rather than leaving stale files behind.
