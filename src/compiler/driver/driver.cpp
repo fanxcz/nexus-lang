@@ -3600,7 +3600,7 @@ namespace nexus {
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
                          "\"renameProvider\":true,\"hoverProvider\":true,"
                          "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":true,"
-                         "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}");
+                         "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}}");
                 } else if (method == "initialized") {
                     if (clientSupportsWatchedFilesRegistration) {
                         send("{\"jsonrpc\":\"2.0\",\"id\":\"nexus-register-nx-watcher\","
