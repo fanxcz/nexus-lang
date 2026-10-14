@@ -30,7 +30,13 @@ def read_message(stream: BinaryIO) -> dict[str, Any] | None:
     if "content-length" not in headers:
         raise RuntimeError(f"LSP response has no Content-Length header: {headers}")
     length = int(headers["content-length"])
-    payload = stream.read(length)
+    payload_parts = bytearray()
+    while len(payload_parts) < length:
+        chunk = stream.read(length - len(payload_parts))
+        if not chunk:
+            break
+        payload_parts.extend(chunk)
+    payload = bytes(payload_parts)
     if len(payload) != length:
         raise RuntimeError(f"Truncated LSP response: expected {length}, got {len(payload)} bytes")
     try:
