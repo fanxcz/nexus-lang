@@ -262,6 +262,62 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed for an unchanged local package: ${out}\\n${err}")
 endif()
 
+
+# Invalid generated lockfiles and malformed dependency entries must fail closed.
+file(WRITE "${SMOKE_DIR}/nexus.lock" "this is not a NEXUS lockfile\n")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(bad_lock_output "${out}\n${err}")
+if(rc EQUAL 0 OR NOT bad_lock_output MATCHES "invalid lockfile")
+  message(FATAL_ERROR "pkg verify accepted a lockfile without the v2 header: ${bad_lock_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+
+file(APPEND "${SMOKE_DIR}/nexus.lock" "\n[dependencies]\nsample_lib = \"0.3.0\"\n")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(duplicate_lock_table_output "${out}\n${err}")
+if(rc EQUAL 0 OR NOT duplicate_lock_table_output MATCHES "duplicate table")
+  message(FATAL_ERROR "pkg verify accepted a duplicate lockfile table: ${duplicate_lock_table_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+
+string(REPLACE [=[sample_lib = "0.3.0"]=] [=[sample_lib]=] malformed_lock_entry "${lock_after_add}")
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${malformed_lock_entry}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(malformed_lock_output "${out}\n${err}")
+if(rc EQUAL 0 OR NOT malformed_lock_output MATCHES "invalid lockfile entry")
+  message(FATAL_ERROR "pkg verify accepted a malformed lockfile entry: ${malformed_lock_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+
+file(READ "${SMOKE_DIR}/nexus.toml" manifest_valid_for_parse_tests)
+string(REPLACE [=[sample_lib = "vendor/sample_lib"]=] [=[sample_lib]=] malformed_manifest_entry "${manifest_valid_for_parse_tests}")
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${malformed_manifest_entry}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(malformed_manifest_output "${out}\n${err}")
+if(rc EQUAL 0 OR NOT malformed_manifest_output MATCHES "malformed entry")
+  message(FATAL_ERROR "pkg verify accepted a malformed dependency entry: ${malformed_manifest_output}")
+endif()
+
+string(REPLACE [=[sample_lib = "vendor/sample_lib"]=] [=[sample_lib = "vendor/sample_lib"
+sample_lib = "vendor/sample_lib"]=] duplicate_manifest_entry "${manifest_valid_for_parse_tests}")
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${duplicate_manifest_entry}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(duplicate_manifest_output "${out}\n${err}")
+if(rc EQUAL 0 OR NOT duplicate_manifest_output MATCHES "duplicate key 'sample_lib'")
+  message(FATAL_ERROR "pkg verify accepted a duplicate dependency key: ${duplicate_manifest_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_valid_for_parse_tests}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after restoring valid package metadata: ${out}\n${err}")
+endif()
+
 # Re-adding a package replaces its contents rather than leaving stale files behind.
 file(WRITE "${SMOKE_DIR}/vendor/sample_lib/stale.txt" "stale")
 execute_process(COMMAND "${NEXUS_BIN}" pkg add "${PKG_SOURCE}"
