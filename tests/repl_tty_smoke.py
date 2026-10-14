@@ -52,6 +52,12 @@ def main():
                 raise AssertionError(f"history recall did not evaluate: {second!r}")
             os.write(master, bytes([3]))
             read_until(master, proc, bytes([13, 10]) + b"nexus> ")
+            # Tab expands a built-in identifier from a partial prefix.
+            os.write(master, b"pri\t")
+            completion = read_until(master, proc, b"nexus> print")
+            if b"nexus> print" not in completion:
+                raise AssertionError(f"REPL tab completion did not find print: {completion!r}")
+            os.write(master, bytes([21]))  # Ctrl+U clears the unexecuted line.
             os.write(master, b":quit\r")
             proc.wait(timeout=5)
             if proc.returncode != 0:

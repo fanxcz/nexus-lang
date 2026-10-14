@@ -5957,7 +5957,26 @@ namespace nexus {
             return width;
         }
 
-#ifndef _WIN32
+#ifdef _WIN32
+        struct ReplTerminalMode {
+            HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
+            DWORD originalMode = 0;
+            bool active = false;
+
+            ReplTerminalMode() {
+                if (input == INVALID_HANDLE_VALUE || !GetConsoleMode(input, &originalMode))
+                    return;
+                const DWORD rawMode =
+                    originalMode & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
+                active = SetConsoleMode(input, rawMode) != 0;
+            }
+
+            ~ReplTerminalMode() {
+                if (active)
+                    SetConsoleMode(input, originalMode);
+            }
+        };
+#else
         struct ReplTerminalMode {
             termios original{};
             bool active = false;
@@ -5981,9 +6000,16 @@ namespace nexus {
 
         ReplInputResult readReplInputLine(const std::string& prompt,
                                           const std::vector<std::string>& history,
+                                          const std::vector<std::string>& completionCandidates,
                                           std::string& inputLine) {
 #ifdef _WIN32
             if (_isatty(_fileno(stdin)) == 0) {
+                if (std::getline(std::cin, inputLine))
+                    return ReplInputResult::Line;
+                return ReplInputResult::EndOfInput;
+            }
+            ReplTerminalMode terminalMode;
+            if (!terminalMode.active) {
                 if (std::getline(std::cin, inputLine))
                     return ReplInputResult::Line;
                 return ReplInputResult::EndOfInput;
@@ -6161,6 +6187,58 @@ namespace nexus {
                         line = historyIndex == history.size() ? draft : history[historyIndex];
                         cursor = line.size();
                         redraw();
+                    }
+                    continue;
+                }
+                if (key == '\t') {
+                    const auto isIdentifierByte = [](unsigned char ch) {
+                        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                               (ch >= '0' && ch <= '9') || ch == '_';
+                    };
+                    std::size_t wordStart = cursor;
+                    while (wordStart > 0 &&
+                           isIdentifierByte(static_cast<unsigned char>(line[wordStart - 1])))
+                        --wordStart;
+                    std::size_t wordEnd = cursor;
+                    while (wordEnd < line.size() &&
+                           isIdentifierByte(static_cast<unsigned char>(line[wordEnd])))
+                        ++wordEnd;
+                    const std::string prefix = line.substr(wordStart, cursor - wordStart);
+                    std::vector<std::string> matches;
+                    for (const auto& candidate : completionCandidates) {
+                        if (candidate.compare(0, prefix.size(), prefix) == 0)
+                            matches.push_back(candidate);
+                    }
+                    if (!matches.empty()) {
+                        std::size_t commonLength = matches.front().size();
+                        for (std::size_t i = 1; i < matches.size(); ++i) {
+                            commonLength = std::min(commonLength, matches[i].size());
+                            std::size_t j = 0;
+                            while (j < commonLength && matches.front()[j] == matches[i][j])
+                                ++j;
+                            commonLength = j;
+                        }
+                        const std::size_t replacementLength = matches.size() == 1
+                                                                  ? matches.front().size()
+                                                                  : std::max(commonLength, prefix.size());
+                        if (replacementLength > prefix.size() || matches.size() == 1) {
+                            const std::string replacement =
+                                matches.front().substr(0, replacementLength);
+                            line.replace(wordStart, wordEnd - wordStart, replacement);
+                            cursor = wordStart + replacement.size();
+                        }
+                        if (matches.size() == 1) {
+                            redraw();
+                        } else {
+                            if (replacementLength > prefix.size())
+                                redraw();
+                            std::cout << "\r\n";
+                            for (const auto& match : matches)
+                                std::cout << match << "  ";
+                            std::cout << "\r\n";
+                            displayedColumns = 0;
+                            redraw();
+                        }
                     }
                     continue;
                 }
@@ -6617,10 +6695,40 @@ namespace nexus {
 
             std::string pending;
             std::string inputLine;
+            const auto buildReplCompletionCandidates = [&]() {
+                std::vector<std::string> candidates = {
+                    "fn",          "let",        "const",       "mut",          "if",
+                    "else",        "while",       "for",         "match",        "return",
+                    "struct",      "enum",        "true",        "false",        "print",
+                    "input",       "input_i64",   "random_i64",  "str_i64",      "file_read",
+                    "file_write",
+                    "file_exists", "env",         "sleep",       "gfx_window",   "gfx_clear",
+                    "gfx_present"};
+                candidates.insert(candidates.end(), variableNames.begin(), variableNames.end());
+                for (const auto& declaration : declarations) {
+                    try {
+                        const auto tokens = Lexer(declaration).tokenize();
+                        if (tokens.size() < 2 || tokens[1].kind != TokenKind::Identifier)
+                            continue;
+                        if (tokens[0].kind == TokenKind::KwFn ||
+                            tokens[0].kind == TokenKind::KwStruct ||
+                            tokens[0].kind == TokenKind::KwEnum) {
+                            candidates.push_back(tokens[1].text);
+                        }
+                    } catch (const std::exception&) {
+                        // Invalid/incomplete declarations are already diagnosed when entered.
+                    }
+                }
+                std::sort(candidates.begin(), candidates.end());
+                candidates.erase(std::unique(candidates.begin(), candidates.end()), candidates.end());
+                return candidates;
+            };
             for (;;) {
                 const std::string prompt = pending.empty() ? "nexus> " : "   ... ";
                 std::cout << prompt << std::flush;
-                const auto inputResult = readReplInputLine(prompt, history, inputLine);
+                const auto completionCandidates = buildReplCompletionCandidates();
+                const auto inputResult =
+                    readReplInputLine(prompt, history, completionCandidates, inputLine);
                 if (inputResult == ReplInputResult::EndOfInput) {
                     if (!pending.empty()) {
                         std::cerr << "nexus: incomplete multi-line input discarded\n";

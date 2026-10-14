@@ -16,7 +16,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 1. Keep the full test suite green on clean Linux, Windows, and macOS runners; run the sanitizer workflow for frontend/runtime changes.
 2. Make `nexus doctor` verify the actual packaged compiler/runtime/stdlib/template layout on each platform.
-3. Extend tests for paths with spaces, clean installs, missing optional tools, malformed source, repeatable builds, and interactive-terminal editing/history navigation.
+3. Extend tests for paths with spaces, clean installs, missing optional tools, malformed source, repeatable builds, and interactive-terminal editing, history navigation, and Tab completion.
 4. Keep formatter and linter behavior deterministic. `nexus fmt --all` and `nexus fmt --check --all` now process `.nx` files in sorted path order while skipping dependency and build-output directories.
 5. Keep the CLI and published documentation synchronized so examples only use implemented options.
 
