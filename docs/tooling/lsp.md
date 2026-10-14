@@ -22,7 +22,7 @@ The server caches discovered files and per-file lexical indexes. Unchanged index
 
 The index tracks declarations, tokens and brace-delimited scopes. Navigation resolves top-level functions, structs and enums across discoverable workspace files, plus `let`/`const` bindings, loop variables and simple function parameters with scope awareness. Tests cover cross-file lookup, shadowing and rename without rewriting unrelated bindings.
 
-Field and enum completion uses parsed source context; it is not yet a complete semantic index for all member expressions. Full navigation across imported aliases and robust inferred field types across files remain future work. User-defined hover can resolve declarations from other workspace files when the selected identifier resolves to that global symbol; incomplete source and duplicate global names can still limit resolution. Range formatting operates on the selected lines but computes indentation from the whole document.
+Field and enum completion uses parsed source context; it is not yet a complete semantic index for all member expressions. Imported-alias resolution and inference beyond named-struct function returns remain future work. User-defined hover can resolve declarations from other workspace files when the selected identifier resolves to that global symbol; incomplete source and duplicate global names can still limit resolution. Range formatting operates on the selected lines but computes indentation from the whole document.
 
 ## Diagnostics
 
