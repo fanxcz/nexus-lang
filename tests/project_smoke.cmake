@@ -262,6 +262,19 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed for an unchanged local package: ${out}\\n${err}")
 endif()
 
+# The dependency key and vendored package name are coupled in the local package
+# workflow. A renamed package manifest must not pass verification just because its
+# lockfile was created from the previous contents.
+file(READ "${SMOKE_DIR}/vendor/sample_lib/nexus.toml" vendor_manifest_before_name_test)
+string(REPLACE [=[name = "sample_lib"]=] [=[name = "renamed_lib"]=] mismatched_vendor_manifest "${vendor_manifest_before_name_test}")
+file(WRITE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml" "${mismatched_vendor_manifest}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(name_mismatch_output "${out}\\n${err}")
+if(rc EQUAL 0 OR NOT name_mismatch_output MATCHES "package name mismatch for dependency 'sample_lib'")
+  message(FATAL_ERROR "pkg verify accepted a vendored package with a mismatched name: ${name_mismatch_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml" "${vendor_manifest_before_name_test}")
 
 # Invalid generated lockfiles and malformed dependency entries must fail closed.
 file(WRITE "${SMOKE_DIR}/nexus.lock" "this is not a NEXUS lockfile\n")

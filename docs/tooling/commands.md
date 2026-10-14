@@ -122,7 +122,7 @@ The current package manager supports local vendoring and creation of a local `.n
 
 ## Language server
 
-Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The server provides initialization, diagnostics, completion, hover, whole-document formatting, references, rename, and brace-scope-aware resolution for local variables and simple parameters. Workspace files are cached and indexed for supported declarations, including unopened `.nx` files. Resolution is still lexical rather than a full type-aware semantic model: struct fields, enum variants, import aliases, and inferred types have known limitations.
+Run `nexus lsp` from an editor configured to launch the language server over standard input/output. The server provides diagnostics, completion, signature help, hover, go-to-definition, references, rename, whole-document and range formatting, quick fixes, a current-file Outline (`textDocument/documentSymbol`), and workspace-wide declaration search (`workspace/symbol`). Workspace files are cached and indexed for supported declarations, including unopened `.nx` files; workspace symbol search is capped at 500 results per request. Resolution is still lexical rather than a full type-aware semantic model: struct fields, enum variants, import aliases, and inferred types have known limitations.
 
 ## Diagnostics
 

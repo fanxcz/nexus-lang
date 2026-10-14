@@ -2732,6 +2732,13 @@ namespace nexus {
 
                     try {
                         const auto dependencyConfig = loadProject(canonicalDependency);
+                        if (dependencyConfig.name != name) {
+                            std::cerr << "pkg verify: package name mismatch for dependency '"
+                                      << name << "': package manifest declares '"
+                                      << dependencyConfig.name << "'\n";
+                            failed = true;
+                            continue;
+                        }
                         const auto lockedVersion = lockedDependencies.find(name);
                         if (lockedVersion == lockedDependencies.end() ||
                             dependencyConfig.version != lockedVersion->second) {
