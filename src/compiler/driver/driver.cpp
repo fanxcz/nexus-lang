@@ -30,6 +30,8 @@
 #include <variant>
 #include <vector>
 #ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -2524,6 +2526,13 @@ namespace nexus {
         }
 
         int commandLsp() {
+#ifdef _WIN32
+            // LSP framing uses explicit CRLF bytes; disable Windows text-mode newline translation.
+            if (_setmode(_fileno(stdout), _O_BINARY) == -1) {
+                std::cerr << "NEXUS LSP: could not switch stdout to binary mode\\n";
+                return 2;
+            }
+#endif
             const auto extractString = [](const std::string& json, const std::string& field) {
                 const std::string key = "\"" + field + "\"";
                 auto pos = json.find(key);
