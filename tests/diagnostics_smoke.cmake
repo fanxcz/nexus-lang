@@ -61,5 +61,39 @@ if(rc EQUAL 0 OR NOT declaration_combined MATCHES "duplicate field 'value' in st
   message(FATAL_ERROR "Semantic analysis did not aggregate declaration and body errors: ${declaration_combined}")
 endif()
 
+# Struct initializers must name every field exactly once.
+set(DUPLICATE_INIT_SOURCE "${DIAGNOSTIC_DIR}/duplicate-init.nx")
+file(WRITE "${DUPLICATE_INIT_SOURCE}"
+  "struct Pair { left: i64, right: i64 }\nfn main() { let pair = Pair { left: 1, left: 2 } }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${DUPLICATE_INIT_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(duplicate_init_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT duplicate_init_combined MATCHES "duplicate field initializer 'left' in 'Pair'")
+  message(FATAL_ERROR "Duplicate struct initializer field was not rejected: ${duplicate_init_combined}")
+endif()
+
+set(MISSING_INIT_SOURCE "${DIAGNOSTIC_DIR}/missing-init.nx")
+file(WRITE "${MISSING_INIT_SOURCE}"
+  "struct Pair { left: i64, right: i64 }\nfn main() { let pair = Pair { left: 1 } }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${MISSING_INIT_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(missing_init_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT missing_init_combined MATCHES "missing field 'right' in initializer for 'Pair'")
+  message(FATAL_ERROR "Missing struct initializer field was not identified: ${missing_init_combined}")
+endif()
+
+set(UNKNOWN_INIT_SOURCE "${DIAGNOSTIC_DIR}/unknown-init.nx")
+file(WRITE "${UNKNOWN_INIT_SOURCE}"
+  "struct Pair { left: i64, right: i64 }\nfn main() { let pair = Pair { left: 1, height: 2 } }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${UNKNOWN_INIT_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(unknown_init_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT unknown_init_combined MATCHES "unknown field 'height' in initializer for 'Pair'")
+  message(FATAL_ERROR "Unknown struct initializer field was not identified: ${unknown_init_combined}")
+endif()
+
 file(REMOVE_RECURSE "${DIAGNOSTIC_DIR}")
 message(STATUS "NEXUS diagnostics smoke test: PASS")

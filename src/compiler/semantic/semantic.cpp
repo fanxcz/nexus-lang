@@ -412,12 +412,23 @@ namespace nexus {
         }
         if (auto* si = dynamic_cast<StructInitExpr*>(e)) {
             auto& s = getStruct(si->typeName);
-            if (si->fields.size() != s.fields.size())
-                throw std::runtime_error("wrong number of fields for " + si->typeName);
+            std::unordered_map<std::string, bool> supplied;
+            for (const auto& [name, value] : si->fields) {
+                (void)value;
+                if (!supplied.emplace(name, true).second)
+                    throw std::runtime_error("duplicate field initializer '" + name + "' in '" +
+                                             si->typeName + "'");
+                if (!fieldOf(s, name))
+                    throw std::runtime_error("unknown field '" + name + "' in initializer for '" +
+                                             si->typeName + "'");
+            }
+            for (const auto& field : s.fields) {
+                if (!supplied.contains(field.name))
+                    throw std::runtime_error("missing field '" + field.name +
+                                             "' in initializer for '" + si->typeName + "'");
+            }
             for (auto& [name, x] : si->fields) {
                 auto* f = fieldOf(s, name);
-                if (!f)
-                    throw std::runtime_error("unknown field '" + name + "'");
                 auto actual = expr(x.get(), env);
                 if (!sameType(actual, f->type))
                     throw std::runtime_error("field '" + name + "' of '" + si->typeName +
