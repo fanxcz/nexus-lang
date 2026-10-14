@@ -93,7 +93,13 @@ endif()
 # Adjacent unary operators are lexically significant in NEXUS. The formatter
 # must preserve the original token stream, not merely make the output parse.
 set(UNARY_SOURCE "${TEST_DIR}/unary-operators.nx")
-file(WRITE "${UNARY_SOURCE}" [=[fn main(){let value=8--2;let nested=-(value+3);let ratio=12/-3;let message="line // and brace }";print(value+nested+ratio);print(message); // keep comment }
+file(WRITE "${UNARY_SOURCE}" [=[fn main(){
+let value=8--2;
+let nested=-(value+3);
+let ratio=12/-3;
+let message="line // and brace }";
+print(value+nested+ratio);
+print(message); // keep comment }
 }
 ]=])
 execute_process(
