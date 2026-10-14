@@ -143,7 +143,7 @@ nexus --version
 See the [NEXUS Roadmap](../development/roadmap.md) for planned improvements and completion criteria.
 
 
-REPL history persists between launches (up to 500 entries); `:history-clear` removes saved entries too. Terminal arrow-key editing is not yet provided.
+REPL history persists between launches (up to 500 entries); `:history-clear` removes saved entries too. In an interactive terminal, Up/Down recall history, Left/Right and Home/End move the cursor, Backspace/Delete edit the line, Ctrl+A/Ctrl+E jump to the start/end, Ctrl+U clears the text before the cursor, Ctrl+K clears to the end, and Ctrl+C cancels the current line. When standard input is redirected or piped, the REPL uses ordinary line-based input so scripts and automated tests remain compatible.
 
 
 State is rebuilt from saved declarations and statements for each entry. Pure `if`, `while`, `for`, and `match` blocks that only use local expressions and assignments are retained so their binding changes persist. Blocks containing function calls or unsupported operations run once but are not replayed; the shell prints a note because mutations inside those blocks cannot currently be retained.

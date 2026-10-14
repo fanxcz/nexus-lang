@@ -31,6 +31,7 @@
 #include <variant>
 #include <vector>
 #ifdef _WIN32
+#include <conio.h>
 #include <fcntl.h>
 #include <io.h>
 #ifndef NOMINMAX
@@ -41,8 +42,10 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <termios.h>
 #include <unistd.h>
 #endif
 
@@ -5914,6 +5917,271 @@ namespace nexus {
             }
         }
 
+
+        enum class ReplInputResult { Line, EndOfInput, Interrupted };
+
+        constexpr int kReplKeyUp = 0x1001;
+        constexpr int kReplKeyDown = 0x1002;
+        constexpr int kReplKeyLeft = 0x1003;
+        constexpr int kReplKeyRight = 0x1004;
+        constexpr int kReplKeyHome = 0x1005;
+        constexpr int kReplKeyEnd = 0x1006;
+        constexpr int kReplKeyDelete = 0x1007;
+
+        std::size_t replPreviousUtf8Boundary(const std::string& value, std::size_t cursor) {
+            if (cursor == 0)
+                return 0;
+            --cursor;
+            while (cursor > 0 &&
+                   (static_cast<unsigned char>(value[cursor]) & 0xc0) == 0x80)
+                --cursor;
+            return cursor;
+        }
+
+        std::size_t replNextUtf8Boundary(const std::string& value, std::size_t cursor) {
+            if (cursor >= value.size())
+                return value.size();
+            ++cursor;
+            while (cursor < value.size() &&
+                   (static_cast<unsigned char>(value[cursor]) & 0xc0) == 0x80)
+                ++cursor;
+            return cursor;
+        }
+
+        std::size_t replDisplayWidth(const std::string& value) {
+            std::size_t width = 0;
+            for (const unsigned char ch : value) {
+                if ((ch & 0xc0) != 0x80)
+                    ++width;
+            }
+            return width;
+        }
+
+#ifndef _WIN32
+        struct ReplTerminalMode {
+            termios original{};
+            bool active = false;
+
+            ReplTerminalMode() {
+                if (::tcgetattr(STDIN_FILENO, &original) != 0)
+                    return;
+                termios raw = original;
+                raw.c_lflag &= static_cast<tcflag_t>(~(ICANON | ECHO | ISIG));
+                raw.c_cc[VMIN] = 1;
+                raw.c_cc[VTIME] = 0;
+                active = ::tcsetattr(STDIN_FILENO, TCSANOW, &raw) == 0;
+            }
+
+            ~ReplTerminalMode() {
+                if (active)
+                    ::tcsetattr(STDIN_FILENO, TCSANOW, &original);
+            }
+        };
+#endif
+
+        ReplInputResult readReplInputLine(const std::string& prompt,
+                                          const std::vector<std::string>& history,
+                                          std::string& inputLine) {
+#ifdef _WIN32
+            if (_isatty(_fileno(stdin)) == 0) {
+                if (std::getline(std::cin, inputLine))
+                    return ReplInputResult::Line;
+                return ReplInputResult::EndOfInput;
+            }
+            auto readKey = []() -> int {
+                const int ch = _getch();
+                if (ch == 0 || ch == 224) {
+                    switch (_getch()) {
+                    case 72: return kReplKeyUp;
+                    case 80: return kReplKeyDown;
+                    case 75: return kReplKeyLeft;
+                    case 77: return kReplKeyRight;
+                    case 71: return kReplKeyHome;
+                    case 79: return kReplKeyEnd;
+                    case 83: return kReplKeyDelete;
+                    default: return -2;
+                    }
+                }
+                return ch;
+            };
+#else
+            if (::isatty(STDIN_FILENO) == 0) {
+                if (std::getline(std::cin, inputLine))
+                    return ReplInputResult::Line;
+                return ReplInputResult::EndOfInput;
+            }
+            ReplTerminalMode terminalMode;
+            if (!terminalMode.active) {
+                if (std::getline(std::cin, inputLine))
+                    return ReplInputResult::Line;
+                return ReplInputResult::EndOfInput;
+            }
+            const auto readByte = [](int timeoutMs) -> int {
+                pollfd descriptor{STDIN_FILENO, POLLIN, 0};
+                if (::poll(&descriptor, 1, timeoutMs) <= 0)
+                    return -1;
+                unsigned char byte = 0;
+                if (::read(STDIN_FILENO, &byte, 1) != 1)
+                    return -1;
+                return byte;
+            };
+            auto readKey = [&]() -> int {
+                unsigned char byte = 0;
+                if (::read(STDIN_FILENO, &byte, 1) != 1)
+                    return -1;
+                if (byte != 27)
+                    return byte;
+                const int opening = readByte(35);
+                if (opening != '[' && opening != 'O')
+                    return 27;
+                const int final = readByte(35);
+                switch (final) {
+                case 'A': return kReplKeyUp;
+                case 'B': return kReplKeyDown;
+                case 'C': return kReplKeyRight;
+                case 'D': return kReplKeyLeft;
+                case 'H': return kReplKeyHome;
+                case 'F': return kReplKeyEnd;
+                case '3':
+                    return readByte(35) == '~' ? kReplKeyDelete : -2;
+                default: return -2;
+                }
+            };
+#endif
+            std::string line;
+            std::string draft;
+            std::size_t cursor = 0;
+            std::size_t historyIndex = history.size();
+            std::size_t displayedColumns = 0;
+            const auto redraw = [&]() {
+                const std::size_t lineColumns = replDisplayWidth(line);
+                const std::size_t cursorColumns = replDisplayWidth(line.substr(0, cursor));
+                const std::size_t width = std::max(displayedColumns, lineColumns);
+                std::cout << '\r' << prompt << line;
+                if (width > lineColumns)
+                    std::cout << std::string(width - lineColumns, ' ');
+                if (width > cursorColumns)
+                    std::cout << std::string(width - cursorColumns, '\b');
+                std::cout.flush();
+                displayedColumns = lineColumns;
+            };
+
+            for (;;) {
+                const int key = readKey();
+                if (key == -2)
+                    continue;
+                if (key == -1) {
+                    if (line.empty())
+                        return ReplInputResult::EndOfInput;
+                    std::cout << "\r\n" << std::flush;
+                    inputLine = std::move(line);
+                    return ReplInputResult::Line;
+                }
+                if (key == '\r' || key == '\n') {
+                    std::cout << "\r\n" << std::flush;
+                    inputLine = std::move(line);
+                    return ReplInputResult::Line;
+                }
+                if (key == 3) {
+                    std::cout << "^C\r\n" << std::flush;
+                    return ReplInputResult::Interrupted;
+                }
+                if (key == 4) {
+                    if (line.empty())
+                        return ReplInputResult::EndOfInput;
+                    if (cursor < line.size()) {
+                        line.erase(cursor, replNextUtf8Boundary(line, cursor) - cursor);
+                        redraw();
+                    }
+                    continue;
+                }
+                if (key == 1) { // Ctrl+A
+                    cursor = 0;
+                    redraw();
+                    continue;
+                }
+                if (key == 5) { // Ctrl+E
+                    cursor = line.size();
+                    redraw();
+                    continue;
+                }
+                if (key == 21) { // Ctrl+U
+                    line.erase(0, cursor);
+                    cursor = 0;
+                    redraw();
+                    continue;
+                }
+                if (key == 11) { // Ctrl+K
+                    line.erase(cursor);
+                    redraw();
+                    continue;
+                }
+                if (key == kReplKeyLeft) {
+                    cursor = replPreviousUtf8Boundary(line, cursor);
+                    redraw();
+                    continue;
+                }
+                if (key == kReplKeyRight) {
+                    cursor = replNextUtf8Boundary(line, cursor);
+                    redraw();
+                    continue;
+                }
+                if (key == kReplKeyHome) {
+                    cursor = 0;
+                    redraw();
+                    continue;
+                }
+                if (key == kReplKeyEnd) {
+                    cursor = line.size();
+                    redraw();
+                    continue;
+                }
+                if (key == kReplKeyDelete) {
+                    if (cursor < line.size()) {
+                        line.erase(cursor, replNextUtf8Boundary(line, cursor) - cursor);
+                        redraw();
+                    }
+                    continue;
+                }
+                if (key == kReplKeyUp) {
+                    if (history.empty())
+                        continue;
+                    if (historyIndex == history.size())
+                        draft = line;
+                    if (historyIndex > 0)
+                        --historyIndex;
+                    line = history[historyIndex];
+                    cursor = line.size();
+                    redraw();
+                    continue;
+                }
+                if (key == kReplKeyDown) {
+                    if (historyIndex < history.size()) {
+                        ++historyIndex;
+                        line = historyIndex == history.size() ? draft : history[historyIndex];
+                        cursor = line.size();
+                        redraw();
+                    }
+                    continue;
+                }
+                if (key == 8 || key == 127) {
+                    if (cursor > 0) {
+                        const std::size_t previous = replPreviousUtf8Boundary(line, cursor);
+                        line.erase(previous, cursor - previous);
+                        cursor = previous;
+                        redraw();
+                    }
+                    continue;
+                }
+                if (key >= 32 && key <= 255) {
+                    line.insert(cursor, 1, static_cast<char>(key));
+                    ++cursor;
+                    redraw();
+                }
+            }
+        }
+
+
         int commandRepl() {
             std::cout << "NEXUS " << kVersion << " interactive shell\n"
                       << "Enter an expression to evaluate it. Use let x = 10 to keep a value.\n"
@@ -6350,12 +6618,18 @@ namespace nexus {
             std::string pending;
             std::string inputLine;
             for (;;) {
-                std::cout << (pending.empty() ? "nexus> " : "   ... ") << std::flush;
-                if (!std::getline(std::cin, inputLine)) {
+                const std::string prompt = pending.empty() ? "nexus> " : "   ... ";
+                std::cout << prompt << std::flush;
+                const auto inputResult = readReplInputLine(prompt, history, inputLine);
+                if (inputResult == ReplInputResult::EndOfInput) {
                     if (!pending.empty()) {
                         std::cerr << "nexus: incomplete multi-line input discarded\n";
                     }
                     break;
+                }
+                if (inputResult == ReplInputResult::Interrupted) {
+                    pending.clear();
+                    continue;
                 }
 
                 if (pending.empty()) {
