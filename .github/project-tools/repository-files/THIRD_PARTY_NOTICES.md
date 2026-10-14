@@ -19,7 +19,7 @@
 #   dynamically when present (dlopen/LoadLibrary) and otherwise reports a
 #   clean runtime error. They are NOT shipped in NEXUS packages. If you install
 #   them separately, their own licenses (zlib license) apply; see
-#   https://github.com/libsdl-org/SDL/blob/main/LICENSE.txt.
+#   https://raw.githubusercontent.com/libsdl-org/SDL/main/LICENSE.txt.
 # - CI validates an optional self-contained configuration where a
 #   Zig-provided `clang++.cmd` wrapper sits beside the NEXUS binary. Zig is a
 #   separate project (MIT license, https://ziglang.org) and is NOT vendored in
