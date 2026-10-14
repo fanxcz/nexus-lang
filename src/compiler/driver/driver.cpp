@@ -3190,6 +3190,7 @@ namespace nexus {
                 std::vector<StructDecl> structs;
                 std::vector<EnumDecl> enums;
                 std::map<std::string, std::string> functionReturnTypes;
+                std::map<std::string, std::string> functionHoverMarkdown;
                 bool declarationsParsed = false;
             };
             std::map<std::string, LspTypeDeclarationIndex> workspaceTypeDeclarationCache;
@@ -3408,9 +3409,44 @@ namespace nexus {
                     Program parsed = Parser(Lexer(index.source).tokenize()).parseProgram();
                     index.structs = std::move(parsed.structs);
                     index.enums = std::move(parsed.enums);
+                    const auto describeIndexedType = [&](const auto& self,
+                                                          const Type& type) -> std::string {
+                        switch (type.kind) {
+                        case TypeKind::I64: return "i64";
+                        case TypeKind::F64: return "f64";
+                        case TypeKind::Bool: return "bool";
+                        case TypeKind::String: return "string";
+                        case TypeKind::Void: return "void";
+                        case TypeKind::Pointer:
+                            return type.pointee ? "*" + self(self, *type.pointee) : "*unknown";
+                        case TypeKind::Struct:
+                            return type.name.empty() ? "struct" : type.name;
+                        case TypeKind::Enum:
+                            return type.name.empty() ? "enum" : type.name;
+                        case TypeKind::Array:
+                            return type.element
+                                       ? "[" + self(self, *type.element) + "; " +
+                                             std::to_string(type.arraySize) + "]"
+                                       : "[unknown]";
+                        case TypeKind::Unknown: return "inferred";
+                        }
+                        return "unknown";
+                    };
                     for (const auto& function : parsed.functions) {
-                        // Member completion needs named struct return types. Primitive
-                        // returns intentionally do not produce field suggestions.
+                        std::ostringstream signature;
+                        signature << "fn " << function.name << "(";
+                        for (std::size_t i = 0; i < function.params.size(); ++i) {
+                            if (i)
+                                signature << ", ";
+                            signature << function.params[i].name << ": "
+                                      << describeIndexedType(describeIndexedType,
+                                                             function.params[i].type);
+                        }
+                        signature << ") -> "
+                                  << describeIndexedType(describeIndexedType, function.ret);
+                        index.functionHoverMarkdown.insert_or_assign(
+                            function.name,
+                            "**" + signature.str() + "**\n\nUser-defined function.");
                         if (function.ret.kind == TypeKind::Struct &&
                             !function.ret.name.empty()) {
                             index.functionReturnTypes.insert_or_assign(
@@ -3418,10 +3454,11 @@ namespace nexus {
                         }
                     }
                 } catch (const std::exception&) {
-                    // A malformed source file contributes no contextual declarations.
+                    // Incomplete workspace source should never crash an LSP request.
                     index.structs.clear();
                     index.enums.clear();
                     index.functionReturnTypes.clear();
+                    index.functionHoverMarkdown.clear();
                 }
                 index.declarationsParsed = true;
             };
@@ -4177,6 +4214,114 @@ namespace nexus {
                                 }
                             } catch (const std::exception&) {
                                 // Unsaved/incomplete source is normal while an editor is open.
+                            }
+                        }
+
+                        // Resolve global declarations from unopened or open workspace files.
+                        if (result == "null" && !identifier.empty()) {
+                            const auto occurrences = findIdentifierOccurrences(
+                                identifier, uri, document->second,
+                                extractNumber(body, "line"),
+                                extractNumber(body, "character"));
+                            const bool declaredElsewhere =
+                                std::any_of(occurrences.begin(), occurrences.end(),
+                                            [&](const LspIdentifierOccurrence& occurrence) {
+                                                return occurrence.isDeclaration &&
+                                                       occurrence.uri != uri;
+                                            });
+                            if (declaredElsewhere) {
+                                const auto describeWorkspaceHoverType =
+                                    [&](const auto& self, const Type& type) -> std::string {
+                                        switch (type.kind) {
+                                        case TypeKind::I64: return "i64";
+                                        case TypeKind::F64: return "f64";
+                                        case TypeKind::Bool: return "bool";
+                                        case TypeKind::String: return "string";
+                                        case TypeKind::Void: return "void";
+                                        case TypeKind::Pointer:
+                                            return type.pointee
+                                                       ? "*" + self(self, *type.pointee)
+                                                       : "*unknown";
+                                        case TypeKind::Struct:
+                                            return type.name.empty() ? "struct" : type.name;
+                                        case TypeKind::Enum:
+                                            return type.name.empty() ? "enum" : type.name;
+                                        case TypeKind::Array:
+                                            return type.element
+                                                       ? "[" + self(self, *type.element) + "; " +
+                                                             std::to_string(type.arraySize) + "]"
+                                                       : "[unknown]";
+                                        case TypeKind::Unknown: return "inferred";
+                                        }
+                                        return "unknown";
+                                    };
+                                for (const auto& [candidateUri, candidateSource] :
+                                     collectWorkspaceDocuments(uri, document->second)) {
+                                    if (candidateUri == uri)
+                                        continue;
+                                    auto& index = workspaceTypeIndexFor(candidateUri,
+                                                                        candidateSource);
+                                    if (!index.functionNames.contains(identifier) &&
+                                        !index.structNames.contains(identifier) &&
+                                        !index.enumNames.contains(identifier)) {
+                                        continue;
+                                    }
+
+                                    parseWorkspaceTypeIndex(index);
+                                    std::string markdown;
+                                    const auto function = index.functionHoverMarkdown.find(identifier);
+                                    if (function != index.functionHoverMarkdown.end())
+                                        markdown = function->second;
+
+                                    if (markdown.empty()) {
+                                        for (const auto& declaration : index.structs) {
+                                            if (declaration.name != identifier)
+                                                continue;
+                                            std::ostringstream description;
+                                            description << "**struct " << declaration.name << "**";
+                                            if (declaration.fields.empty()) {
+                                                description << "\n\nNo fields.";
+                                            } else {
+                                                description << "\n\nFields:";
+                                                for (const auto& field : declaration.fields) {
+                                                    description << "\n- "
+                                                                << static_cast<char>(96)
+                                                                << field.name << static_cast<char>(96)
+                                                                << ": "
+                                                                << describeWorkspaceHoverType(describeWorkspaceHoverType,
+                                                                                field.type);
+                                                }
+                                            }
+                                            markdown = description.str();
+                                            break;
+                                        }
+                                    }
+                                    if (markdown.empty()) {
+                                        for (const auto& declaration : index.enums) {
+                                            if (declaration.name != identifier)
+                                                continue;
+                                            std::ostringstream description;
+                                            description << "**enum " << declaration.name << "**";
+                                            if (declaration.variants.empty()) {
+                                                description << "\n\nNo variants.";
+                                            } else {
+                                                description << "\n\nVariants:";
+                                                for (const auto& variant : declaration.variants)
+                                                    description << "\n- "
+                                                                << static_cast<char>(96) << variant
+                                                                << static_cast<char>(96);
+                                            }
+                                            markdown = description.str();
+                                            break;
+                                        }
+                                    }
+                                    if (!markdown.empty()) {
+                                        result =
+                                            "{\"contents\":{\"kind\":\"markdown\",\"value\":\"" +
+                                            jsonEscape(markdown) + "\"}}";
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }

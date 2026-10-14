@@ -6,7 +6,7 @@
 
 - Initialize and clean shutdown, full-document synchronization, and diagnostics on open/change/save/close.
 - Completion for keywords, built-ins and runtime functions, with context-aware suggestions for struct fields after `value.` and enum variants after `Enum::`.
-- Hover for language/built-in documentation and parsed function/type declarations in the current valid buffer.
+- Hover for language/built-in documentation and parsed function/type declarations in the current buffer or other discoverable workspace files when the selected symbol resolves to a workspace declaration.
 - Go-to-definition, references and rename for indexed declarations, references and scoped local bindings, including functions/types across discoverable workspace files.
 - Whole-document formatting with `textDocument/formatting` and selected-line formatting with `textDocument/rangeFormatting`. Both use the same conservative formatter as `nexus fmt`.
 - Quick-fix code actions for close struct-field-name suggestions and uniquely matching visible variable/parameter names.
@@ -22,7 +22,7 @@ The server caches discovered files and per-file lexical indexes. Unchanged index
 
 The index tracks declarations, tokens and brace-delimited scopes. Navigation resolves top-level functions, structs and enums across discoverable workspace files, plus `let`/`const` bindings, loop variables and simple function parameters with scope awareness. Tests cover cross-file lookup, shadowing and rename without rewriting unrelated bindings.
 
-Field and enum completion uses parsed source context; it is not yet a complete semantic index for all member expressions. Full navigation across imported aliases and robust inferred field types across files remain future work. Hover for user declarations currently parses the open buffer, so incomplete source can produce no declaration hover. Range formatting operates on the selected lines but computes indentation from the whole document.
+Field and enum completion uses parsed source context; it is not yet a complete semantic index for all member expressions. Imported-alias resolution and inference beyond named-struct function returns remain future work. User-defined hover can resolve declarations from other workspace files when the selected identifier resolves to that global symbol; incomplete source and duplicate global names can still limit resolution. Range formatting operates on the selected lines but computes indentation from the whole document.
 
 ## Diagnostics
 
