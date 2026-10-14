@@ -301,19 +301,32 @@ std::string formatNexusSource(const std::string& source) {
 
     const std::string formatted = output.str();
 
-    // Formatting is allowed to help with incomplete source, but it must never
-    // damage a file that already parsed successfully. This guard keeps editor
-    // formatting and the CLI conservative if a token-spacing rule regresses.
+    // Keep the formatter semantics-preserving for any source that already
+    // parses. Parseability alone is not sufficient: a whitespace regression
+    // might still produce a different (but valid) token stream. Lexer token
+    // text captures decoded string contents, so escaped strings are protected
+    // as well. Comments and whitespace are intentionally not tokens.
+    std::vector<Token> originalTokens;
     bool originalParses = false;
     try {
-        (void)Parser(Lexer(source).tokenize()).parseProgram();
+        originalTokens = Lexer(source).tokenize();
+        (void)Parser(originalTokens).parseProgram();
         originalParses = true;
     } catch (const std::exception&) {
         // Incomplete/invalid input is still formatted conservatively below.
     }
     if (originalParses) {
         try {
-            (void)Parser(Lexer(formatted).tokenize()).parseProgram();
+            const auto formattedTokens = Lexer(formatted).tokenize();
+            if (originalTokens.size() != formattedTokens.size())
+                return source;
+            for (std::size_t i = 0; i < originalTokens.size(); ++i) {
+                if (originalTokens[i].kind != formattedTokens[i].kind ||
+                    originalTokens[i].text != formattedTokens[i].text)
+                    return source;
+            }
+
+            (void)Parser(formattedTokens).parseProgram();
         } catch (const std::exception&) {
             return source;
         }

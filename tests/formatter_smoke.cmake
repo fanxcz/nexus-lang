@@ -89,4 +89,37 @@ if(NOT syntax_idempotency_result EQUAL 0)
   message(FATAL_ERROR "Representative syntax formatting is not idempotent: ${syntax_idempotency_output}${syntax_idempotency_error}")
 endif()
 
+
+# Adjacent unary operators are lexically significant in NEXUS. The formatter
+# must preserve the original token stream, not merely make the output parse.
+set(UNARY_SOURCE "${TEST_DIR}/unary-operators.nx")
+file(WRITE "${UNARY_SOURCE}" [=[fn main(){let value=8--2;let nested=-(value+3);let ratio=12/-3;let message="line // and brace }";print(value+nested+ratio);print(message); // keep comment }
+}
+]=])
+execute_process(
+  COMMAND "${NEXUS_BIN}" fmt "${UNARY_SOURCE}"
+  RESULT_VARIABLE unary_fmt_result OUTPUT_VARIABLE unary_fmt_output ERROR_VARIABLE unary_fmt_error)
+if(NOT unary_fmt_result EQUAL 0)
+  message(FATAL_ERROR "Formatter failed on adjacent unary operators: ${unary_fmt_output}${unary_fmt_error}")
+endif()
+file(READ "${UNARY_SOURCE}" unary_formatted)
+set(unary_expected [=[fn main() {
+    let value = 8 - -2;
+    let nested = -(value + 3);
+    let ratio = 12 / -3;
+    let message = "line // and brace }";
+    print(value + nested + ratio);
+    print(message); // keep comment }
+}
+]=])
+if(NOT unary_formatted STREQUAL unary_expected)
+  message(FATAL_ERROR "Formatter changed lexical meaning or skipped canonical formatting.\nExpected:\n${unary_expected}\nActual:\n${unary_formatted}")
+endif()
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${UNARY_SOURCE}"
+  RESULT_VARIABLE unary_check_result OUTPUT_VARIABLE unary_check_output ERROR_VARIABLE unary_check_error)
+if(NOT unary_check_result EQUAL 0)
+  message(FATAL_ERROR "Formatted unary-operator fixture no longer checks: ${unary_check_output}${unary_check_error}")
+endif()
+
 message(STATUS "Formatter preserves strings, comments and decimal literals; output parses and formatting is idempotent.")
