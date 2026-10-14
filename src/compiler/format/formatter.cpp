@@ -1,5 +1,8 @@
 #include "formatter.hpp"
 
+#include "lexer/lexer.hpp"
+#include "parser/parser.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <sstream>
@@ -296,7 +299,27 @@ std::string formatNexusSource(const std::string& source) {
         }
     }
 
-    return output.str();
+    const std::string formatted = output.str();
+
+    // Formatting is allowed to help with incomplete source, but it must never
+    // damage a file that already parsed successfully. This guard keeps editor
+    // formatting and the CLI conservative if a token-spacing rule regresses.
+    bool originalParses = false;
+    try {
+        (void)Parser(Lexer(source).tokenize()).parseProgram();
+        originalParses = true;
+    } catch (const std::exception&) {
+        // Incomplete/invalid input is still formatted conservatively below.
+    }
+    if (originalParses) {
+        try {
+            (void)Parser(Lexer(formatted).tokenize()).parseProgram();
+        } catch (const std::exception&) {
+            return source;
+        }
+    }
+
+    return formatted;
 }
 
 } // namespace nexus

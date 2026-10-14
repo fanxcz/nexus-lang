@@ -19,7 +19,7 @@ The check command exits with status 0 when the file is already formatted, and a 
 
 ## Formatting rules
 
-The formatter now tokenizes each line while respecting quoted strings, line comments and multi-line block comments. It normalizes spacing around operators and common punctuation, removes trailing whitespace, and applies four-space indentation based on braces found in code (not braces inside strings or comments). It preserves original line breaks and comments instead of reconstructing a file from an AST.
+The formatter now tokenizes each line while respecting quoted strings, line comments and multi-line block comments. It normalizes spacing around operators and common punctuation, removes trailing whitespace, and applies four-space indentation based on braces found in code (not braces inside strings or comments). It preserves original line breaks and comments instead of reconstructing a file from an AST. Before returning a changed result, it checks that a file which parsed before formatting still parses afterward; if the formatting rules would break valid syntax, the original text is returned unchanged. Incomplete source can still be formatted conservatively.
 
 This is a conservative source formatter, not a full AST pretty-printer. It does not wrap long expressions or split multiple statements written on one line. `nexus fmt --all` walks project `.nx` files in deterministic path order and skips `vendor`, `build`, `dist`, `.git`, `.vscode`, `node_modules`, `target`, `.cache`, and `CMakeFiles`. `nexus fmt --check --all` checks every discovered file without changing it and exits nonzero if any file needs formatting or cannot be read. Review formatting changes for deliberately unusual layouts.
 

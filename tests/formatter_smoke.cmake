@@ -52,4 +52,41 @@ if(NOT idempotency_result EQUAL 0)
   message(FATAL_ERROR "Formatter is not idempotent: ${idempotency_output}${idempotency_error}")
 endif()
 
+# A broader syntax sample guards arrays, structure literals, enum variants,
+# match arms, calls and nested blocks against token-spacing regressions.
+set(SYNTAX_SOURCE "${TEST_DIR}/parser-sensitive.nx")
+file(WRITE "${SYNTAX_SOURCE}" [=[
+enum Color { Red, Green }
+struct Item { value: i64, ratio: f64 }
+fn absolute(value: i64) -> i64 {
+    if value >= 0 { return value } else { return -value }
+}
+fn main() {
+    let item = Item { value: absolute(-1), ratio: 2.5 }
+    let values = [1, 2, 3]
+    match Color::Red {
+        Color::Red => { print(item.value) }
+        _ => { print(values[0]) }
+    }
+}
+]=])
+execute_process(
+  COMMAND "${NEXUS_BIN}" fmt "${SYNTAX_SOURCE}"
+  RESULT_VARIABLE syntax_fmt_result OUTPUT_VARIABLE syntax_fmt_output ERROR_VARIABLE syntax_fmt_error)
+if(NOT syntax_fmt_result EQUAL 0)
+  message(FATAL_ERROR "Formatter failed on representative syntax: ${syntax_fmt_output}${syntax_fmt_error}")
+endif()
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${SYNTAX_SOURCE}"
+  RESULT_VARIABLE syntax_check_result OUTPUT_VARIABLE syntax_check_output ERROR_VARIABLE syntax_check_error)
+if(NOT syntax_check_result EQUAL 0)
+  message(FATAL_ERROR "Formatting damaged representative syntax: ${syntax_check_output}${syntax_check_error}")
+endif()
+execute_process(
+  COMMAND "${NEXUS_BIN}" fmt "${SYNTAX_SOURCE}" --check
+  RESULT_VARIABLE syntax_idempotency_result OUTPUT_VARIABLE syntax_idempotency_output ERROR_VARIABLE syntax_idempotency_error)
+if(NOT syntax_idempotency_result EQUAL 0)
+  message(FATAL_ERROR "Representative syntax formatting is not idempotent: ${syntax_idempotency_output}${syntax_idempotency_error}")
+endif()
+
 message(STATUS "Formatter preserves strings, comments and decimal literals; output parses and formatting is idempotent.")
