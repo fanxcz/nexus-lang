@@ -95,5 +95,17 @@ if(rc EQUAL 0 OR NOT unknown_init_combined MATCHES "unknown field 'height' in in
   message(FATAL_ERROR "Unknown struct initializer field was not identified: ${unknown_init_combined}")
 endif()
 
+# Repeating a literal or enum case makes later match arms unreachable.
+set(DUPLICATE_MATCH_SOURCE "${DIAGNOSTIC_DIR}/duplicate-match.nx")
+file(WRITE "${DUPLICATE_MATCH_SOURCE}"
+  "enum Color { Red, Green }\nfn main() { let color = Color::Red; match color { Color::Red => {}, Color::Red => {}, _ => {} } }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${DUPLICATE_MATCH_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(duplicate_match_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT duplicate_match_combined MATCHES "duplicate match pattern 'Color::Red'")
+  message(FATAL_ERROR "Duplicate enum match pattern was not rejected: ${duplicate_match_combined}")
+endif()
+
 file(REMOVE_RECURSE "${DIAGNOSTIC_DIR}")
 message(STATUS "NEXUS diagnostics smoke test: PASS")

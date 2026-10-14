@@ -546,6 +546,7 @@ namespace nexus {
                     vt.kind != TypeKind::Enum)
                     throw std::runtime_error("match supports i64, bool, or enum values");
                 bool wildcard = false;
+                std::unordered_map<std::string, bool> seenPatterns;
                 for (auto& arm : mm->arms) {
                     if (arm.wildcard) {
                         if (wildcard)
@@ -555,6 +556,23 @@ namespace nexus {
                         auto pt = expr(arm.pattern.get(), env);
                         if (!sameType(pt, vt))
                             throw std::runtime_error("match pattern type mismatch");
+
+                        std::string key;
+                        std::string display;
+                        if (const auto* integer = dynamic_cast<const IntExpr*>(arm.pattern.get())) {
+                            key = "i64:" + std::to_string(integer->value);
+                            display = std::to_string(integer->value);
+                        } else if (const auto* boolean =
+                                       dynamic_cast<const BoolExpr*>(arm.pattern.get())) {
+                            key = std::string("bool:") + (boolean->value ? "true" : "false");
+                            display = boolean->value ? "true" : "false";
+                        } else if (const auto* variant =
+                                       dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
+                            key = "enum:" + variant->enumName + "::" + variant->variant;
+                            display = variant->enumName + "::" + variant->variant;
+                        }
+                        if (!key.empty() && !seenPatterns.emplace(key, true).second)
+                            throw std::runtime_error("duplicate match pattern '" + display + "'");
                     }
                     auto local = env;
                     block(*arm.body, local, ret, inLoop);
