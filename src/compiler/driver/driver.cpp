@@ -4174,6 +4174,127 @@ namespace nexus {
                 return response.str();
             };
 
+
+            // Standard LSP symbols support editor Outline and workspace symbol search.
+            // Source offsets are bytes; LSP character positions are UTF-16 code units.
+            const auto collectDocumentSymbols = [&](const std::string& source) {
+                struct SymbolRecord {
+                    std::string name;
+                    int kind = 12;
+                    std::size_t start = 0, end = 0, nameStart = 0, nameEnd = 0;
+                };
+                std::vector<SymbolRecord> result;
+                std::vector<Token> tokens;
+                Program program;
+                try {
+                    tokens = Lexer(source).tokenize();
+                    program = Parser(tokens).parseProgram();
+                } catch (const std::exception&) {
+                    return result;
+                }
+                const auto add = [&](const std::string& name, int kind, const SourceSpan& span) {
+                    std::size_t nameStart = source.size(), nameEnd = source.size();
+                    for (const auto& token : tokens) {
+                        if (token.kind != TokenKind::Identifier || token.text != name)
+                            continue;
+                        if (span.valid && (token.pos.offset < span.start.offset ||
+                                           token.pos.offset >= span.end.offset))
+                            continue;
+                        nameStart = token.pos.offset;
+                        nameEnd = token.hasEndPos ? token.endPos.offset
+                                                  : token.pos.offset + token.text.size();
+                        break;
+                    }
+                    if (nameStart >= source.size() || nameEnd <= nameStart)
+                        return;
+                    const auto start = span.valid ? span.start.offset : nameStart;
+                    const auto end = span.valid && span.end.offset >= start ? span.end.offset : nameEnd;
+                    result.push_back({name, kind, start, end, nameStart, nameEnd});
+                };
+                for (const auto& f : program.functions) add(f.name, 12, f.span);
+                for (const auto& st : program.structs) add(st.name, 23, st.span);
+                for (const auto& en : program.enums) add(en.name, 10, en.span);
+                std::stable_sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
+                    return a.start < b.start;
+                });
+                return result;
+            };
+            const auto serializeDocumentSymbol = [&](const std::string& source, const auto& symbol,
+                                                     bool workspaceEntry, const std::string& uri) {
+                const auto positionAt = [&](std::size_t offset) {
+                    offset = std::min(offset, source.size());
+                    std::size_t line = 0, lineStart = 0;
+                    for (std::size_t i = 0; i < offset; ++i)
+                        if (source[i] == '\n') { ++line; lineStart = i + 1; }
+                    std::size_t character = 0;
+                    for (std::size_t i = lineStart; i < offset;) {
+                        const auto first = static_cast<unsigned char>(source[i]);
+                        std::size_t width = 1;
+                        if ((first & 0xe0) == 0xc0) width = 2;
+                        else if ((first & 0xf0) == 0xe0) width = 3;
+                        else if ((first & 0xf8) == 0xf0) width = 4;
+                        if (i + width > offset) width = 1;
+                        character += width == 4 ? 2 : 1;
+                        i += width;
+                    }
+                    return std::pair<std::size_t, std::size_t>{line, character};
+                };
+                const auto range = [&](std::size_t start, std::size_t end) {
+                    const auto a = positionAt(start), b = positionAt(end);
+                    std::ostringstream out;
+                    out << "{\"start\":{\"line\":" << a.first << ",\"character\":" << a.second
+                        << "},\"end\":{\"line\":" << b.first << ",\"character\":" << b.second << "}}";
+                    return out.str();
+                };
+                std::ostringstream out;
+                out << "{\"name\":\"" << jsonEscape(symbol.name) << "\",\"kind\":" << symbol.kind;
+                if (workspaceEntry)
+                    out << ",\"location\":{\"uri\":\"" << jsonEscape(uri) << "\",\"range\":"
+                        << range(symbol.start, symbol.end) << "}";
+                else
+                    out << ",\"range\":" << range(symbol.start, symbol.end)
+                        << ",\"selectionRange\":" << range(symbol.nameStart, symbol.nameEnd);
+                out << "}";
+                return out.str();
+            };
+            const auto documentSymbolsResult = [&](const std::string& source) {
+                const auto symbols = collectDocumentSymbols(source);
+                std::ostringstream out;
+                out << "[";
+                for (std::size_t i = 0; i < symbols.size(); ++i) {
+                    if (i) out << ',';
+                    out << serializeDocumentSymbol(source, symbols[i], false, std::string{});
+                }
+                out << "]";
+                return out.str();
+            };
+            const auto workspaceSymbolsResult = [&](const std::string& query) {
+                std::map<std::string, std::string> documents;
+                for (const auto& open : openDocuments)
+                    for (const auto& document : collectWorkspaceDocuments(open.first, open.second))
+                        documents.insert_or_assign(document.first, document.second);
+                std::ostringstream out;
+                out << "[";
+                bool first = true;
+                std::size_t emitted = 0;
+                constexpr std::size_t maxWorkspaceSymbols = 500;
+                for (const auto& document : documents) {
+                    const auto symbols = collectDocumentSymbols(document.second);
+                    for (const auto& symbol : symbols) {
+                        if (!query.empty() && symbol.name.find(query) == std::string::npos) continue;
+                        if (emitted >= maxWorkspaceSymbols) break;
+                        if (!first) out << ',';
+                        first = false;
+                        out << serializeDocumentSymbol(document.second, symbol, true, document.first);
+                        ++emitted;
+                    }
+                    if (emitted >= maxWorkspaceSymbols) break;
+                }
+                out << "]";
+                return out.str();
+            };
+
+
             const std::vector<std::pair<std::string, std::string>> completions = {
                 {"fn", "Function declaration"},
                 {"let", "Variable declaration"},
@@ -4247,7 +4368,7 @@ namespace nexus {
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
                          "\"renameProvider\":true,\"hoverProvider\":true,"
                          "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":"
-                         "true,"
+                         "true,\"documentSymbolProvider\":true,\"workspaceSymbolProvider\":true,"
                          "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}}");
                 } else if (method == "initialized") {
                     if (clientSupportsWatchedFilesRegistration) {
@@ -4302,6 +4423,16 @@ namespace nexus {
                              jsonEscape(uri) + "\",\"diagnostics\":[]}}");
                     }
 
+                } else if (method == "textDocument/documentSymbol" && !id.empty()) {
+                    const std::string uri = extractString(body, "uri");
+                    const auto document = openDocuments.find(uri);
+                    const std::string result = document == openDocuments.end()
+                                                   ? "[]"
+                                                   : documentSymbolsResult(document->second);
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
+                } else if (method == "workspace/symbol" && !id.empty()) {
+                    const std::string result = workspaceSymbolsResult(extractString(body, "query"));
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
                 } else if (method == "textDocument/signatureHelp" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);

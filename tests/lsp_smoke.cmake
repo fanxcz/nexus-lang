@@ -49,6 +49,8 @@ set(open_signature_builtin "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOp
 set(open_signature_nested "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///signature_nested.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn main() { sum(1, random_i64(2, 3) \"}}}")
 set(signature_help_builtin "{\"jsonrpc\":\"2.0\",\"id\":29,\"method\":\"textDocument/signatureHelp\",\"params\":{\"textDocument\":{\"uri\":\"file:///signature_builtin.nx\"},\"position\":{\"line\":0,\"character\":26}}}")
 set(signature_help_nested "{\"jsonrpc\":\"2.0\",\"id\":30,\"method\":\"textDocument/signatureHelp\",\"params\":{\"textDocument\":{\"uri\":\"file:///signature_nested.nx\"},\"position\":{\"line\":0,\"character\":36}}}")
+set(document_symbols "{\"jsonrpc\":\"2.0\",\"id\":31,\"method\":\"textDocument/documentSymbol\",\"params\":{\"textDocument\":{\"uri\":\"file:///hover_user.nx\"}}}")
+set(workspace_symbols "{\"jsonrpc\":\"2.0\",\"id\":32,\"method\":\"workspace/symbol\",\"params\":{\"query\":\"External\"}}")
 set(hover_enum "{\"jsonrpc\":\"2.0\",\"id\":11,\"method\":\"textDocument/hover\",\"params\":{\"textDocument\":{\"uri\":\"file:///hover_user.nx\"},\"position\":{\"line\":1,\"character\":6}}}")
 set(open_workspace_caller "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_caller_uri}\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn caller() { disk_helper() }\\n\"}}}")
 set(workspace_definition "{\"jsonrpc\":\"2.0\",\"id\":12,\"method\":\"textDocument/definition\",\"params\":{\"textDocument\":{\"uri\":\"${workspace_caller_uri}\"},\"position\":{\"line\":0,\"character\":16}}}")
@@ -81,7 +83,7 @@ set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":n
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_signature_decl}" "${open_signature_call}" "${open_signature_builtin}" "${open_signature_nested}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${signature_help}" "${signature_help_builtin}" "${signature_help_nested}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_enum_completion}" "${open_workspace_hover}" "${open_workspace_struct_hover}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_enum_completion}" "${workspace_hover}" "${workspace_struct_hover}" "${workspace_enum_hover}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
+foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_signature_decl}" "${open_signature_call}" "${open_signature_builtin}" "${open_signature_nested}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${signature_help}" "${signature_help_builtin}" "${signature_help_nested}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_enum_completion}" "${open_workspace_hover}" "${open_workspace_struct_hover}" "${document_symbols}" "${workspace_symbols}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_enum_completion}" "${workspace_hover}" "${workspace_struct_hover}" "${workspace_enum_hover}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
   string(LENGTH "${message}" message_length)
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
@@ -181,6 +183,27 @@ if(builtin_signature_pos EQUAL -1 OR nested_signature_pos EQUAL -1 OR nested_act
 endif()
 if(signature_response_pos EQUAL -1 OR signature_active_parameter_pos EQUAL -1)
   message(FATAL_ERROR "NEXUS LSP did not resolve the active parameter for a workspace function call: ${out}")
+endif()
+
+string(FIND "${out}" "\\"id\\":31,\\"result\\":[" document_symbols_pos)
+string(FIND "${out}" "\\"id\\":32,\\"result\\":[" workspace_symbols_pos)
+string(FIND "${out}" "\\"id\\":12,\\"result\\"" workspace_definition_pos)
+if(document_symbols_pos EQUAL -1 OR workspace_symbols_pos EQUAL -1 OR workspace_definition_pos EQUAL -1 OR
+   NOT out MATCHES "documentSymbolProvider" OR NOT out MATCHES "workspaceSymbolProvider")
+  message(FATAL_ERROR "NEXUS LSP document/workspace symbol requests or capabilities are missing: ${out}")
+endif()
+math(EXPR document_symbols_length "${workspace_symbols_pos} - ${document_symbols_pos}")
+string(SUBSTRING "${out}" ${document_symbols_pos} ${document_symbols_length} document_symbols_payload)
+if(NOT document_symbols_payload MATCHES "\\"name\\":\\"Person\\"" OR
+   NOT document_symbols_payload MATCHES "\\"name\\":\\"Color\\"" OR
+   NOT document_symbols_payload MATCHES "\\"name\\":\\"add\\"")
+  message(FATAL_ERROR "NEXUS LSP Outline omitted functions/structs/enums: ${document_symbols_payload}")
+endif()
+math(EXPR workspace_symbols_length "${workspace_definition_pos} - ${workspace_symbols_pos}")
+string(SUBSTRING "${out}" ${workspace_symbols_pos} ${workspace_symbols_length} workspace_symbols_payload)
+if(NOT workspace_symbols_payload MATCHES "\\"name\\":\\"ExternalPerson\\"" OR
+   NOT workspace_symbols_payload MATCHES "\\"name\\":\\"ExternalColor\\"")
+  message(FATAL_ERROR "NEXUS LSP workspace/symbol did not find matching declarations in closed files: ${workspace_symbols_payload}")
 endif()
 
 if(NOT out MATCHES "hoverProvider")
