@@ -2203,6 +2203,7 @@ namespace nexus {
                 const fs::path lockPath = cfg.root / "nexus.lock";
                 const std::string manifestBefore = readFile(manifestPath);
                 const auto lockStatus = fs::symlink_status(lockPath, ec);
+                bool hadLockfile = false;
                 if (ec == std::errc::no_such_file_or_directory ||
                     (!ec && lockStatus.type() == fs::file_type::not_found)) {
                     ec.clear();
@@ -2211,9 +2212,8 @@ namespace nexus {
                         throw std::runtime_error("cannot inspect lockfile: " + ec.message());
                     if (fs::is_symlink(lockStatus) || !fs::is_regular_file(lockStatus))
                         throw std::runtime_error("nexus.lock must be a regular file, not a symlink");
+                    hadLockfile = true;
                 }
-                const bool hadLockfile =
-                    !ec && lockStatus.type() != fs::file_type::not_found;
                 const std::string lockBefore = hadLockfile ? readFile(lockPath) : std::string{};
 
                 const auto stamp =

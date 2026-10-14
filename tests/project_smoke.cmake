@@ -321,5 +321,25 @@ if(manifest_after_remove MATCHES "sample_lib" OR lock_after_remove MATCHES "samp
 endif()
 file(REMOVE "${SMOKE_DIR}/outside-sentinel.txt")
 
+# A symlinked vendor root must never redirect package writes outside the project.
+if(NOT WIN32)
+  file(REMOVE_RECURSE "${SMOKE_DIR}/vendor")
+  set(OUTSIDE_VENDOR "${SMOKE_DIR}/outside-vendor")
+  file(MAKE_DIRECTORY "${OUTSIDE_VENDOR}")
+  file(WRITE "${OUTSIDE_VENDOR}/keep.txt" "keep")
+  execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink "${OUTSIDE_VENDOR}" "${SMOKE_DIR}/vendor"
+    RESULT_VARIABLE symlink_rc OUTPUT_VARIABLE symlink_out ERROR_VARIABLE symlink_err)
+  if(NOT symlink_rc EQUAL 0)
+    message(FATAL_ERROR "could not prepare vendor symlink safety test: ${symlink_out}\\n${symlink_err}")
+  endif()
+  execute_process(COMMAND "${NEXUS_BIN}" pkg add "${PKG_SOURCE}"
+    WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+  if(rc EQUAL 0 OR NOT err MATCHES "vendor directory must not be a symlink"
+     OR NOT EXISTS "${OUTSIDE_VENDOR}/keep.txt")
+    message(FATAL_ERROR "pkg add followed a symlinked vendor root: ${out}\\n${err}")
+  endif()
+  file(REMOVE "${SMOKE_DIR}/vendor")
+endif()
+
 file(REMOVE_RECURSE "${SMOKE_DIR}" "${RUN_SMOKE_DIR}")
 message(STATUS "NEXUS project workflow smoke test: PASS")
