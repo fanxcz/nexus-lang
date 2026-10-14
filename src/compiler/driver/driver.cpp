@@ -1,4 +1,5 @@
 #include "driver/driver.hpp"
+#include "builtins.hpp"
 
 #include "codegen/llvm_ir.hpp"
 #include "format/formatter.hpp"
