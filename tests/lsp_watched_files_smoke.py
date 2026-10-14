@@ -33,7 +33,14 @@ def read_message(stream: BinaryIO) -> dict[str, Any] | None:
     payload = stream.read(length)
     if len(payload) != length:
         raise RuntimeError(f"Truncated LSP response: expected {length}, got {len(payload)} bytes")
-    return json.loads(payload.decode("utf-8"))
+    try:
+        return json.loads(payload.decode("utf-8"))
+    except json.JSONDecodeError as error:
+        start = max(0, error.pos - 100)
+        end = min(len(payload), error.pos + 100)
+        raise RuntimeError(
+            f"Invalid LSP JSON near byte {error.pos}: {payload[start:end]!r}"
+        ) from error
 
 
 def send_message(stream: BinaryIO, message: dict[str, Any]) -> None:
