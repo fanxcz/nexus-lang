@@ -4174,7 +4174,6 @@ namespace nexus {
                 return response.str();
             };
 
-
             // Standard LSP symbols support editor Outline and workspace symbol search.
             // Source offsets are bytes; LSP character positions are UTF-16 code units.
             const auto collectDocumentSymbols = [&](const std::string& source) {
@@ -4208,32 +4207,45 @@ namespace nexus {
                     if (nameStart >= source.size() || nameEnd <= nameStart)
                         return;
                     const auto start = span.valid ? span.start.offset : nameStart;
-                    const auto end = span.valid && span.end.offset >= start ? span.end.offset : nameEnd;
+                    const auto end =
+                        span.valid && span.end.offset >= start ? span.end.offset : nameEnd;
                     result.push_back({name, kind, start, end, nameStart, nameEnd});
                 };
-                for (const auto& f : program.functions) add(f.name, 12, f.span);
-                for (const auto& st : program.structs) add(st.name, 23, st.span);
-                for (const auto& en : program.enums) add(en.name, 10, en.span);
+                for (const auto& f : program.functions)
+                    add(f.name, 12, f.span);
+                for (const auto& st : program.structs)
+                    add(st.name, 23, st.span);
+                for (const auto& en : program.enums)
+                    add(en.name, 10, en.span);
                 std::stable_sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
                     return a.start < b.start;
                 });
                 return result;
             };
-            const auto serializeDocumentSymbol = [&](const std::string& source, const auto& symbol,
-                                                     bool workspaceEntry, const std::string& uri) {
+            const auto serializeDocumentSymbol = [&](const std::string& source,
+                                                     const auto& symbol,
+                                                     bool workspaceEntry,
+                                                     const std::string& uri) {
                 const auto positionAt = [&](std::size_t offset) {
                     offset = std::min(offset, source.size());
                     std::size_t line = 0, lineStart = 0;
                     for (std::size_t i = 0; i < offset; ++i)
-                        if (source[i] == '\n') { ++line; lineStart = i + 1; }
+                        if (source[i] == '\n') {
+                            ++line;
+                            lineStart = i + 1;
+                        }
                     std::size_t character = 0;
                     for (std::size_t i = lineStart; i < offset;) {
                         const auto first = static_cast<unsigned char>(source[i]);
                         std::size_t width = 1;
-                        if ((first & 0xe0) == 0xc0) width = 2;
-                        else if ((first & 0xf0) == 0xe0) width = 3;
-                        else if ((first & 0xf8) == 0xf0) width = 4;
-                        if (i + width > offset) width = 1;
+                        if ((first & 0xe0) == 0xc0)
+                            width = 2;
+                        else if ((first & 0xf0) == 0xe0)
+                            width = 3;
+                        else if ((first & 0xf8) == 0xf0)
+                            width = 4;
+                        if (i + width > offset)
+                            width = 1;
                         character += width == 4 ? 2 : 1;
                         i += width;
                     }
@@ -4243,14 +4255,15 @@ namespace nexus {
                     const auto a = positionAt(start), b = positionAt(end);
                     std::ostringstream out;
                     out << "{\"start\":{\"line\":" << a.first << ",\"character\":" << a.second
-                        << "},\"end\":{\"line\":" << b.first << ",\"character\":" << b.second << "}}";
+                        << "},\"end\":{\"line\":" << b.first << ",\"character\":" << b.second
+                        << "}}";
                     return out.str();
                 };
                 std::ostringstream out;
                 out << "{\"name\":\"" << jsonEscape(symbol.name) << "\",\"kind\":" << symbol.kind;
                 if (workspaceEntry)
-                    out << ",\"location\":{\"uri\":\"" << jsonEscape(uri) << "\",\"range\":"
-                        << range(symbol.start, symbol.end) << "}";
+                    out << ",\"location\":{\"uri\":\"" << jsonEscape(uri)
+                        << "\",\"range\":" << range(symbol.start, symbol.end) << "}";
                 else
                     out << ",\"range\":" << range(symbol.start, symbol.end)
                         << ",\"selectionRange\":" << range(symbol.nameStart, symbol.nameEnd);
@@ -4262,7 +4275,8 @@ namespace nexus {
                 std::ostringstream out;
                 out << "[";
                 for (std::size_t i = 0; i < symbols.size(); ++i) {
-                    if (i) out << ',';
+                    if (i)
+                        out << ',';
                     out << serializeDocumentSymbol(source, symbols[i], false, std::string{});
                 }
                 out << "]";
@@ -4281,19 +4295,23 @@ namespace nexus {
                 for (const auto& document : documents) {
                     const auto symbols = collectDocumentSymbols(document.second);
                     for (const auto& symbol : symbols) {
-                        if (!query.empty() && symbol.name.find(query) == std::string::npos) continue;
-                        if (emitted >= maxWorkspaceSymbols) break;
-                        if (!first) out << ',';
+                        if (!query.empty() && symbol.name.find(query) == std::string::npos)
+                            continue;
+                        if (emitted >= maxWorkspaceSymbols)
+                            break;
+                        if (!first)
+                            out << ',';
                         first = false;
-                        out << serializeDocumentSymbol(document.second, symbol, true, document.first);
+                        out << serializeDocumentSymbol(
+                            document.second, symbol, true, document.first);
                         ++emitted;
                     }
-                    if (emitted >= maxWorkspaceSymbols) break;
+                    if (emitted >= maxWorkspaceSymbols)
+                        break;
                 }
                 out << "]";
                 return out.str();
             };
-
 
             const std::vector<std::pair<std::string, std::string>> completions = {
                 {"fn", "Function declaration"},
@@ -4736,16 +4754,14 @@ namespace nexus {
                                     --objectStart;
                                 while (objectStart > 0) {
                                     std::size_t boundary = objectStart;
-                                    while (boundary > 0 &&
-                                           std::isspace(static_cast<unsigned char>(
-                                               currentLineText[boundary - 1])))
+                                    while (boundary > 0 && std::isspace(static_cast<unsigned char>(
+                                                               currentLineText[boundary - 1])))
                                         --boundary;
                                     if (boundary == 0 || currentLineText[boundary - 1] != '.')
                                         break;
                                     --boundary;
-                                    while (boundary > 0 &&
-                                           std::isspace(static_cast<unsigned char>(
-                                               currentLineText[boundary - 1])))
+                                    while (boundary > 0 && std::isspace(static_cast<unsigned char>(
+                                                               currentLineText[boundary - 1])))
                                         --boundary;
                                     std::size_t previousStart = boundary;
                                     while (previousStart > 0 &&
@@ -4874,18 +4890,20 @@ namespace nexus {
                                         collectTypes(collectTypes, *function.body);
 
                                 const auto structFieldType = [&](const std::string& typeName,
-                                                                       const std::string& fieldName) {
-                                    const auto local = std::find_if(
-                                        program.structs.begin(), program.structs.end(),
-                                        [&](const StructDecl& declaration) {
-                                            return declaration.name == typeName;
-                                        });
+                                                                 const std::string& fieldName) {
+                                    const auto local =
+                                        std::find_if(program.structs.begin(),
+                                                     program.structs.end(),
+                                                     [&](const StructDecl& declaration) {
+                                                         return declaration.name == typeName;
+                                                     });
                                     if (local != program.structs.end()) {
-                                        const auto field = std::find_if(
-                                            local->fields.begin(), local->fields.end(),
-                                            [&](const StructField& candidate) {
-                                                return candidate.name == fieldName;
-                                            });
+                                        const auto field =
+                                            std::find_if(local->fields.begin(),
+                                                         local->fields.end(),
+                                                         [&](const StructField& candidate) {
+                                                             return candidate.name == fieldName;
+                                                         });
                                         if (field != local->fields.end() &&
                                             field->type.kind == TypeKind::Struct)
                                             return field->type.name;
@@ -4897,11 +4915,12 @@ namespace nexus {
                                     for (const auto& declaration : workspaceTypes.first) {
                                         if (declaration.name != typeName)
                                             continue;
-                                        const auto field = std::find_if(
-                                            declaration.fields.begin(), declaration.fields.end(),
-                                            [&](const StructField& candidate) {
-                                                return candidate.name == fieldName;
-                                            });
+                                        const auto field =
+                                            std::find_if(declaration.fields.begin(),
+                                                         declaration.fields.end(),
+                                                         [&](const StructField& candidate) {
+                                                             return candidate.name == fieldName;
+                                                         });
                                         if (field != declaration.fields.end() &&
                                             field->type.kind == TypeKind::Struct)
                                             return field->type.name;
@@ -4925,11 +4944,11 @@ namespace nexus {
                                                    !resolvedTypeName.empty()) {
                                                 const std::size_t fieldEnd =
                                                     objectName.find('.', fieldStart);
-                                                const std::string fieldName = objectName.substr(
-                                                    fieldStart,
-                                                    fieldEnd == std::string::npos
-                                                        ? std::string::npos
-                                                        : fieldEnd - fieldStart);
+                                                const std::string fieldName =
+                                                    objectName.substr(fieldStart,
+                                                                      fieldEnd == std::string::npos
+                                                                          ? std::string::npos
+                                                                          : fieldEnd - fieldStart);
                                                 resolvedTypeName =
                                                     structFieldType(resolvedTypeName, fieldName);
                                                 if (fieldEnd == std::string::npos)
@@ -4952,10 +4971,8 @@ namespace nexus {
                                         resolvedTypeName == "i64" || resolvedTypeName == "int" ||
                                         resolvedTypeName == "isize" ||
                                         resolvedTypeName == "usize" || resolvedTypeName == "f64" ||
-                                        resolvedTypeName == "float" ||
-                                        resolvedTypeName == "bool" ||
-                                        resolvedTypeName == "string" ||
-                                        resolvedTypeName == "void";
+                                        resolvedTypeName == "float" || resolvedTypeName == "bool" ||
+                                        resolvedTypeName == "string" || resolvedTypeName == "void";
                                     if (!hasLocalStruct && !builtinType) {
                                         auto workspaceTypes = workspaceTypeDeclarationsFor(
                                             uri, document->second, resolvedTypeName, false);
