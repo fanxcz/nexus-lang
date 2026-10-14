@@ -286,50 +286,49 @@ int main() {
                 return 10;
         }
         {
-            const std::string input =
-                "fn main(){\n"
-                "let text=\"{\"; // }\n"
-                "if true {\n"
-                "print(text)  \n"
-                "}\n"
-                "}\n";
-            const std::string expected =
-                "fn main() {\n"
-                "    let text = \"{\"; // }\n"
-                "    if true {\n"
-                "        print(text)\n"
-                "    }\n"
-                "}\n";
+            const std::string input = "fn main(){\n"
+                                      "let text=\"{\"; // }\n"
+                                      "if true {\n"
+                                      "print(text)  \n"
+                                      "}\n"
+                                      "}\n";
+            const std::string expected = "fn main() {\n"
+                                         "    let text = \"{\"; // }\n"
+                                         "    if true {\n"
+                                         "        print(text)\n"
+                                         "    }\n"
+                                         "}\n";
             const auto actual = nexus::formatNexusSource(input);
             if (actual != expected) {
                 std::cerr << "formatter string/comment/indent regression\n"
-                          << "Expected:\n" << expected << "Actual:\n" << actual;
+                          << "Expected:\n"
+                          << expected << "Actual:\n"
+                          << actual;
                 return 20;
             }
         }
         {
-            const std::string input =
-                "fn sum(a:i64,b:i64)->i64{\n"
-                "return a+b\n"
-                "}\n";
-            const std::string expected =
-                "fn sum(a: i64, b: i64) -> i64 {\n"
-                "    return a + b\n"
-                "}\n";
+            const std::string input = "fn sum(a:i64,b:i64)->i64{\n"
+                                      "return a+b\n"
+                                      "}\n";
+            const std::string expected = "fn sum(a: i64, b: i64) -> i64 {\n"
+                                         "    return a + b\n"
+                                         "}\n";
             const auto actual = nexus::formatNexusSource(input);
             if (actual != expected) {
                 std::cerr << "formatter token-spacing regression\n"
-                          << "Expected:\n" << expected << "Actual:\n" << actual;
+                          << "Expected:\n"
+                          << expected << "Actual:\n"
+                          << actual;
                 return 21;
             }
         }
         {
             bool reportedMultiple = false;
             try {
-                auto invalid = parse(
-                    "fn broken( { }\n"
-                    "fn also_broken( { }\n"
-                    "fn main() { }\n");
+                auto invalid = parse("fn broken( { }\n"
+                                     "fn also_broken( { }\n"
+                                     "fn main() { }\n");
                 (void)invalid;
             } catch (const std::exception& error) {
                 const std::string message = error.what();
@@ -352,9 +351,9 @@ int main() {
         }
         {
             if (nexus::package::sha256Hex("") !=
-                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ||
+                    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ||
                 nexus::package::sha256Hex("abc") !=
-                "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad") {
+                    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad") {
                 std::cerr << "SHA-256 regression\\n";
                 return 24;
             }

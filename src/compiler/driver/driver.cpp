@@ -1,6 +1,6 @@
 #include "driver/driver.hpp"
-#include "builtins.hpp"
 
+#include "builtins.hpp"
 #include "codegen/llvm_ir.hpp"
 #include "format/formatter.hpp"
 #include "lexer/lexer.hpp"
@@ -130,13 +130,12 @@ namespace nexus {
                     std::size_t line = 0;
                     std::size_t column = 0;
                     std::size_t columnEnd = separator + 1;
-                    while (columnEnd < location.size() &&
-                           location[columnEnd] >= '0' && location[columnEnd] <= '9') {
+                    while (columnEnd < location.size() && location[columnEnd] >= '0' &&
+                           location[columnEnd] <= '9') {
                         ++columnEnd;
                     }
                     if (parseNumber(location.substr(0, separator), line) &&
-                        parseNumber(location.substr(separator + 1,
-                                                    columnEnd - separator - 1),
+                        parseNumber(location.substr(separator + 1, columnEnd - separator - 1),
                                     column) &&
                         !gDiagnosticSource.empty()) {
                         std::ostringstream out;
@@ -1443,7 +1442,8 @@ namespace nexus {
             }
 
 #ifdef _WIN32
-            if (!MoveFileExW(temporary.c_str(), p.c_str(),
+            if (!MoveFileExW(temporary.c_str(),
+                             p.c_str(),
                              MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
                 const DWORD error = GetLastError();
                 std::error_code cleanup;
@@ -1468,14 +1468,18 @@ namespace nexus {
                 ".git", ".vscode", "build", "dist", "node_modules", "CMakeFiles"};
             std::vector<fs::path> files;
             std::error_code ec;
-            for (fs::recursive_directory_iterator it(
-                     root, fs::directory_options::skip_permission_denied, ec), end;
-                 it != end; it.increment(ec)) {
+            for (fs::recursive_directory_iterator
+                     it(root, fs::directory_options::skip_permission_denied, ec),
+                 end;
+                 it != end;
+                 it.increment(ec)) {
                 if (ec)
-                    throw std::runtime_error("cannot traverse package for checksum: " + ec.message());
+                    throw std::runtime_error("cannot traverse package for checksum: " +
+                                             ec.message());
                 const auto status = it->symlink_status(ec);
                 if (ec)
-                    throw std::runtime_error("cannot inspect package for checksum: " + ec.message());
+                    throw std::runtime_error("cannot inspect package for checksum: " +
+                                             ec.message());
                 if (fs::is_symlink(status)) {
                     it.disable_recursion_pending();
                     continue;
@@ -1522,15 +1526,23 @@ namespace nexus {
 
         int commandFmtAll(bool checkOnly) {
             const auto cfg = loadProject();
-            static const std::set<std::string> excludedDirectories = {
-                ".git", ".vscode", "build", "dist", "vendor", "node_modules",
-                "CMakeFiles", "target", ".cache"};
+            static const std::set<std::string> excludedDirectories = {".git",
+                                                                      ".vscode",
+                                                                      "build",
+                                                                      "dist",
+                                                                      "vendor",
+                                                                      "node_modules",
+                                                                      "CMakeFiles",
+                                                                      "target",
+                                                                      ".cache"};
 
             std::vector<fs::path> files;
             std::error_code ec;
-            for (fs::recursive_directory_iterator it(
-                     cfg.root, fs::directory_options::skip_permission_denied, ec), end;
-                 it != end; it.increment(ec)) {
+            for (fs::recursive_directory_iterator
+                     it(cfg.root, fs::directory_options::skip_permission_denied, ec),
+                 end;
+                 it != end;
+                 it.increment(ec)) {
                 if (ec)
                     throw std::runtime_error("cannot discover NEXUS source files: " + ec.message());
 
@@ -1551,10 +1563,9 @@ namespace nexus {
                     files.push_back(it->path());
             }
 
-            std::sort(files.begin(), files.end(),
-                      [](const fs::path& left, const fs::path& right) {
-                          return left.generic_string() < right.generic_string();
-                      });
+            std::sort(files.begin(), files.end(), [](const fs::path& left, const fs::path& right) {
+                return left.generic_string() < right.generic_string();
+            });
 
             if (files.empty()) {
                 std::cout << "fmt: no .nx files found in " << cfg.root << '\n';
@@ -1575,7 +1586,8 @@ namespace nexus {
 
             if (checkOnly) {
                 if (failed != 0) {
-                    std::cout << "fmt: " << failed << " file(s) need formatting or could not be read\n";
+                    std::cout << "fmt: " << failed
+                              << " file(s) need formatting or could not be read\n";
                     return 1;
                 }
                 std::cout << "fmt: OK (" << files.size() << " file(s))\n";
@@ -1995,13 +2007,27 @@ namespace nexus {
                 if (i + 1 >= value.size())
                     throw std::runtime_error(context + ": unfinished string escape");
                 switch (value[i]) {
-                case '"': decoded.push_back('"'); break;
-                case '\\': decoded.push_back('\\'); break;
-                case 'b': decoded.push_back('\b'); break;
-                case 't': decoded.push_back('\t'); break;
-                case 'n': decoded.push_back('\n'); break;
-                case 'f': decoded.push_back('\f'); break;
-                case 'r': decoded.push_back('\r'); break;
+                case '"':
+                    decoded.push_back('"');
+                    break;
+                case '\\':
+                    decoded.push_back('\\');
+                    break;
+                case 'b':
+                    decoded.push_back('\b');
+                    break;
+                case 't':
+                    decoded.push_back('\t');
+                    break;
+                case 'n':
+                    decoded.push_back('\n');
+                    break;
+                case 'f':
+                    decoded.push_back('\f');
+                    break;
+                case 'r':
+                    decoded.push_back('\r');
+                    break;
                 default:
                     throw std::runtime_error(context + ": unsupported string escape");
                 }
@@ -2009,10 +2035,8 @@ namespace nexus {
             return decoded;
         }
 
-        std::map<std::string, std::string>
-        readStrictTomlStringSection(const std::string& data,
-                                    const std::string& wantedSection,
-                                    const std::string& context) {
+        std::map<std::string, std::string> readStrictTomlStringSection(
+            const std::string& data, const std::string& wantedSection, const std::string& context) {
             std::map<std::string, std::string> values;
             std::set<std::string> seenTables;
             std::string activeSection;
@@ -2027,19 +2051,17 @@ namespace nexus {
                     continue;
 
                 if (original.front() == '[') {
-                    const bool arrayTable = original.size() >= 4 &&
-                        original.rfind("[[", 0) == 0 &&
-                        original.substr(original.size() - 2) == "]]";
-                    const bool regularTable = original.size() >= 3 &&
-                        original.front() == '[' && original.back() == ']' && !arrayTable &&
-                        original.find(']', 1) == original.size() - 1;
+                    const bool arrayTable = original.size() >= 4 && original.rfind("[[", 0) == 0 &&
+                                            original.substr(original.size() - 2) == "]]";
+                    const bool regularTable = original.size() >= 3 && original.front() == '[' &&
+                                              original.back() == ']' && !arrayTable &&
+                                              original.find(']', 1) == original.size() - 1;
                     if (!arrayTable && !regularTable)
                         throw std::runtime_error(context + ": invalid table header at line " +
                                                  std::to_string(lineNumber));
 
                     const std::size_t start = arrayTable ? 2 : 1;
-                    const std::size_t length =
-                        original.size() - start - (arrayTable ? 2 : 1);
+                    const std::size_t length = original.size() - start - (arrayTable ? 2 : 1);
                     const std::string section = trim(original.substr(start, length));
                     if (section.empty() || section.find('[') != std::string::npos ||
                         section.find(']') != std::string::npos)
@@ -2065,9 +2087,8 @@ namespace nexus {
                     continue;
                 const auto equal = findTomlAssignment(current);
                 if (equal == std::string::npos)
-                    throw std::runtime_error(context + ": malformed entry in [" +
-                                             wantedSection + "] at line " +
-                                             std::to_string(lineNumber) +
+                    throw std::runtime_error(context + ": malformed entry in [" + wantedSection +
+                                             "] at line " + std::to_string(lineNumber) +
                                              ": expected key = \"value\"");
 
                 const std::string key = trim(current.substr(0, equal));
@@ -2076,11 +2097,10 @@ namespace nexus {
                                              std::to_string(lineNumber));
                 const std::string value = parsePackageMetadataString(
                     current.substr(equal + 1),
-                    context + " [" + wantedSection + "] line " +
-                        std::to_string(lineNumber));
+                    context + " [" + wantedSection + "] line " + std::to_string(lineNumber));
                 if (!values.emplace(key, value).second)
-                    throw std::runtime_error(context + ": duplicate key '" + key +
-                                             "' in [" + wantedSection + "]");
+                    throw std::runtime_error(context + ": duplicate key '" + key + "' in [" +
+                                             wantedSection + "]");
             }
             return values;
         }
@@ -2118,8 +2138,7 @@ namespace nexus {
                     continue;
                 if (current.front() == '[') {
                     if (current.size() < 3 || current.back() != ']' ||
-                        current.rfind("[[", 0) == 0 ||
-                        current.find(']', 1) != current.size() - 1)
+                        current.rfind("[[", 0) == 0 || current.find(']', 1) != current.size() - 1)
                         throw std::runtime_error("pkg verify: invalid lockfile table at line " +
                                                  std::to_string(lineNumber));
                     activeSection = trim(current.substr(1, current.size() - 2));
@@ -2143,8 +2162,7 @@ namespace nexus {
                                              std::to_string(lineNumber));
                 const std::string value = parsePackageMetadataString(
                     current.substr(equal + 1),
-                    "pkg verify: invalid lockfile value at line " +
-                        std::to_string(lineNumber));
+                    "pkg verify: invalid lockfile value at line " + std::to_string(lineNumber));
 
                 if (activeSection.empty()) {
                     if (key != "package" && key != "version")
@@ -2154,8 +2172,8 @@ namespace nexus {
                         throw std::runtime_error("pkg verify: invalid lockfile: duplicate key '" +
                                                  key + "'");
                 } else if (!result.sections[activeSection].emplace(key, value).second) {
-                    throw std::runtime_error("pkg verify: invalid lockfile: duplicate key '" +
-                                             key + "' in [" + activeSection + "]");
+                    throw std::runtime_error("pkg verify: invalid lockfile: duplicate key '" + key +
+                                             "' in [" + activeSection + "]");
                 }
             }
 
@@ -2388,7 +2406,8 @@ namespace nexus {
         int commandPkg(const std::vector<std::string>& args) {
             const auto cfg = loadProject();
             if (args.empty() || args[0] == "help") {
-                std::cout << "nexus pkg init|add <path>|remove <name>|list|update|verify|build|publish\n";
+                std::cout
+                    << "nexus pkg init|add <path>|remove <name>|list|update|verify|build|publish\n";
                 return 0;
             }
             const std::string sub = args[0];
@@ -2463,13 +2482,13 @@ namespace nexus {
                     if (ec)
                         throw std::runtime_error("cannot inspect lockfile: " + ec.message());
                     if (fs::is_symlink(lockStatus) || !fs::is_regular_file(lockStatus))
-                        throw std::runtime_error("nexus.lock must be a regular file, not a symlink");
+                        throw std::runtime_error(
+                            "nexus.lock must be a regular file, not a symlink");
                     hadLockfile = true;
                 }
                 const std::string lockBefore = hadLockfile ? readFile(lockPath) : std::string{};
 
-                const auto stamp =
-                    std::chrono::steady_clock::now().time_since_epoch().count();
+                const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
                 const fs::path backup =
                     root / (".nexus-pkg-backup-" + dep.name + "-" + std::to_string(stamp));
                 if (fs::exists(backup, ec) || ec)
@@ -2530,8 +2549,8 @@ namespace nexus {
                 if (hadDestination) {
                     fs::remove_all(backup, ec);
                     if (ec)
-                        std::cerr << "pkg add: warning: old package backup remains at "
-                                  << backup << ": " << ec.message() << '\n';
+                        std::cerr << "pkg add: warning: old package backup remains at " << backup
+                                  << ": " << ec.message() << '\n';
                 }
                 std::cout << "pkg add: vendored " << dep.name << " " << dep.version << "\n";
                 return 0;
@@ -2565,11 +2584,11 @@ namespace nexus {
                     readStrictTomlStringSection(manifest, "dependencies", "nexus.toml");
                 const auto parsedLock = parsePackageLockfile(lock);
                 static const std::map<std::string, std::string> emptyLockSection;
-                const auto lockSection = [&](const std::string& name)
-                    -> const std::map<std::string, std::string>& {
+                const auto lockSection =
+                    [&](const std::string& name) -> const std::map<std::string, std::string>& {
                     const auto section = parsedLock.sections.find(name);
                     return section == parsedLock.sections.end() ? emptyLockSection
-                                                                 : section->second;
+                                                                : section->second;
                 };
                 const auto& lockedDependencies = lockSection("dependencies");
                 const auto& sources = lockSection("sources");
@@ -2580,14 +2599,17 @@ namespace nexus {
                 std::error_code rootError;
                 const fs::path canonicalRoot = fs::weakly_canonical(cfg.root, rootError);
                 if (rootError)
-                    throw std::runtime_error("cannot resolve project root for package verification");
+                    throw std::runtime_error(
+                        "cannot resolve project root for package verification");
 
                 if (parsedLock.metadata.at("package") != cfg.name) {
-                    std::cerr << "pkg verify: lockfile mismatch: package name differs from nexus.toml\n";
+                    std::cerr
+                        << "pkg verify: lockfile mismatch: package name differs from nexus.toml\n";
                     failed = true;
                 }
                 if (parsedLock.metadata.at("version") != cfg.version) {
-                    std::cerr << "pkg verify: lockfile mismatch: project version differs from nexus.toml\n";
+                    std::cerr << "pkg verify: lockfile mismatch: project version differs from "
+                                 "nexus.toml\n";
                     failed = true;
                 }
 
@@ -2623,8 +2645,9 @@ namespace nexus {
                             failed = true;
                         }
                         if (!integrities.contains(name)) {
-                            std::cerr << "pkg verify: lockfile mismatch: missing checksum for local "
-                                      << "dependency '" << name << "'\n";
+                            std::cerr
+                                << "pkg verify: lockfile mismatch: missing checksum for local "
+                                << "dependency '" << name << "'\n";
                             failed = true;
                         }
                         const fs::path localRoot = (cfg.root / normalized).lexically_normal();
@@ -2646,8 +2669,9 @@ namespace nexus {
                     }
                     const auto declaredDependency = manifestDependencies.find(name);
                     if (declaredDependency == manifestDependencies.end()) {
-                        std::cerr << "pkg verify: lockfile mismatch: source for undeclared dependency '"
-                                  << name << "'\n";
+                        std::cerr
+                            << "pkg verify: lockfile mismatch: source for undeclared dependency '"
+                            << name << "'\n";
                         failed = true;
                         continue;
                     }
@@ -2717,8 +2741,8 @@ namespace nexus {
                             continue;
                         }
                     } catch (const std::exception& error) {
-                        std::cerr << "pkg verify: invalid package '" << name << "': "
-                                  << error.what() << "\n";
+                        std::cerr << "pkg verify: invalid package '" << name
+                                  << "': " << error.what() << "\n";
                         failed = true;
                         continue;
                     }
@@ -2735,7 +2759,8 @@ namespace nexus {
                 for (const auto& [name, checksum] : integrities) {
                     (void)checksum;
                     if (!sources.contains(name)) {
-                        std::cerr << "pkg verify: checksum has no source entry for " << name << "\n";
+                        std::cerr << "pkg verify: checksum has no source entry for " << name
+                                  << "\n";
                         failed = true;
                     }
                 }
@@ -3016,7 +3041,8 @@ namespace nexus {
                         std::string target;
                         const auto quote = diagnostic.message.find('\'');
                         if (diagnostic.message.rfind("unknown variable: ", 0) == 0) {
-                            target = diagnostic.message.substr(std::string("unknown variable: ").size());
+                            target =
+                                diagnostic.message.substr(std::string("unknown variable: ").size());
                         } else if (diagnostic.message.find("field") != std::string::npos &&
                                    quote != std::string::npos) {
                             const auto endQuote = diagnostic.message.find('\'', quote + 1);
@@ -3382,32 +3408,32 @@ namespace nexus {
             const auto workspaceTypeIndexFor =
                 [&](const std::string& documentUri,
                     const std::string& source) -> LspTypeDeclarationIndex& {
-                    auto cached = workspaceTypeDeclarationCache.find(documentUri);
-                    if (cached == workspaceTypeDeclarationCache.end() ||
-                        cached->second.source != source) {
-                        LspTypeDeclarationIndex index;
-                        index.source = source;
-                        try {
-                            const auto tokens = Lexer(source).tokenize();
-                            for (std::size_t i = 0; i + 1 < tokens.size(); ++i) {
-                                if (tokens[i + 1].kind != TokenKind::Identifier)
-                                    continue;
-                                if (tokens[i].kind == TokenKind::KwStruct)
-                                    index.structNames.insert(tokens[i + 1].text);
-                                else if (tokens[i].kind == TokenKind::KwEnum)
-                                    index.enumNames.insert(tokens[i + 1].text);
-                                else if (tokens[i].kind == TokenKind::KwFn)
-                                    index.functionNames.insert(tokens[i + 1].text);
-                            }
-                        } catch (const std::exception&) {
-                            // One incomplete workspace buffer must not break completion.
+                auto cached = workspaceTypeDeclarationCache.find(documentUri);
+                if (cached == workspaceTypeDeclarationCache.end() ||
+                    cached->second.source != source) {
+                    LspTypeDeclarationIndex index;
+                    index.source = source;
+                    try {
+                        const auto tokens = Lexer(source).tokenize();
+                        for (std::size_t i = 0; i + 1 < tokens.size(); ++i) {
+                            if (tokens[i + 1].kind != TokenKind::Identifier)
+                                continue;
+                            if (tokens[i].kind == TokenKind::KwStruct)
+                                index.structNames.insert(tokens[i + 1].text);
+                            else if (tokens[i].kind == TokenKind::KwEnum)
+                                index.enumNames.insert(tokens[i + 1].text);
+                            else if (tokens[i].kind == TokenKind::KwFn)
+                                index.functionNames.insert(tokens[i + 1].text);
                         }
-                        cached = workspaceTypeDeclarationCache
-                                     .insert_or_assign(documentUri, std::move(index))
-                                     .first;
+                    } catch (const std::exception&) {
+                        // One incomplete workspace buffer must not break completion.
                     }
-                    return cached->second;
-                };
+                    cached = workspaceTypeDeclarationCache
+                                 .insert_or_assign(documentUri, std::move(index))
+                                 .first;
+                }
+                return cached->second;
+            };
             const auto parseWorkspaceTypeIndex = [&](LspTypeDeclarationIndex& index) {
                 if (index.declarationsParsed)
                     return;
@@ -3416,13 +3442,18 @@ namespace nexus {
                     index.structs = std::move(parsed.structs);
                     index.enums = std::move(parsed.enums);
                     const auto describeIndexedType = [&](const auto& self,
-                                                          const Type& type) -> std::string {
+                                                         const Type& type) -> std::string {
                         switch (type.kind) {
-                        case TypeKind::I64: return "i64";
-                        case TypeKind::F64: return "f64";
-                        case TypeKind::Bool: return "bool";
-                        case TypeKind::String: return "string";
-                        case TypeKind::Void: return "void";
+                        case TypeKind::I64:
+                            return "i64";
+                        case TypeKind::F64:
+                            return "f64";
+                        case TypeKind::Bool:
+                            return "bool";
+                        case TypeKind::String:
+                            return "string";
+                        case TypeKind::Void:
+                            return "void";
                         case TypeKind::Pointer:
                             return type.pointee ? "*" + self(self, *type.pointee) : "*unknown";
                         case TypeKind::Struct:
@@ -3430,11 +3461,11 @@ namespace nexus {
                         case TypeKind::Enum:
                             return type.name.empty() ? "enum" : type.name;
                         case TypeKind::Array:
-                            return type.element
-                                       ? "[" + self(self, *type.element) + "; " +
-                                             std::to_string(type.arraySize) + "]"
-                                       : "[unknown]";
-                        case TypeKind::Unknown: return "inferred";
+                            return type.element ? "[" + self(self, *type.element) + "; " +
+                                                      std::to_string(type.arraySize) + "]"
+                                                : "[unknown]";
+                        case TypeKind::Unknown:
+                            return "inferred";
                         }
                         return "unknown";
                     };
@@ -3451,8 +3482,7 @@ namespace nexus {
                         signature << ") -> "
                                   << describeIndexedType(describeIndexedType, function.ret);
                         index.functionHoverMarkdown.insert_or_assign(
-                            function.name,
-                            "**" + signature.str() + "**\n\nUser-defined function.");
+                            function.name, "**" + signature.str() + "**\n\nUser-defined function.");
 
                         LspFunctionSignatureInfo signatureInfo;
                         signatureInfo.label = signature.str();
@@ -3461,12 +3491,11 @@ namespace nexus {
                                 parameter.name + ": " +
                                 describeIndexedType(describeIndexedType, parameter.type));
                         }
-                        index.functionSignatures.insert_or_assign(
-                            function.name, std::move(signatureInfo));
-                        if (function.ret.kind == TypeKind::Struct &&
-                            !function.ret.name.empty()) {
-                            index.functionReturnTypes.insert_or_assign(
-                                function.name, function.ret.name);
+                        index.functionSignatures.insert_or_assign(function.name,
+                                                                  std::move(signatureInfo));
+                        if (function.ret.kind == TypeKind::Struct && !function.ret.name.empty()) {
+                            index.functionReturnTypes.insert_or_assign(function.name,
+                                                                       function.ret.name);
                         }
                     }
                 } catch (const std::exception&) {
@@ -3479,65 +3508,63 @@ namespace nexus {
                 }
                 index.declarationsParsed = true;
             };
-            const auto workspaceTypeDeclarationsFor =
-                [&](const std::string& requestUri,
-                    const std::string& requestSource,
-                    const std::string& requestedType,
-                    bool requestedEnum) {
-                    std::pair<std::vector<StructDecl>, std::vector<EnumDecl>> result;
-                    if (requestedType.empty())
-                        return result;
+            const auto workspaceTypeDeclarationsFor = [&](const std::string& requestUri,
+                                                          const std::string& requestSource,
+                                                          const std::string& requestedType,
+                                                          bool requestedEnum) {
+                std::pair<std::vector<StructDecl>, std::vector<EnumDecl>> result;
+                if (requestedType.empty())
+                    return result;
 
-                    for (const auto& [documentUri, source] :
-                         collectWorkspaceDocuments(requestUri, requestSource)) {
-                        if (documentUri == requestUri)
-                            continue;
+                for (const auto& [documentUri, source] :
+                     collectWorkspaceDocuments(requestUri, requestSource)) {
+                    if (documentUri == requestUri)
+                        continue;
 
-                        auto& index = workspaceTypeIndexFor(documentUri, source);
-                        const bool typeExists = requestedEnum
-                                                    ? index.enumNames.contains(requestedType)
-                                                    : index.structNames.contains(requestedType);
-                        if (!typeExists)
-                            continue;
+                    auto& index = workspaceTypeIndexFor(documentUri, source);
+                    const bool typeExists = requestedEnum
+                                                ? index.enumNames.contains(requestedType)
+                                                : index.structNames.contains(requestedType);
+                    if (!typeExists)
+                        continue;
 
-                        parseWorkspaceTypeIndex(index);
-                        if (requestedEnum) {
-                            for (const auto& declaration : index.enums) {
-                                if (declaration.name == requestedType)
-                                    result.second.push_back(declaration);
-                            }
-                        } else {
-                            for (const auto& declaration : index.structs) {
-                                if (declaration.name == requestedType)
-                                    result.first.push_back(declaration);
-                            }
+                    parseWorkspaceTypeIndex(index);
+                    if (requestedEnum) {
+                        for (const auto& declaration : index.enums) {
+                            if (declaration.name == requestedType)
+                                result.second.push_back(declaration);
+                        }
+                    } else {
+                        for (const auto& declaration : index.structs) {
+                            if (declaration.name == requestedType)
+                                result.first.push_back(declaration);
                         }
                     }
-                    return result;
-                };
-            const auto workspaceFunctionReturnTypeFor =
-                [&](const std::string& requestUri,
-                    const std::string& requestSource,
-                    const std::string& requestedFunction) {
-                    if (requestedFunction.empty())
-                        return std::string{};
-
-                    for (const auto& [documentUri, source] :
-                         collectWorkspaceDocuments(requestUri, requestSource)) {
-                        if (documentUri == requestUri)
-                            continue;
-
-                        auto& index = workspaceTypeIndexFor(documentUri, source);
-                        if (!index.functionNames.contains(requestedFunction))
-                            continue;
-
-                        parseWorkspaceTypeIndex(index);
-                        const auto found = index.functionReturnTypes.find(requestedFunction);
-                        if (found != index.functionReturnTypes.end())
-                            return found->second;
-                    }
+                }
+                return result;
+            };
+            const auto workspaceFunctionReturnTypeFor = [&](const std::string& requestUri,
+                                                            const std::string& requestSource,
+                                                            const std::string& requestedFunction) {
+                if (requestedFunction.empty())
                     return std::string{};
-                };
+
+                for (const auto& [documentUri, source] :
+                     collectWorkspaceDocuments(requestUri, requestSource)) {
+                    if (documentUri == requestUri)
+                        continue;
+
+                    auto& index = workspaceTypeIndexFor(documentUri, source);
+                    if (!index.functionNames.contains(requestedFunction))
+                        continue;
+
+                    parseWorkspaceTypeIndex(index);
+                    const auto found = index.functionReturnTypes.find(requestedFunction);
+                    if (found != index.functionReturnTypes.end())
+                        return found->second;
+                }
+                return std::string{};
+            };
 
             const auto identifierAtPosition = [&](const std::string& source,
                                                   std::size_t requestedLine,
@@ -3974,9 +4001,8 @@ namespace nexus {
                     const auto& diagnostic = diagnostics[i];
                     payload << "{\"range\":{\"start\":{\"line\":" << diagnostic.line
                             << ",\"character\":" << diagnostic.character
-                            << "},\"end\":{\"line\":" << diagnostic.line
-                            << ",\"character\":" << diagnostic.character +
-                                   std::max<std::size_t>(1, diagnostic.length)
+                            << "},\"end\":{\"line\":" << diagnostic.line << ",\"character\":"
+                            << diagnostic.character + std::max<std::size_t>(1, diagnostic.length)
                             << "}},\"severity\":1,\"code\":\"" << diagnostic.code
                             << "\",\"source\":\"nexus\",\"message\":\""
                             << jsonEscape(diagnostic.message) << "\"}";
@@ -3999,10 +4025,9 @@ namespace nexus {
                 if (lineStart > source.size())
                     return std::string("null");
                 const auto lineEnd = source.find('\n', lineStart);
-                const std::string lineText =
-                    source.substr(lineStart, lineEnd == std::string::npos
-                                                 ? std::string::npos
-                                                 : lineEnd - lineStart);
+                const std::string lineText = source.substr(
+                    lineStart,
+                    lineEnd == std::string::npos ? std::string::npos : lineEnd - lineStart);
                 const std::size_t cursorOffset =
                     lineStart + byteOffsetForUtf16(lineText, requestedCharacter);
 
@@ -4043,8 +4068,7 @@ namespace nexus {
                     } else if (token.kind == TokenKind::LBrace) {
                         delimiters.push_back({TokenKind::LBrace, {}, 0, false});
                     } else if (token.kind == TokenKind::Comma) {
-                        if (!delimiters.empty() &&
-                            delimiters.back().opening == TokenKind::LParen &&
+                        if (!delimiters.empty() && delimiters.back().opening == TokenKind::LParen &&
                             delimiters.back().isCall) {
                             ++delimiters.back().activeParameter;
                         }
@@ -4055,9 +4079,8 @@ namespace nexus {
                         const TokenKind expected =
                             token.kind == TokenKind::RParen
                                 ? TokenKind::LParen
-                                : (token.kind == TokenKind::RBracket
-                                       ? TokenKind::LBracket
-                                       : TokenKind::LBrace);
+                                : (token.kind == TokenKind::RBracket ? TokenKind::LBracket
+                                                                     : TokenKind::LBrace);
                         if (delimiters.back().opening == expected)
                             delimiters.pop_back();
                     }
@@ -4075,21 +4098,28 @@ namespace nexus {
 
                 const auto describeType = [&](const auto& self, const Type& type) -> std::string {
                     switch (type.kind) {
-                    case TypeKind::I64: return "i64";
-                    case TypeKind::F64: return "f64";
-                    case TypeKind::Bool: return "bool";
-                    case TypeKind::String: return "string";
-                    case TypeKind::Void: return "void";
-                    case TypeKind::Unknown: return "unknown";
-                    case TypeKind::Struct: return type.name;
-                    case TypeKind::Enum: return "enum " + type.name;
+                    case TypeKind::I64:
+                        return "i64";
+                    case TypeKind::F64:
+                        return "f64";
+                    case TypeKind::Bool:
+                        return "bool";
+                    case TypeKind::String:
+                        return "string";
+                    case TypeKind::Void:
+                        return "void";
+                    case TypeKind::Unknown:
+                        return "unknown";
+                    case TypeKind::Struct:
+                        return type.name;
+                    case TypeKind::Enum:
+                        return "enum " + type.name;
                     case TypeKind::Pointer:
                         return type.pointee ? "*" + self(self, *type.pointee) : "*unknown";
                     case TypeKind::Array:
-                        return type.element
-                                   ? "[" + self(self, *type.element) + "; " +
-                                         std::to_string(type.arraySize) + "]"
-                                   : "[unknown]";
+                        return type.element ? "[" + self(self, *type.element) + "; " +
+                                                  std::to_string(type.arraySize) + "]"
+                                            : "[unknown]";
                     }
                     return "unknown";
                 };
@@ -4127,13 +4157,12 @@ namespace nexus {
                     return std::string("null");
 
                 std::ostringstream response;
-                response << "{\"signatures\":[{\"label\":\""
-                         << jsonEscape(signature.label) << "\",\"parameters\":[";
+                response << "{\"signatures\":[{\"label\":\"" << jsonEscape(signature.label)
+                         << "\",\"parameters\":[";
                 for (std::size_t i = 0; i < signature.parameters.size(); ++i) {
                     if (i)
                         response << ',';
-                    response << "{\"label\":\"" << jsonEscape(signature.parameters[i])
-                             << "\"}";
+                    response << "{\"label\":\"" << jsonEscape(signature.parameters[i]) << "\"}";
                 }
                 response << "]}],\"activeSignature\":0";
                 if (!signature.parameters.empty()) {
@@ -4217,7 +4246,8 @@ namespace nexus {
                          "\"signatureHelpProvider\":{\"triggerCharacters\":[\"(\",\",\"]},"
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
                          "\"renameProvider\":true,\"hoverProvider\":true,"
-                         "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":true,"
+                         "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":"
+                         "true,"
                          "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}}");
                 } else if (method == "initialized") {
                     if (clientSupportsWatchedFilesRegistration) {
@@ -4277,12 +4307,12 @@ namespace nexus {
                     const auto document = openDocuments.find(uri);
                     std::string result = "null";
                     if (document != openDocuments.end()) {
-                        result = signatureHelpResult(document->first, document->second,
-                                                      extractNumber(body, "line"),
-                                                      extractNumber(body, "character"));
+                        result = signatureHelpResult(document->first,
+                                                     document->second,
+                                                     extractNumber(body, "line"),
+                                                     extractNumber(body, "character"));
                     }
-                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" +
-                         result + "}");
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
                 } else if (method == "textDocument/hover" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);
@@ -4409,48 +4439,55 @@ namespace nexus {
 
                         // Resolve global declarations from unopened or open workspace files.
                         if (result == "null" && !identifier.empty()) {
-                            const auto occurrences = findIdentifierOccurrences(
-                                identifier, uri, document->second,
-                                extractNumber(body, "line"),
-                                extractNumber(body, "character"));
-                            const bool declaredElsewhere =
-                                std::any_of(occurrences.begin(), occurrences.end(),
-                                            [&](const LspIdentifierOccurrence& occurrence) {
-                                                return occurrence.isDeclaration &&
-                                                       occurrence.uri != uri;
-                                            });
+                            const auto occurrences =
+                                findIdentifierOccurrences(identifier,
+                                                          uri,
+                                                          document->second,
+                                                          extractNumber(body, "line"),
+                                                          extractNumber(body, "character"));
+                            const bool declaredElsewhere = std::any_of(
+                                occurrences.begin(),
+                                occurrences.end(),
+                                [&](const LspIdentifierOccurrence& occurrence) {
+                                    return occurrence.isDeclaration && occurrence.uri != uri;
+                                });
                             if (declaredElsewhere) {
                                 const auto describeWorkspaceHoverType =
                                     [&](const auto& self, const Type& type) -> std::string {
-                                        switch (type.kind) {
-                                        case TypeKind::I64: return "i64";
-                                        case TypeKind::F64: return "f64";
-                                        case TypeKind::Bool: return "bool";
-                                        case TypeKind::String: return "string";
-                                        case TypeKind::Void: return "void";
-                                        case TypeKind::Pointer:
-                                            return type.pointee
-                                                       ? "*" + self(self, *type.pointee)
-                                                       : "*unknown";
-                                        case TypeKind::Struct:
-                                            return type.name.empty() ? "struct" : type.name;
-                                        case TypeKind::Enum:
-                                            return type.name.empty() ? "enum" : type.name;
-                                        case TypeKind::Array:
-                                            return type.element
-                                                       ? "[" + self(self, *type.element) + "; " +
-                                                             std::to_string(type.arraySize) + "]"
-                                                       : "[unknown]";
-                                        case TypeKind::Unknown: return "inferred";
-                                        }
-                                        return "unknown";
-                                    };
+                                    switch (type.kind) {
+                                    case TypeKind::I64:
+                                        return "i64";
+                                    case TypeKind::F64:
+                                        return "f64";
+                                    case TypeKind::Bool:
+                                        return "bool";
+                                    case TypeKind::String:
+                                        return "string";
+                                    case TypeKind::Void:
+                                        return "void";
+                                    case TypeKind::Pointer:
+                                        return type.pointee ? "*" + self(self, *type.pointee)
+                                                            : "*unknown";
+                                    case TypeKind::Struct:
+                                        return type.name.empty() ? "struct" : type.name;
+                                    case TypeKind::Enum:
+                                        return type.name.empty() ? "enum" : type.name;
+                                    case TypeKind::Array:
+                                        return type.element
+                                                   ? "[" + self(self, *type.element) + "; " +
+                                                         std::to_string(type.arraySize) + "]"
+                                                   : "[unknown]";
+                                    case TypeKind::Unknown:
+                                        return "inferred";
+                                    }
+                                    return "unknown";
+                                };
                                 for (const auto& [candidateUri, candidateSource] :
                                      collectWorkspaceDocuments(uri, document->second)) {
                                     if (candidateUri == uri)
                                         continue;
-                                    auto& index = workspaceTypeIndexFor(candidateUri,
-                                                                        candidateSource);
+                                    auto& index =
+                                        workspaceTypeIndexFor(candidateUri, candidateSource);
                                     if (!index.functionNames.contains(identifier) &&
                                         !index.structNames.contains(identifier) &&
                                         !index.enumNames.contains(identifier)) {
@@ -4459,7 +4496,8 @@ namespace nexus {
 
                                     parseWorkspaceTypeIndex(index);
                                     std::string markdown;
-                                    const auto function = index.functionHoverMarkdown.find(identifier);
+                                    const auto function =
+                                        index.functionHoverMarkdown.find(identifier);
                                     if (function != index.functionHoverMarkdown.end())
                                         markdown = function->second;
 
@@ -4474,12 +4512,12 @@ namespace nexus {
                                             } else {
                                                 description << "\n\nFields:";
                                                 for (const auto& field : declaration.fields) {
-                                                    description << "\n- "
-                                                                << static_cast<char>(96)
-                                                                << field.name << static_cast<char>(96)
-                                                                << ": "
-                                                                << describeWorkspaceHoverType(describeWorkspaceHoverType,
-                                                                                field.type);
+                                                    description << "\n- " << static_cast<char>(96)
+                                                                << field.name
+                                                                << static_cast<char>(96) << ": "
+                                                                << describeWorkspaceHoverType(
+                                                                       describeWorkspaceHoverType,
+                                                                       field.type);
                                                 }
                                             }
                                             markdown = description.str();
@@ -4497,9 +4535,8 @@ namespace nexus {
                                             } else {
                                                 description << "\n\nVariants:";
                                                 for (const auto& variant : declaration.variants)
-                                                    description << "\n- "
-                                                                << static_cast<char>(96) << variant
-                                                                << static_cast<char>(96);
+                                                    description << "\n- " << static_cast<char>(96)
+                                                                << variant << static_cast<char>(96);
                                             }
                                             markdown = description.str();
                                             break;
@@ -4540,10 +4577,10 @@ namespace nexus {
                         }
                         if (lineStart <= source.size()) {
                             const auto newline = source.find('\n', lineStart);
-                            currentLineText = source.substr(
-                                lineStart, newline == std::string::npos
-                                               ? std::string::npos
-                                               : newline - lineStart);
+                            currentLineText =
+                                source.substr(lineStart,
+                                              newline == std::string::npos ? std::string::npos
+                                                                           : newline - lineStart);
                             const std::size_t cursor =
                                 std::min(byteOffsetForUtf16(currentLineText, currentCharacter),
                                          currentLineText.size());
@@ -4558,9 +4595,8 @@ namespace nexus {
                             if (prefixStart > 0 && currentLineText[prefixStart - 1] == '.') {
                                 memberContext = true;
                                 std::size_t objectEnd = prefixStart - 1;
-                                while (objectEnd > 0 &&
-                                       std::isspace(static_cast<unsigned char>(
-                                           currentLineText[objectEnd - 1])))
+                                while (objectEnd > 0 && std::isspace(static_cast<unsigned char>(
+                                                            currentLineText[objectEnd - 1])))
                                     --objectEnd;
                                 std::size_t objectStart = objectEnd;
                                 while (objectStart > 0 &&
@@ -4610,7 +4646,8 @@ namespace nexus {
                                         continue;
                                     for (const auto& variant : declaration.variants) {
                                         const std::string label = declaration.name + "::" + variant;
-                                        if (prefix.empty() || label.rfind(enumName + "::" + prefix, 0) == 0)
+                                        if (prefix.empty() ||
+                                            label.rfind(enumName + "::" + prefix, 0) == 0)
                                             choices.emplace_back(label, "Variant of " + enumName);
                                     }
                                 }
@@ -4623,13 +4660,15 @@ namespace nexus {
                                             variableTypes[parameter.name] = parameter.type.name;
                                     }
                                 }
-                                const auto collectTypes = [&](const auto& self, const Block& block) -> void {
+                                const auto collectTypes = [&](const auto& self,
+                                                              const Block& block) -> void {
                                     for (const auto& statement : block.statements) {
                                         if (const auto* declaration =
                                                 dynamic_cast<const LetStmt*>(statement.get())) {
                                             std::string typeName = declaration->type.name;
                                             if (const auto* init =
-                                                    dynamic_cast<const StructInitExpr*>(declaration->init.get()))
+                                                    dynamic_cast<const StructInitExpr*>(
+                                                        declaration->init.get()))
                                                 typeName = init->typeName;
                                             else if (const auto* init =
                                                          dynamic_cast<const EnumVariantExpr*>(
@@ -4654,22 +4693,25 @@ namespace nexus {
                                             if (!typeName.empty())
                                                 variableTypes[declaration->name] = typeName;
                                         } else if (const auto* conditional =
-                                                       dynamic_cast<const IfStmt*>(statement.get())) {
+                                                       dynamic_cast<const IfStmt*>(
+                                                           statement.get())) {
                                             if (conditional->thenBlock)
                                                 self(self, *conditional->thenBlock);
                                             if (conditional->elseBlock)
                                                 self(self, *conditional->elseBlock);
                                         } else if (const auto* loop =
-                                                       dynamic_cast<const WhileStmt*>(statement.get())) {
+                                                       dynamic_cast<const WhileStmt*>(
+                                                           statement.get())) {
                                             if (loop->body)
                                                 self(self, *loop->body);
                                         } else if (const auto* match =
-                                                       dynamic_cast<const MatchStmt*>(statement.get())) {
+                                                       dynamic_cast<const MatchStmt*>(
+                                                           statement.get())) {
                                             for (const auto& arm : match->arms)
                                                 if (arm.body)
                                                     self(self, *arm.body);
-                                        } else if (const auto* nested =
-                                                       dynamic_cast<const Block*>(statement.get())) {
+                                        } else if (const auto* nested = dynamic_cast<const Block*>(
+                                                       statement.get())) {
                                             self(self, *nested);
                                         }
                                     }
@@ -4680,8 +4722,7 @@ namespace nexus {
 
                                 const auto type = variableTypes.find(objectName);
                                 if (type != variableTypes.end()) {
-                                    std::vector<StructDecl> structureDeclarations =
-                                        program.structs;
+                                    std::vector<StructDecl> structureDeclarations = program.structs;
                                     const bool hasLocalStruct =
                                         std::any_of(structureDeclarations.begin(),
                                                     structureDeclarations.end(),
@@ -4698,8 +4739,8 @@ namespace nexus {
                                         auto workspaceTypes = workspaceTypeDeclarationsFor(
                                             uri, document->second, type->second, false);
                                         structureDeclarations.insert(structureDeclarations.end(),
-                                                                      workspaceTypes.first.begin(),
-                                                                      workspaceTypes.first.end());
+                                                                     workspaceTypes.first.begin(),
+                                                                     workspaceTypes.first.end());
                                     }
                                     for (const auto& declaration : structureDeclarations) {
                                         if (declaration.name != type->second)
@@ -4731,12 +4772,13 @@ namespace nexus {
                     for (std::size_t i = 0; i < choices.size(); ++i) {
                         if (i)
                             result << ',';
-                        const int kind = choices[i].second.rfind("Field of ", 0) == 0
-                                             ? 5
-                                             : (choices[i].second.rfind("Variant of ", 0) == 0 ? 20 : 14);
+                        const int kind =
+                            choices[i].second.rfind("Field of ", 0) == 0
+                                ? 5
+                                : (choices[i].second.rfind("Variant of ", 0) == 0 ? 20 : 14);
                         result << "{\"label\":\"" << jsonEscape(choices[i].first)
-                               << "\",\"kind\":" << kind
-                               << ",\"detail\":\"" << jsonEscape(choices[i].second) << "\"}";
+                               << "\",\"kind\":" << kind << ",\"detail\":\""
+                               << jsonEscape(choices[i].second) << "\"}";
                     }
                     result << "]}";
                     send(result.str());
@@ -4771,14 +4813,14 @@ namespace nexus {
                     std::string result = "[]";
                     if (doc != openDocuments.end()) {
                         const std::size_t rangePos = body.find("\"range\"");
-                        const std::size_t startPos =
-                            rangePos == std::string::npos ? std::string::npos
-                                                          : body.find("\"start\"", rangePos);
-                        const std::size_t endPos =
-                            startPos == std::string::npos ? std::string::npos
-                                                          : body.find("\"end\"", startPos + 7);
+                        const std::size_t startPos = rangePos == std::string::npos
+                                                         ? std::string::npos
+                                                         : body.find("\"start\"", rangePos);
+                        const std::size_t endPos = startPos == std::string::npos
+                                                       ? std::string::npos
+                                                       : body.find("\"end\"", startPos + 7);
                         const auto nestedNumber = [&](std::size_t objectPos,
-                                                       const std::string& field) {
+                                                      const std::string& field) {
                             if (objectPos == std::string::npos)
                                 return std::size_t{0};
                             const std::size_t objectEnd = body.find('}', objectPos);
@@ -4857,8 +4899,8 @@ namespace nexus {
                                     --lastLine;
 
                                 const auto joinRange = [](const std::vector<std::string>& lines,
-                                                           std::size_t first,
-                                                           std::size_t last) {
+                                                          std::size_t first,
+                                                          std::size_t last) {
                                     std::string text;
                                     for (std::size_t line = first; line <= last; ++line) {
                                         if (line != first)
@@ -4876,8 +4918,7 @@ namespace nexus {
                                     result = "[{\"range\":{\"start\":{\"line\":" +
                                              std::to_string(firstLine) +
                                              ",\"character\":0},\"end\":{\"line\":" +
-                                             std::to_string(lastLine) +
-                                             ",\"character\":" +
+                                             std::to_string(lastLine) + ",\"character\":" +
                                              std::to_string(utf16Length(sourceLines[lastLine])) +
                                              "}},\"newText\":\"" + jsonEscape(newText) + "\"}]";
                                 }
@@ -4907,9 +4948,8 @@ namespace nexus {
                                     for (std::size_t j = 1; j <= right.size(); ++j) {
                                         const std::size_t substitution =
                                             previous[j - 1] + (left[i - 1] == right[j - 1] ? 0 : 1);
-                                        current[j] = std::min({previous[j] + 1,
-                                                               current[j - 1] + 1,
-                                                               substitution});
+                                        current[j] = std::min(
+                                            {previous[j] + 1, current[j - 1] + 1, substitution});
                                     }
                                     previous.swap(current);
                                 }
@@ -5003,10 +5043,10 @@ namespace nexus {
                                                            "\"changes\":{\""
                                                         << jsonEscape(uri)
                                                         << "\":[{\"range\":{\"start\":{\"line\":"
-                                                        << diagnostic.line << ",\"character\":"
-                                                        << diagnostic.character
-                                                        << "},\"end\":{\"line\":"
-                                                        << diagnostic.line << ",\"character\":"
+                                                        << diagnostic.line
+                                                        << ",\"character\":" << diagnostic.character
+                                                        << "},\"end\":{\"line\":" << diagnostic.line
+                                                        << ",\"character\":"
                                                         << diagnostic.character + length
                                                         << "}},\"newText\":\""
                                                         << jsonEscape(bestName) << "\"}]}}}";
@@ -5043,7 +5083,8 @@ namespace nexus {
                                             bestDistance = distance;
                                             bestField = field.name;
                                             ambiguous = false;
-                                        } else if (distance == bestDistance && field.name != bestField) {
+                                        } else if (distance == bestDistance &&
+                                                   field.name != bestField) {
                                             ambiguous = true;
                                         }
                                     }
@@ -5056,15 +5097,18 @@ namespace nexus {
                                 if (!firstAction)
                                     actions << ',';
                                 firstAction = false;
-                                const std::size_t length = std::max<std::size_t>(1, diagnostic.length);
+                                const std::size_t length =
+                                    std::max<std::size_t>(1, diagnostic.length);
                                 actions << "{\"title\":\"Replace '" << jsonEscape(misspelled)
                                         << "' with '" << jsonEscape(bestField)
                                         << "'\",\"kind\":\"quickfix\",\"edit\":{\"changes\":{\""
-                                        << jsonEscape(uri) << "\":[{\"range\":{\"start\":{\"line\":"
-                                        << diagnostic.line << ",\"character\":" << diagnostic.character
+                                        << jsonEscape(uri)
+                                        << "\":[{\"range\":{\"start\":{\"line\":" << diagnostic.line
+                                        << ",\"character\":" << diagnostic.character
                                         << "},\"end\":{\"line\":" << diagnostic.line
                                         << ",\"character\":" << diagnostic.character + length
-                                        << "}},\"newText\":\"" << jsonEscape(bestField) << "\"}]}}}";
+                                        << "}},\"newText\":\"" << jsonEscape(bestField)
+                                        << "\"}]}}}";
                             }
                         } catch (const std::exception&) {
                             // Quick fixes are best-effort; malformed or incomplete source
@@ -5072,8 +5116,8 @@ namespace nexus {
                         }
                     }
                     actions << ']';
-                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
-                         ",\"result\":" + actions.str() + "}");
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + actions.str() +
+                         "}");
                 } else if (method == "textDocument/references" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);
@@ -5402,8 +5446,7 @@ namespace nexus {
                 line = trim(line);
             }
             if (line.empty() ||
-                !(std::isalpha(static_cast<unsigned char>(line.front())) ||
-                  line.front() == '_'))
+                !(std::isalpha(static_cast<unsigned char>(line.front())) || line.front() == '_'))
                 return false;
 
             std::size_t nameEnd = 1;
@@ -5415,8 +5458,7 @@ namespace nexus {
             }
             functionName = line.substr(0, nameEnd);
             std::size_t open = nameEnd;
-            while (open < line.size() &&
-                   std::isspace(static_cast<unsigned char>(line[open])))
+            while (open < line.size() && std::isspace(static_cast<unsigned char>(line[open])))
                 ++open;
             if (open >= line.size() || line[open] != '(')
                 return false;
@@ -5487,10 +5529,10 @@ namespace nexus {
                 const auto bodyStart = header.find('{', nameEnd);
                 const auto declarationEnd =
                     bodyStart == std::string::npos ? header.find(';', nameEnd) : bodyStart;
-                const std::string signature = header.substr(
-                    nameEnd,
-                    declarationEnd == std::string::npos ? std::string::npos
-                                                        : declarationEnd - nameEnd);
+                const std::string signature =
+                    header.substr(nameEnd,
+                                  declarationEnd == std::string::npos ? std::string::npos
+                                                                      : declarationEnd - nameEnd);
                 return signature.find("->") == std::string::npos;
             }
             return false;
@@ -5658,8 +5700,7 @@ namespace nexus {
             std::vector<std::string> history = loadReplHistory(persistentHistoryPath);
             bool historySaveWarningShown = false;
             const auto persistHistory = [&]() {
-                if (!saveReplHistory(persistentHistoryPath, history) &&
-                    !historySaveWarningShown) {
+                if (!saveReplHistory(persistentHistoryPath, history) && !historySaveWarningShown) {
                     std::cerr << "nexus: warning: could not save REPL history to "
                               << persistentHistoryPath << '\n';
                     historySaveWarningShown = true;
@@ -6192,8 +6233,7 @@ namespace nexus {
                 if (replIsDirectStatement(inputLine) ||
                     replIsVoidFunctionCall(inputLine, declarations)) {
                     const bool isControlBlock = replIsBlockStatement(inputLine);
-                    const bool replaySafeBlock =
-                        isControlBlock && replIsReplaySafeBlock(inputLine);
+                    const bool replaySafeBlock = isControlBlock && replIsReplaySafeBlock(inputLine);
                     if (execute(declarations, statements, inputLine, ReplMode::Statement) &&
                         isControlBlock) {
                         fastPathEnabled = false;
@@ -6202,10 +6242,10 @@ namespace nexus {
                             // declarations/assignments so later entries see the same state.
                             statements.push_back(inputLine);
                         } else {
-                            std::cerr
-                                << "nexus: note: this control-flow block contains calls or "
-                                   "unsupported operations, so it is not replayed in later entries; "
-                                   "variable changes made inside it will not persist.\n";
+                            std::cerr << "nexus: note: this control-flow block contains calls or "
+                                         "unsupported operations, so it is not replayed in later "
+                                         "entries; "
+                                         "variable changes made inside it will not persist.\n";
                         }
                     }
                     continue;
@@ -6392,7 +6432,8 @@ namespace nexus {
                 }
                 if (allFiles) {
                     if (!input.empty())
-                        throw std::runtime_error("fmt --all does not accept a source-file argument");
+                        throw std::runtime_error(
+                            "fmt --all does not accept a source-file argument");
                     return commandFmtAll(checkOnly);
                 }
                 return commandFmt(resolveInput(input), checkOnly);

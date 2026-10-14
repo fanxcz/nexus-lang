@@ -1,11 +1,10 @@
 #include "parser/parser.hpp"
 
 #include <algorithm>
-
 #include <cstdlib>
 #include <limits>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 namespace nexus {
 
     const Token& Parser::cur() const {
@@ -50,9 +49,8 @@ namespace nexus {
         SourceSpan span;
         if (first >= tokens_.size())
             return span;
-        const std::size_t last = afterLast > first
-                                     ? std::min(afterLast - 1, tokens_.size() - 1)
-                                     : first;
+        const std::size_t last =
+            afterLast > first ? std::min(afterLast - 1, tokens_.size() - 1) : first;
         span.start = tokens_[first].pos;
         span.end = positionAfter(tokens_[last]);
         span.valid = true;
@@ -157,14 +155,12 @@ namespace nexus {
                 std::size_t candidate = i_;
                 if (candidate <= declarationStart)
                     candidate = declarationStart + 1;
-                while (candidate < tokens_.size() &&
-                       tokens_[candidate].kind != TokenKind::End &&
+                while (candidate < tokens_.size() && tokens_[candidate].kind != TokenKind::End &&
                        !isDeclarationStart(tokens_[candidate].kind)) {
                     ++candidate;
                 }
 
-                if (candidate >= tokens_.size() ||
-                    tokens_[candidate].kind == TokenKind::End) {
+                if (candidate >= tokens_.size() || tokens_[candidate].kind == TokenKind::End) {
                     i_ = tokens_.size() - 1;
                     break;
                 }
@@ -663,9 +659,8 @@ namespace nexus {
     }
 
     Expr::Ptr Parser::parsePostfix(Expr::Ptr e) {
-        const SourcePos start = e && e->span.valid
-                                    ? e->span.start
-                                    : (i_ > 0 ? tokens_[i_ - 1].pos : cur().pos);
+        const SourcePos start =
+            e && e->span.valid ? e->span.start : (i_ > 0 ? tokens_[i_ - 1].pos : cur().pos);
         auto expression = parsePostfixImpl(std::move(e));
         if (expression) {
             expression->span.start = start;

@@ -3,8 +3,8 @@
 #include "builtins.hpp"
 
 #include <functional>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 namespace nexus {
 
@@ -196,8 +196,7 @@ namespace nexus {
             if (f.body) {
                 block(*f.body, env, f.ret, false);
                 if (f.ret.kind != TypeKind::Void && !blockAlwaysReturns(*f.body)) {
-                    std::string message =
-                        "function may exit without returning a value: " + f.name;
+                    std::string message = "function may exit without returning a value: " + f.name;
                     if (f.span.valid)
                         message += " at " + std::to_string(f.span.start.line) + ":" +
                                    std::to_string(f.span.start.column);
@@ -221,9 +220,8 @@ namespace nexus {
         } catch (const std::exception& error) {
             const std::string message = error.what();
             if (e && e->span.valid && message.rfind(" at ") == std::string::npos) {
-                throw std::runtime_error(message + " at " +
-                                         std::to_string(e->span.start.line) + ":" +
-                                         std::to_string(e->span.start.column));
+                throw std::runtime_error(message + " at " + std::to_string(e->span.start.line) +
+                                         ":" + std::to_string(e->span.start.column));
             }
             throw;
         }
@@ -446,141 +444,144 @@ namespace nexus {
 
         for (auto& s : b.statements) {
             try {
-            if (auto* nested = dynamic_cast<Block*>(s.get())) {
-                auto localEnv = env;
-                block(*nested, localEnv, ret, inLoop);
-            } else if (auto* l = dynamic_cast<LetStmt*>(s.get())) {
-                if (env.contains(l->name))
-                    throw std::runtime_error("duplicate variable: " + l->name);
-                auto t = expr(l->init.get(), env);
-                if (l->type.kind != TypeKind::Unknown && !sameType(l->type, t))
-                    throw std::runtime_error("cannot initialize '" + l->name + "': expected '" +
-                                             describeType(l->type) + "' but got '" +
-                                             describeType(t) + "'");
-                l->type = t;
-                env[l->name] = {t, l->mut};
-            } else if (auto* a = dynamic_cast<AssignStmt*>(s.get())) {
-                auto it = env.find(a->name);
-                if (it == env.end())
-                    throw std::runtime_error("unknown variable: " + a->name);
-                if (!it->second.mut)
-                    throw std::runtime_error("cannot assign to immutable variable: " + a->name);
-                auto actual = expr(a->value.get(), env);
-                if (!sameType(actual, it->second.type))
-                    throw std::runtime_error("cannot assign to '" + a->name + "': expected '" +
-                                             describeType(it->second.type) + "' but got '" +
-                                             describeType(actual) + "'");
-            } else if (auto* ma = dynamic_cast<MemberAssignStmt*>(s.get())) {
-                auto t = expr(ma->object.get(), env);
-                if (t.kind != TypeKind::Struct)
-                    throw std::runtime_error("member assignment requires struct");
-                if (auto* ov = dynamic_cast<VarExpr*>(ma->object.get())) {
-                    auto it = env.find(ov->name);
-                    if (it != env.end() && !it->second.mut)
-                        throw std::runtime_error(
-                            "cannot modify field through immutable variable: " + ov->name);
-                }
-                auto& st = getStruct(t.name);
-                auto* f = fieldOf(st, ma->member);
-                if (!f)
-                    throw std::runtime_error("unknown field: " + ma->member);
-                auto actual = expr(ma->value.get(), env);
-                if (!sameType(actual, f->type))
-                    throw std::runtime_error("cannot assign field '" + ma->member +
-                                             "': expected '" + describeType(f->type) +
-                                             "' but got '" + describeType(actual) + "'");
-            } else if (auto* ia = dynamic_cast<IndexAssignStmt*>(s.get())) {
-                auto ot = expr(ia->object.get(), env);
-                if (auto* ov = dynamic_cast<VarExpr*>(ia->object.get())) {
-                    auto it = env.find(ov->name);
-                    if (it != env.end() && !it->second.mut)
-                        throw std::runtime_error(
-                            "cannot modify array through immutable variable: " + ov->name);
-                }
-                if (ot.kind != TypeKind::Array || !ot.element)
-                    throw std::runtime_error("index assignment requires an array");
-                if (expr(ia->index.get(), env).kind != TypeKind::I64)
-                    throw std::runtime_error("array index must be i64");
-                if (auto* c = dynamic_cast<IntExpr*>(ia->index.get()))
-                    if (c->value < 0 || static_cast<size_t>(c->value) >= ot.arraySize)
-                        throw std::runtime_error("array index is out of bounds");
-                auto actual = expr(ia->value.get(), env);
-                if (!sameType(actual, *ot.element))
-                    throw std::runtime_error("array element assignment expects '" +
-                                             describeType(*ot.element) + "' but got '" +
-                                             describeType(actual) + "'");
-            } else if (auto* e = dynamic_cast<ExprStmt*>(s.get()))
-                expr(e->expr.get(), env);
-
-            else if (auto* r = dynamic_cast<ReturnStmt*>(s.get())) {
-                auto t = r->expr ? expr(r->expr.get(), env) : Type::void_();
-                if (!sameType(t, ret))
-                    throw std::runtime_error("return expects '" + describeType(ret) +
-                                             "' but got '" + describeType(t) + "'");
-            } else if (auto* ifs = dynamic_cast<IfStmt*>(s.get())) {
-                {
-                    auto actual = expr(ifs->cond.get(), env);
-                    if (actual.kind != TypeKind::Bool)
-                        throw std::runtime_error("if condition expects 'bool' but got '" +
+                if (auto* nested = dynamic_cast<Block*>(s.get())) {
+                    auto localEnv = env;
+                    block(*nested, localEnv, ret, inLoop);
+                } else if (auto* l = dynamic_cast<LetStmt*>(s.get())) {
+                    if (env.contains(l->name))
+                        throw std::runtime_error("duplicate variable: " + l->name);
+                    auto t = expr(l->init.get(), env);
+                    if (l->type.kind != TypeKind::Unknown && !sameType(l->type, t))
+                        throw std::runtime_error("cannot initialize '" + l->name + "': expected '" +
+                                                 describeType(l->type) + "' but got '" +
+                                                 describeType(t) + "'");
+                    l->type = t;
+                    env[l->name] = {t, l->mut};
+                } else if (auto* a = dynamic_cast<AssignStmt*>(s.get())) {
+                    auto it = env.find(a->name);
+                    if (it == env.end())
+                        throw std::runtime_error("unknown variable: " + a->name);
+                    if (!it->second.mut)
+                        throw std::runtime_error("cannot assign to immutable variable: " + a->name);
+                    auto actual = expr(a->value.get(), env);
+                    if (!sameType(actual, it->second.type))
+                        throw std::runtime_error("cannot assign to '" + a->name + "': expected '" +
+                                                 describeType(it->second.type) + "' but got '" +
                                                  describeType(actual) + "'");
-                }
-                auto a = env;
-                block(*ifs->thenBlock, a, ret, inLoop);
-                if (ifs->elseBlock) {
-                    auto c = env;
-                    block(*ifs->elseBlock, c, ret, inLoop);
-                }
-            } else if (auto* w = dynamic_cast<WhileStmt*>(s.get())) {
-                {
-                    auto actual = expr(w->cond.get(), env);
-                    if (actual.kind != TypeKind::Bool)
-                        throw std::runtime_error("while condition expects 'bool' but got '" +
-                                                 describeType(actual) + "'");
-                }
-                auto a = env;
-                block(*w->body, a, ret, true);
-            } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
-
-                auto vt = expr(mm->value.get(), env);
-                if (vt.kind != TypeKind::I64 && vt.kind != TypeKind::Bool &&
-                    vt.kind != TypeKind::Enum)
-                    throw std::runtime_error("match supports i64, bool, or enum values");
-                bool wildcard = false;
-                std::unordered_map<std::string, bool> seenPatterns;
-                for (auto& arm : mm->arms) {
-                    if (arm.wildcard) {
-                        if (wildcard)
-                            throw std::runtime_error("duplicate wildcard match arm");
-                        wildcard = true;
-                    } else {
-                        auto pt = expr(arm.pattern.get(), env);
-                        if (!sameType(pt, vt))
-                            throw std::runtime_error("match pattern type mismatch");
-
-                        std::string key;
-                        std::string display;
-                        if (const auto* integer = dynamic_cast<const IntExpr*>(arm.pattern.get())) {
-                            key = "i64:" + std::to_string(integer->value);
-                            display = std::to_string(integer->value);
-                        } else if (const auto* boolean =
-                                       dynamic_cast<const BoolExpr*>(arm.pattern.get())) {
-                            key = std::string("bool:") + (boolean->value ? "true" : "false");
-                            display = boolean->value ? "true" : "false";
-                        } else if (const auto* variant =
-                                       dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
-                            key = "enum:" + variant->enumName + "::" + variant->variant;
-                            display = variant->enumName + "::" + variant->variant;
-                        }
-                        if (!key.empty() && !seenPatterns.emplace(key, true).second)
-                            throw std::runtime_error("duplicate match pattern '" + display + "'");
+                } else if (auto* ma = dynamic_cast<MemberAssignStmt*>(s.get())) {
+                    auto t = expr(ma->object.get(), env);
+                    if (t.kind != TypeKind::Struct)
+                        throw std::runtime_error("member assignment requires struct");
+                    if (auto* ov = dynamic_cast<VarExpr*>(ma->object.get())) {
+                        auto it = env.find(ov->name);
+                        if (it != env.end() && !it->second.mut)
+                            throw std::runtime_error(
+                                "cannot modify field through immutable variable: " + ov->name);
                     }
-                    auto local = env;
-                    block(*arm.body, local, ret, inLoop);
+                    auto& st = getStruct(t.name);
+                    auto* f = fieldOf(st, ma->member);
+                    if (!f)
+                        throw std::runtime_error("unknown field: " + ma->member);
+                    auto actual = expr(ma->value.get(), env);
+                    if (!sameType(actual, f->type))
+                        throw std::runtime_error("cannot assign field '" + ma->member +
+                                                 "': expected '" + describeType(f->type) +
+                                                 "' but got '" + describeType(actual) + "'");
+                } else if (auto* ia = dynamic_cast<IndexAssignStmt*>(s.get())) {
+                    auto ot = expr(ia->object.get(), env);
+                    if (auto* ov = dynamic_cast<VarExpr*>(ia->object.get())) {
+                        auto it = env.find(ov->name);
+                        if (it != env.end() && !it->second.mut)
+                            throw std::runtime_error(
+                                "cannot modify array through immutable variable: " + ov->name);
+                    }
+                    if (ot.kind != TypeKind::Array || !ot.element)
+                        throw std::runtime_error("index assignment requires an array");
+                    if (expr(ia->index.get(), env).kind != TypeKind::I64)
+                        throw std::runtime_error("array index must be i64");
+                    if (auto* c = dynamic_cast<IntExpr*>(ia->index.get()))
+                        if (c->value < 0 || static_cast<size_t>(c->value) >= ot.arraySize)
+                            throw std::runtime_error("array index is out of bounds");
+                    auto actual = expr(ia->value.get(), env);
+                    if (!sameType(actual, *ot.element))
+                        throw std::runtime_error("array element assignment expects '" +
+                                                 describeType(*ot.element) + "' but got '" +
+                                                 describeType(actual) + "'");
+                } else if (auto* e = dynamic_cast<ExprStmt*>(s.get()))
+                    expr(e->expr.get(), env);
+
+                else if (auto* r = dynamic_cast<ReturnStmt*>(s.get())) {
+                    auto t = r->expr ? expr(r->expr.get(), env) : Type::void_();
+                    if (!sameType(t, ret))
+                        throw std::runtime_error("return expects '" + describeType(ret) +
+                                                 "' but got '" + describeType(t) + "'");
+                } else if (auto* ifs = dynamic_cast<IfStmt*>(s.get())) {
+                    {
+                        auto actual = expr(ifs->cond.get(), env);
+                        if (actual.kind != TypeKind::Bool)
+                            throw std::runtime_error("if condition expects 'bool' but got '" +
+                                                     describeType(actual) + "'");
+                    }
+                    auto a = env;
+                    block(*ifs->thenBlock, a, ret, inLoop);
+                    if (ifs->elseBlock) {
+                        auto c = env;
+                        block(*ifs->elseBlock, c, ret, inLoop);
+                    }
+                } else if (auto* w = dynamic_cast<WhileStmt*>(s.get())) {
+                    {
+                        auto actual = expr(w->cond.get(), env);
+                        if (actual.kind != TypeKind::Bool)
+                            throw std::runtime_error("while condition expects 'bool' but got '" +
+                                                     describeType(actual) + "'");
+                    }
+                    auto a = env;
+                    block(*w->body, a, ret, true);
+                } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
+
+                    auto vt = expr(mm->value.get(), env);
+                    if (vt.kind != TypeKind::I64 && vt.kind != TypeKind::Bool &&
+                        vt.kind != TypeKind::Enum)
+                        throw std::runtime_error("match supports i64, bool, or enum values");
+                    bool wildcard = false;
+                    std::unordered_map<std::string, bool> seenPatterns;
+                    for (auto& arm : mm->arms) {
+                        if (arm.wildcard) {
+                            if (wildcard)
+                                throw std::runtime_error("duplicate wildcard match arm");
+                            wildcard = true;
+                        } else {
+                            auto pt = expr(arm.pattern.get(), env);
+                            if (!sameType(pt, vt))
+                                throw std::runtime_error("match pattern type mismatch");
+
+                            std::string key;
+                            std::string display;
+                            if (const auto* integer =
+                                    dynamic_cast<const IntExpr*>(arm.pattern.get())) {
+                                key = "i64:" + std::to_string(integer->value);
+                                display = std::to_string(integer->value);
+                            } else if (const auto* boolean =
+                                           dynamic_cast<const BoolExpr*>(arm.pattern.get())) {
+                                key = std::string("bool:") + (boolean->value ? "true" : "false");
+                                display = boolean->value ? "true" : "false";
+                            } else if (const auto* variant = dynamic_cast<const EnumVariantExpr*>(
+                                           arm.pattern.get())) {
+                                key = "enum:" + variant->enumName + "::" + variant->variant;
+                                display = variant->enumName + "::" + variant->variant;
+                            }
+                            if (!key.empty() && !seenPatterns.emplace(key, true).second)
+                                throw std::runtime_error("duplicate match pattern '" + display +
+                                                         "'");
+                        }
+                        auto local = env;
+                        block(*arm.body, local, ret, inLoop);
+                    }
+                } else if (dynamic_cast<BreakStmt*>(s.get()) ||
+                           dynamic_cast<ContinueStmt*>(s.get())) {
+                    if (!inLoop)
+                        throw std::runtime_error("break/continue used outside loop");
                 }
-            } else if (dynamic_cast<BreakStmt*>(s.get()) || dynamic_cast<ContinueStmt*>(s.get())) {
-                if (!inLoop)
-                    throw std::runtime_error("break/continue used outside loop");
-            }
             } catch (const std::exception& error) {
                 std::string diagnostic = error.what();
                 if (diagnostic.rfind(" at ") == std::string::npos && s && s->span.valid)
