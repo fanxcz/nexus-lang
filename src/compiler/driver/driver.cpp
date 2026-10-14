@@ -4734,6 +4734,28 @@ namespace nexus {
                                        identifierCharacter(static_cast<unsigned char>(
                                            currentLineText[objectStart - 1])))
                                     --objectStart;
+                                while (objectStart > 0) {
+                                    std::size_t boundary = objectStart;
+                                    while (boundary > 0 &&
+                                           std::isspace(static_cast<unsigned char>(
+                                               currentLineText[boundary - 1])))
+                                        --boundary;
+                                    if (boundary == 0 || currentLineText[boundary - 1] != '.')
+                                        break;
+                                    --boundary;
+                                    while (boundary > 0 &&
+                                           std::isspace(static_cast<unsigned char>(
+                                               currentLineText[boundary - 1])))
+                                        --boundary;
+                                    std::size_t previousStart = boundary;
+                                    while (previousStart > 0 &&
+                                           identifierCharacter(static_cast<unsigned char>(
+                                               currentLineText[previousStart - 1])))
+                                        --previousStart;
+                                    if (previousStart == boundary)
+                                        break;
+                                    objectStart = previousStart;
+                                }
                                 objectName =
                                     currentLineText.substr(objectStart, objectEnd - objectStart);
                             } else if (prefixStart >= 2 &&
@@ -4851,30 +4873,98 @@ namespace nexus {
                                     if (function.body)
                                         collectTypes(collectTypes, *function.body);
 
-                                const auto type = variableTypes.find(objectName);
-                                if (type != variableTypes.end()) {
+                                const auto structFieldType = [&](const std::string& typeName,
+                                                                       const std::string& fieldName) {
+                                    const auto local = std::find_if(
+                                        program.structs.begin(), program.structs.end(),
+                                        [&](const StructDecl& declaration) {
+                                            return declaration.name == typeName;
+                                        });
+                                    if (local != program.structs.end()) {
+                                        const auto field = std::find_if(
+                                            local->fields.begin(), local->fields.end(),
+                                            [&](const StructField& candidate) {
+                                                return candidate.name == fieldName;
+                                            });
+                                        if (field != local->fields.end() &&
+                                            field->type.kind == TypeKind::Struct)
+                                            return field->type.name;
+                                        return std::string{};
+                                    }
+
+                                    const auto workspaceTypes = workspaceTypeDeclarationsFor(
+                                        uri, document->second, typeName, false);
+                                    for (const auto& declaration : workspaceTypes.first) {
+                                        if (declaration.name != typeName)
+                                            continue;
+                                        const auto field = std::find_if(
+                                            declaration.fields.begin(), declaration.fields.end(),
+                                            [&](const StructField& candidate) {
+                                                return candidate.name == fieldName;
+                                            });
+                                        if (field != declaration.fields.end() &&
+                                            field->type.kind == TypeKind::Struct)
+                                            return field->type.name;
+                                    }
+                                    return std::string{};
+                                };
+
+                                std::string resolvedTypeName;
+                                const auto directType = variableTypes.find(objectName);
+                                if (directType != variableTypes.end()) {
+                                    resolvedTypeName = directType->second;
+                                } else {
+                                    const std::size_t firstDot = objectName.find('.');
+                                    if (firstDot != std::string::npos) {
+                                        const auto rootType =
+                                            variableTypes.find(objectName.substr(0, firstDot));
+                                        if (rootType != variableTypes.end()) {
+                                            resolvedTypeName = rootType->second;
+                                            std::size_t fieldStart = firstDot + 1;
+                                            while (fieldStart < objectName.size() &&
+                                                   !resolvedTypeName.empty()) {
+                                                const std::size_t fieldEnd =
+                                                    objectName.find('.', fieldStart);
+                                                const std::string fieldName = objectName.substr(
+                                                    fieldStart,
+                                                    fieldEnd == std::string::npos
+                                                        ? std::string::npos
+                                                        : fieldEnd - fieldStart);
+                                                resolvedTypeName =
+                                                    structFieldType(resolvedTypeName, fieldName);
+                                                if (fieldEnd == std::string::npos)
+                                                    break;
+                                                fieldStart = fieldEnd + 1;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (!resolvedTypeName.empty()) {
                                     std::vector<StructDecl> structureDeclarations = program.structs;
                                     const bool hasLocalStruct =
                                         std::any_of(structureDeclarations.begin(),
                                                     structureDeclarations.end(),
                                                     [&](const StructDecl& declaration) {
-                                                        return declaration.name == type->second;
+                                                        return declaration.name == resolvedTypeName;
                                                     });
                                     const bool builtinType =
-                                        type->second == "i64" || type->second == "int" ||
-                                        type->second == "isize" || type->second == "usize" ||
-                                        type->second == "f64" || type->second == "float" ||
-                                        type->second == "bool" || type->second == "string" ||
-                                        type->second == "void";
+                                        resolvedTypeName == "i64" || resolvedTypeName == "int" ||
+                                        resolvedTypeName == "isize" ||
+                                        resolvedTypeName == "usize" || resolvedTypeName == "f64" ||
+                                        resolvedTypeName == "float" ||
+                                        resolvedTypeName == "bool" ||
+                                        resolvedTypeName == "string" ||
+                                        resolvedTypeName == "void";
                                     if (!hasLocalStruct && !builtinType) {
                                         auto workspaceTypes = workspaceTypeDeclarationsFor(
-                                            uri, document->second, type->second, false);
+                                            uri, document->second, resolvedTypeName, false);
                                         structureDeclarations.insert(structureDeclarations.end(),
                                                                      workspaceTypes.first.begin(),
                                                                      workspaceTypes.first.end());
                                     }
                                     for (const auto& declaration : structureDeclarations) {
-                                        if (declaration.name != type->second)
+                                        if (declaration.name != resolvedTypeName)
                                             continue;
                                         for (const auto& field : declaration.fields) {
                                             if (prefix.empty() || field.name.rfind(prefix, 0) == 0)
