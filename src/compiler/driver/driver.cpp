@@ -4311,12 +4311,19 @@ namespace nexus {
             int balance = 0;
             bool inString = false;
             bool escaped = false;
+            bool inBlockComment = false;
 
             for (std::size_t i = 0; i < source.size(); ++i) {
                 const char ch = source[i];
+                const bool hasNext = i + 1 < source.size();
+                const char next = hasNext ? source[i + 1] : '\0';
 
-                if (!inString && ch == '/' && i + 1 < source.size() && source[i + 1] == '/') {
-                    break;
+                if (inBlockComment) {
+                    if (ch == '*' && next == '/') {
+                        inBlockComment = false;
+                        ++i;
+                    }
+                    continue;
                 }
                 if (inString) {
                     if (escaped) {
@@ -4326,6 +4333,16 @@ namespace nexus {
                     } else if (ch == '"') {
                         inString = false;
                     }
+                    continue;
+                }
+                if (ch == '/' && next == '/') {
+                    while (i < source.size() && source[i] != '\n')
+                        ++i;
+                    continue;
+                }
+                if (ch == '/' && next == '*') {
+                    inBlockComment = true;
+                    ++i;
                     continue;
                 }
                 if (ch == '"') {

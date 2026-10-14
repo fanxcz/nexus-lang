@@ -319,6 +319,27 @@ file(READ "${SMOKE_DIR}/nexus.lock" lock_after_remove)
 if(manifest_after_remove MATCHES "sample_lib" OR lock_after_remove MATCHES "sample_lib")
   message(FATAL_ERROR "pkg remove left stale dependency metadata")
 endif()
+
+# Adding a local dependency must also work when the project has no lockfile yet.
+set(NO_LOCK_DIR "${SMOKE_DIR}/without-lock")
+file(MAKE_DIRECTORY "${NO_LOCK_DIR}/src")
+file(WRITE "${NO_LOCK_DIR}/nexus.toml"
+  "[package]\nname = \"no_lock_project\"\nversion = \"0.1.0\"\n\n[build]\nentry = \"src/main.nx\"\n")
+file(WRITE "${NO_LOCK_DIR}/src/main.nx" "fn main() { print(1) }\n")
+if(EXISTS "${NO_LOCK_DIR}/nexus.lock")
+  message(FATAL_ERROR "no-lock test fixture unexpectedly has a lockfile")
+endif()
+execute_process(COMMAND "${NEXUS_BIN}" pkg add "${PKG_SOURCE}"
+  WORKING_DIRECTORY "${NO_LOCK_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT EXISTS "${NO_LOCK_DIR}/nexus.lock")
+  message(FATAL_ERROR "pkg add failed for a project without a lockfile: ${out}\\n${err}")
+endif()
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify
+  WORKING_DIRECTORY "${NO_LOCK_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "new lockfile failed verification: ${out}\\n${err}")
+endif()
+
 file(REMOVE "${SMOKE_DIR}/outside-sentinel.txt")
 
 # A symlinked vendor root must never redirect package writes outside the project.
