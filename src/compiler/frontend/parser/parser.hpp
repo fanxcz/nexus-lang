@@ -35,6 +35,7 @@ namespace nexus {
         };
 
         std::vector<Token> tokens_;
+        std::vector<std::string> recoveredErrors_;
         size_t i_ = 0;
         std::size_t recursionDepth_ = 0;
 

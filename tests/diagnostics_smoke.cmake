@@ -107,5 +107,19 @@ if(rc EQUAL 0 OR NOT duplicate_match_combined MATCHES "duplicate match pattern '
   message(FATAL_ERROR "Duplicate enum match pattern was not rejected: ${duplicate_match_combined}")
 endif()
 
+# Recover from multiple malformed statements within one function body.
+set(MULTI_SYNTAX_SOURCE "${DIAGNOSTIC_DIR}/syntax-multiple.nx")
+file(WRITE "${MULTI_SYNTAX_SOURCE}"
+  "fn main() { let = 1; print(2; let other = ; print(3) }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${MULTI_SYNTAX_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(multi_syntax_combined "${out}\n${err}")
+string(REGEX MATCHALL "error\\[NX1001\\]" syntax_error_codes "${multi_syntax_combined}")
+list(LENGTH syntax_error_codes syntax_error_count)
+if(rc EQUAL 0 OR NOT syntax_error_count EQUAL 3)
+  message(FATAL_ERROR "Parser did not recover all three syntax errors inside one function: ${multi_syntax_combined}")
+endif()
+
 file(REMOVE_RECURSE "${DIAGNOSTIC_DIR}")
 message(STATUS "NEXUS diagnostics smoke test: PASS")

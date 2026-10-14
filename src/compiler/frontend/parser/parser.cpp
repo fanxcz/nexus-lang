@@ -99,6 +99,7 @@ namespace nexus {
     }
     Program Parser::parseProgram() {
         Program p;
+        recoveredErrors_.clear();
         std::vector<std::string> errors;
 
         const auto isDeclarationStart = [](TokenKind kind) {
@@ -181,6 +182,8 @@ namespace nexus {
             }
         }
 
+        errors.insert(errors.end(), recoveredErrors_.begin(), recoveredErrors_.end());
+
         if (!errors.empty()) {
             std::ostringstream message;
             message << "NEXUS found " << errors.size() << " syntax error";
@@ -262,8 +265,55 @@ namespace nexus {
         const std::size_t first = i_;
         expect(TokenKind::LBrace);
         auto b = std::make_unique<Block>();
-        while (cur().kind != TokenKind::RBrace && cur().kind != TokenKind::End)
-            b->statements.push_back(parseStmt());
+
+        const auto isStatementStart = [](TokenKind kind) {
+            switch (kind) {
+            case TokenKind::KwLet:
+            case TokenKind::KwConst:
+            case TokenKind::KwReturn:
+            case TokenKind::KwIf:
+            case TokenKind::KwWhile:
+            case TokenKind::KwFor:
+            case TokenKind::KwBreak:
+            case TokenKind::KwContinue:
+            case TokenKind::KwMatch:
+            case TokenKind::KwUnsafe:
+                return true;
+            default:
+                return false;
+            }
+        };
+
+        while (cur().kind != TokenKind::RBrace && cur().kind != TokenKind::End) {
+            const std::size_t statementStart = i_;
+            try {
+                b->statements.push_back(parseStmt());
+            } catch (const std::exception& error) {
+                // A missing delimiter at EOF is usually a broken enclosing block;
+                // let the outer parser report it once rather than emitting cascades.
+                if (cur().kind == TokenKind::End)
+                    throw;
+
+                recoveredErrors_.emplace_back(error.what());
+
+                // NEXUS permits omitted semicolons, so recover at explicit statement
+                // terminators or at an unmistakable statement keyword. Do not retry
+                // the token that caused this error.
+                while (cur().kind != TokenKind::End && cur().kind != TokenKind::RBrace &&
+                       cur().kind != TokenKind::Semicolon) {
+                    if (i_ > statementStart && isStatementStart(cur().kind))
+                        break;
+                    ++i_;
+                }
+                if (cur().kind == TokenKind::Semicolon) {
+                    ++i_;
+                } else if (i_ == statementStart && cur().kind != TokenKind::RBrace &&
+                           cur().kind != TokenKind::End) {
+                    ++i_;
+                }
+            }
+        }
+
         expect(TokenKind::RBrace);
         b->span = spanForTokens(first, i_);
         return b;
