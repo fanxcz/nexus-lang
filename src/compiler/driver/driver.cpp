@@ -3491,7 +3491,7 @@ namespace nexus {
                          "\".\",\":\"]},"
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
                          "\"renameProvider\":true,\"hoverProvider\":true,"
-                         "\"documentFormattingProvider\":true,"
+                         "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":true,"
                          "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}");
                 } else if (method == "initialized") {
                     if (clientSupportsWatchedFilesRegistration) {
@@ -3866,6 +3866,126 @@ namespace nexus {
                     }
                     send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
 
+                } else if (method == "textDocument/rangeFormatting" && !id.empty()) {
+                    const std::string uri = extractString(body, "uri");
+                    const auto doc = openDocuments.find(uri);
+                    std::string result = "[]";
+                    if (doc != openDocuments.end()) {
+                        const std::size_t rangePos = body.find("\"range\"");
+                        const std::size_t startPos =
+                            rangePos == std::string::npos ? std::string::npos
+                                                          : body.find("\"start\"", rangePos);
+                        const std::size_t endPos =
+                            startPos == std::string::npos ? std::string::npos
+                                                          : body.find("\"end\"", startPos + 7);
+                        const auto nestedNumber = [&](std::size_t objectPos,
+                                                       const std::string& field) {
+                            if (objectPos == std::string::npos)
+                                return std::size_t{0};
+                            const std::size_t objectEnd = body.find('}', objectPos);
+                            const std::string key = "\"" + field + "\"";
+                            const std::size_t keyPos = body.find(key, objectPos);
+                            if (keyPos == std::string::npos ||
+                                (objectEnd != std::string::npos && keyPos >= objectEnd))
+                                return std::size_t{0};
+                            const std::size_t colon = body.find(':', keyPos + key.size());
+                            if (colon == std::string::npos ||
+                                (objectEnd != std::string::npos && colon >= objectEnd))
+                                return std::size_t{0};
+                            std::size_t pos = colon + 1;
+                            while (pos < body.size() &&
+                                   std::isspace(static_cast<unsigned char>(body[pos])))
+                                ++pos;
+                            const std::size_t begin = pos;
+                            while (pos < body.size() &&
+                                   std::isdigit(static_cast<unsigned char>(body[pos])))
+                                ++pos;
+                            if (begin == pos)
+                                return std::size_t{0};
+                            try {
+                                return static_cast<std::size_t>(
+                                    std::stoull(body.substr(begin, pos - begin)));
+                            } catch (const std::exception&) {
+                                return std::size_t{0};
+                            }
+                        };
+
+                        if (startPos != std::string::npos && endPos != std::string::npos) {
+                            const std::size_t firstLine = nestedNumber(startPos, "line");
+                            const std::size_t requestedEndLine = nestedNumber(endPos, "line");
+                            const std::size_t requestedEndCharacter =
+                                nestedNumber(endPos, "character");
+
+                            const auto splitLines = [](const std::string& text) {
+                                std::vector<std::string> lines;
+                                std::size_t start = 0;
+                                for (;;) {
+                                    const std::size_t newline = text.find('\n', start);
+                                    if (newline == std::string::npos) {
+                                        lines.push_back(text.substr(start));
+                                        break;
+                                    }
+                                    lines.push_back(text.substr(start, newline - start));
+                                    start = newline + 1;
+                                    if (start == text.size()) {
+                                        lines.emplace_back();
+                                        break;
+                                    }
+                                }
+                                for (auto& line : lines) {
+                                    if (!line.empty() && line.back() == '\r')
+                                        line.pop_back();
+                                }
+                                return lines;
+                            };
+
+                            const std::string& source = doc->second;
+                            const std::string formatted = formatNexusSource(source);
+                            const auto sourceLines = splitLines(source);
+                            auto formattedLines = splitLines(formatted);
+                            if (!source.empty() && source.back() != '\n' &&
+                                formattedLines.size() == sourceLines.size() + 1 &&
+                                formattedLines.back().empty()) {
+                                formattedLines.pop_back();
+                            }
+
+                            if (formattedLines.size() == sourceLines.size() &&
+                                firstLine < sourceLines.size() &&
+                                requestedEndLine < sourceLines.size() &&
+                                firstLine <= requestedEndLine) {
+                                std::size_t lastLine = requestedEndLine;
+                                if (lastLine > firstLine && requestedEndCharacter == 0)
+                                    --lastLine;
+
+                                const auto joinRange = [](const std::vector<std::string>& lines,
+                                                           std::size_t first,
+                                                           std::size_t last) {
+                                    std::string text;
+                                    for (std::size_t line = first; line <= last; ++line) {
+                                        if (line != first)
+                                            text.push_back('\n');
+                                        text += lines[line];
+                                    }
+                                    return text;
+                                };
+
+                                const std::string oldText =
+                                    joinRange(sourceLines, firstLine, lastLine);
+                                const std::string newText =
+                                    joinRange(formattedLines, firstLine, lastLine);
+                                if (oldText != newText) {
+                                    result = "[{\"range\":{\"start\":{\"line\":" +
+                                             std::to_string(firstLine) +
+                                             ",\"character\":0},\"end\":{\"line\":" +
+                                             std::to_string(lastLine) +
+                                             ",\"character\":" +
+                                             std::to_string(utf16Length(sourceLines[lastLine])) +
+                                             "}},\"newText\":\"" + jsonEscape(newText) + "\"}]";
+                                }
+                            }
+                        }
+                    }
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
                 } else if (method == "textDocument/codeAction" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);
