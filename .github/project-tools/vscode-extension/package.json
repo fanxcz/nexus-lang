@@ -2,7 +2,7 @@
   "name": "nexus-language",
   "displayName": "NEXUS Language Support",
   "description": "NEXUS syntax highlighting, snippets, diagnostics, completion and go-to-definition.",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "publisher": "fanxcz",
   "license": "MIT",
   "engines": {
