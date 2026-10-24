@@ -2,88 +2,53 @@
   "scopeName": "source.nexus",
   "name": "NEXUS",
   "patterns": [
-    { "include": "#comments" },
-    { "include": "#strings" },
-    { "include": "#numbers" },
-    { "include": "#function-declarations" },
-    { "include": "#keywords" },
-    { "include": "#types" },
-    { "include": "#constants" },
-    { "include": "#builtins" },
-    { "include": "#function-calls" },
-    { "include": "#operators" }
-  ],
-  "repository": {
-    "comments": {
-      "patterns": [
-        {
-          "name": "comment.block.nexus",
-          "begin": "/\\*",
-          "end": "\\*/"
-        },
-        {
-          "name": "comment.line.double-slash.nexus",
-          "match": "//.*$"
-        }
-      ]
+    {
+      "name": "comment.line.double-slash.nexus",
+      "match": "//.*"
     },
-    "strings": {
+    {
+      "name": "comment.block.nexus",
+      "begin": "/\\*",
+      "end": "\\*/"
+    },
+    {
       "name": "string.quoted.double.nexus",
       "begin": "\"",
       "end": "\"",
       "patterns": [
         {
           "name": "constant.character.escape.nexus",
-          "match": "\\\\."
-        },
-        {
-          "name": "constant.character.escape.nexus",
-          "match": "\\$"
+          "match": "\\."
         }
       ]
     },
-    "numbers": {
-      "patterns": [
-        {
-          "name": "constant.numeric.float.nexus",
-          "match": "\\b[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?\\b"
-        },
-        {
-          "name": "constant.numeric.integer.nexus",
-          "match": "\\b[0-9]+\\b"
-        }
-      ]
+    {
+      "name": "constant.numeric.nexus",
+      "match": "\b[0-9]+(\\.[0-9]+)?\b"
     },
-    "function-declarations": {
-      "match": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
-      "captures": {
-        "1": { "name": "keyword.declaration.function.nexus" },
-        "2": { "name": "entity.name.function.nexus" }
-      }
+    {
+      "name": "keyword.declaration.function.nexus",
+      "match": "\bfn\b"
     },
-    "keywords": {
+    {
       "name": "keyword.control.nexus",
-      "match": "\\b(fn|let|mut|const|struct|enum|match|if|else|for|while|loop|break|continue|return|defer|import|as|in|pub|extern|true|false|null)\\b"
+      "match": "\b(let|mut|const|return|if|else|while|for|in|match|break|continue|struct|enum|import|extern|unsafe|as|true|false)\b"
     },
-    "types": {
-      "name": "storage.type.nexus",
-      "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|string|char|void|ptr)\\b"
+    {
+      "name": "support.type.nexus",
+      "match": "\b(i64|f64|bool|string|void|usize|isize|int|float)\b"
     },
-    "constants": {
-      "name": "constant.language.nexus",
-      "match": "\\b(true|false|null)\\b"
-    },
-    "builtins": {
+    {
       "name": "support.function.builtin.nexus",
-      "match": "\\b(print|println|input|input_i64|input_f64|file_read|file_write|file_exists|http_get|json_get|sqlite_open|sqlite_exec|sqlite_close|sha256|mem_alloc|mem_free)\\b"
+      "match": "\b(print|input|input_i64|input_f64|file_read|file_write|file_exists|capture_output|system|str_i64|str_f64|str_bool|to_i64|to_f64|mem_alloc|mem_free|mem_set|mem_read|sleep|time_ms|random_i64|env|exit|clear)\b"
     },
-    "function-calls": {
-      "name": "entity.name.function.call.nexus",
-      "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+    {
+      "name": "entity.name.function.nexus",
+      "match": "\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
     },
-    "operators": {
+    {
       "name": "keyword.operator.nexus",
-      "match": "==|!=|<=|>=|=>|->|&&|\\|\\||\\+|-|\\*|/|%|=|<|>|!|&|\\|"
+      "match": "==|!=|<=|>=|=>|->|&&|\\|\\||[+\\-*/%=<>&!:,;]"
     }
-  }
+  ]
 }
