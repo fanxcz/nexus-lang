@@ -1,0 +1,1 @@
+fn json_field(json: string, key: string) -> string { return json_get(json, key) }

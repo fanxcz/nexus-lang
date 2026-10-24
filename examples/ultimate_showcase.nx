@@ -1,0 +1,73 @@
+fn main() {
+    let ok = gfx_init(1280, 720, "NEXUS 0.6 Ultimate Showcase")
+    if !ok {
+        print("Graphics unavailable: " + gfx_error())
+        return
+    }
+
+    gfx_vsync(true)
+    let hero = ecs_create()
+    let enemy = ecs_create()
+    ecs_set_position(hero, 300.0, 330.0)
+    ecs_set_position(enemy, 800.0, 330.0)
+    ecs_set_velocity(enemy, -80.0, 0.0)
+    ecs_set_size(hero, 72.0, 72.0)
+    ecs_set_size(enemy, 64.0, 64.0)
+    ecs_set_color(hero, 0.2, 0.85, 1.0, 1.0)
+    ecs_set_color(enemy, 1.0, 0.25, 0.2, 1.0)
+
+    let playerTex = gfx_texture_load("assets/player.png")
+    if playerTex != 0 { ecs_set_texture(hero, playerTex) }
+
+    let font = gfx_font_load("assets/font.ttf", 28)
+    let music = gfx_music_load("assets/music.ogg")
+    if music != 0 { gfx_music_volume(0.45); gfx_music_play(music, true) }
+
+    let mut running = true
+    let mut score: i64 = 0
+
+    while running && !gfx_should_close() {
+        gfx_poll()
+        let dt = gfx_dt()
+        if gfx_event_is("quit") { running = false }
+        if gfx_key_down("ESC") { running = false }
+
+        ecs_update(dt)
+        if ecs_collides(hero, enemy) { score = score + 1; ecs_set_position(enemy, 900.0, 330.0) }
+
+        if gfx_key_down("A") { ecs_set_position(hero, ecs_x(hero) - 240.0 * dt, ecs_y(hero)) }
+        if gfx_key_down("D") { ecs_set_position(hero, ecs_x(hero) + 240.0 * dt, ecs_y(hero)) }
+
+        gfx_begin()
+        gfx_clear(0.015, 0.02, 0.05, 1.0)
+        gfx_camera_set(0.0, 0.0, 1.0)
+        gfx_rect(0.0, 0.0, 1280.0, 84.0, 0.05, 0.08, 0.16, 1.0)
+        gfx_text(30.0, 24.0, 3.0, "NEXUS 0.6", 0.45, 0.9, 1.0, 1.0)
+        gfx_text(250.0, 31.0, 1.5, "2D + ECS + INPUT + UI + AUDIO", 0.8, 0.85, 0.95, 1.0)
+
+        ecs_draw()
+        gfx_line(0.0, 430.0, 1280.0, 430.0, 2.0, 0.18, 0.22, 0.3, 1.0)
+
+        ui_panel(40.0, 470.0, 360.0, 180.0, 0.06, 0.08, 0.14, 0.95)
+        ui_label(70.0, 500.0, "NEXUS RUNTIME", 2.0)
+        ui_label(70.0, 540.0, "ECS entities:", 1.2)
+        ui_label(220.0, 540.0, str_i64(ecs_count()), 1.2)
+        ui_label(70.0, 570.0, "Score:", 1.2)
+        ui_label(220.0, 570.0, str_i64(score), 1.2)
+        ui_progress(70.0, 605.0, 280.0, 18.0, 0.65, 0.2, 0.75, 1.0, 1.0)
+
+        if ui_button(930.0, 500.0, 260.0, 70.0, "QUIT") { running = false }
+
+        if font != 0 { gfx_text_font(font, 70.0, 120.0, "Real TTF font backend", 0.7, 0.85, 1.0, 1.0) }
+        if playerTex != 0 { gfx_texture_draw_frame(playerTex, 0.0, 580.0, 64.0, 64.0, 0, 4, 64, 4, 1.0, 1.0, 1.0, 1.0) }
+        gfx_end()
+    }
+
+    gfx_music_stop()
+    if music != 0 { }
+    if font != 0 { gfx_font_unload(font) }
+    if playerTex != 0 { gfx_texture_unload(playerTex) }
+    ecs_destroy(hero)
+    ecs_destroy(enemy)
+    gfx_shutdown()
+}

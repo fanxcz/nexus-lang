@@ -1,0 +1,73 @@
+fn main() {
+    let ok = gfx_init(1400, 800, "NEXUS Scene Editor")
+    if !ok {
+        print("Graphics backend unavailable: " + gfx_error())
+        return
+    }
+
+    let scene = scene_create()
+    let e1 = ecs_create()
+    let e2 = ecs_create()
+    ecs_set_position(e1, 420.0, 320.0)
+    ecs_set_size(e1, 120.0, 90.0)
+    ecs_set_color(e1, 0.15, 0.75, 1.0, 1.0)
+    ecs_set_position(e2, 640.0, 430.0)
+    ecs_set_size(e2, 150.0, 100.0)
+    ecs_set_color(e2, 1.0, 0.3, 0.25, 1.0)
+    scene_add(scene, e1)
+    scene_add(scene, e2)
+
+    let mut running = true
+    while running && !gfx_should_close() {
+        gfx_poll()
+        if gfx_key_down("ESC") { running = false }
+        if ui_button(20.0, 20.0, 120.0, 42.0, "SAVE") { scene_save(scene, "scenes/editor_scene.nxs"); gfx_sound_tone(880.0, 60, 0.08) }
+        if ui_button(150.0, 20.0, 120.0, 42.0, "LOAD") { let loaded = scene_load("scenes/editor_scene.nxs"); scene_destroy(scene); let _keep = loaded }
+        if ui_button(280.0, 20.0, 150.0, 42.0, "ADD BOX") {
+            let e = ecs_create()
+            ecs_set_position(e, 760.0, 260.0)
+            ecs_set_size(e, 110.0, 80.0)
+            ecs_set_color(e, 0.25, 1.0, 0.45, 1.0)
+            scene_add(scene, e)
+        }
+
+        gfx_begin()
+        gfx_clear(0.025, 0.03, 0.05, 1.0)
+
+        // Left scene panel
+        gfx_rect(0.0, 0.0, 320.0, 800.0, 0.045, 0.06, 0.10, 1.0)
+        gfx_text(25.0, 95.0, 2.2, "SCENE", 0.65, 0.9, 1.0, 1.0)
+        gfx_text(25.0, 145.0, 1.5, "Entity 1", 0.85, 0.88, 0.92, 1.0)
+        gfx_text(25.0, 185.0, 1.5, "Entity 2", 0.85, 0.88, 0.92, 1.0)
+        gfx_text(25.0, 225.0, 1.5, "Click ADD BOX to create", 0.55, 0.65, 0.75, 1.0)
+
+        // Center viewport
+        gfx_rect(320.0, 0.0, 760.0, 800.0, 0.07, 0.08, 0.11, 1.0)
+        for i in 0..16 {
+            let gx = 320.0 + to_f64(i) * 48.0
+            gfx_line(gx, 90.0, gx, 770.0, 0.12, 0.15, 0.2, 1.0, 1.0)
+        }
+        for i in 0..15 {
+            let gy = 90.0 + to_f64(i) * 48.0
+            gfx_line(320.0, gy, 1080.0, gy, 0.12, 0.15, 0.2, 1.0, 1.0)
+        }
+        ecs_update(gfx_dt())
+        ecs_draw()
+        gfx_text(345.0, 40.0, 1.6, "VIEWPORT", 0.7, 0.8, 0.95, 1.0)
+
+        // Inspector
+        gfx_rect(1080.0, 0.0, 320.0, 800.0, 0.045, 0.06, 0.10, 1.0)
+        gfx_text(1110.0, 70.0, 2.0, "INSPECTOR", 0.65, 0.9, 1.0, 1.0)
+        gfx_text(1110.0, 135.0, 1.4, "ENTITY COUNT", 0.55, 0.65, 0.75, 1.0)
+        gfx_text(1110.0, 170.0, 2.0, str_i64(ecs_count()), 1.0, 1.0, 1.0, 1.0)
+        gfx_text(1110.0, 235.0, 1.4, "EDITOR", 0.55, 0.65, 0.75, 1.0)
+        ui_panel(1100.0, 270.0, 260.0, 140.0, 0.08, 0.1, 0.16, 1.0)
+        ui_label(1120.0, 300.0, "Scene save/load is native", 1.25)
+        ui_label(1120.0, 335.0, "ECS objects render live", 1.25)
+        ui_label(1120.0, 370.0, "NEXUS 1.0", 1.25)
+
+        gfx_end()
+    }
+    scene_destroy(scene)
+    gfx_shutdown()
+}

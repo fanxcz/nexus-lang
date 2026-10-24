@@ -1,0 +1,21 @@
+fn main() {
+    // SHA-256 known answer tests
+    print("SHA-256 tests:")
+    
+    // Empty string
+    let h0 = sha256("")
+    print("sha256(\"\") = " + h0)
+    
+    // "abc" - RFC 4634 test vector
+    let h1 = sha256("abc")
+    print("sha256(\"abc\") = " + h1)
+    
+    // "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" - RFC 4634 test vector
+    let h2 = sha256("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")
+    print("sha256(long) = " + h2)
+    
+    // Longer input (80 chars, multiple blocks)
+    let long = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    let h3 = sha256(long)
+    print("sha256(80 a's) = " + h3)
+}

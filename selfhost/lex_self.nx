@@ -1,0 +1,46 @@
+// Self-lexing smoke: the NEXUS-written lexer must tokenize its own source,
+// the stdlib sources and real examples without a single error line.
+// lexer_test.nx is intentionally excluded: its source embeds invalid inputs.
+import "lexer_lib.nx"
+
+fn lex_file(path: string, label: string) -> i64 {
+    let src = file_read(path)
+    if string.len(src) == 0 {
+        print("FAIL " + label + ": cannot read " + path)
+        return 1
+    }
+    let out = tokenize(src)
+    let n = string.split_count(out, "\n")
+    let mut bad = 0
+    let mut i = 0
+    while i < n {
+        let l = string.split_at(out, "\n", i)
+        if string.slice(l, 0, 5) == "error" {
+            if bad == 0 {
+                print("FAIL " + label + ": lexer reported errors")
+            }
+            print("  " + l)
+            bad = bad + 1
+        }
+        i = i + 1
+    }
+    if bad > 0 {
+        return 1
+    }
+    let tokens = string.split_count(out, "\n") - 1
+    print("ok " + label + ": " + tokens + " tokens")
+    return 0
+}
+
+fn main() {
+    let mut failed = 0
+    failed = failed + lex_file("selfhost/lexer_lib.nx", "lexer_lib.nx")
+    failed = failed + lex_file("selfhost/lex_self.nx", "lex_self.nx")
+    failed = failed + lex_file("stdlib/string.nx", "stdlib/string.nx")
+    failed = failed + lex_file("stdlib/os.nx", "stdlib/os.nx")
+    failed = failed + lex_file("examples/control_flow.nx", "examples/control_flow.nx")
+    if failed > 0 {
+        exit(1)
+    }
+    print("self-lex ok")
+}

@@ -1,0 +1,69 @@
+name: Question
+description: Ask a question about NEXUS
+title: "[Question]: "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about NEXUS? We're happy to help! Please check the documentation first:
+        - [Language Reference](https://fanxcz.github.io/nexus-lang/language/)
+        - [Runtime API](https://fanxcz.github.io/nexus-lang/runtime/)
+        - [Examples](https://github.com/fanxcz/nexus-lang/tree/main/examples)
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does your question relate to?
+      options:
+        - Getting Started / Installation
+        - Language Syntax / Features
+        - Standard Library (std.*)
+        - Runtime / Graphics / Audio
+        - Build System / CMake / Templates
+        - Package Manager
+        - Tooling (fmt, lint, lsp, editor)
+        - Cross-compilation / Targets
+        - IDE Integration (VS Code, CLion, etc.)
+        - Contributing / Development
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: Ask your question here. Provide as much context as possible.
+      placeholder: How do I...?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to achieve? Any relevant code snippets?
+      placeholder: |
+        I'm trying to...
+        ```nx
+        // Your code here
+        ```
+      render: nx
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: NEXUS Version
+      description: What version are you using? (run `nexus --version`)
+      placeholder: "1.1.0"
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked the documentation
+          required: true
+        - label: I have searched existing issues/discussions
+          required: true

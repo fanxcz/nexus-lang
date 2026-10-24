@@ -1,0 +1,304 @@
+// Self-hosting step 1: the NEXUS lexer, written in NEXUS.
+// Mirrors src/compiler/frontend/lexer/lexer.cpp: keywords, identifiers,
+// i64/f64 literals, strings with escapes, operators, punctuation, comments.
+// tokenize(src) -> string emits one token per line as "LINE:COL KIND TEXT"
+// and stops at the first error, emitting "error LINE:COL MESSAGE".
+
+fn is_alpha(b: i64) -> bool {
+    return (b >= 97 && b <= 122) || (b >= 65 && b <= 90) || b == 95
+}
+
+fn is_digit(b: i64) -> bool {
+    return b >= 48 && b <= 57
+}
+
+fn keyword_kind(name: string) -> string {
+    if name == "fn" { return "KwFn" }
+    if name == "let" { return "KwLet" }
+    if name == "const" { return "KwConst" }
+    if name == "mut" { return "KwMut" }
+    if name == "return" { return "KwReturn" }
+    if name == "if" { return "KwIf" }
+    if name == "else" { return "KwElse" }
+    if name == "while" { return "KwWhile" }
+    if name == "for" { return "KwFor" }
+    if name == "in" { return "KwIn" }
+    if name == "break" { return "KwBreak" }
+    if name == "continue" { return "KwContinue" }
+    if name == "struct" { return "KwStruct" }
+    if name == "enum" { return "KwEnum" }
+    if name == "import" { return "KwImport" }
+    if name == "extern" { return "KwExtern" }
+    if name == "unsafe" { return "KwUnsafe" }
+    if name == "as" { return "KwAs" }
+    if name == "match" { return "KwMatch" }
+    if name == "true" { return "KwTrue" }
+    if name == "false" { return "KwFalse" }
+    if name == "print" { return "KwPrint" }
+    return "Identifier"
+}
+
+fn tokenize(src: string) -> string {
+    let len = string.len(src)
+    let mut out = ""
+    let mut i = 0
+    let mut line = 1
+    let mut col = 1
+    let mut done = false
+
+    while !done {
+        // whitespace
+        let mut b = 0
+        if i < len {
+            b = string.byte_at(src, i)
+        }
+        while i < len && (b == 32 || b == 9 || b == 13 || b == 10) {
+            if b == 10 {
+                line = line + 1
+                col = 1
+            } else {
+                col = col + 1
+            }
+            i = i + 1
+            if i < len {
+                b = string.byte_at(src, i)
+            }
+        }
+        // line comment
+        if i < len && b == 47 && i + 1 < len && string.byte_at(src, i + 1) == 47 {
+            while i < len && string.byte_at(src, i) != 10 {
+                i = i + 1
+            }
+            continue
+        }
+        // block comment
+        if i < len && b == 47 && i + 1 < len && string.byte_at(src, i + 1) == 42 {
+            let sl = line
+            let sc = col
+            i = i + 2
+            col = col + 2
+            let mut closed = false
+            while i < len && !closed {
+                let c = string.byte_at(src, i)
+                if c == 42 && i + 1 < len && string.byte_at(src, i + 1) == 47 {
+                    i = i + 2
+                    col = col + 2
+                    closed = true
+                } else {
+                    if c == 10 {
+                        line = line + 1
+                        col = 1
+                    } else {
+                        col = col + 1
+                    }
+                    i = i + 1
+                }
+            }
+            if !closed {
+                return out + "error " + sl + ":" + sc + " unterminated block comment\n"
+            }
+            continue
+        }
+        if i >= len {
+            out = out + line + ":" + col + " End \n"
+            done = true
+            continue
+        }
+        let tl = line
+        let tc = col
+
+        // identifier or keyword
+        if is_alpha(b) {
+            let mut name = ""
+            while i < len && (is_alpha(b) || is_digit(b)) {
+                name = name + string.slice(src, i, i + 1)
+                i = i + 1
+                col = col + 1
+                if i < len {
+                    b = string.byte_at(src, i)
+                }
+            }
+            out = out + tl + ":" + tc + " " + keyword_kind(name) + " " + name + "\n"
+            continue
+        }
+
+        // number
+        if is_digit(b) {
+            let mut num = ""
+            let mut isfloat = false
+            while i < len && is_digit(b) {
+                num = num + string.slice(src, i, i + 1)
+                i = i + 1
+                col = col + 1
+                if i < len {
+                    b = string.byte_at(src, i)
+                }
+            }
+            if b == 46 && i + 1 < len && is_digit(string.byte_at(src, i + 1)) {
+                isfloat = true
+                num = num + "."
+                i = i + 1
+                col = col + 1
+                if i < len {
+                    b = string.byte_at(src, i)
+                }
+                while i < len && is_digit(b) {
+                    num = num + string.slice(src, i, i + 1)
+                    i = i + 1
+                    col = col + 1
+                    if i < len {
+                        b = string.byte_at(src, i)
+                    }
+                }
+            }
+            let mut kind = "Integer"
+            if isfloat {
+                kind = "Float"
+            }
+            out = out + tl + ":" + tc + " " + kind + " " + num + "\n"
+            continue
+        }
+
+        // string literal
+        if b == 34 {
+            i = i + 1
+            col = col + 1
+            let mut text = ""
+            let mut closed = false
+            while i < len && !closed {
+                let c = string.byte_at(src, i)
+                if c == 34 {
+                    i = i + 1
+                    col = col + 1
+                    closed = true
+                } else if c == 92 {
+                    if i + 1 >= len {
+                        return out + "error " + line + ":" + col + " unterminated string\n"
+                    }
+                    let e = string.byte_at(src, i + 1)
+                    if e == 110 {
+                        text = text + "\n"
+                    } else if e == 116 {
+                        text = text + "\t"
+                    } else if e == 114 {
+                        text = text + "\r"
+                    } else if e == 92 {
+                        text = text + "\\"
+                    } else if e == 34 {
+                        text = text + "\""
+                    } else {
+                        return out + "error " + line + ":" + col + " unknown string escape\n"
+                    }
+                    i = i + 2
+                    col = col + 2
+                } else {
+                    text = text + string.slice(src, i, i + 1)
+                    i = i + 1
+                    col = col + 1
+                }
+            }
+            if !closed {
+                return out + "error " + tl + ":" + tc + " unterminated string\n"
+            }
+            out = out + tl + ":" + tc + " String " + text + "\n"
+            continue
+        }
+
+        // operators and punctuation
+        let mut kind = ""
+        let mut text = ""
+        let mut width = 1
+        let mut n1 = 0
+        if i + 1 < len {
+            n1 = string.byte_at(src, i + 1)
+        }
+        if b == 43 {
+            kind = "Plus"
+            text = "+"
+            if n1 == 61 { kind = "PlusEqual"; text = "+="; width = 2 }
+        } else if b == 45 {
+            kind = "Minus"
+            text = "-"
+            if n1 == 62 { kind = "Arrow"; text = "->"; width = 2 }
+            else if n1 == 61 { kind = "MinusEqual"; text = "-="; width = 2 }
+        } else if b == 42 {
+            kind = "Star"
+            text = "*"
+            if n1 == 61 { kind = "StarEqual"; text = "*="; width = 2 }
+        } else if b == 47 {
+            kind = "Slash"
+            text = "/"
+            if n1 == 61 { kind = "SlashEqual"; text = "/="; width = 2 }
+        } else if b == 37 {
+            kind = "Percent"
+            text = "%"
+            if n1 == 61 { kind = "PercentEqual"; text = "%="; width = 2 }
+        } else if b == 61 {
+            kind = "Equal"
+            text = "="
+            if n1 == 61 { kind = "EqualEqual"; text = "=="; width = 2 }
+            else if n1 == 62 { kind = "FatArrow"; text = "=>"; width = 2 }
+        } else if b == 33 {
+            kind = "Bang"
+            text = "!"
+            if n1 == 61 { kind = "BangEqual"; text = "!="; width = 2 }
+        } else if b == 60 {
+            kind = "Less"
+            text = "<"
+            if n1 == 61 { kind = "LessEqual"; text = "<="; width = 2 }
+        } else if b == 62 {
+            kind = "Greater"
+            text = ">"
+            if n1 == 61 { kind = "GreaterEqual"; text = ">="; width = 2 }
+        } else if b == 38 {
+            kind = "Ampersand"
+            text = "&"
+            if n1 == 38 { kind = "AndAnd"; text = "&&"; width = 2 }
+        } else if b == 124 {
+            if n1 == 124 {
+                kind = "OrOr"
+                text = "||"
+                width = 2
+            } else {
+                return out + "error " + tl + ":" + tc + " unexpected character\n"
+            }
+        } else if b == 40 {
+            kind = "LParen"
+            text = "("
+        } else if b == 41 {
+            kind = "RParen"
+            text = ")"
+        } else if b == 123 {
+            kind = "LBrace"
+            text = "{"
+        } else if b == 125 {
+            kind = "RBrace"
+            text = "}"
+        } else if b == 91 {
+            kind = "LBracket"
+            text = "["
+        } else if b == 93 {
+            kind = "RBracket"
+            text = "]"
+        } else if b == 44 {
+            kind = "Comma"
+            text = ","
+        } else if b == 58 {
+            kind = "Colon"
+            text = ":"
+            if n1 == 58 { kind = "ColonColon"; text = "::"; width = 2 }
+        } else if b == 46 {
+            kind = "Dot"
+            text = "."
+        } else if b == 59 {
+            kind = "Semicolon"
+            text = ";"
+        } else {
+            return out + "error " + tl + ":" + tc + " unexpected character\n"
+        }
+        out = out + tl + ":" + tc + " " + kind + " " + text + "\n"
+        i = i + width
+        col = col + width
+    }
+    return out
+}

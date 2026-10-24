@@ -1,0 +1,411 @@
+// Self-hosting step 2: recursive-descent expression and statement parser
+// for a NEXUS subset, written in NEXUS on top of lexer_lib's token stream.
+// parse(src) -> string emits an S-expression tree, one node per line, or
+// "error MESSAGE" when the input is not in the subset.
+//
+// Subset: let / assignment, print, if/else, while, blocks with { },
+// integer/float/string/bool literals, identifiers, calls, unary ! and -,
+// binary + - * / % == != < <= > >= && ||, parentheses.
+import "lexer_lib.nx"
+
+// ---- token helpers: tokens are "LINE:COL KIND TEXT" ----
+
+fn tok_kind(tok: string) -> string {
+    // skip "L:C "
+    let n = string.len(tok)
+    let mut i = 0
+    while i < n && string.byte_at(tok, i) != 32 {
+        i = i + 1
+    }
+    let mut start = i + 1
+    let mut j = start
+    while j < n && string.byte_at(tok, j) != 32 {
+        j = j + 1
+    }
+    return string.slice(tok, start, j)
+}
+
+fn tok_text(tok: string) -> string {
+    let n = string.len(tok)
+    // first space after pos, second space after kind
+    let mut spaces = 0
+    let mut i = 0
+    while i < n {
+        if string.byte_at(tok, i) == 32 {
+            spaces = spaces + 1
+            if spaces == 2 {
+                return string.slice(tok, i + 1, n)
+            }
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+// ---- parser state: T = token list, P = one-element position cell ----
+
+fn at_end(t: i64, p: i64) -> bool {
+    return ilist_get(p, 0) >= slist_len(t)
+}
+
+fn cur_kind(t: i64, p: i64) -> string {
+    if at_end(t, p) {
+        return "End"
+    }
+    return tok_kind(slist_get(t, ilist_get(p, 0)))
+}
+
+fn cur_text(t: i64, p: i64) -> string {
+    if at_end(t, p) {
+        return ""
+    }
+    return tok_text(slist_get(t, ilist_get(p, 0)))
+}
+
+fn bump(t: i64, p: i64) {
+    ilist_set(p, 0, ilist_get(p, 0) + 1)
+}
+
+fn eat(t: i64, p: i64, kind: string) -> bool {
+    if cur_kind(t, p) == kind {
+        bump(t, p)
+        return true
+    }
+    return false
+}
+
+// ---- expressions (precedence climbing) ----
+
+fn parse_primary(t: i64, p: i64) -> string {
+    let kind = cur_kind(t, p)
+    if kind == "Integer" || kind == "Float" || kind == "String" || kind == "Identifier" {
+        let text = cur_text(t, p)
+        bump(t, p)
+        if kind == "Integer" {
+            return "(int " + text + ")"
+        }
+        if kind == "Float" {
+            return "(float " + text + ")"
+        }
+        if kind == "String" {
+            return "(str " + text + ")"
+        }
+        return "(ident " + text + ")"
+    }
+    if kind == "KwTrue" {
+        bump(t, p)
+        return "(bool true)"
+    }
+    if kind == "KwFalse" {
+        bump(t, p)
+        return "(bool false)"
+    }
+    if kind == "LParen" {
+        bump(t, p)
+        let inner = parse_or(t, p)
+        if string.slice(inner, 0, 5) == "error" {
+            return inner
+        }
+        if !eat(t, p, "RParen") {
+            return "error expected )"
+        }
+        return inner
+    }
+    if kind == "Minus" {
+        bump(t, p)
+        let inner = parse_primary(t, p)
+        if string.slice(inner, 0, 5) == "error" {
+            return inner
+        }
+        return "(neg " + inner + ")"
+    }
+    if kind == "Bang" {
+        bump(t, p)
+        let inner = parse_primary(t, p)
+        if string.slice(inner, 0, 5) == "error" {
+            return inner
+        }
+        return "(not " + inner + ")"
+    }
+    return "error expected expression, got " + kind
+}
+
+fn parse_call(t: i64, p: i64) -> string {
+    let mut node = parse_primary(t, p)
+    if string.slice(node, 0, 5) == "error" {
+        return node
+    }
+    while cur_kind(t, p) == "LParen" {
+        bump(t, p)
+        let mut args = "(call " + node
+        if cur_kind(t, p) != "RParen" {
+            let a = parse_or(t, p)
+            if string.slice(a, 0, 5) == "error" {
+                return a
+            }
+            args = args + " " + a
+            while eat(t, p, "Comma") {
+                let b = parse_or(t, p)
+                if string.slice(b, 0, 5) == "error" {
+                    return b
+                }
+                args = args + " " + b
+            }
+        }
+        if !eat(t, p, "RParen") {
+            return "error expected ) after arguments"
+        }
+        node = args + ")"
+    }
+    return node
+}
+
+fn op_symbol(kind: string) -> string {
+    if kind == "Plus" { return "+" }
+    if kind == "Minus" { return "-" }
+    if kind == "Star" { return "*" }
+    if kind == "Slash" { return "/" }
+    if kind == "Percent" { return "%" }
+    if kind == "EqualEqual" { return "==" }
+    if kind == "BangEqual" { return "!=" }
+    if kind == "Less" { return "<" }
+    if kind == "LessEqual" { return "<=" }
+    if kind == "Greater" { return ">" }
+    if kind == "GreaterEqual" { return ">=" }
+    if kind == "AndAnd" { return "&&" }
+    if kind == "OrOr" { return "||" }
+    return kind
+}
+
+fn fold_ops(t: i64, p: i64, ops: i64, tighter: i64, tighter_kind: i64) -> string {
+    // tighter/tighter_kind: 0 = parse_call (function), 1..4 = next fold level
+    let lhs = tighter_expr(t, p, tighter, tighter_kind)
+    if string.slice(lhs, 0, 5) == "error" {
+        return lhs
+    }
+    let mut node = lhs
+    let mut done = false
+    while !done {
+        let kind = cur_kind(t, p)
+        let mut matched = false
+        let k = slist_len(ops)
+        let mut oi = 0
+        while oi < k {
+            if kind == slist_get(ops, oi) {
+                matched = true
+            }
+            oi = oi + 1
+        }
+        if !matched {
+            done = true
+        } else {
+            bump(t, p)
+            let rhs = tighter_expr(t, p, tighter, tighter_kind)
+            if string.slice(rhs, 0, 5) == "error" {
+                return rhs
+            }
+            node = "(" + op_symbol(kind) + " " + node + " " + rhs + ")"
+        }
+    }
+    return node
+}
+
+fn tighter_expr(t: i64, p: i64, which: i64, ops: i64) -> string {
+    if which == 0 {
+        return parse_call(t, p)
+    }
+    // which 1..4 calls the corresponding fold level below
+    return fold_level(t, p, which, ops)
+}
+
+fn fold_level(t: i64, p: i64, level: i64, ops_unused: i64) -> string {
+    // level 1 = mul, 2 = add, 3 = cmp, 4 = and ; 0 unused
+    if level == 1 {
+        let ops = slist_new()
+        slist_push(ops, "Star")
+        slist_push(ops, "Slash")
+        slist_push(ops, "Percent")
+        return fold_ops(t, p, ops, 0, 0)
+    }
+    if level == 2 {
+        let ops = slist_new()
+        slist_push(ops, "Plus")
+        slist_push(ops, "Minus")
+        return fold_ops(t, p, ops, 1, 0)
+    }
+    if level == 3 {
+        let ops = slist_new()
+        slist_push(ops, "EqualEqual")
+        slist_push(ops, "BangEqual")
+        slist_push(ops, "Less")
+        slist_push(ops, "LessEqual")
+        slist_push(ops, "Greater")
+        slist_push(ops, "GreaterEqual")
+        return fold_ops(t, p, ops, 2, 0)
+    }
+    if level == 4 {
+        let ops = slist_new()
+        slist_push(ops, "AndAnd")
+        return fold_ops(t, p, ops, 3, 0)
+    }
+    let ops = slist_new()
+    slist_push(ops, "OrOr")
+    return fold_ops(t, p, ops, 4, 0)
+}
+
+fn parse_mul(t: i64, p: i64) -> string {
+    return fold_level(t, p, 1, 0)
+}
+
+fn parse_add(t: i64, p: i64) -> string {
+    return fold_level(t, p, 2, 0)
+}
+
+fn parse_cmp(t: i64, p: i64) -> string {
+    return fold_level(t, p, 3, 0)
+}
+
+fn parse_and(t: i64, p: i64) -> string {
+    return fold_level(t, p, 4, 0)
+}
+
+fn parse_or(t: i64, p: i64) -> string {
+    return fold_level(t, p, 5, 0)
+}
+
+// ---- statements ----
+
+fn parse_block(t: i64, p: i64) -> string {
+    if !eat(t, p, "LBrace") {
+        return "error expected {"
+    }
+    let mut out = "(block"
+    while cur_kind(t, p) != "RBrace" && !at_end(t, p) && cur_kind(t, p) != "End" {
+        let s = parse_stmt(t, p)
+        if string.slice(s, 0, 5) == "error" {
+            return s
+        }
+        out = out + "\n  " + s
+    }
+    if !eat(t, p, "RBrace") {
+        return "error expected }"
+    }
+    return out + ")"
+}
+
+fn parse_stmt(t: i64, p: i64) -> string {
+    let kind = cur_kind(t, p)
+    if kind == "KwLet" {
+        bump(t, p)
+        if cur_kind(t, p) != "Identifier" {
+            return "error expected variable name after let"
+        }
+        let name = cur_text(t, p)
+        bump(t, p)
+        if !eat(t, p, "Equal") {
+            return "error expected = in let"
+        }
+        let init = parse_or(t, p)
+        if string.slice(init, 0, 5) == "error" {
+            return init
+        }
+        return "(let " + name + " " + init + ")"
+    }
+    if kind == "Identifier" {
+        let name = cur_text(t, p)
+        let save = ilist_get(p, 0)
+        bump(t, p)
+        if eat(t, p, "Equal") {
+            let value = parse_or(t, p)
+            if string.slice(value, 0, 5) == "error" {
+                return value
+            }
+            return "(assign " + name + " " + value + ")"
+        }
+        // not an assignment: rewind and parse as an expression statement
+        ilist_set(p, 0, save)
+    }
+    if kind == "KwPrint" {
+        bump(t, p)
+        let value = parse_or(t, p)
+        if string.slice(value, 0, 5) == "error" {
+            return value
+        }
+        return "(print " + value + ")"
+    }
+    if kind == "KwIf" {
+        bump(t, p)
+        let cond = parse_or(t, p)
+        if string.slice(cond, 0, 5) == "error" {
+            return cond
+        }
+        let then = parse_block(t, p)
+        if string.slice(then, 0, 5) == "error" {
+            return then
+        }
+        if cur_kind(t, p) == "KwElse" {
+            bump(t, p)
+            let els = parse_block(t, p)
+            if string.slice(els, 0, 5) == "error" {
+                return els
+            }
+            return "(if " + cond + "\n  " + then + "\n  " + els + ")"
+        }
+        return "(if " + cond + "\n  " + then + ")"
+    }
+    if kind == "KwWhile" {
+        bump(t, p)
+        let cond = parse_or(t, p)
+        if string.slice(cond, 0, 5) == "error" {
+            return cond
+        }
+        let body = parse_block(t, p)
+        if string.slice(body, 0, 5) == "error" {
+            return body
+        }
+        return "(while " + cond + "\n  " + body + ")"
+    }
+    // bare expression statement
+    let value = parse_or(t, p)
+    if string.slice(value, 0, 5) == "error" {
+        return value
+    }
+    return "(expr " + value + ")"
+}
+
+// ---- entry point ----
+
+fn tokenize_into(t: i64, src: string) -> bool {
+    let out = tokenize(src)
+    let n = string.split_count(out, "\n")
+    let mut i = 0
+    while i < n - 1 {
+        let line = string.split_at(out, "\n", i)
+        if string.slice(line, 0, 5) == "error" {
+            print("lex " + line)
+            return false
+        }
+        slist_push(t, line)
+        i = i + 1
+    }
+    // stop before the End token line? keep End: parser treats it as terminator
+    return true
+}
+
+fn parse(src: string) -> string {
+    let t = slist_new()
+    if !tokenize_into(t, src) {
+        return "error lexical error"
+    }
+    let p = ilist_new()
+    ilist_push(p, 0)
+    let mut out = ""
+    while !at_end(t, p) && cur_kind(t, p) != "End" {
+        let s = parse_stmt(t, p)
+        if string.slice(s, 0, 5) == "error" {
+            return s
+        }
+        out = out + s + "\n"
+    }
+    return out
+}

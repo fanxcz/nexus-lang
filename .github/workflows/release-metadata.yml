@@ -1,0 +1,20 @@
+name: Finalize NEXUS release metadata
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: contains(github.event.head_commit.message, '[release-metadata]')
+    name: Correct published release title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set release display name
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit v1.1.0 --repo "$GITHUB_REPOSITORY" --title "NEXUS v1.1.0"

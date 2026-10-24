@@ -1,0 +1,240 @@
+// NEXUS Task Manager — интерактивный консольный диспетчер задач
+// Запуск: nexus run examples/task_manager.nx --backend llvm
+
+// system(command) -> i64 — встроенная функция NEXUS (выполняет команду ОС)
+
+fn show_header() {
+    print("==============================================")
+    print("        NEXUS TASK MANAGER  v1.0")
+    print("==============================================")
+}
+
+fn show_menu() {
+    print("")
+    print("  1) ТОП-15 процессов по памяти")
+    print("  2) Показать подробности процесса (по имени)")
+    print("  3) Завершить процесс по имени")
+    print("  4) Завершить процесс по PID")
+    print("  5) Запустить программу (notepad, calc, ...)")
+    print("  6) Информация о системе")
+    print("  7) Поиск процесса по части имени")
+    print("  0) Выход")
+    print("")
+}
+
+fn strip_quotes(s: string) -> string {
+    let len = string.len(s)
+    let mut start = 0
+    let mut end = len
+    if end > start && string.byte_at(s, start) == 34 {
+        start = 1
+    }
+    if end > start && string.byte_at(s, end - 1) == 34 {
+        end = end - 1
+    }
+    return string.slice(s, start, end)
+}
+
+fn mem_of(line: string) -> i64 {
+    // CSV: "...","...","1 234 K",...
+    let n = string.split_count(line, "\",\"")
+    if n < 5 {
+        return 0
+    }
+    let mem = strip_quotes(string.trim(string.split_at(line, "\",\"", n - 1)))
+    let len = string.len(mem)
+    let mut value: i64 = 0
+    let mut i = 0
+    while i < len {
+        let b = string.byte_at(mem, i)
+        if b >= 48 && b <= 57 {
+            value = value * 10 + (b - 48)
+        }
+        i = i + 1
+    }
+    return value
+}
+
+fn name_of(line: string) -> string {
+    let n = string.split_count(line, "\",\"")
+    if n < 2 {
+        return line
+    }
+    return strip_quotes(string.trim(string.split_at(line, "\",\"", 0)))
+}
+
+// Insertion sort descending by memory (tasklist is not sorted).
+fn sort_lines(lines: string, count: i64) -> string {
+    let mut i = 1
+    while i < count {
+        let cur = string.split_at(lines, "\n", i)
+        let cur_mem = mem_of(cur)
+        let mut j = i - 1
+        let mut moved = true
+        while j >= 0 && moved {
+            let prev = string.split_at(lines, "\n", j)
+            if mem_of(prev) < cur_mem {
+                j = j - 1
+            } else {
+                moved = false
+            }
+        }
+        // rebuild only if shift needed (j+1 != i)
+        if j + 1 != i {
+            let mut out = ""
+            let mut k = 0
+            while k < count {
+                if k == j + 1 {
+                    out = out + cur + "\n"
+                }
+                if k != i {
+                    out = out + string.split_at(lines, "\n", k) + "\n"
+                }
+                k = k + 1
+            }
+            lines = out
+        }
+        i = i + 1
+    }
+    return lines
+}
+
+fn print_top(count_max: i64) {
+    let csv = capture_output("tasklist /FO CSV /NH")
+    let count = string.split_count(csv, "\n")
+    let sorted = sort_lines(csv, count)
+    print("")
+    print("   ПАМЯТЬ(KB)  ИМЯ ПРОЦЕССА")
+    print("  --------------------------")
+    let mut i = 0
+    while i < count_max && i < count {
+        let line = string.trim(string.split_at(sorted, "\n", i))
+        if string.len(line) > 0 {
+            let mem = mem_of(line)
+            let name = name_of(line)
+            print("  " + mem + "  " + name)
+        }
+        i = i + 1
+    }
+    print("  --------------------------")
+    print("  Всего строк: " + count)
+}
+
+fn find_process() {
+    let q = string.lower(string.trim(input("Поиск по имени (часть имени): ")))
+    if q == "" {
+        return
+    }
+    let csv = capture_output("tasklist /FO CSV /NH")
+    let count = string.split_count(csv, "\n")
+    let mut shown = 0
+    let mut i = 0
+    while i < count {
+        let line = string.trim(string.split_at(csv, "\n", i))
+        if string.len(line) > 0 && string.contains(string.lower(name_of(line)), q) {
+            print("  PID/строка: " + line)
+            shown = shown + 1
+        }
+        i = i + 1
+    }
+    print("Найдено: " + shown)
+}
+
+fn list_processes() {
+    print("")
+    print("--- ТОП процессов по памяти ---")
+    print_top(15)
+}
+
+fn process_details() {
+    let name = input("Имя процесса (например chrome.exe): ")
+    if name == "" {
+        print("Имя не введено.")
+        return
+    }
+    print("")
+    let _ = system("tasklist /FI \"IMAGENAME eq " + name + "\" /V")
+}
+
+fn kill_by_name() {
+    let name = input("Имя процесса для завершения (например notepad.exe): ")
+    if name == "" {
+        print("Имя не введено.")
+        return
+    }
+    print("Завершаю " + name + " ...")
+    let rc = system("taskkill /IM \"" + name + "\" /F")
+    if rc == 0 {
+        print("Готово: процесс(ы) " + name + " завершён(ы).")
+    } else {
+        print("Не удалось завершить (код " + str_i64(rc) + "). Возможно, нет прав или процесс не найден.")
+    }
+}
+
+fn kill_by_pid() {
+    let pid_s = input("PID процесса: ")
+    if pid_s == "" {
+        print("PID не введён.")
+        return
+    }
+    let rc = system("taskkill /PID " + pid_s + " /F")
+    if rc == 0 {
+        print("Готово: процесс " + pid_s + " завершён.")
+    } else {
+        print("Не удалось завершить (код " + str_i64(rc) + ").")
+    }
+}
+
+fn launch_program() {
+    let prog = input("Программа для запуска (notepad, calc, mspaint...): ")
+    if prog == "" {
+        print("Ничего не введено.")
+        return
+    }
+    let rc = system("start \"\" " + prog)
+    if rc == 0 {
+        print("Запущено: " + prog)
+    } else {
+        print("Не удалось запустить (код " + str_i64(rc) + ").")
+    }
+}
+
+fn system_info() {
+    print("")
+    print("--- Информация о системе ---")
+    let _ = system("systeminfo | findstr /B /C:\"OS\" /C:\"Total\" /C:\"Available\"")
+    print("-----------------------------")
+}
+
+fn main() {
+    system("chcp 65001 >nul")
+    system("title NEXUS Task Manager")
+    system("color 0B")
+    show_header()
+    let mut running = true
+    while running {
+        show_menu()
+        let choice = input("Выберите пункт: ")
+        if choice == "1" {
+            list_processes()
+        } else if choice == "2" {
+            process_details()
+        } else if choice == "3" {
+            kill_by_name()
+        } else if choice == "4" {
+            kill_by_pid()
+        } else if choice == "5" {
+            launch_program()
+        } else if choice == "6" {
+            system_info()
+        } else if choice == "7" {
+            find_process()
+        } else if choice == "0" {
+            running = false
+        } else {
+            print("Неизвестный пункт: " + choice)
+        }
+    }
+    print("До встречи! Окно можно закрыть.")
+    let _ = input("Нажмите Enter для выхода...")
+}

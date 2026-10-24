@@ -1,0 +1,160 @@
+// NEXUS Memory Scanner — a small Cheat Engine style tool, written in NEXUS.
+// Scan another process for an integer value and overwrite it.
+//
+// Requires the LLVM backend: nexus run examples/cheat_engine.nx --backend llvm
+// Needs administrator rights to open other processes.
+
+extern "C" fn OpenProcess(access: i64, inherit: i64, pid: i64) -> i64
+extern "C" fn CloseHandle(handle: i64) -> i64
+extern "C" fn ReadProcessMemory(proc: i64, base: i64, buffer: i64, size: i64, read_ptr: i64) -> i64
+extern "C" fn WriteProcessMemory(proc: i64, base: i64, buffer: i64, size: i64, written_ptr: i64) -> i64
+extern "C" fn VirtualQueryEx(proc: i64, address: i64, info: i64, length: i64) -> i64
+extern "C" fn VirtualProtectEx(proc: i64, address: i64, size: i64, protect: i64, old_ptr: i64) -> i64
+
+fn ACCESS_ALL() -> i64 { return 2097151 }
+fn MEM_COMMIT() -> i64 { return 4096 }
+fn CHUNK() -> i64 { return 4194304 }
+fn MAX_HITS() -> i64 { return 64 }
+
+fn find_pid() -> i64 {
+    print("Процессы (первые 20 по памяти) и их PID:")
+    let csv = capture_output("tasklist /FO CSV /NH")
+    let n = string.split_count(csv, "\n")
+    let mut shown = 0
+    let mut i = 0
+    while i < n && shown < 20 {
+        let line = string.trim(string.split_at(csv, "\n", i))
+        if string.len(line) > 0 {
+            let name = string.split_at(line, "\",\"", 0)
+            let pid = string.split_at(line, "\",\"", 1)
+            print("  " + pid + "  " + name)
+            shown = shown + 1
+        }
+        i = i + 1
+    }
+    return input_i64("Введите PID процесса: ")
+}
+
+fn scan(proc: i64, value: i64) -> i64 {
+    let hits = ilist_new()
+    let info = mem_alloc(64)
+    let buf = mem_alloc(CHUNK())
+    let got = mem_alloc(8)
+    let mut addr = 0
+    let scanned = 0
+    let mut regions = 0
+    while addr < 140737488289792 {
+        mem_set(info, 0, 64)
+        let rc = VirtualQueryEx(proc, addr, info, 64)
+        if rc == 0 {
+            break
+        }
+        let region_size = mem_read(info + 24)
+        let state = mem_read(info + 32) % 4294967296
+        if state == MEM_COMMIT() && region_size > 0 {
+            regions = regions + 1
+            let mut offset = 0
+            let mut done = false
+            while offset < region_size && !done {
+                let mut take = region_size - offset
+                if take > CHUNK() {
+                    take = CHUNK()
+                }
+                mem_set(got, 0, 8)
+                let ok = ReadProcessMemory(proc, addr + offset, buf, take, got)
+                if ok == 1 {
+                    let read = mem_read(got)
+                    let mut p = 0
+                    while p + 8 <= read {
+                        if mem_read(buf + p) == value {
+                            if ilist_len(hits) < MAX_HITS() {
+                                ilist_push(hits, addr + offset + p)
+                            }
+                            if ilist_len(hits) >= MAX_HITS() {
+                                done = true
+                            }
+                        }
+                        p = p + 1
+                    }
+                }
+                offset = offset + take
+            }
+        }
+        addr = addr + region_size
+    }
+    print("Просмотрено регионов: " + regions)
+    let count = ilist_len(hits)
+    print("Найдено адресов со значением " + value + ": " + count)
+    let mut i = 0
+    while i < count {
+        print("  [" + i + "] 0x" + ilist_get(hits, i))
+        i = i + 1
+    }
+    if count == 0 {
+        return 0
+    }
+    return hits
+}
+
+fn main() {
+    print("=== NEXUS Memory Scanner 2.0 ===")
+    let pid = find_pid()
+    let proc = OpenProcess(ACCESS_ALL(), 0, pid)
+    if proc == 0 {
+        print("Не удалось открыть процесс (нужны права администратора?)")
+        return
+    }
+    print("Процесс открыт, handle " + proc)
+    let mut running = true
+    let mut hits = 0
+    while running {
+        print("")
+        print("1) Сканировать значение")
+        print("2) Записать новое значение по адресу")
+        print("0) Выход")
+        let choice = input("Выбор: ")
+        if choice == "1" {
+            let value = input_i64("Искомое значение (i64): ")
+            hits = scan(proc, value)
+        } else if choice == "2" {
+            if hits == 0 {
+                print("Сначала выполните сканирование.")
+            } else {
+                let idx = input_i64("Индекс адреса: ")
+                if idx < 0 || idx >= ilist_len(hits) {
+                    print("Неверный индекс")
+                } else {
+                    let new_value = input_i64("Новое значение: ")
+                    let cell = mem_alloc(8)
+                    let written = mem_alloc(8)
+                    mem_set(cell, 0, 8)
+                    // store value by copying its bytes: use mem_set low byte trick is
+                    // fragile; instead build the value in memory via repeated bytes
+                    let mut v = new_value
+                    let mut b = 0
+                    while b < 8 {
+                        let byte = v % 256
+                        mem_set(cell + b, byte, 1)
+                        v = (v - byte) / 256
+                        b = b + 1
+                    }
+                    let target = ilist_get(hits, idx)
+                    let old_prot = mem_alloc(8)
+                    // make the page writable first, like Cheat Engine does
+                    VirtualProtectEx(proc, target, 8, 64, old_prot)
+                    let ok = WriteProcessMemory(proc, target, cell, 8, written)
+                    VirtualProtectEx(proc, target, 8, mem_read(old_prot) % 4294967296, old_prot)
+                    if ok == 1 {
+                        print("Записано. Перепроверьте значение в игре/программе.")
+                    } else {
+                        print("Запись не удалась")
+                    }
+                }
+            }
+        } else if choice == "0" {
+            running = false
+        }
+    }
+    CloseHandle(proc)
+    print("До встречи.")
+}

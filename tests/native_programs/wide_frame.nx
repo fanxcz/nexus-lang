@@ -1,0 +1,30 @@
+fn wide(a0: i64, a1: i64, a2: i64, a3: i64, a4: i64, a5: i64, a6: i64, a7: i64, a8: i64, a9: i64, a10: i64, a11: i64, a12: i64, a13: i64, a14: i64, a15: i64, a16: i64, a17: i64, a18: i64, a19: i64) -> i64 {
+    return a0 + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19
+}
+
+fn main() {
+    let v0: i64 = 1
+    let v1: i64 = 2
+    let v2: i64 = 3
+    let v3: i64 = 4
+    let v4: i64 = 5
+    let v5: i64 = 6
+    let v6: i64 = 7
+    let v7: i64 = 8
+    let v8: i64 = 9
+    let v9: i64 = 10
+    let v10: i64 = 11
+    let v11: i64 = 12
+    let v12: i64 = 13
+    let v13: i64 = 14
+    let v14: i64 = 15
+    let v15: i64 = 16
+    let v16: i64 = 17
+    let v17: i64 = 18
+    let v18: i64 = 19
+    let v19: i64 = 20
+    print(v0 + v19)
+    print(wide(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19))
+    print(-9223372036854775807)
+    print(0)
+}

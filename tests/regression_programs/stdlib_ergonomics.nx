@@ -1,0 +1,30 @@
+// Regression coverage for stdlib/ergonomics additions:
+// smart string concatenation, discard binding `_`, string builtins,
+// and capture_output declaration + call.
+fn main() {
+    // Smart concat: string + i64/f64/bool
+    let code = 42
+    print("code=" + code)
+    print("ok=" + (1 < 2))
+    print("half=" + 0.5 + "!")
+
+    // Discard binding repeated in one scope
+    let _ = system("echo one >nul")
+    let _ = system("echo two >nul")
+    let _ = system("echo three >nul")
+
+    // String builtins
+    let s = string.trim("  nexus  ")
+    print(s)
+    print(string.upper(s))
+    print(string.lower(s))
+    print(string.contains(s, "nex"))
+    print(string.find(s, "xus"))
+    print(string.slice(s, 0, 3))
+    print(string.split_count("a,b,c", ","))
+    print(string.split_at("a,b,c", ",", 1))
+
+    // capture_output
+    let out = capture_output("echo hi")
+    print(string.len(out) > 0)
+}

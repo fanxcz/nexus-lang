@@ -1,0 +1,640 @@
+name: Deploy NEXUS documentation and Windows package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/project-tools/repository-files/mkdocs.yml'
+      - '.github/project-tools/repository-files/requirements-docs.txt'
+      - '.github/workflows/pages.yml'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'src/**'
+      - 'stdlib/**'
+      - 'examples/**'
+      - 'tests/**'
+      - '.github/project-tools/repository-files/**'
+      - '.github/project-tools/installer/**'
+      - '.github/project-tools/vscode-extension/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  # Pull requests have independent groups. For main/dispatch, the newest source
+  # must supersede stale packaging/deployment runs so a hung old run cannot block
+  # publication of the latest site and installer.
+  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages' }}
+  cancel-in-progress: true
+
+jobs:
+  package-windows:
+    name: Build and package Windows compiler
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Windows build tools
+        shell: pwsh
+        run: choco install ninja llvm innosetup -y --no-progress
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DNEXUS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Assemble portable package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $package = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable'
+          New-Item -ItemType Directory -Path $package -Force | Out-Null
+
+          if (-not (Test-Path 'build/nexus.exe')) { throw 'build/nexus.exe was not produced.' }
+          $bin = Join-Path $package 'bin'
+          New-Item -ItemType Directory -Path $bin -Force | Out-Null
+          Copy-Item 'build/nexus.exe' (Join-Path $bin 'nexus-core.exe') -Force
+
+          # Bundle a pinned Zig/Clang-compatible C++ toolchain. Zig ships its
+          # own compiler, linker, libc headers and Windows target support, so
+          # generated programs do not need a separately installed LLVM/MSVC SDK.
+          $zigVersion = '0.14.1'
+          $zigZip = Join-Path $env:RUNNER_TEMP "zig-windows-x64-$zigVersion.zip"
+          $zigExtract = Join-Path $env:RUNNER_TEMP "zig-windows-x64-$zigVersion"
+          Invoke-WebRequest "https://ziglang.org/download/$zigVersion/zig-x86_64-windows-$zigVersion.zip" -OutFile $zigZip
+          Expand-Archive -LiteralPath $zigZip -DestinationPath $zigExtract -Force
+          $zigRoot = Get-ChildItem -LiteralPath $zigExtract -Directory | Select-Object -First 1
+          if (-not $zigRoot) { throw 'The official Zig archive did not contain its toolchain directory.' }
+          $toolchain = Join-Path $package 'toolchain'
+          New-Item -ItemType Directory -Path $toolchain -Force | Out-Null
+          foreach ($required in @('zig.exe','lib')) {
+            $source = Join-Path $zigRoot.FullName $required
+            if (-not (Test-Path -LiteralPath $source)) { throw "Bundled Zig component is missing: $required" }
+            Copy-Item -LiteralPath $source -Destination $toolchain -Recurse -Force
+          }
+          foreach ($license in @('LICENSE','README.md')) {
+            $source = Join-Path $zigRoot.FullName $license
+            if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination $toolchain -Force }
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $toolchain 'zig.exe'))) { throw 'Bundled zig.exe was not packaged.' }
+          $zigWrapper = Join-Path $bin 'clang++.cmd'
+          @'
+          @echo off
+          setlocal
+          "%~dp0..\toolchain\zig.exe" c++ %*
+          exit /b %ERRORLEVEL%
+          '@ | Set-Content -LiteralPath $zigWrapper -Encoding ASCII
+
+          $directories = @(
+            @{ Source = 'src/runtime'; Destination = 'runtime' },
+            @{ Source = 'stdlib'; Destination = 'stdlib' },
+            @{ Source = 'examples/templates'; Destination = 'project-templates' }
+          )
+          foreach ($directory in $directories) {
+            if (-not (Test-Path $directory.Source)) { throw "Required package directory missing: $($directory.Source)" }
+            Copy-Item $directory.Source -Destination (Join-Path $package $directory.Destination) -Recurse -Force
+          }
+
+          # Bundle the SDL2 runtime required by native graphics programs.
+          $sdlZip = Join-Path $env:RUNNER_TEMP 'SDL2-2.32.10-win32-x64.zip'
+          $sdlExtract = Join-Path $env:RUNNER_TEMP 'SDL2-runtime'
+          Invoke-WebRequest 'https://www.libsdl.org/release/SDL2-2.32.10-win32-x64.zip' -OutFile $sdlZip
+          Expand-Archive -LiteralPath $sdlZip -DestinationPath $sdlExtract -Force
+          $sdlDll = Get-ChildItem -LiteralPath $sdlExtract -Filter 'SDL2.dll' -File -Recurse | Select-Object -First 1
+          if (-not $sdlDll) { throw 'SDL2.dll was not found in the official SDL2 runtime archive.' }
+          Copy-Item -LiteralPath $sdlDll.FullName -Destination (Join-Path $package 'runtime/SDL2.dll') -Force
+          $sdlLicense = Get-ChildItem -LiteralPath $sdlExtract -File -Recurse | Where-Object { $_.Name -match '^(LICENSE|COPYING)(\.txt)?$' } | Select-Object -First 1
+          if ($sdlLicense) { Copy-Item -LiteralPath $sdlLicense.FullName -Destination (Join-Path $package 'SDL2-LICENSE.txt') -Force }
+
+          # Bundle the optional SDL extensions plus their DLL dependencies.
+          $runtimeDir = Join-Path $package 'runtime'
+          $sdlAddons = @(
+            @{ Name = 'SDL2_image'; Url = 'https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.8.3-win32-x64.zip'; Expected = 'SDL2_image.dll' },
+            @{ Name = 'SDL2_ttf'; Url = 'https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.24.0-win32-x64.zip'; Expected = 'SDL2_ttf.dll' },
+            @{ Name = 'SDL2_mixer'; Url = 'https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.8.2-win32-x64.zip'; Expected = 'SDL2_mixer.dll' }
+          )
+          foreach ($addon in $sdlAddons) {
+            $archive = Join-Path $env:RUNNER_TEMP ($addon.Name + '-runtime.zip')
+            $extract = Join-Path $env:RUNNER_TEMP ($addon.Name + '-runtime')
+            Invoke-WebRequest $addon.Url -OutFile $archive
+            Expand-Archive -LiteralPath $archive -DestinationPath $extract -Force
+            $dlls = @(Get-ChildItem -LiteralPath $extract -Filter '*.dll' -File -Recurse)
+            if (-not ($dlls | Where-Object { $_.Name -eq $addon.Expected })) {
+              throw "$($addon.Name) runtime DLL $($addon.Expected) was not found in its official archive."
+            }
+            foreach ($dll in $dlls) {
+              if ($dll.Name -ne 'SDL2.dll') {
+                Copy-Item -LiteralPath $dll.FullName -Destination (Join-Path $runtimeDir $dll.Name) -Force
+              }
+            }
+            $license = Get-ChildItem -LiteralPath $extract -File -Recurse | Where-Object { $_.Name -match '^(LICENSE|COPYING|COPYRIGHT)(\.txt)?$' } | Select-Object -First 1
+            if ($license) {
+              Copy-Item -LiteralPath $license.FullName -Destination (Join-Path $package ($addon.Name + '-LICENSE.txt')) -Force
+            }
+          }
+
+          # sqlite3.dll is loaded dynamically by std.db; include it as well.
+          $sqliteZip = Join-Path $env:RUNNER_TEMP 'sqlite-dll-win-x64-3540000.zip'
+          $sqliteExtract = Join-Path $env:RUNNER_TEMP 'sqlite-runtime'
+          Invoke-WebRequest 'https://www.sqlite.org/2026/sqlite-dll-win-x64-3540000.zip' -OutFile $sqliteZip
+          Expand-Archive -LiteralPath $sqliteZip -DestinationPath $sqliteExtract -Force
+          $sqliteDll = Get-ChildItem -LiteralPath $sqliteExtract -Filter 'sqlite3.dll' -File -Recurse | Select-Object -First 1
+          if (-not $sqliteDll) { throw 'sqlite3.dll was not found in the official SQLite archive.' }
+          Copy-Item -LiteralPath $sqliteDll.FullName -Destination (Join-Path $runtimeDir 'sqlite3.dll') -Force
+          Set-Content -LiteralPath (Join-Path $package 'SQLITE-LICENSE.txt') -Value 'SQLite is in the public domain. See https://sqlite.org/copyright.html' -Encoding UTF8
+
+          New-Item -ItemType Directory -Path (Join-Path $package 'examples') -Force | Out-Null
+          Copy-Item 'examples/assets' -Destination (Join-Path $package 'examples') -Recurse -Force
+          New-Item -ItemType Directory -Path (Join-Path $package 'MyPrograms') -Force | Out-Null
+          Copy-Item 'examples/hello.nx' -Destination (Join-Path $package 'MyPrograms/hello.nx') -Force
+
+          $rootFiles = @(
+            'NEXUS-Windows.ps1',
+            'Install-NEXUS.bat',
+            'nexus.cmd',
+            'Install-NEXUS-Path.ps1',
+            'Uninstall-NEXUS-Path.ps1',
+            'Run-NEXUS.bat',
+            'Build-NEXUS.bat',
+            'Check-NEXUS-Toolchain.bat',
+            'Install-Requirements.bat',
+            'Install-Windows-Association.ps1',
+            'Uninstall-Windows-Association.ps1',
+            'README-WINDOWS-RU.txt',
+            'NEXUS-Console.bat',
+            'README.md',
+            'THIRD_PARTY_NOTICES.md',
+            'LICENSE'
+          )
+          foreach ($file in $rootFiles) {
+            if ($file -eq 'LICENSE') {
+              $sourceFile = 'LICENSE'
+            } else {
+              $sourceFile = Join-Path '.github/project-tools/repository-files' $file
+              if (-not (Test-Path $sourceFile)) { $sourceFile = $file }
+            }
+            if (-not (Test-Path $sourceFile)) { throw "Required package file missing: $sourceFile" }
+            Copy-Item $sourceFile -Destination $package -Force
+          }
+
+          $zip = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable.zip'
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path (Join-Path $package '*') -DestinationPath $zip -CompressionLevel Optimal
+          Write-Host "Created package: $zip"
+
+      - name: Verify command-line launcher
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $package = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable'
+          $sdlRuntime = Join-Path $package 'runtime/SDL2.dll'
+          if (-not (Test-Path -LiteralPath $sdlRuntime)) { throw 'Portable package is missing runtime/SDL2.dll.' }
+          foreach ($runtimeDll in @('SDL2_image.dll','SDL2_ttf.dll','SDL2_mixer.dll','sqlite3.dll')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $package ('runtime/' + $runtimeDll)))) {
+              throw "Portable package is missing bundled runtime dependency: $runtimeDll"
+            }
+          }
+          $toolchainCompiler = Join-Path $package 'toolchain/zig.exe'
+          $toolchainLibrary = Join-Path $package 'toolchain/lib'
+          $compilerWrapper = Join-Path $package 'bin/clang++.cmd'
+          $oneClickInstaller = Join-Path $package 'Install-NEXUS.bat'
+          foreach ($required in @($toolchainCompiler,$toolchainLibrary,$compilerWrapper,$oneClickInstaller)) {
+            if (-not (Test-Path -LiteralPath $required)) { throw "Portable package is missing embedded toolchain component: $required" }
+          }
+
+          # Run the actual one-click installer and verify it appends only the
+          # package root to the current user's PATH. Restore the runner profile
+          # afterward so this test leaves no environment changes behind.
+          $oldUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+          try {
+            $env:NEXUS_INSTALLER_NO_PAUSE = '1'
+            & $oneClickInstaller
+            if ($LASTEXITCODE -ne 0) { throw "Install-NEXUS.bat failed with exit code $LASTEXITCODE." }
+            $installedUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+            $hasInstallRoot = @($installedUserPath -split ';' | ForEach-Object { $_.Trim().Trim([char]34) } |
+              Where-Object { [string]::Equals($_.TrimEnd([char]92,[char]47), $package.TrimEnd([char]92,[char]47), [StringComparison]::OrdinalIgnoreCase) }).Count -gt 0
+            if (-not $hasInstallRoot) { throw 'Install-NEXUS.bat did not add the package root to the user PATH.' }
+            Write-Host 'One-click installer check passed; package root was added to user PATH.'
+          } finally {
+            [Environment]::SetEnvironmentVariable('Path', $oldUserPath, 'User')
+            Remove-Item Env:NEXUS_INSTALLER_NO_PAUSE -ErrorAction SilentlyContinue
+          }
+
+          # Strip LLVM/MSVC and other developer tools from PATH. The package
+          # must still compile and launch a native application by itself.
+          $nexus = Join-Path $package 'nexus.cmd'
+          $oldPath = $env:PATH
+          try {
+            # Simulate PATH after Install-NEXUS-Path.ps1: only the package root
+            # is added. nexus.cmd must expose bin/, toolchain/ and runtime/ itself.
+            $env:PATH = (@(
+              $package,
+              $env:SystemRoot,
+              (Join-Path $env:SystemRoot 'System32'),
+              (Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0')
+            ) -join ';')
+            $zigVersionOutput = & $toolchainCompiler version 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($zigVersionOutput -join "`n") -notmatch '^0\.14\.1')) {
+              throw "Bundled Zig compiler check failed: $($zigVersionOutput -join "`n")"
+            }
+            $resolvedLauncher = Get-Command 'nexus.cmd' -ErrorAction Stop
+            if ([System.IO.Path]::GetFullPath($resolvedLauncher.Source) -ne [System.IO.Path]::GetFullPath($nexus)) {
+              throw "PATH resolved nexus.cmd to the wrong location: $($resolvedLauncher.Source)"
+            }
+            $version = & 'nexus.cmd' --version 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 1\.1\.0')) {
+              throw "nexus --version failed: $($version -join "`n")"
+            }
+
+            # Exercise compiler discovery via the public launcher. The toolchain
+            # and runtime folders are deliberately NOT directly in PATH.
+            $doctor = & 'nexus.cmd' doctor 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($doctor -join "`n") -notmatch 'native backend:\s+OK')) {
+              throw "nexus doctor could not find the bundled backend: $($doctor -join "`n")"
+            }
+
+            $smokeDir = Join-Path $env:RUNNER_TEMP 'nexus command smoke'
+            New-Item -ItemType Directory -Path $smokeDir -Force | Out-Null
+            $source = Join-Path $smokeDir 'hello world.nx'
+            Set-Content -LiteralPath $source -Value 'fn main() { print("NEXUS_PATH_COMMAND_OK") }' -Encoding utf8
+            $output = & 'nexus.cmd' $source 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($output -join "`n") -notmatch 'NEXUS_PATH_COMMAND_OK')) {
+              throw "nexus <file.nx> failed: $($output -join "`n")"
+            }
+            Write-Host 'Self-contained NEXUS compiled and launched a .nx program with only its install root on PATH.'
+            Write-Host 'Self-contained NEXUS passed with only its root directory added to PATH.'
+          } finally {
+            $env:PATH = $oldPath
+          }
+
+      - name: Build and smoke-test NEXUS Paint Windows application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $portable = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable'
+          $paintDir = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64'
+          if (Test-Path -LiteralPath $paintDir) { Remove-Item -LiteralPath $paintDir -Recurse -Force }
+          New-Item -ItemType Directory -Path $paintDir -Force | Out-Null
+
+          $source = Join-Path $paintDir 'NEXUS-Paint.nx'
+          Copy-Item 'examples/nexus_paint.nx' -Destination $source -Force
+          $launcher = Join-Path $portable 'nexus.cmd'
+          & $launcher 'build' $source
+          if ($LASTEXITCODE -ne 0) { throw "NEXUS Paint compilation failed with exit code $LASTEXITCODE." }
+
+          $exe = Join-Path $paintDir 'NEXUS-Paint.exe'
+          if (-not (Test-Path -LiteralPath $exe)) { throw 'NEXUS Paint compiler reported success but produced no EXE.' }
+          foreach ($dll in @('SDL2.dll','SDL2_image.dll','SDL2_ttf.dll','SDL2_mixer.dll','sqlite3.dll')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $paintDir $dll))) {
+              throw "NEXUS Paint package is missing runtime DLL: $dll"
+            }
+          }
+
+          @'
+          NEXUS Paint - Windows x64
+          =========================
+          This desktop raster drawing application is written in the NEXUS language.
+          Launch NEXUS-Paint.exe. Keep the runtime DLLs in this same folder.
+          The ZIP contains the executable, editable NEXUS source, runtime DLLs and this note.
+          Source: https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx
+          '@ | Set-Content -LiteralPath (Join-Path $paintDir 'README-WINDOWS.txt') -Encoding UTF8
+
+          # Smoke-test application startup; the app stays in its SDL event loop until closed.
+          $paintProcess = Start-Process -FilePath $exe -WorkingDirectory $paintDir -PassThru
+          Start-Sleep -Seconds 3
+          $paintProcess.Refresh()
+          if ($paintProcess.HasExited) {
+            throw "NEXUS Paint exited during startup (exit code $($paintProcess.ExitCode))."
+          }
+          Stop-Process -Id $paintProcess.Id -Force
+          Start-Sleep -Milliseconds 250
+
+          $exeOut = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe'
+          Copy-Item -LiteralPath $exe -Destination $exeOut -Force
+          $zipOut = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.zip'
+          if (Test-Path -LiteralPath $zipOut) { Remove-Item -LiteralPath $zipOut -Force }
+          Compress-Archive -Path (Join-Path $paintDir '*') -DestinationPath $zipOut -CompressionLevel Optimal
+          $hash = (Get-FileHash -LiteralPath $exeOut -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  NEXUS-Paint-Windows-x64.exe" | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Encoding ASCII
+          Write-Host "Built and smoke-tested NEXUS Paint: $exeOut"
+          Write-Host "Portable ZIP: $zipOut"
+
+      - name: Build graphical setup installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $isccCandidates = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'),
+            (Join-Path $env:ProgramFiles 'Inno Setup 6\ISCC.exe')
+          )
+          $iscc = $isccCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $iscc) { throw 'Inno Setup 6 ISCC.exe was not found after installation.' }
+
+          $package = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable'
+          $stagedPackage = Join-Path $env:GITHUB_WORKSPACE 'dist/NEXUS_Windows_Portable'
+          New-Item -ItemType Directory -Path $stagedPackage -Force | Out-Null
+          Copy-Item -Path (Join-Path $package '*') -Destination $stagedPackage -Recurse -Force
+
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-1.1.0.exe'
+          & $iscc "/O$env:RUNNER_TEMP" "/DSourceDir=$stagedPackage" '.github/project-tools/installer/NEXUS-Setup.iss'
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with exit code $LASTEXITCODE." }
+          if (-not (Test-Path -LiteralPath $installer)) { throw 'The NEXUS Setup EXE was not produced.' }
+          Write-Host "Created graphical installer: $installer"
+
+      - name: Verify setup installs and launches NEXUS
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-1.1.0.exe'
+          $installRoot = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS'
+          $oldUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+          $testFailed = $false
+          try {
+            $arguments = @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/TASKS=addtopath,desktopicon,startmenuicon')
+            $process = Start-Process -FilePath $installer -ArgumentList $arguments -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw "NEXUS Setup exited with code $($process.ExitCode)." }
+
+            $nexus = Join-Path $installRoot 'nexus.cmd'
+            $core = Join-Path $installRoot 'bin/nexus-core.exe'
+            $zig = Join-Path $installRoot 'toolchain/zig.exe'
+            foreach ($required in @($nexus,$core,$zig)) {
+              if (-not (Test-Path -LiteralPath $required)) { throw "Installer did not install required file: $required" }
+            }
+
+            $version = & $nexus --version 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 1\.1\.0')) {
+              throw "Installed nexus --version failed: $($version -join "`n")"
+            }
+            $doctor = & $nexus doctor 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($doctor -join "`n") -notmatch 'native backend:\s+OK')) {
+              throw "Installed nexus doctor failed: $($doctor -join "`n")"
+            }
+            $installedUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+            $pathEntries = @($installedUserPath -split ';' | ForEach-Object { $_.Trim().Trim([char]34) })
+            if (-not ($pathEntries | Where-Object { [string]::Equals($_.TrimEnd([char]92,[char]47), $installRoot.TrimEnd([char]92,[char]47), [StringComparison]::OrdinalIgnoreCase) })) {
+              throw 'Setup was requested to add PATH but the installed folder was not added.'
+            }
+
+            $smokeDir = Join-Path $env:RUNNER_TEMP 'NEXUS installer smoke with spaces'
+            New-Item -ItemType Directory -Path $smokeDir -Force | Out-Null
+            $source = Join-Path $smokeDir 'hello world.nx'
+            Set-Content -LiteralPath $source -Value 'fn main() { print("NEXUS_GUI_INSTALLER_SMOKE_OK") }' -Encoding utf8
+            $output = & $nexus $source 2>&1
+            if ($LASTEXITCODE -ne 0 -or (($output -join "`n") -notmatch 'NEXUS_GUI_INSTALLER_SMOKE_OK')) {
+              throw "Installed NEXUS could not compile and run a source file: $($output -join "`n")"
+            }
+
+            $desktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'NEXUS Console.lnk'
+            $startMenuShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'NEXUS\NEXUS Console.lnk'
+            foreach ($shortcut in @($desktopShortcut,$startMenuShortcut)) {
+              if (-not (Test-Path -LiteralPath $shortcut)) { throw "Installer did not create selected shortcut: $shortcut" }
+            }
+            Write-Host 'GUI installer passed: shortcuts created; installed NEXUS built and ran a native program.'
+          } finally {
+            $uninstaller = Get-ChildItem -LiteralPath $installRoot -Filter 'unins*.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($uninstaller) {
+              $uninstallProcess = Start-Process -FilePath $uninstaller.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+              if ($uninstallProcess.ExitCode -ne 0) { Write-Warning "Silent uninstall returned $($uninstallProcess.ExitCode)." }
+            }
+            [Environment]::SetEnvironmentVariable('Path', $oldUserPath, 'User')
+            $desktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'NEXUS Console.lnk'
+            $startMenuShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'NEXUS'
+            Remove-Item -LiteralPath $desktopShortcut -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $startMenuShortcut -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Upload Windows installer, portable compiler and NEXUS Paint
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEXUS_Windows_Packages
+          path: |
+            ${{ runner.temp }}/NEXUS_Windows_Portable.zip
+            ${{ runner.temp }}/NEXUS-Setup-1.1.0.exe
+            ${{ runner.temp }}/NEXUS-Paint-Windows-x64.exe
+            ${{ runner.temp }}/NEXUS-Paint-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-paint-exe:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Commit NEXUS Paint EXE into main
+    # Disabled: bot commits break the single-author history of this repository.
+    if: false
+    runs-on: ubuntu-latest
+    needs: package-windows
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download tested NEXUS Paint build
+        uses: actions/download-artifact@v4
+        with:
+          name: NEXUS_Windows_Packages
+          path: paint-artifacts
+
+      - name: Commit EXE and SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe='paint-artifacts/NEXUS-Paint-Windows-x64.exe'
+          test -s "$exe"
+          zip='paint-artifacts/NEXUS-Paint-Windows-x64.zip'
+          test -s "$exe"
+          test -s "$zip"
+          dest='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
+          checksum='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
+          zipdest='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip'
+          zipchecksum='.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt'
+          mkdir -p .github/project-tools/downloads
+          cp "$exe" "$dest"
+          cp "$zip" "$zipdest"
+          sha256sum "$dest" | awk '{print $1 "  NEXUS-Paint-Windows-x64.exe"}' > "$checksum"
+          sha256sum "$zipdest" | awk '{print $1 "  NEXUS-Paint-Windows-x64.zip"}' > "$zipchecksum"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f "$dest" "$checksum" "$zipdest" "$zipchecksum"
+          if git diff --cached --quiet; then
+            echo 'NEXUS Paint EXE, portable ZIP and checksums are already current.'
+            exit 0
+          fi
+          git commit -m 'Add NEXUS Paint portable Windows package'
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git rebase origin/main
+          git push origin HEAD:main
+
+  build:
+    name: Build documentation website
+    runs-on: ubuntu-latest
+    needs: package-windows
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download freshly built Windows package
+        uses: actions/download-artifact@v4
+        with:
+          name: NEXUS_Windows_Packages
+          path: docs/assets/downloads
+
+      - name: Package VS Code extension
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd .github/project-tools/vscode-extension
+          npm install --no-audit --no-fund
+          npx --yes @vscode/vsce package --out ../../../docs/assets/downloads/NEXUS-Language-1.1.0.vsix
+          test -s ../../../docs/assets/downloads/NEXUS-Language-1.1.0.vsix
+
+      - name: Create SHA-256 checksums
+        run: |
+          sha256sum docs/assets/downloads/NEXUS_Windows_Portable.zip | awk '{print $1}' > docs/assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt
+          sha256sum docs/assets/downloads/NEXUS-Setup-1.1.0.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Setup-1.1.0.exe.sha256.txt
+          sha256sum docs/assets/downloads/NEXUS-Language-1.1.0.vsix | awk '{print $1}' > docs/assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt
+          sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt
+          sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.zip | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt
+      
+      - name: Validate links across README and documentation
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --include-fragments
+            --timeout 30
+            --max-retries 2
+            --max-concurrency 8
+            --exclude '^https://fanxcz.github.io/nexus-lang/'
+            README.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            SECURITY.md
+            docs
+            .github/project-tools/nexus-studio/README.md
+            .github/project-tools/vscode-extension/README.md
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          requirements="requirements-docs.txt"
+          if [ -f ".github/project-tools/repository-files/requirements-docs.txt" ]; then
+            requirements=".github/project-tools/repository-files/requirements-docs.txt"
+          fi
+          pip install -r "$requirements"
+
+      - name: Build documentation
+        run: |
+          config="mkdocs.yml"
+          if [ -f ".github/project-tools/repository-files/mkdocs.yml" ]; then
+            config=".github/project-tools/repository-files/mkdocs.yml"
+          fi
+          mkdocs build --strict -f "$config"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+  deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    name: Deploy GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Checkout source tree for complete route verification
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify every published documentation page and downloadable asset
+        shell: bash
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          base="${SITE_URL:-https://fanxcz.github.io/nexus-lang/}"
+          base="${base%/}/"
+
+          check_url() {
+            local path="$1"
+            local url="${base}${path}"
+            local code="000"
+            for attempt in 1 2 3 4 5 6; do
+              code="$(curl --silent --show-error --location --head --output /dev/null --write-out '%{http_code}' "$url" 2>/dev/null || true)"
+              if [[ "$code" =~ ^2[0-9][0-9]$ ]]; then
+                echo "PASS $url ($code)"
+                return 0
+              fi
+              echo "WAIT $url ($code), attempt $attempt/6"
+              sleep 5
+            done
+            echo "FAIL $url remained unavailable (HTTP $code)" >&2
+            return 1
+          }
+
+          # Derive URLs from the exact Markdown files MkDocs publishes. This
+          # checks every page, not just a hand-picked sample, and handles index.md.
+          while IFS= read -r file; do
+            rel="${file#docs/}"
+            if [[ "$rel" == "assets/screenshots/README.md" ]]; then
+              continue
+            fi
+            if [[ "$rel" == "index.md" ]]; then
+              route=""
+            elif [[ "$rel" == */index.md ]]; then
+              route="${rel%index.md}"
+            else
+              route="${rel%.md}/"
+            fi
+            echo "Checking documentation page: $route"
+            check_url "$route"
+          done < <(find docs -type f -name '*.md' -print | sort)
+
+          assets=(
+            'NEXUS-Setup-1.1.0.exe'
+            'NEXUS-Setup-1.1.0.exe.sha256.txt'
+            'NEXUS_Windows_Portable.zip'
+            'NEXUS_Windows_Portable.zip.sha256.txt'
+            'NEXUS-Language-1.1.0.vsix'
+            'NEXUS-Language-1.1.0.vsix.sha256.txt'
+            'NEXUS-Paint-Windows-x64.exe'
+            'NEXUS-Paint-Windows-x64.exe.sha256.txt'
+            'NEXUS-Paint-Windows-x64.zip'
+            'NEXUS-Paint-Windows-x64.zip.sha256.txt'
+          )
+          for asset in "${assets[@]}"; do
+            check_url "assets/downloads/$asset"
+          done
+
+          echo 'PASS: every published documentation route and packaged download URL responds successfully.'
+

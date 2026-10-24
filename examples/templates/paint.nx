@@ -1,0 +1,334 @@
+// Nexus Paint - responsive raster editor example.
+//
+// Design goals:
+//   * One virtual 1600x900 coordinate space.
+//   * SDL2 scales that space for normal windows and fullscreen.
+//   * All mouse coordinates come from the same virtual UI space.
+//   * The editable image itself remains a real CPU-side raster canvas.
+
+fn min_f64(a: f64, b: f64) -> f64 {
+    if a < b {
+        return a
+    }
+    return b
+}
+
+fn clamp_f64(value: f64, low: f64, high: f64) -> f64 {
+    if value < low {
+        return low
+    }
+    if value > high {
+        return high
+    }
+    return value
+}
+
+fn palette_r(index: i64) -> f64 {
+    if index == 0 { return 0.0 }
+    if index == 1 { return 1.0 }
+    if index == 2 { return 1.0 }
+    if index == 3 { return 1.0 }
+    if index == 4 { return 0.20 }
+    if index == 5 { return 0.05 }
+    if index == 6 { return 0.15 }
+    if index == 7 { return 0.65 }
+    if index == 8 { return 1.0 }
+    return 0.35
+}
+
+fn palette_g(index: i64) -> f64 {
+    if index == 0 { return 0.0 }
+    if index == 1 { return 0.0 }
+    if index == 2 { return 0.55 }
+    if index == 3 { return 0.90 }
+    if index == 4 { return 0.85 }
+    if index == 5 { return 0.80 }
+    if index == 6 { return 0.30 }
+    if index == 7 { return 0.20 }
+    if index == 8 { return 0.25 }
+    return 0.38
+}
+
+fn palette_b(index: i64) -> f64 {
+    if index == 0 { return 0.0 }
+    if index == 1 { return 0.0 }
+    if index == 2 { return 0.05 }
+    if index == 3 { return 0.10 }
+    if index == 4 { return 0.25 }
+    if index == 5 { return 1.0 }
+    if index == 6 { return 1.0 }
+    if index == 7 { return 1.0 }
+    if index == 8 { return 0.70 }
+    return 0.45
+}
+
+fn main() {
+    const UI_WIDTH: f64 = 1600.0
+    const UI_HEIGHT: f64 = 900.0
+    const TOOLBAR_HEIGHT: f64 = 92.0
+    const PANEL_WIDTH: f64 = 300.0
+    const GAP: f64 = 20.0
+    const CANVAS_WIDTH: f64 = 1024.0
+    const CANVAS_HEIGHT: f64 = 720.0
+
+    let ok = gfx_init(1400, 900, "Nexus Paint")
+    if !ok {
+        print("Graphics backend unavailable: " + gfx_error())
+        return
+    }
+
+    gfx_set_ui_resolution(UI_WIDTH, UI_HEIGHT)
+    gfx_cursor_visible(true)
+    gfx_vsync(true)
+
+    let mut canvas = gfx_canvas_create(
+        to_i64(CANVAS_WIDTH),
+        to_i64(CANVAS_HEIGHT),
+        1.0, 1.0, 1.0, 1.0
+    )
+
+    if canvas == 0 {
+        print("Canvas creation failed: " + gfx_error())
+        gfx_shutdown()
+        return
+    }
+
+    let mut tool = 0
+    let mut brush_size = 12.0
+    let mut red = 0.05
+    let mut green = 0.80
+    let mut blue = 1.0
+    let mut drawing = false
+    let mut start_x = 0.0
+    let mut start_y = 0.0
+    let mut last_x = 0.0
+    let mut last_y = 0.0
+    let mut status = "Ready"
+    let mut f11_down = false
+    let mut fullscreen = false
+
+    while !gfx_should_close() {
+        gfx_poll()
+
+        let f11 = gfx_key_down("F11")
+        if f11 && !f11_down {
+            fullscreen = !fullscreen
+            gfx_fullscreen(fullscreen)
+        }
+        f11_down = f11
+
+        if gfx_key_down("ESC") && fullscreen {
+            fullscreen = false
+            gfx_fullscreen(false)
+        }
+
+        let canvas_x = 28.0
+        let canvas_y = TOOLBAR_HEIGHT + 24.0
+        let canvas_area_width = UI_WIDTH - PANEL_WIDTH - 3.0 * GAP - 28.0
+        let canvas_area_height = UI_HEIGHT - TOOLBAR_HEIGHT - 48.0
+
+        let scale_x = canvas_area_width / CANVAS_WIDTH
+        let scale_y = canvas_area_height / CANVAS_HEIGHT
+        let scale = min_f64(scale_x, scale_y)
+        let display_width = CANVAS_WIDTH * scale
+        let display_height = CANVAS_HEIGHT * scale
+
+        let canvas_left = canvas_x + (canvas_area_width - display_width) * 0.5
+        let canvas_top = canvas_y + (canvas_area_height - display_height) * 0.5
+        let panel_x = canvas_x + canvas_area_width + GAP
+
+        let mouse_x = gfx_mouse_x()
+        let mouse_y = gfx_mouse_y()
+
+        let inside_canvas =
+            mouse_x >= canvas_left && mouse_x < canvas_left + display_width &&
+            mouse_y >= canvas_top && mouse_y < canvas_top + display_height
+
+        let image_x = clamp_f64(
+            (mouse_x - canvas_left) / scale,
+            0.0,
+            CANVAS_WIDTH - 1.0
+        )
+        let image_y = clamp_f64(
+            (mouse_y - canvas_top) / scale,
+            0.0,
+            CANVAS_HEIGHT - 1.0
+        )
+
+        if gfx_event_is("mouse_down") && gfx_event_mouse_button() == 1 && inside_canvas {
+            drawing = true
+            start_x = image_x
+            start_y = image_y
+            last_x = image_x
+            last_y = image_y
+            gfx_canvas_checkpoint(canvas)
+
+            if tool == 0 {
+                gfx_canvas_brush(canvas, image_x, image_y, brush_size, red, green, blue, 1.0)
+            }
+
+            if tool == 1 {
+                gfx_canvas_brush(canvas, image_x, image_y, brush_size, 1.0, 1.0, 1.0, 1.0)
+            }
+
+            if tool == 3 {
+                gfx_canvas_fill(canvas, to_i64(image_x), to_i64(image_y), red, green, blue, 1.0)
+                drawing = false
+                status = "Filled"
+            }
+        }
+
+        if drawing && gfx_mouse_down(1) && inside_canvas {
+            if tool == 0 {
+                gfx_canvas_line(canvas, last_x, last_y, image_x, image_y,
+                    brush_size, red, green, blue, 1.0)
+            }
+
+            if tool == 1 {
+                gfx_canvas_line(canvas, last_x, last_y, image_x, image_y,
+                    brush_size, 1.0, 1.0, 1.0, 1.0)
+            }
+
+            last_x = image_x
+            last_y = image_y
+        }
+
+        if drawing && gfx_event_is("mouse_up") && gfx_event_mouse_button() == 1 {
+            if tool == 2 {
+                gfx_canvas_line(canvas, start_x, start_y, image_x, image_y,
+                    brush_size, red, green, blue, 1.0)
+                status = "Line"
+            }
+
+            if tool == 4 {
+                gfx_canvas_rect(canvas, start_x, start_y,
+                    image_x - start_x, image_y - start_y,
+                    brush_size, red, green, blue, 1.0, false)
+                status = "Rectangle"
+            }
+
+            drawing = false
+        }
+
+        gfx_begin()
+        gfx_clear(0.055, 0.06, 0.085, 1.0)
+
+        gfx_rect(0.0, 0.0, UI_WIDTH, TOOLBAR_HEIGHT,
+            0.040, 0.045, 0.070, 1.0)
+
+        gfx_rect(canvas_left - 12.0, canvas_top - 12.0,
+            display_width + 24.0, display_height + 24.0,
+            0.12, 0.13, 0.17, 1.0)
+
+        gfx_canvas_draw(canvas, canvas_left, canvas_top,
+            display_width, display_height, 1.0)
+
+        gfx_rect(panel_x, canvas_y, PANEL_WIDTH, canvas_area_height,
+            0.040, 0.045, 0.070, 1.0)
+
+        gfx_rect(panel_x + 16.0, canvas_y + 16.0,
+            PANEL_WIDTH - 32.0, 2.0,
+            0.10, 0.30, 0.85, 1.0)
+
+        let button_y = 16.0
+        if ui_button(18.0, button_y, 82.0, 40.0, "NEW") {
+            gfx_canvas_clear(canvas, 1.0, 1.0, 1.0, 1.0)
+            status = "New canvas"
+        }
+        if ui_button(108.0, button_y, 96.0, 40.0, "PENCIL") {
+            tool = 0
+            status = "Pencil"
+        }
+        if ui_button(212.0, button_y, 96.0, 40.0, "ERASER") {
+            tool = 1
+            status = "Eraser"
+        }
+        if ui_button(316.0, button_y, 82.0, 40.0, "LINE") {
+            tool = 2
+            status = "Line"
+        }
+        if ui_button(406.0, button_y, 92.0, 40.0, "RECT") {
+            tool = 4
+            status = "Rectangle"
+        }
+        if ui_button(506.0, button_y, 92.0, 40.0, "FILL") {
+            tool = 3
+            status = "Fill"
+        }
+        if ui_button(606.0, button_y, 82.0, 40.0, "UNDO") {
+            if gfx_canvas_undo(canvas) { status = "Undo" }
+        }
+        if ui_button(696.0, button_y, 82.0, 40.0, "REDO") {
+            if gfx_canvas_redo(canvas) { status = "Redo" }
+        }
+        if ui_button(786.0, button_y, 88.0, 40.0, "SAVE") {
+            if gfx_canvas_save_bmp(canvas, "nexus_paint.bmp") { status = "Saved" }
+        }
+        if ui_button(882.0, button_y, 88.0, 40.0, "OPEN") {
+            let loaded = gfx_canvas_load_bmp("nexus_paint.bmp")
+            if loaded != 0 {
+                gfx_canvas_destroy(canvas)
+                canvas = loaded
+                status = "Loaded"
+            }
+        }
+
+        // Palette.
+        for i in 0..10 {
+            let px = 18.0 + to_f64(i) * 36.0
+            gfx_rect(px, 66.0, 28.0, 20.0,
+                palette_r(i), palette_g(i), palette_b(i), 1.0)
+
+            if gfx_event_is("mouse_down") && gfx_event_mouse_button() == 1 &&
+                mouse_x >= px && mouse_x <= px + 28.0 &&
+                mouse_y >= 66.0 && mouse_y <= 86.0 {
+                red = palette_r(i)
+                green = palette_g(i)
+                blue = palette_b(i)
+                status = "Color selected"
+            }
+        }
+
+        brush_size = 2.0 + ui_slider(
+            420.0, 65.0, 180.0, 22.0,
+            (brush_size - 2.0) / 62.0
+        ) * 62.0
+
+        ui_label(620.0, 69.0, "SIZE", 0.85)
+        ui_label(660.0, 69.0, str_i64(to_i64(brush_size)), 0.85)
+        ui_label(700.0, 69.0, status, 0.85)
+
+        let info_x = panel_x + 24.0
+        ui_label(info_x, canvas_y + 30.0, "NEXUS PAINT", 1.55)
+        ui_label(info_x, canvas_y + 68.0, "RESPONSIVE RASTER EDITOR", 0.88)
+        ui_label(info_x, canvas_y + 126.0, "TOOLS", 1.15)
+        ui_label(info_x, canvas_y + 156.0, "PENCIL / ERASER", 0.86)
+        ui_label(info_x, canvas_y + 180.0, "LINE / RECT / FILL", 0.86)
+        ui_label(info_x, canvas_y + 224.0, "CANVAS", 1.15)
+        ui_label(info_x, canvas_y + 254.0,
+            str_i64(gfx_canvas_width(canvas)) + " x " +
+            str_i64(gfx_canvas_height(canvas)), 0.86)
+        ui_label(info_x, canvas_y + 294.0, "VIEW", 1.15)
+        ui_label(info_x, canvas_y + 324.0, str_f64(scale) + "x", 0.86)
+        ui_label(info_x, canvas_y + 348.0, "F11: FULLSCREEN", 0.86)
+        ui_label(info_x, canvas_y + 372.0, "ESC: WINDOWED", 0.86)
+        ui_label(info_x, canvas_y + 412.0, "FILES", 1.15)
+        ui_label(info_x, canvas_y + 442.0, "nexus_paint.bmp", 0.86)
+        ui_label(info_x, canvas_y + 482.0, "EDITING", 1.15)
+        ui_label(info_x, canvas_y + 512.0, "UNDO / REDO: 32", 0.86)
+        ui_label(info_x, canvas_y + 536.0, "LEFT MOUSE: DRAW", 0.86)
+        ui_label(info_x, canvas_y + 560.0, "BACKEND: " + gfx_backend(), 0.86)
+
+        if inside_canvas {
+            gfx_circle(mouse_x, mouse_y,
+                brush_size * 0.5 + 1.0,
+                red, green, blue, 0.8)
+        }
+
+        gfx_end()
+    }
+
+    gfx_canvas_save_bmp(canvas, "nexus_paint.bmp")
+    gfx_canvas_destroy(canvas)
+    gfx_shutdown()
+}

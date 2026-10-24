@@ -1,0 +1,2 @@
+fn memory_alloc(bytes: i64) -> i64 { return mem_alloc(bytes) }
+fn memory_free(ptr: i64) { mem_free(ptr) }

@@ -1,0 +1,32 @@
+fn main() {
+    // Smart concat: string + number / bool
+    let code = 42
+    print("code=" + code + " ok=" + (1 < 2))
+    let pi = 3.5
+    print("half=" + pi)
+
+    // Discard _ (three times in one scope)
+    let _ = system("echo a >nul")
+    let _ = system("echo b >nul")
+    let _ = system("echo c >nul")
+
+    // String builtins
+    let s = "  Hello NEXUS  "
+    let t = string.trim(s)
+    print("[" + t + "]")
+    print(string.upper(t))
+    print(string.lower(t))
+    print(string.contains(t, "NEXUS"))
+    print(string.find(t, "NEXUS"))
+    print(string.slice(t, 6, 11))
+
+    // split
+    let csv = "a,b,c,d"
+    print(string.split_count(csv, ","))
+    print(string.split_at(csv, ",", 0))
+    print(string.split_at(csv, ",", 2))
+
+    // capture_output
+    let out = capture_output("echo captured!")
+    print("captured: [" + string.trim(out) + "]")
+}

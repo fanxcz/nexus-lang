@@ -1,0 +1,25 @@
+fn main() {
+    print("NEXUS 0.8 RUNTIME SHOWCASE")
+
+    let a = physics_aabb(10.0, 10.0, 40.0, 40.0, 30.0, 30.0, 40.0, 40.0)
+    let c = physics_circle(0.0, 0.0, 10.0, 12.0, 0.0, 5.0)
+    print("AABB collision: " + str_bool(a))
+    print("Circle collision: " + str_bool(c))
+
+    let scene = scene_create()
+    let player = ecs_create()
+    ecs_set_position(player, 120.0, 180.0)
+    ecs_set_velocity(player, 20.0, 0.0)
+    ecs_set_size(player, 48.0, 48.0)
+    scene_add(scene, player)
+    let saved = scene_save(scene, "/tmp/nexus-v080-scene.nxs")
+    print("Scene saved: " + str_bool(saved))
+
+    let loaded = scene_load("/tmp/nexus-v080-scene.nxs")
+    print("Scene loaded: " + str_bool(loaded != 0))
+    print("ECS count: " + str_i64(ecs_count()))
+
+    scene_destroy(loaded)
+    scene_destroy(scene)
+    print("NEXUS 0.8 OK")
+}

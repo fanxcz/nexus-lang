@@ -1,0 +1,89 @@
+{
+  "scopeName": "source.nexus",
+  "name": "NEXUS",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#function-declarations" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#constants" },
+    { "include": "#builtins" },
+    { "include": "#function-calls" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.nexus",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.nexus",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.nexus",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.nexus",
+          "match": "\\\\."
+        },
+        {
+          "name": "constant.character.escape.nexus",
+          "match": "\\$"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.nexus",
+          "match": "\\b[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.nexus",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "function-declarations": {
+      "match": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.function.nexus" },
+        "2": { "name": "entity.name.function.nexus" }
+      }
+    },
+    "keywords": {
+      "name": "keyword.control.nexus",
+      "match": "\\b(fn|let|mut|const|struct|enum|match|if|else|for|while|loop|break|continue|return|defer|import|as|in|pub|extern|true|false|null)\\b"
+    },
+    "types": {
+      "name": "storage.type.nexus",
+      "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|string|char|void|ptr)\\b"
+    },
+    "constants": {
+      "name": "constant.language.nexus",
+      "match": "\\b(true|false|null)\\b"
+    },
+    "builtins": {
+      "name": "support.function.builtin.nexus",
+      "match": "\\b(print|println|input|input_i64|input_f64|file_read|file_write|file_exists|http_get|json_get|sqlite_open|sqlite_exec|sqlite_close|sha256|mem_alloc|mem_free)\\b"
+    },
+    "function-calls": {
+      "name": "entity.name.function.call.nexus",
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+    },
+    "operators": {
+      "name": "keyword.operator.nexus",
+      "match": "==|!=|<=|>=|=>|->|&&|\\|\\||\\+|-|\\*|/|%|=|<|>|!|&|\\|"
+    }
+  }
+}

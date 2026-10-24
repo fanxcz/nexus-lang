@@ -1,0 +1,13 @@
+fn main() {
+    clear()
+    print("NEXUS INTERACTIVE CLI")
+    let name = input("Your name: ")
+    let age = input_i64("Your age: ")
+    print("Hello, " + name)
+    print("Next year: " + str_i64(age + 1))
+    let note = input("Write a note to save: ")
+    let rc = file_write("nexus_note.txt", note)
+    if rc == 0 { print("Saved nexus_note.txt") } else { print("Save failed") }
+    if file_exists("nexus_note.txt") { print("File exists") }
+    print("Saved data: " + file_read("nexus_note.txt"))
+}

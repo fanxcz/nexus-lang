@@ -1,0 +1,22 @@
+fn main() {
+    let ok = gfx_init(960, 540, "NEXUS Particles")
+    if !ok { print(gfx_error()); return }
+
+    let mut burst = 0
+    while !gfx_should_close() {
+        gfx_poll()
+        let dt = gfx_dt()
+        if burst < 120 {
+            let p = gfx_particle_create(480.0, 270.0, 120.0, -80.0, 1.2, 5.0, 0.2, 0.75, 1.0, 1.0)
+            if gfx_particle_alive(p) { burst = burst + 1 }
+        }
+        gfx_particles_update(dt)
+        gfx_begin()
+        gfx_clear(0.02,0.03,0.06,1.0)
+        gfx_particles_draw()
+        gfx_text(24.0,24.0,2.0,"NEXUS PARTICLES",0.7,0.85,1.0,1.0)
+        gfx_end()
+    }
+    gfx_particles_clear()
+    gfx_shutdown()
+}

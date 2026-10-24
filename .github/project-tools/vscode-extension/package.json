@@ -1,0 +1,66 @@
+{
+  "name": "nexus-language",
+  "displayName": "NEXUS Language Support",
+  "description": "NEXUS syntax highlighting, snippets, diagnostics, completion and go-to-definition.",
+  "version": "2.0.0",
+  "publisher": "fanxcz",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "main": "./extension.js",
+  "icon": "icon.png",
+  "activationEvents": [
+    "onLanguage:nexus"
+  ],
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "nexus",
+        "aliases": [
+          "NEXUS",
+          "nexus"
+        ],
+        "extensions": [
+          ".nx"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nexus",
+        "scopeName": "source.nexus",
+        "path": "./syntaxes/nexus.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "nexus",
+        "path": "./snippets/nexus.json"
+      }
+    ],
+    "configuration": {
+      "title": "NEXUS",
+      "properties": {
+        "nexus.serverPath": {
+          "type": "string",
+          "default": "nexus",
+          "description": "Path to the NEXUS command. The extension starts it with the lsp argument."
+        }
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fanxcz/nexus-lang.git",
+    "directory": ".github/project-tools/vscode-extension"
+  }
+}

@@ -1,0 +1,37 @@
+# CODEOWNERS for NEXUS
+# These users/groups will be automatically requested for review when matching files are changed.
+
+# Global owners - review everything
+* @fanxcz
+
+# Compiler core
+/src/compiler/ @fanxcz
+
+# Runtime
+/src/runtime/ @fanxcz
+
+# Standard library
+/stdlib/ @fanxcz
+
+# Build system
+/CMakeLists.txt @fanxcz
+/CMakePresets.json @fanxcz
+/*.cmake @fanxcz
+
+# Templates and examples
+/examples/templates/ @fanxcz
+/examples/ @fanxcz
+
+# Tooling
+/.github/project-tools/scripts/ @fanxcz
+
+# Documentation
+/docs/ @fanxcz
+/README.md @fanxcz
+/CHANGELOG.md @fanxcz
+
+# CI/CD and GitHub configuration
+/.github/ @fanxcz
+
+# Tests
+/tests/ @fanxcz

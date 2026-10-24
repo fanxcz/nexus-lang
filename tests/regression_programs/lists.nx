@@ -1,0 +1,23 @@
+// Regression: growable ilist_*/slist_* builtins compile and type-check.
+fn main() {
+    let nums = ilist_new()
+    let mut i = 0
+    while i < 100 {
+        ilist_push(nums, i)
+        i = i + 1
+    }
+    let n = ilist_len(nums)
+    print("pushed " + n)
+    print("first " + ilist_get(nums, 0))
+    print("last " + ilist_get(nums, n - 1))
+    print("oob " + ilist_get(nums, -1))
+
+    let words = slist_new()
+    slist_push(words, "lex")
+    slist_push(words, "parse")
+    slist_push(words, "codegen")
+    let m = slist_len(words)
+    print("words " + m)
+    print("mid " + slist_get(words, m / 2))
+    print("empty " + slist_get(words, m))
+}

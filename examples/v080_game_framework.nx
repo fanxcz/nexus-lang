@@ -1,0 +1,89 @@
+fn main() {
+    let ok = gfx_init(1100, 700, "NEXUS 0.8 Game Framework")
+    if !ok {
+        print("Graphics error: " + gfx_error())
+        return
+    }
+    gfx_set_title("NEXUS 0.8 - ECS / Animation / Scene / UI")
+    gfx_vsync(true)
+
+    let sprite = gfx_texture_load("examples/assets/sprite_sheet.bmp")
+    if sprite == 0 {
+        print("Sprite error: " + gfx_error())
+        gfx_shutdown()
+        return
+    }
+    gfx_texture_filter(sprite, false)
+
+    let anim = gfx_anim_create(sprite, 32, 32, 4, 4, 10.0, true)
+    let sound = gfx_sound_load("examples/assets/beep.wav")
+    if sound != 0 { gfx_sound_play(sound, false) }
+    let scene = scene_create()
+    let player = ecs_create()
+    let enemy = ecs_create()
+    ecs_set_position(player, 150.0, 320.0)
+    ecs_set_size(player, 64.0, 64.0)
+    ecs_set_velocity(player, 0.0, 0.0)
+    ecs_set_color(player, 1.0, 1.0, 1.0, 1.0)
+    ecs_set_texture(player, sprite)
+    ecs_set_position(enemy, 820.0, 320.0)
+    ecs_set_size(enemy, 64.0, 64.0)
+    ecs_set_velocity(enemy, -60.0, 0.0)
+    ecs_set_color(enemy, 1.0, 0.55, 0.55, 1.0)
+    scene_add(scene, player)
+    scene_add(scene, enemy)
+
+    let mut hp: f64 = 0.72
+    let mut volume: f64 = 0.7
+    let mut enabled = true
+
+    while !gfx_should_close() {
+        gfx_poll()
+        let dt = gfx_dt()
+        gfx_anim_update(anim, dt)
+        ecs_update(dt)
+
+        if gfx_key_down("A") { ecs_set_velocity(player, -180.0, 0.0) }
+        if gfx_key_down("D") { ecs_set_velocity(player, 180.0, 0.0) }
+        if !gfx_key_down("A") && !gfx_key_down("D") { ecs_set_velocity(player, 0.0, 0.0) }
+
+        if physics_aabb(ecs_x(player), ecs_y(player), 64.0, 64.0, ecs_x(enemy), ecs_y(enemy), 64.0, 64.0) {
+            hp = hp - dt * 0.2
+            if hp < 0.0 { hp = 0.0 }
+        }
+
+        let sceneSaved = scene_save(scene, "/tmp/nexus-v080-demo.nxs")
+        if sceneSaved { scene_clear(scene) }
+
+        gfx_begin()
+        gfx_clear(0.025, 0.03, 0.06, 1.0)
+        gfx_rect(0.0, 0.0, 1100.0, 84.0, 0.06, 0.09, 0.17, 1.0)
+        gfx_text(28.0, 24.0, 2.2, "NEXUS 0.8 GAME FRAMEWORK", 0.55, 0.88, 1.0, 1.0)
+        gfx_text(28.0, 58.0, 1.2, "ECS + SPRITE ANIMATION + PHYSICS + SCENE + GUI", 0.72, 0.78, 0.9, 1.0)
+
+        gfx_text(70.0, 120.0, 1.5, "PLAYER", 0.5, 0.8, 1.0, 1.0)
+        gfx_anim_draw(anim, 70.0, 150.0, 128.0, 128.0, 1.0, 1.0, 1.0, 1.0)
+        gfx_text(260.0, 150.0, 1.6, "A / D MOVE", 0.9, 0.9, 1.0, 1.0)
+        gfx_text(260.0, 185.0, 1.4, "COLLISION: " + str_bool(physics_aabb(ecs_x(player), ecs_y(player), 64.0, 64.0, ecs_x(enemy), ecs_y(enemy), 64.0, 64.0)), 1.0, 0.65, 0.45, 1.0)
+
+        ui_panel(700.0, 120.0, 330.0, 250.0, 0.07, 0.09, 0.16, 0.96)
+        ui_label(730.0, 145.0, "GAME SETTINGS", 2.0)
+        enabled = ui_checkbox(730.0, 200.0, "ENABLE EFFECTS", enabled)
+        volume = ui_slider(730.0, 260.0, 240.0, 24.0, volume)
+        ui_label(730.0, 300.0, "VOLUME " + str_i64(70), 1.2)
+        ui_progress(730.0, 350.0, 240.0, 20.0, hp, 0.2, 0.85, 0.45, 1.0)
+
+        gfx_text(70.0, 500.0, 1.4, "ENTITY COUNT: " + str_i64(ecs_count()), 0.65, 0.75, 0.9, 1.0)
+        gfx_text(70.0, 530.0, 1.2, "ANIMATION FRAME: " + str_i64(gfx_anim_frame(anim)), 0.55, 0.65, 0.8, 1.0)
+        gfx_text(70.0, 560.0, 1.2, "SCENE SAVE: " + str_bool(sceneSaved), 0.55, 0.65, 0.8, 1.0)
+        gfx_end()
+    }
+
+    scene_destroy(scene)
+    ecs_destroy(player)
+    ecs_destroy(enemy)
+    gfx_anim_destroy(anim)
+    if sound != 0 { gfx_sound_stop(); gfx_sound_unload(sound) }
+    gfx_texture_unload(sprite)
+    gfx_shutdown()
+}

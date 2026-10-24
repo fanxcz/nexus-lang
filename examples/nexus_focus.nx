@@ -1,0 +1,161 @@
+// NEXUS Focus — a small native desktop focus timer.
+fn hit(mx: f64, my: f64, x: f64, y: f64, w: f64, h: f64) -> bool {
+    return mx >= x && mx <= x + w && my >= y && my <= y + h
+}
+
+fn main() {
+    let ok = gfx_init(1000, 720, "NEXUS Focus")
+    if !ok {
+        print("NEXUS Focus could not start graphics: " + gfx_error())
+        return
+    }
+    gfx_vsync(true)
+
+    let mut running = false
+    let mut breakMode = false
+    let mut finished = false
+    let mut remaining: f64 = 1500.0
+    let mut sessions: i64 = 0
+    let mut totalFocusSeconds: f64 = 0.0
+    let mut previousSessions = "0"
+    let mut wasMouseDown = false
+
+    if file_exists("nexus_focus_sessions.txt") {
+        previousSessions = file_read("nexus_focus_sessions.txt")
+    }
+
+    while !gfx_should_close() {
+        gfx_poll()
+        let dt = gfx_dt()
+        let mx = gfx_mouse_x()
+        let my = gfx_mouse_y()
+        let mouseDown = gfx_mouse_down(1)
+        let clicked = mouseDown && !wasMouseDown
+        wasMouseDown = mouseDown
+
+        if gfx_key_down("ESC") { break }
+
+        if running {
+            remaining = remaining - dt
+            if !breakMode { totalFocusSeconds = totalFocusSeconds + dt }
+        }
+
+        if remaining <= 0.0 {
+            remaining = 0.0
+            running = false
+            finished = true
+            gfx_sound_tone(880.0, 220, 0.18)
+            if !breakMode {
+                sessions = sessions + 1
+                file_write("nexus_focus_sessions.txt", str_i64(sessions))
+                breakMode = true
+                remaining = 300.0
+            } else {
+                breakMode = false
+                remaining = 1500.0
+            }
+        }
+
+        if clicked && hit(mx, my, 94.0, 430.0, 168.0, 58.0) {
+            running = !running
+            finished = false
+        }
+        if clicked && hit(mx, my, 278.0, 430.0, 124.0, 58.0) {
+            running = false
+            finished = false
+            if breakMode { remaining = 300.0 } else { remaining = 1500.0 }
+        }
+        if clicked && hit(mx, my, 418.0, 430.0, 166.0, 58.0) {
+            breakMode = !breakMode
+            running = false
+            finished = false
+            if breakMode { remaining = 300.0 } else { remaining = 1500.0 }
+        }
+
+        let totalSeconds = to_i64(remaining)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        let mut secondText = str_i64(seconds)
+        if seconds < 10 { secondText = "0" + str_i64(seconds) }
+        let clockText = str_i64(minutes) + ":" + secondText
+
+        let mut duration: f64 = 1500.0
+        if breakMode { duration = 300.0 }
+        let progress = (duration - remaining) / duration
+        let focusMinutes = to_i64(totalFocusSeconds / 60.0)
+
+        gfx_begin()
+        gfx_clear(0.025, 0.035, 0.065, 1.0)
+
+        // Header
+        gfx_rect(0.0, 0.0, 1000.0, 124.0, 0.035, 0.05, 0.09, 1.0)
+        gfx_circle(70.0, 54.0, 22.0, 0.25, 0.78, 0.96, 1.0)
+        gfx_circle(70.0, 54.0, 11.0, 0.04, 0.09, 0.16, 1.0)
+        gfx_text(108.0, 31.0, 2.6, "NEXUS FOCUS", 0.88, 0.95, 1.0, 1.0)
+        gfx_text(110.0, 76.0, 1.25, "A QUIET PLACE TO GET THINGS DONE", 0.46, 0.61, 0.74, 1.0)
+        gfx_text(815.0, 48.0, 1.2, "ESC  QUIT", 0.46, 0.61, 0.74, 1.0)
+
+        // Main timer panel
+        gfx_rect(54.0, 151.0, 570.0, 492.0, 0.045, 0.065, 0.105, 1.0)
+        gfx_rect(54.0, 151.0, 570.0, 3.0, 0.2, 0.72, 0.92, 1.0)
+        if breakMode {
+            gfx_text(96.0, 190.0, 1.45, "RECOVERY MODE", 0.36, 0.86, 0.69, 1.0)
+            gfx_text(96.0, 224.0, 1.2, "Step away. Let your mind reset.", 0.54, 0.67, 0.77, 1.0)
+        } else {
+            gfx_text(96.0, 190.0, 1.45, "DEEP WORK", 0.33, 0.77, 0.96, 1.0)
+            gfx_text(96.0, 224.0, 1.2, "One task. One clear next step.", 0.54, 0.67, 0.77, 1.0)
+        }
+
+        gfx_text(96.0, 258.0, 6.2, clockText, 0.92, 0.96, 1.0, 1.0)
+        gfx_text(100.0, 330.0, 1.15, "TIME REMAINING", 0.42, 0.55, 0.68, 1.0)
+        gfx_rect(96.0, 365.0, 486.0, 10.0, 0.09, 0.13, 0.19, 1.0)
+        if progress < 0.01 {
+            gfx_rect(96.0, 365.0, 5.0, 10.0, 0.22, 0.78, 0.96, 1.0)
+        } else {
+            gfx_rect(96.0, 365.0, 486.0 * progress, 10.0, 0.22, 0.78, 0.96, 1.0)
+        }
+
+        // Real clickable controls
+        if running {
+            gfx_rect(94.0, 430.0, 168.0, 58.0, 0.12, 0.27, 0.40, 1.0)
+            gfx_text(137.0, 451.0, 1.55, "PAUSE", 0.92, 0.97, 1.0, 1.0)
+        } else {
+            gfx_rect(94.0, 430.0, 168.0, 58.0, 0.13, 0.55, 0.70, 1.0)
+            gfx_text(143.0, 451.0, 1.55, "START", 1.0, 1.0, 1.0, 1.0)
+        }
+        gfx_rect(278.0, 430.0, 124.0, 58.0, 0.09, 0.13, 0.20, 1.0)
+        gfx_text(300.0, 451.0, 1.35, "RESET", 0.72, 0.82, 0.92, 1.0)
+        gfx_rect(418.0, 430.0, 166.0, 58.0, 0.09, 0.13, 0.20, 1.0)
+        if breakMode {
+            gfx_text(438.0, 451.0, 1.15, "FOCUS MODE", 0.48, 0.88, 0.97, 1.0)
+        } else {
+            gfx_text(438.0, 451.0, 1.15, "TAKE A BREAK", 0.48, 0.88, 0.97, 1.0)
+        }
+
+        if finished {
+            gfx_text(98.0, 535.0, 1.45, "CYCLE COMPLETE  -  NICE WORK", 0.32, 0.88, 0.66, 1.0)
+        } else if running {
+            gfx_text(98.0, 535.0, 1.25, "TIMER RUNNING  /  STAY IN THE FLOW", 0.44, 0.71, 0.83, 1.0)
+        } else {
+            gfx_text(98.0, 535.0, 1.25, "READY WHEN YOU ARE", 0.44, 0.61, 0.74, 1.0)
+        }
+        gfx_text(98.0, 590.0, 1.05, "Tip: press ESC to close the app.", 0.36, 0.46, 0.58, 1.0)
+
+        // Statistics panel
+        gfx_rect(650.0, 151.0, 296.0, 492.0, 0.045, 0.065, 0.105, 1.0)
+        gfx_text(682.0, 187.0, 1.65, "YOUR DAY", 0.86, 0.92, 1.0, 1.0)
+        gfx_rect(682.0, 225.0, 230.0, 1.0, 0.13, 0.19, 0.27, 1.0)
+        gfx_text(682.0, 252.0, 1.1, "SESSIONS THIS RUN", 0.44, 0.59, 0.72, 1.0)
+        gfx_text(682.0, 282.0, 3.0, str_i64(sessions), 0.4, 0.85, 0.98, 1.0)
+        gfx_text(682.0, 343.0, 1.1, "FOCUS MINUTES", 0.44, 0.59, 0.72, 1.0)
+        gfx_text(682.0, 374.0, 3.0, str_i64(focusMinutes), 0.4, 0.85, 0.98, 1.0)
+        gfx_text(682.0, 438.0, 1.1, "PREVIOUS SAVE", 0.44, 0.59, 0.72, 1.0)
+        gfx_text(682.0, 469.0, 2.2, previousSessions, 0.48, 0.88, 0.68, 1.0)
+        gfx_text(682.0, 526.0, 1.0, "Saved after each", 0.4, 0.52, 0.63, 1.0)
+        gfx_text(682.0, 546.0, 1.0, "completed focus cycle.", 0.4, 0.52, 0.63, 1.0)
+        gfx_text(682.0, 600.0, 1.0, "NEXUS / NATIVE DESKTOP", 0.34, 0.46, 0.58, 1.0)
+
+        gfx_end()
+    }
+    gfx_shutdown()
+}

@@ -1,0 +1,34 @@
+// Text rendering with fonts. gfx_font_default picks a system font
+// (Segoe UI / DejaVu Sans / Helvetica) so no .ttf needs to ship with the app.
+// Requires a build with SDL2 and the LLVM backend.
+
+fn main() {
+    if !gfx_init(800, 480, "NEXUS fonts") {
+        print(gfx_error())
+        return
+    }
+    let font = gfx_font_default(28)
+    if font == 0 {
+        print(gfx_error())
+        gfx_shutdown()
+        return
+    }
+    let title = "Hello, fonts!"
+    let w = to_f64(gfx_text_width(font, title))
+    let h = to_f64(gfx_text_height(font))
+    print("text is " + w + " x " + h + " px")
+
+    while !gfx_should_close() {
+        gfx_poll()
+        gfx_begin()
+        gfx_clear(0.08, 0.09, 0.12, 1.0)
+        gfx_text_font(font, 400.0 - w / 2.0, 200.0, title, 1.0, 0.9, 0.3, 1.0)
+        gfx_font_style(font, 1)
+        gfx_text_font(font, 400.0 - w / 2.0, 240.0 + h, "bold subtitle", 0.8, 0.8, 0.85, 1.0)
+        gfx_font_style(font, 0)
+        gfx_end()
+        sleep(16)
+    }
+    gfx_font_unload(font)
+    gfx_shutdown()
+}

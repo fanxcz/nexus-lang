@@ -1,0 +1,78 @@
+// Tests for selfhost/typecheck_lib.nx.
+// Run: nexus run selfhost/typecheck_test.nx --backend llvm
+import "typecheck_lib.nx"
+
+fn check(name: string, src: string, expected: string) -> i64 {
+    let got = typecheck(src)
+    if got != expected {
+        print("FAIL " + name)
+        print("  expected: [" + expected + "]")
+        print("  got:      [" + got + "]")
+        return 1
+    }
+    print("ok " + name)
+    return 0
+}
+
+fn main() {
+    let mut failed = 0
+
+    failed = failed + check("valid program",
+        "let a = 1\nlet b = a + 2\nprint(a * b)",
+        "ok")
+
+    failed = failed + check("string concat widens",
+        "let s = \"n=\" + 42 + 0.5 + true",
+        "ok")
+
+    failed = failed + check("bool logic and comparison",
+        "let flag = 1 < 2 && 3 != 4 || false",
+        "ok")
+
+    failed = failed + check("unknown variable",
+        "print(nope + 1)",
+        "error unknown variable: nope")
+
+    failed = failed + check("assignment type change rejected",
+        "let a = 1\na = \"text\"",
+        "error cannot assign string to a of type i64")
+
+    failed = failed + check("arithmetic on strings rejected",
+        "let bad = \"a\" - \"b\"",
+        "error operator - requires numbers, got string and string")
+
+    failed = failed + check("comparison of mixed types rejected",
+        "let bad = 1 < \"2\"",
+        "error cannot compare i64 with string")
+
+    failed = failed + check("if condition must be bool",
+        "if 1 { print(1) }",
+        "error condition must be bool, got i64")
+
+    failed = failed + check("while condition must be bool",
+        "let a = 1\nwhile a { a = 2 }",
+        "error condition must be bool, got i64")
+
+    failed = failed + check("&& needs bool operands",
+        "let bad = 1 && 2",
+        "error && requires bool operands")
+
+    failed = failed + check("unary - needs number",
+        "let bad = -\"x\"",
+        "error unary - requires a number")
+
+    failed = failed + check("! needs bool",
+        "let bad = !5",
+        "error ! requires bool")
+
+    failed = failed + check("scoping in blocks",
+        "let a = 1\nif a < 2 { let b = 3\n print(b) }",
+        "ok")
+
+    if failed == 0 {
+        print("all typecheck tests passed")
+    } else {
+        print(failed + " test(s) failed")
+        exit(1)
+    }
+}

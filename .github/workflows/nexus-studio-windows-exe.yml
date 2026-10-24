@@ -1,0 +1,98 @@
+name: Build and commit NEXUS Studio Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/project-tools/nexus-studio/**'
+      - '!.github/project-tools/nexus-studio/downloads/**'
+      - '.github/workflows/nexus-studio-windows-exe.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-studio-windows-exe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Disabled: bot commits break the single-author history of this repository.
+  windows-exe:
+    if: false
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .github/project-tools/nexus-studio
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build Windows installer
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Prepare EXE for repository
+        shell: pwsh
+        run: |
+          $source = Get-ChildItem release -Filter '*.exe' -File |
+            Sort-Object Length -Descending |
+            Select-Object -First 1
+          if (-not $source) { throw 'electron-builder did not produce an EXE installer.' }
+          if ($source.Length -ge 100MB) { throw "EXE is $($source.Length) bytes; GitHub blocks regular Git files at 100 MB. Use the Actions artifact instead." }
+          New-Item -ItemType Directory -Force downloads | Out-Null
+          Copy-Item $source.FullName 'downloads/NEXUS-Studio-Windows-x64.exe' -Force
+          $hash = (Get-FileHash 'downloads/NEXUS-Studio-Windows-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  NEXUS-Studio-Windows-x64.exe" | Set-Content 'downloads/NEXUS-Studio-Windows-x64.exe.sha256' -Encoding ASCII
+          Get-Item 'downloads/NEXUS-Studio-Windows-x64.exe','downloads/NEXUS-Studio-Windows-x64.exe.sha256' | Format-Table FullName,Length
+
+      - name: Commit EXE into repository
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # The job already runs inside .github/project-tools/nexus-studio.
+          # Stage a relative path and fail loudly if any Git operation fails.
+          # The repository .gitignore excludes executable files globally;
+          # force-add this intentionally versioned release asset, then add its hash.
+          git add -f 'downloads/NEXUS-Studio-Windows-x64.exe'
+          if ($LASTEXITCODE -ne 0) { throw 'git add -f failed for the NEXUS Studio EXE.' }
+          git add 'downloads/NEXUS-Studio-Windows-x64.exe.sha256'
+          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Studio SHA-256 file.' }
+
+          git diff --cached --quiet
+          $diffExitCode = $LASTEXITCODE
+          if ($diffExitCode -eq 0) {
+            Write-Host 'The repository already contains the current NEXUS Studio EXE; no commit is needed.'
+            exit 0
+          }
+          if ($diffExitCode -ne 1) { throw "git diff --cached failed with exit code $diffExitCode." }
+
+          git commit -m 'Add built NEXUS Studio Windows EXE'
+          if ($LASTEXITCODE -ne 0) { throw 'git commit failed for the built NEXUS Studio EXE.' }
+
+          # The binary build takes several minutes; docs or code may land on main
+          # while it runs. Rebase this asset-only commit on the latest branch first.
+          $branch = $env:GITHUB_REF_NAME
+          $refspec = "+refs/heads/{0}:refs/remotes/origin/{0}" -f $branch
+          git fetch origin $refspec
+          if ($LASTEXITCODE -ne 0) { throw "git fetch failed for branch $branch." }
+
+          git rebase "origin/$branch"
+          if ($LASTEXITCODE -ne 0) {
+            git rebase --abort
+            throw "Could not rebase the generated EXE commit on the latest $branch."
+          }
+
+          git push origin "HEAD:$branch"
+          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $branch." }

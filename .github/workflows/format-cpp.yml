@@ -1,0 +1,94 @@
+name: Format and verify C++ source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/project-tools/repository-files/format-cpp.trigger'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-cpp-format
+  cancel-in-progress: false
+
+jobs:
+  format:
+    # Disabled: bot commits break the single-author history of this repository.
+    if: false
+    name: Apply consistent C++ formatting
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+          clang-format --version
+
+      - name: Format all C++ sources and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          find src tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.c' \) -print0 |
+            xargs -0 -r clang-format -i
+
+      - name: Commit formatting
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .clang-format .editorconfig src tests
+          if git diff --cached --quiet; then
+            echo 'No formatting changes were necessary.'
+          else
+            git commit -m 'Apply consistent C++ formatting'
+            git push origin HEAD:main
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: Build and test formatted source
+    needs: format
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.format.outputs.sha }}
+
+      - name: Install Linux toolchain
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang lld
+
+      - name: Install Windows toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install ninja llvm -y --no-progress
+
+      - name: Install macOS toolchain
+        if: runner.os == 'macOS'
+        run: brew install ninja llvm
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DNEXUS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

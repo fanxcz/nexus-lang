@@ -1,0 +1,44 @@
+import std.io
+import std.fs
+import std.json
+import std.db
+import std.crypto
+import std.memory
+
+fn fibonacci(n: i64) -> i64 {
+    if n <= 1 { return n }
+    let mut a: i64 = 0
+    let mut b: i64 = 1
+    for i in 0..n {
+        let next = a + b
+        a = b
+        b = next
+    }
+    return a
+}
+
+fn main() {
+    const title: string = "NEXUS v1.0 FULL STACK"
+    print(title)
+    let mut total: i64 = 0
+    for i in 1..11 {
+        total += fibonacci(i)
+    }
+    print(total)
+
+    let json = "{\"language\":\"NEXUS\",\"version\":1}"
+    print(json_field(json, "language"))
+
+    let db = db_open(":memory:")
+    print(db_exec(db, "CREATE TABLE demo(v INTEGER);"))
+    db_close(db)
+
+    let path = "/tmp/nexus-v1-showcase.txt"
+    fs_write(path, "NEXUS 1.0")
+    print(fs_read(path))
+
+    print(hash_sha256("NEXUS"))
+    let mem = memory_alloc(64)
+    print(mem != 0)
+    memory_free(mem)
+}

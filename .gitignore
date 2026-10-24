@@ -1,0 +1,54 @@
+# Build directories
+build/
+build-*/
+dist/
+site/
+
+# Object files and libraries
+*.ll
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.lib
+*.exp
+*.pdb
+*.exe
+
+# CMake / Ninja
+.cmake/
+.ninja/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+*.ninja
+*.ninja_log
+*.ninja_deps
+
+# Cache
+.cache/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Package manager
+vendor/
+nexus.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor output
+nexus_paint.bmp
+
+# Keep source assets tracked
+!examples/assets/*.obj
+# NEXUS source files should always be tracked
+!.nx
+.github/project-tools/vscode-extension/node_modules/
+*.vsix

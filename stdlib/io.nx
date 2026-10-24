@@ -1,0 +1,3 @@
+fn read_line(prompt: string) -> string { return input(prompt) }
+fn read_i64(prompt: string) -> i64 { return input_i64(prompt) }
+fn read_f64(prompt: string) -> f64 { return input_f64(prompt) }

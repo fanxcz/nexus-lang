@@ -1,0 +1,88 @@
+// Example: Ultimate NEXUS Showcase v1.1.0
+// Run: nexus run examples/nexus_showcase.nx
+// Confirmed API from game.nx, nexus_paint.nx, neon_survivor.nx
+
+import std.io
+
+fn main() {
+    print("=== NEXUS Ultimate Showcase v1.1.0 ===")
+    print("")
+    print("[CONFIRMED FEATURES FROM EXAMPLES]")
+    print("  - Graphics 2D (SDL2): gfx_init, gfx_clear, gfx_circle, gfx_rect, gfx_line, gfx_text")
+    print("  - Audio: gfx_sound_tone")
+    print("  - Input: gfx_key_down, gfx_mouse_x, gfx_mouse_y, gfx_event_is")
+    print("  - Math: sqrt")
+    print("  - Utils: str_i64, str_i32, to_f64")
+    print("")
+
+    gfx_init(1280, 720, "NEXUS Ultimate Showcase")
+    gfx_vsync(true)
+
+    let mut player_x: f64 = 640.0
+    let mut player_y: f64 = 360.0
+    let mut score: i64 = 0
+    let mut frame: i64 = 0
+    let mut running = true
+    let mut time: f64 = 0.0
+
+    print("Starting main loop...")
+    print("")
+
+    while !gfx_should_close() && running {
+        gfx_poll()
+        let dt = gfx_dt()
+        time = time + dt
+        frame = frame + 1
+
+        // Movement
+        let speed = 300.0
+        if gfx_key_down("A") { player_x = player_x - speed * dt }
+        if gfx_key_down("D") { player_x = player_x + speed * dt }
+        if gfx_key_down("W") { player_y = player_y - speed * dt }
+        if gfx_key_down("S") { player_y = player_y + speed * dt }
+
+        // Shooting
+        if gfx_event_is("mouse_down") && gfx_event_mouse_button() == 1 {
+            score = score + 10
+            gfx_sound_tone(800.0, 50, 0.3)
+        }
+
+        // Quit
+        if gfx_key_down("ESC") { running = false }
+
+        // Render
+        gfx_begin()
+        gfx_clear(0.015, 0.02, 0.04, 1.0)
+
+        // Grid
+        let mut i = 0
+        while i < 20 {
+            gfx_line(to_f64(i * 64), 0.0, to_f64(i * 64), 720.0, 1.0, 0.06, 0.12, 0.18, 1.0)
+            gfx_line(0.0, to_f64(i * 36), 1280.0, to_f64(i * 36), 1.0, 0.06, 0.12, 0.18, 1.0)
+            i = i + 1
+        }
+
+        // Player
+        gfx_circle(player_x, player_y, 18.0, 0.15, 0.85, 1.0, 1.0)
+        gfx_circle(player_x, player_y, 8.0, 0.9, 1.0, 1.0, 1.0)
+
+        // Crosshair
+        let mx = gfx_mouse_x()
+        let my = gfx_mouse_y()
+        gfx_line(player_x, player_y, mx, my, 1.5, 0.15, 0.5, 0.7, 0.35)
+        gfx_circle(mx, my, 6.0, 0.9, 0.95, 1.0, 1.0)
+
+        // HUD
+        gfx_rect(0.0, 0.0, 1280.0, 60.0, 0.025, 0.04, 0.075, 1.0)
+        gfx_text(20.0, 18.0, 24.0, "NEXUS SHOWCASE", 0.2, 0.85, 1.0, 1.0)
+        gfx_text(20.0, 40.0, 14.0, "WASD:Move  Mouse:Aim  Click:Shoot  ESC:Quit", 0.65, 0.75, 0.9, 1.0)
+        gfx_text(900.0, 40.0, 14.0, "FRAME " + str_i64(frame), 0.55, 0.7, 0.85, 1.0)
+
+        gfx_text(1100.0, 18.0, 20.0, "SCORE", 0.7, 0.8, 1.0, 1.0)
+        gfx_text(1100.0, 40.0, 16.0, str_i64(score), 0.9, 1.0, 1.0, 1.0)
+
+        gfx_end()
+    }
+
+    gfx_shutdown()
+}

@@ -1,0 +1,54 @@
+{
+  "Main function": {
+    "prefix": "main",
+    "body": [
+      "fn main() {",
+      "    $0",
+      "}"
+    ],
+    "description": "NEXUS program entry point"
+  },
+  "Function": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2})${3: -> i64} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Declare a function"
+  },
+  "Print": {
+    "prefix": "print",
+    "body": [
+      "print(${1:value})"
+    ],
+    "description": "Print a value"
+  },
+  "If statement": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Conditional block"
+  },
+  "For range": {
+    "prefix": "for",
+    "body": [
+      "for ${1:item} in ${2:0}..${3:10} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Iterate over a range"
+  },
+  "Struct": {
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Name} {",
+      "    ${2:field}: ${3:i64}",
+      "}"
+    ],
+    "description": "Declare a structure"
+  }
+}

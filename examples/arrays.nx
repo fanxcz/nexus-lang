@@ -1,0 +1,8 @@
+fn main() {
+    let mut values = [10, 20, 30]
+    values[1] = 99
+    print(values[0])
+    print(values[1])
+    let i: i64 = 2
+    print(values[i])
+}

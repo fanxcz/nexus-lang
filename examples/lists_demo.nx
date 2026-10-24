@@ -1,0 +1,31 @@
+// Growable lists: ilist_* for i64, slist_* for strings.
+// Handles are opaque; values live for the whole process.
+
+fn main() {
+    let nums = ilist_new()
+    let mut i = 1
+    while i <= 5 {
+        ilist_push(nums, i * i)
+        i = i + 1
+    }
+    print("count: " + ilist_len(nums))
+    let mut j = 0
+    while j < ilist_len(nums) {
+        print("sq " + j + " = " + ilist_get(nums, j))
+        j = j + 1
+    }
+
+    let words = slist_new()
+    slist_push(words, "compile")
+    slist_push(words, "run")
+    slist_push(words, "repeat")
+    print("words: " + slist_len(words))
+    let mut k = 0
+    while k < slist_len(words) {
+        print(slist_get(words, k))
+        k = k + 1
+    }
+
+    // out-of-range is a defined empty/zero result, not a crash
+    print("oob: " + ilist_get(nums, 99) + " [" + slist_get(words, 99) + "]")
+}
