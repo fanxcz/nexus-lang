@@ -15,6 +15,8 @@ mirrored against it feature by feature and must not diverge.
 | Parser tests | `parser_test.nx` | 12 cases: precedence, associativity, calls, blocks, 3 error cases |
 | Type checker (subset) | `typecheck_lib.nx` | Works; variable environment, numeric/string/bool rules, bool conditions for `if`/`while`, assignment type stability |
 | Type checker tests | `typecheck_test.nx` | 13 cases: 3 valid programs, 10 diagnostics |
+| Code generator (subset) | `codegen_lib.nx` | Works; emits a complete LLVM IR module (alloca/load/store SSA, branches, loops) for the i64 statement subset |
+| Code generator tests | `codegen_test.nx` | End-to-end: NEXUS compiles `tests/hello_subset.nx` to `.ll`, clang++ builds it, the binary runs and prints the expected 42/10/1 |
 
 `tokenize(src: string) -> string` emits one token per line as
 `LINE:COL KIND TEXT` (`Integer 42`, `KwFn fn`, `String decoded-text`, ...).

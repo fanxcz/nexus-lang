@@ -12,7 +12,8 @@ set(SELFCASES
     "${NEXUS_SOURCE_DIR}/selfhost/lexer_test.nx"
     "${NEXUS_SOURCE_DIR}/selfhost/lex_self.nx"
     "${NEXUS_SOURCE_DIR}/selfhost/parser_test.nx"
-    "${NEXUS_SOURCE_DIR}/selfhost/typecheck_test.nx")
+    "${NEXUS_SOURCE_DIR}/selfhost/typecheck_test.nx"
+    "${NEXUS_SOURCE_DIR}/selfhost/codegen_test.nx")
 
 foreach(CASE ${SELFCASES})
   get_filename_component(NAME "${CASE}" NAME)
@@ -27,7 +28,7 @@ foreach(CASE ${SELFCASES})
   if(NOT rc EQUAL 0)
     message(FATAL_ERROR "selfhost lexer case ${NAME} failed (rc=${rc}):\n${out}\n${err}")
   endif()
-  if(NOT out MATCHES "(all lexer tests passed|all parser tests passed|all typecheck tests passed|self-lex ok)")
+  if(NOT out MATCHES "(all lexer tests passed|all parser tests passed|all typecheck tests passed|all codegen tests passed|self-lex ok)")
     message(FATAL_ERROR "selfhost lexer case ${NAME} produced unexpected output:\n${out}\n${err}")
   endif()
 endforeach()

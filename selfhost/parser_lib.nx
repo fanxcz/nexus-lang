@@ -297,6 +297,9 @@ fn parse_stmt(t: i64, p: i64) -> string {
     let kind = cur_kind(t, p)
     if kind == "KwLet" {
         bump(t, p)
+        if cur_kind(t, p) == "KwMut" {
+            bump(t, p)
+        }
         if cur_kind(t, p) != "Identifier" {
             return "error expected variable name after let"
         }

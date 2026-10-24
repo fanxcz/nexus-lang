@@ -1,0 +1,15 @@
+let a = 6
+let b = 7
+print(a * b)
+let mut i = 0
+let mut sum = 0
+while i < 5 {
+    sum = sum + i
+    i = i + 1
+}
+print(sum)
+if sum == 10 {
+    print(1)
+} else {
+    print(0)
+}

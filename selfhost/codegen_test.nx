@@ -1,0 +1,55 @@
+// End-to-end test: NEXUS-written compiler compiles and runs a NEXUS program.
+// Pipeline: lexer -> parser -> codegen (.ll) -> clang++ -> execute -> compare.
+// Requires NEXUS_CXX (clang-compatible) in the environment.
+import "codegen_lib.nx"
+
+fn line_is(out: string, index: i64, want: string) -> bool {
+    return string.trim(string.split_at(out, "\n", index)) == want
+}
+
+fn main() {
+    let src = file_read("selfhost/tests/hello_subset.nx")
+    if string.len(src) == 0 {
+        print("FAIL cannot read selfhost/tests/hello_subset.nx")
+        exit(1)
+    }
+    let ll = codegen(src)
+    if string.slice(ll, 0, 5) == "error" {
+        print("FAIL codegen: " + ll)
+        exit(1)
+    }
+    file_write("build/selfhost-test.ll", ll)
+
+    let mut cxx = env("NEXUS_CXX")
+    if cxx == "" {
+        cxx = "clang++"
+    }
+    let rc = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-test.ll src/runtime/runtime.cpp -o build/selfhost-test.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    if rc != 0 {
+        print("FAIL clang++ rc=" + rc)
+        exit(1)
+    }
+    let run_rc = system("build\\selfhost-test.exe > build\\selfhost-out.txt 2>&1")
+    if run_rc != 0 {
+        print("FAIL run rc=" + run_rc)
+        exit(1)
+    }
+    let out = string.trim(file_read("build/selfhost-out.txt"))
+    if string.split_count(out, "\n") < 3 {
+        print("FAIL unexpected output: [" + out + "]")
+        exit(1)
+    }
+    if !line_is(out, 0, "42") {
+        print("FAIL line0: " + string.trim(string.split_at(out, "\n", 0)))
+        exit(1)
+    }
+    if !line_is(out, 1, "10") {
+        print("FAIL line1: " + string.trim(string.split_at(out, "\n", 1)))
+        exit(1)
+    }
+    if !line_is(out, 2, "1") {
+        print("FAIL line2: " + string.trim(string.split_at(out, "\n", 2)))
+        exit(1)
+    }
+    print("all codegen tests passed")
+}
