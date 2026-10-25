@@ -394,6 +394,10 @@ if (NEXUS_BUILD_TESTS)
             -P ${CMAKE_SOURCE_DIR}/tests/math_helpers_smoke.cmake)
     set_tests_properties(nexus_math_helpers_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    add_test(NAME nexus_engine2d_api_smoke
+        COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/tests/regression_programs/engine2d_api.nx)
+    set_tests_properties(nexus_engine2d_api_smoke PROPERTIES
+        PASS_REGULAR_EXPRESSION "check: OK")
   endif()
 
   # The built-in emitters currently target x86-64 Linux and Windows.
