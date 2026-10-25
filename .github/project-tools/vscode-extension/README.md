@@ -1,8 +1,14 @@
 # NEXUS Language Support — VS Code extension
 
-This extension registers `.nx` files as the **NEXUS** language. It includes syntax highlighting, bracket/comment behavior, snippets, and a language client that starts `nexus lsp` for live diagnostics, completion and basic declaration navigation.
+This extension registers `.nx` files as the **NEXUS** language. It includes syntax highlighting, bracket/comment behavior, snippets, and a language client that starts `nexus lsp` for language-server features.
 
-The NEXUS compiler is not bundled inside the extension. Install the compiler separately and make sure the `nexus` command is available on PATH, or configure `nexus.serverPath` to the full path of the executable/launcher.
+## Features
+
+The current LSP implementation provides diagnostics, keyword/builtin completion, context-aware struct-field and enum-variant completion, signature help, hover, go-to-definition, references, rename, document outline, workspace symbol search, whole-document and range formatting, and quick-fix suggestions for common unknown-name errors. Workspace symbol search is capped at 500 results.
+
+Navigation and type-aware completion are best-effort rather than a full compiler-backed index. Imported aliases, complete type inference for arbitrary member-expression chains, debugging integration, and inlay hints are not implemented. See the [LSP guide](../../../docs/tooling/lsp.md) for details.
+
+The compiler is not bundled inside the extension. Install NEXUS separately and make sure the `nexus` command is available on PATH, or configure `nexus.serverPath` to the full path of the executable/launcher.
 
 ## Build a VSIX
 
@@ -40,5 +46,4 @@ Add this to VS Code settings JSON if `nexus` is not on PATH:
 }
 ```
 
-The LSP currently supports diagnostics, basic completion and basic declaration navigation. Full workspace indexing, references, rename, hover/type details, formatting and debugging are not implemented.
 The extension is not yet published on the VS Code Marketplace.
