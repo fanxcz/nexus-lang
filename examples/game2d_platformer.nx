@@ -7,13 +7,13 @@ fn main() {
         return
     }
 
-    let player_x = 96.0
-    let player_y = 360.0
-    let player_w = 30.0
-    let player_h = 38.0
-    let velocity_x = 0.0
-    let velocity_y = 0.0
-    let grounded = false
+    let mut player_x = 96.0
+    let mut player_y = 360.0
+    let mut player_w = 30.0
+    let mut player_h = 38.0
+    let mut velocity_x = 0.0
+    let mut velocity_y = 0.0
+    let mut grounded = false
     let world_speed = 260.0
     let gravity = 1100.0
     let jump_speed = -430.0
@@ -21,7 +21,9 @@ fn main() {
     while !gfx_should_close() {
         gfx_poll()
         let dt = gfx_dt()
-        let frame_dt = if dt > 0.05 { 0.05 } else { dt }
+        let mut frame_dt = dt
+        if frame_dt > 0.05 { frame_dt = 0.05 }
+        if frame_dt < 0.0 { frame_dt = 0.0 }
 
         if gfx_key_down("ESC") { break }
 
@@ -88,7 +90,7 @@ fn main() {
         gfx_rect(520.0, 320.0, 150.0, 5.0, 0.82, 0.58, 0.28, 1.0)
 
         // Player, eyes and simple shadow
-        gfx_ellipse(player_x + 15.0, 474.0, 18.0, 5.0, 0.01, 0.02, 0.03, 0.4)
+        gfx_circle(player_x + 15.0, 474.0, 9.0, 0.01, 0.02, 0.03, 0.4)
         gfx_rect(player_x, player_y, player_w, player_h, 0.95, 0.25, 0.18, 1.0)
         gfx_rect(player_x + 5.0, player_y + 8.0, 6.0, 6.0, 1.0, 0.94, 0.78, 1.0)
         gfx_rect(player_x + 19.0, player_y + 8.0, 6.0, 6.0, 1.0, 0.94, 0.78, 1.0)
