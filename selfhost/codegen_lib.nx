@@ -484,6 +484,41 @@ fn gen_stmt(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         emit_line(out, l_end + ":")
         return false
     }
+    if h == "for" {
+        skip_ws(body, p)
+        let var = read_node(body, p)
+        let start = read_node(body, p)
+        let endv = read_node(body, p)
+        let for_body = read_node(body, p)
+        let l_top = next_label(reg)
+        let l_body = next_label(reg)
+        let l_inc = next_label(reg)
+        let l_end = next_label(reg)
+        let sv = gen_expr(start, names, types, out, reg, globals, fns, frets)
+        declare_var(var, "i64", names, types, out)
+        emit_line(out, "  store i64 " + sv + ", ptr %" + var)
+        emit_line(out, "  br label %" + l_top)
+        emit_line(out, l_top + ":")
+        let ident_node = "(ident " + var + ")"
+        let lv = gen_expr(ident_node, names, types, out, reg, globals, fns, frets)
+        let ev = gen_expr(endv, names, types, out, reg, globals, fns, frets)
+        let c = next_reg(reg)
+        emit_line(out, "  " + c + " = icmp slt i64 " + lv + ", " + ev)
+        emit_line(out, "  br i1 " + c + ", label %" + l_body + ", label %" + l_end)
+        emit_line(out, l_body + ":")
+        let bt = gen_block(for_body, names, types, out, reg, globals, fns, frets, ret_ty, l_end, l_inc)
+        if !bt {
+            emit_line(out, "  br label %" + l_inc)
+        }
+        emit_line(out, l_inc + ":")
+        let lv2 = gen_expr(ident_node, names, types, out, reg, globals, fns, frets)
+        let inc = next_reg(reg)
+        emit_line(out, "  " + inc + " = add i64 " + lv2 + ", 1")
+        emit_line(out, "  store i64 " + inc + ", ptr %" + var)
+        emit_line(out, "  br label %" + l_top)
+        emit_line(out, l_end + ":")
+        return false
+    }
     if h == "while" {
         skip_ws(body, p)
         let cond = read_node(body, p)

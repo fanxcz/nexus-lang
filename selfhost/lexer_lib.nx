@@ -288,8 +288,14 @@ fn tokenize(src: string) -> string {
             text = ":"
             if n1 == 58 { kind = "ColonColon"; text = "::"; width = 2 }
         } else if b == 46 {
-            kind = "Dot"
-            text = "."
+            if n1 == 46 {
+                kind = "DotDot"
+                text = ".."
+                width = 2
+            } else {
+                kind = "Dot"
+                text = "."
+            }
         } else if b == 59 {
             kind = "Semicolon"
             text = ";"

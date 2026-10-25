@@ -227,5 +227,41 @@ fn main() {
         exit(1)
     }
 
+    // Seventh case: for loops.
+    let src7 = file_read("selfhost/tests/for_subset.nx")
+    if string.len(src7) == 0 {
+        print("FAIL cannot read selfhost/tests/for_subset.nx")
+        exit(1)
+    }
+    let ll7 = codegen(src7)
+    if string.slice(ll7, 0, 5) == "error" {
+        print("FAIL codegen for: " + ll7)
+        exit(1)
+    }
+    file_write("build/selfhost-for.ll", ll7)
+    let rc7 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-for.ll src/runtime/runtime.cpp -o build/selfhost-for.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    if rc7 != 0 {
+        print("FAIL clang++ for rc=" + rc7)
+        exit(1)
+    }
+    let run_rc7 = system("build\\selfhost-for.exe > build\\selfhost-for-out.txt 2>&1")
+    if run_rc7 != 0 {
+        print("FAIL run for rc=" + run_rc7)
+        exit(1)
+    }
+    let out7 = string.trim(file_read("build/selfhost-for-out.txt"))
+    if !line_is(out7, 0, "0") {
+        print("FAIL for line0: " + string.trim(string.split_at(out7, "\n", 0)))
+        exit(1)
+    }
+    if !line_is(out7, 4, "4") {
+        print("FAIL for line4: " + string.trim(string.split_at(out7, "\n", 4)))
+        exit(1)
+    }
+    if !line_is(out7, 5, "99") {
+        print("FAIL for line5: " + string.trim(string.split_at(out7, "\n", 5)))
+        exit(1)
+    }
+
     print("all codegen tests passed")
 }

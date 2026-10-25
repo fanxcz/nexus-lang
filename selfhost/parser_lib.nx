@@ -438,6 +438,33 @@ fn parse_stmt(t: i64, p: i64) -> string {
         bump(t, p)
         return "(continue)"
     }
+    if kind == "KwFor" {
+        bump(t, p)
+        if cur_kind(t, p) != "Identifier" {
+            return "error expected loop variable"
+        }
+        let var = cur_text(t, p)
+        bump(t, p)
+        if !eat(t, p, "KwIn") {
+            return "error expected in"
+        }
+        let start = parse_or(t, p)
+        if string.slice(start, 0, 5) == "error" {
+            return start
+        }
+        if !eat(t, p, "DotDot") {
+            return "error expected .. in for loop"
+        }
+        let endv = parse_or(t, p)
+        if string.slice(endv, 0, 5) == "error" {
+            return endv
+        }
+        let body = parse_block(t, p)
+        if string.slice(body, 0, 5) == "error" {
+            return body
+        }
+        return "(for " + var + " " + start + " " + endv + " " + body + ")"
+    }
     if kind == "KwWhile" {
         bump(t, p)
         let cond = parse_or(t, p)

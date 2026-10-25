@@ -333,7 +333,18 @@ while condition {
 
 The condition is evaluated before each iteration.
 
-### 9.3 Blocks
+### 9.3 For loop
+
+```
+for i in 0..5 {
+    print(i)
+}
+```
+
+The loop variable is declared automatically. The range is half-open:
+`start..end` includes `start` and excludes `end`.
+
+### 9.4 Blocks
 
 Blocks are delimited by braces. They introduce a new scope:
 
@@ -681,9 +692,13 @@ The self-hosted code generator supports:
 - unary minus
 - `if` and `else`
 - `while`
+- `for i in start..end`
+- `break` and `continue`
+- `const`, `let`, and `let mut`
 - functions and calls
 - string literals
 - `f64`
+- booleans and logical negation (`!`)
 
 Self-hosting is considered complete only when the self-hosted compiler
 produces output matching the C++ compiler on the test corpus.
@@ -700,12 +715,13 @@ params       := (param ("," param)*)?
 param        := IDENT ":" type
 type         := "i64" | "f64" | "bool" | "string" | "void"
 block        := "{" statement* "}"
-statement    := let | assign | print | if | while | return | expr
+statement    := let | assign | print | if | while | for | return | expr
 let          := "let" "mut"? IDENT "=" expression
 assign       := IDENT "=" expression
 print        := "print" "(" expression ")"
 if           := "if" expression block ("else" block)?
 while        := "while" expression block
+for          := "for" IDENT "in" expression ".." expression block
 return       := "return" expression?
 ```
 

@@ -331,6 +331,35 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
         }
         return "ok"
     }
+    if h == "for" {
+        let p = ilist_new()
+        ilist_push(p, 0)
+        let body = node_body(node)
+        skip_ws(body, p)
+        read_node(body, p)  // for
+        let var = read_node(body, p)
+        let start = read_node(body, p)
+        let endv = read_node(body, p)
+        let fn_body = read_node(body, p)
+        let st = infer(start, names, types)
+        if string.slice(st, 0, 5) == "error" { return st }
+        if !is_numeric(st) { return "error for start must be numeric" }
+        let et = infer(endv, names, types)
+        if string.slice(et, 0, 5) == "error" { return et }
+        if !is_numeric(et) { return "error for end must be numeric" }
+        let lnames = slist_new()
+        let ltypes = slist_new()
+        let k = slist_len(names)
+        let mut i = 0
+        while i < k {
+            slist_push(lnames, slist_get(names, i))
+            slist_push(ltypes, slist_get(types, i))
+            i = i + 1
+        }
+        slist_push(lnames, var)
+        slist_push(ltypes, "i64")
+        return check_block(fn_body, lnames, ltypes)
+    }
     if h == "if" || h == "while" {
         let p = ilist_new()
         ilist_push(p, 0)
