@@ -104,6 +104,7 @@ nav:
   - Runtime:
       - Overview: runtime/index.md
       - Runtime Overview: runtime/overview.md
+      - 2D Game Helpers and Tilemaps: runtime/game2d.md
       - Memory: runtime/memory.md
       - Graphics 2D: runtime/graphics-2d.md
       - Graphics 3D: runtime/graphics-3d.md
