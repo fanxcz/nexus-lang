@@ -234,6 +234,13 @@ fn gen_expr(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         }
         return r
     }
+    if h == "not" {
+        let inner = read_node(body, p)
+        let v = gen_expr(inner, names, types, out, reg, globals, fns, frets)
+        let r = next_reg(reg)
+        emit_line(out, "  " + r + " = xor i1 " + v + ", true")
+        return r
+    }
     if h == "+" || h == "-" || h == "*" || h == "/" || h == "%" {
         let lhs = read_node(body, p)
         let rhs = read_node(body, p)

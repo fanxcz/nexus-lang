@@ -155,5 +155,41 @@ fn main() {
         exit(1)
     }
 
+    // Fifth case: bool and logical not.
+    let src5 = file_read("selfhost/tests/bool_subset.nx")
+    if string.len(src5) == 0 {
+        print("FAIL cannot read selfhost/tests/bool_subset.nx")
+        exit(1)
+    }
+    let ll5 = codegen(src5)
+    if string.slice(ll5, 0, 5) == "error" {
+        print("FAIL codegen bool: " + ll5)
+        exit(1)
+    }
+    file_write("build/selfhost-bool.ll", ll5)
+    let rc5 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-bool.ll src/runtime/runtime.cpp -o build/selfhost-bool.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    if rc5 != 0 {
+        print("FAIL clang++ bool rc=" + rc5)
+        exit(1)
+    }
+    let run_rc5 = system("build\\selfhost-bool.exe > build\\selfhost-bool-out.txt 2>&1")
+    if run_rc5 != 0 {
+        print("FAIL run bool rc=" + run_rc5)
+        exit(1)
+    }
+    let out5 = string.trim(file_read("build/selfhost-bool-out.txt"))
+    if !line_is(out5, 0, "true") {
+        print("FAIL bool line0: " + string.trim(string.split_at(out5, "\n", 0)))
+        exit(1)
+    }
+    if !line_is(out5, 1, "false") {
+        print("FAIL bool line1: " + string.trim(string.split_at(out5, "\n", 1)))
+        exit(1)
+    }
+    if !line_is(out5, 2, "1") {
+        print("FAIL bool line2: " + string.trim(string.split_at(out5, "\n", 2)))
+        exit(1)
+    }
+
     print("all codegen tests passed")
 }
