@@ -116,6 +116,22 @@ int main() {
             // Separators at invalid positions must be rejected by the lexer.
         }
     }
+    // Numeric separators must also normalize in parser-only contexts such as
+    // fixed-array lengths, not just expression literals.
+    const std::vector<std::string> validNumericPrograms = {
+        "fn main(){ print(1_000_000) }",
+        "fn main(){ let ratio: f64 = 1.25e-3 }",
+        "fn main(value: [i64;1_0]) {}"
+    };
+    for (const auto& source : validNumericPrograms) {
+        try {
+            (void)nexus::Parser(nexus::Lexer(source).tokenize()).parseProgram();
+        } catch (const std::exception& error) {
+            std::cerr << "valid numeric source rejected: " << error.what() << "\n";
+            return 18;
+        }
+    }
+
     if (!rejects("fn main(){ print(9223372036854775808) }")) {
         std::cerr << "out-of-range integer literal was accepted\n";
         return 1;

@@ -50,6 +50,9 @@ def main():
             second = read_until(master, proc, bytes([13, 10]) + b"nexus> ")
             if not has_line(second, b"2"):
                 raise AssertionError(f"history recall did not evaluate: {second!r}")
+            # The REPL prints its prompt just before enabling raw terminal mode.
+            # Give it a moment so Ctrl+C is delivered as an input byte, not a tty signal.
+            time.sleep(0.05)
             os.write(master, bytes([3]))
             read_until(master, proc, bytes([13, 10]) + b"nexus> ")
             # Tab expands a built-in identifier from a partial prefix.
