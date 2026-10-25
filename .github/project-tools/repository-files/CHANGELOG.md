@@ -1,5 +1,12 @@
 # Changelog
 
+## Runtime parsing and process safety (2026-10-26)
+
+- Replaced text-search JSON extraction with a bounded parser that validates JSON grammar, decodes escape sequences and Unicode, checks raw UTF-8, and enforces input-size, nesting and node limits.
+- Added `json_valid`, `json_type`, `json_array_len` and `json_array_get`, plus wrappers in `std.json` and regression coverage for malformed input, nested-key confusion, escaped strings, Unicode and array access.
+- Changed the HTTP GET runtime to pass URLs as direct process arguments rather than through a shell, check the curl exit status, and cap captured bodies at 16 MiB.
+- Added a regression test against shell interpretation of URL characters and updated runtime/tooling documentation and editor completions.
+
 ## Product site and developer workflow (2026-10-11)
 
 - Redesigned the documentation landing page around a cleaner blue/yellow product identity and clearer download/start paths.
