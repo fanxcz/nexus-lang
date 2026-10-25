@@ -1,190 +1,94 @@
 # Debugging
 
-Debugging NEXUS compiler and applications.
+This page documents workflows supported by the current NEXUS compiler. NEXUS does not yet provide a source-level debugger protocol, source maps, or the language/runtime features shown in some generic debugging examples (such as string interpolation, `eprintln`, assertion macros, or `file!`/`line!` macros).
 
-## Debugging the Compiler
+## Diagnose a source file
 
-### Build Debug Version
+Run the compiler checks before starting an application:
 
-```bash
-cmake --preset=debug
-cmake --build --preset=debug
+```sh
+nexus check src/main.nx
+nexus explain-backend src/main.nx
+nexus doctor
 ```
 
-### GDB / LLDB
+Use `nexus explain-backend` to understand whether a program fits the built-in machine-code subset or needs the LLVM path. `nexus doctor` checks the available compiler/toolchain configuration.
 
-```bash
-# GDB
-gdb ./build/nexus
-(gdb) run new test --template app
-(gdb) bt
+## Inspect generated code
 
-# LLDB
-lldb ./build/nexus
-(lldb) run new test --template app
-(lldb) bt
+The LLVM path can emit LLVM IR for inspection:
+
+```sh
+nexus build src/main.nx -o build/main --emit-ir
 ```
 
-### Common Breakpoints
+The native backend emits PE/ELF machine code directly and does not produce LLVM IR.
 
-```gdb
-# Lexer
-break lexer.cpp:42
+## Print-based debugging
 
-# Parser
-break parser.cpp:123
-
-# Semantic
-break semantic.cpp:567
-
-# Codegen
-break llvm_ir.cpp:89
-
-# Panic handler
-break panic_handler
-```
-
-### Debugging Tips
-
-```bash
-# Enable debug logging
-./build/nexus --debug build src/main.nx
-
-# Dump AST
-./build/nexus --dump-ast src/main.nx
-
-# Dump LLVM IR
-./build/nexus --emit-llvm src/main.nx
-
-# Verbose compilation
-./build/nexus -v build src/main.nx
-```
-
-## Debugging Applications
-
-### Print Debugging
+Use ordinary `print` calls and string concatenation:
 
 ```nx
+fn calculate(value: i64) -> i64 {
+    print("calculate input = " + value)
+    let result = value * 2
+    print("calculate result = " + result)
+    return result
+}
+
 fn main() {
-    let x = compute()
-    print("DEBUG: x = {x}")  // Simple
-    eprintln("DEBUG: x = {x}")  // To stderr
-    
-    // With location
-    print("DEBUG [{}:{}]: x = {x}", file!(), line!())
+    let answer = calculate(21)
+    print("answer = " + answer)
 }
 ```
 
-### Assertions
+NEXUS automatically converts `i64`, `f64`, and `bool` values to strings when concatenated with a string. There is no general-purpose format-string interpolation.
 
-```nx
-fn divide(a: f64, b: f64) -> f64 {
-    assert(b != 0.0, "Division by zero")
-    a / b
-}
+## Native debugger
 
-// Debug-only (removed in release)
-debug_assert!(ptr.is_not_null())
+You can use GDB or LLDB to inspect the generated executable at the machine-code level:
+
+```sh
+gdb ./build/main
 ```
 
-### GDB with NEXUS Programs
+or:
 
-```bash
-# Compile with debug info (default)
-nexus build
-
-# Debug
-gdb ./build/myapp
-(gdb) run
-(gdb) break main.nx:42
-(gdb) print variable_name
+```sh
+lldb ./build/main
 ```
 
-### Memory Debugging
+Debugger support is currently limited to what the generated executable and toolchain provide. Source-level breakpoints in `.nx` files, a NEXUS debug adapter, variable mapping back to source names, and integrated IDE debugging are not implemented.
 
-```bash
-# AddressSanitizer
-cmake --preset=sanitize-address
-cmake --build --preset=sanitize-address
+## Sanitizers
 
-# Valgrind (Linux)
-valgrind --leak-check=full ./build/myapp
+The repository's `sanitizers.yml` workflow builds and tests the C++ compiler/frontend/runtime with AddressSanitizer and UndefinedBehaviorSanitizer. To reproduce that workflow on Linux with Clang installed:
 
-# Heap tracking
-# In code:
-mem_track_enable(true)
-// ... run ...
-mem_track_report()
-mem_track_disable()
+```sh
+cmake -S . -B build-sanitize -G Ninja \
+  -DNEXUS_BUILD_TESTS=ON \
+  -DNEXUS_USE_CLANG=OFF \
+  -DCMAKE_C_COMPILER=clang \
+  -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+  -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+  -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+cmake --build build-sanitize --parallel 2
+ASAN_OPTIONS=halt_on_error=1:detect_leaks=0 \
+UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+  ctest --test-dir build-sanitize --output-on-failure
 ```
 
-### Common Issues
+These sanitizer flags instrument the C++ tools being built. They do not automatically instrument a separately generated NEXUS executable.
 
-| Symptom | Check |
-|---------|-------|
-| Segfault | Null pointer, use-after-free, stack overflow |
-| Wrong output | Logic error, operator precedence |
-| Infinite loop | Loop condition, iterator invalidation |
-| Slow | Algorithm complexity, allocations in loop |
-| Crash on exit | Double free, destructor order |
+## Run the test suite
 
-### VS Code Debug Config
-
-```json
-// .vscode/launch.json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug NEXUS Compiler",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/nexus",
-            "args": ["build", "src/main.nx"],
-            "cwd": "${workspaceFolder}",
-            "MIMode": "gdb"
-        },
-        {
-            "name": "Debug NEXUS App",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/myapp/build/myapp",
-            "cwd": "${workspaceFolder}/myapp",
-            "MIMode": "gdb"
-        }
-    ]
-}
+```sh
+ctest --test-dir build --output-on-failure
 ```
 
-### CLion Debug Config
+For changes to the runtime JSON parser, run its focused test:
 
-1. Run → Edit Configurations → +
-2. **CMake Application**
-3. Target: `nexus` or your app
-4. Executable: `build/nexus`
-5. Arguments: `build src/main.nx`
-
-## Profiling
-
-```bash
-# perf (Linux)
-perf record ./build/nexus build src/main.nx
-perf report
-
-# Instruments (macOS)
-xcrun xctrace record --template "Time Profiler" --launch -- ./build/nexus
-
-# VTune (Intel)
-vtune -collect hotspots -r result -- ./build/nexus
-```
-
-## Logging
-
-```bash
-# Compiler debug logs
-./build/nexus --log-level debug build src/main.nx
-
-# Runtime debug
-export NEXUS_DEBUG=1
-./build/myapp
+```sh
+ctest --test-dir build -R nexus_runtime_json_test --output-on-failure
 ```
