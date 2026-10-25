@@ -24,7 +24,7 @@ fn main() {
     if cxx == "" {
         cxx = "clang++"
     }
-    let rc = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-test.ll src/runtime/runtime.cpp -o build/selfhost-test.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-test.ll src/runtime/runtime.cpp -o build/selfhost-test.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
     if rc != 0 {
         print("FAIL clang++ rc=" + rc)
         exit(1)
@@ -64,7 +64,7 @@ fn main() {
     }
     file_write("build/selfhost-fn.ll", ll2)
 
-    let rc2 = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-fn.ll src/runtime/runtime.cpp -o build/selfhost-fn.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc2 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-fn.ll src/runtime/runtime.cpp -o build/selfhost-fn.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
     if rc2 != 0 {
         print("FAIL clang++ fn rc=" + rc2)
         exit(1)
@@ -99,7 +99,7 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-str.ll", ll3)
-    let rc3 = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-str.ll src/runtime/runtime.cpp -o build/selfhost-str.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc3 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-str.ll src/runtime/runtime.cpp -o build/selfhost-str.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
     if rc3 != 0 {
         print("FAIL clang++ str rc=" + rc3)
         exit(1)
@@ -135,7 +135,7 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-float.ll", ll4)
-    let rc4 = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-float.ll src/runtime/runtime.cpp -o build/selfhost-float.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc4 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-float.ll src/runtime/runtime.cpp -o build/selfhost-float.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
     if rc4 != 0 {
         print("FAIL clang++ float rc=" + rc4)
         exit(1)
