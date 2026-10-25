@@ -16,6 +16,23 @@ The current compiler has a small static type system with inference for initializ
 
 Types such as `i8`, `u8`, `i16`, `i32`, `u32`, `u64`, `char`, `str`, `Option<T>` and `Result<T, E>` are not implemented as built-in types by the current parser.
 
+## Numeric literals
+
+Integer and floating-point literals may use underscores between digits to make
+large values easier to read. Decimal floating-point literals also support
+scientific notation; the exponent may include a sign.
+
+```nx
+const population: i64 = 1_000_000
+let distance: f64 = 1.25e3
+let tiny: f64 = 2.5E-4
+let ratio: f64 = 12_345.6_7e-2
+```
+
+An underscore must appear between digits; repeated, leading, and trailing
+separators are rejected. Scientific notation requires at least one exponent
+digit, so `1e` and `2E+` are invalid literals.
+
 ## Inference and annotations
 
 ```nx

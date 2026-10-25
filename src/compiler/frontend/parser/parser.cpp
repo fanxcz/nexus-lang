@@ -7,6 +7,18 @@
 #include <stdexcept>
 namespace nexus {
 
+    namespace {
+        std::string removeNumericSeparators(const std::string& literal) {
+            std::string normalized;
+            normalized.reserve(literal.size());
+            for (const char c : literal) {
+                if (c != '_')
+                    normalized.push_back(c);
+            }
+            return normalized;
+        }
+    } // namespace
+
     const Token& Parser::cur() const {
         return tokens_.at(i_);
     }
@@ -68,7 +80,7 @@ namespace nexus {
             const Token lengthToken = expect(TokenKind::Integer);
             std::size_t length = 0;
             try {
-                const auto parsed = std::stoull(lengthToken.text);
+                const auto parsed = std::stoull(removeNumericSeparators(lengthToken.text));
                 if (parsed > std::numeric_limits<std::size_t>::max()) {
                     throw std::out_of_range("array length");
                 }
@@ -574,7 +586,7 @@ namespace nexus {
         if (cur().kind == TokenKind::Integer) {
             const Token literal = expect(TokenKind::Integer);
             try {
-                return std::make_unique<IntExpr>(std::stoll(literal.text));
+                return std::make_unique<IntExpr>(std::stoll(removeNumericSeparators(literal.text)));
             } catch (const std::exception&) {
                 throw std::runtime_error("integer literal out of range at " +
                                          std::to_string(literal.pos.line) + ":" +
@@ -584,7 +596,7 @@ namespace nexus {
         if (cur().kind == TokenKind::Float) {
             const Token literal = expect(TokenKind::Float);
             try {
-                return std::make_unique<FloatExpr>(std::stod(literal.text));
+                return std::make_unique<FloatExpr>(std::stod(removeNumericSeparators(literal.text)));
             } catch (const std::exception&) {
                 throw std::runtime_error("floating-point literal out of range at " +
                                          std::to_string(literal.pos.line) + ":" +

@@ -233,17 +233,40 @@ namespace nexus {
         return {k, s, p, pos_, true};
     }
     Token Lexer::number() {
-        auto p = pos_;
+        const auto p = pos_;
         std::string s;
-        while (std::isdigit(static_cast<unsigned char>(peek())))
-            s += take();
 
+        // Separators improve readability in large constants, but must occur
+        // strictly between digits (for example, 1'000 is not this language's
+        // syntax; use 1_000 instead).
+        const auto consumeDigits = [this, &s]() {
+            bool consumedDigit = false;
+            bool previousWasDigit = false;
+            while (std::isdigit(static_cast<unsigned char>(peek())) || peek() == '_') {
+                if (peek() == '_') {
+                    if (!previousWasDigit ||
+                        !std::isdigit(static_cast<unsigned char>(peek(1)))) {
+                        throw std::runtime_error("misplaced '_' in numeric literal at " +
+                                                 std::to_string(pos_.line) + ":" +
+                                                 std::to_string(pos_.column));
+                    }
+                    s += take();
+                    previousWasDigit = false;
+                } else {
+                    s += take();
+                    consumedDigit = true;
+                    previousWasDigit = true;
+                }
+            }
+            return consumedDigit;
+        };
+
+        consumeDigits(); // The caller enters here only when the first character is a digit.
         bool isFloat = false;
         if (peek() == '.' && std::isdigit(static_cast<unsigned char>(peek(1)))) {
             isFloat = true;
             s += take();
-            while (std::isdigit(static_cast<unsigned char>(peek())))
-                s += take();
+            consumeDigits();
         }
 
         // Scientific notation is a floating-point literal even without a
@@ -259,8 +282,7 @@ namespace nexus {
                                          std::to_string(pos_.line) + ":" +
                                          std::to_string(pos_.column));
             }
-            while (std::isdigit(static_cast<unsigned char>(peek())))
-                s += take();
+            consumeDigits();
         }
 
         return {isFloat ? TokenKind::Float : TokenKind::Integer, s, p, pos_, true};

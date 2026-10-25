@@ -84,6 +84,38 @@ int main() {
         return 13;
     }
 
+    // Numeric separators are allowed only between digits and are removed
+    // before conversion to the compiler's integer/floating-point AST values.
+    for (const std::string literal : {"1_000", "12_345_678", "1_000.25", "1.2_5e1_0"}) {
+        try {
+            const auto tokens = nexus::Lexer(literal).tokenize();
+            if (tokens.size() < 2 || tokens[0].text != literal ||
+                tokens[1].kind != nexus::TokenKind::End) {
+                std::cerr << "numeric-separator tokenization failed for: " << literal << "\n";
+                return 14;
+            }
+            const auto expectedKind = literal.find_first_of(".eE") == std::string::npos
+                                          ? nexus::TokenKind::Integer
+                                          : nexus::TokenKind::Float;
+            if (tokens[0].kind != expectedKind) {
+                std::cerr << "numeric-separator token kind mismatch for: " << literal << "\n";
+                return 15;
+            }
+        } catch (const std::exception& error) {
+            std::cerr << "valid numeric literal rejected: " << literal << ": "
+                      << error.what() << "\n";
+            return 16;
+        }
+    }
+    for (const std::string literal : {"1_", "1__0", "1_.0", "1e_3", "1.2e3_"}) {
+        try {
+            (void)nexus::Lexer(literal).tokenize();
+            std::cerr << "malformed numeric separator was accepted: " << literal << "\n";
+            return 17;
+        } catch (const std::exception&) {
+            // Separators at invalid positions must be rejected by the lexer.
+        }
+    }
     if (!rejects("fn main(){ print(9223372036854775808) }")) {
         std::cerr << "out-of-range integer literal was accepted\n";
         return 1;
