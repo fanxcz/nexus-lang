@@ -1,0 +1,13 @@
+import std.engine2d
+
+fn main() {
+    // Compile-only contract test: the convenience API must resolve to real
+    // runtime built-ins and keep its public signatures type-checkable.
+    let ok = true
+    if ok {
+        let dt = engine2d_delta_time()
+        let texture = engine2d_load_texture("missing-asset.png")
+        if dt < 0.0 { print("unexpected delta") }
+        if texture < 0 { print("texture load failed as expected for this compile-only test") }
+    }
+}
