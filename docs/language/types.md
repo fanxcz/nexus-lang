@@ -23,6 +23,10 @@ let count = 42
 let name = "NEXUS"
 let enabled = true
 
+// Floating-point literals support scientific notation.
+let distance: f64 = 1.25e3
+let tiny: f64 = 2.5E-4
+
 let mut total: i64 = 0
 total = total + count
 ```

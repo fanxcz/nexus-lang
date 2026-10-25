@@ -1,0 +1,7 @@
+fn main() {
+    let thousands: f64 = 1e3
+    let large: f64 = 2E+4
+    let small: f64 = 1.25e-3
+    let decimal: f64 = 3.5
+    print(thousands + large + small + decimal)
+}

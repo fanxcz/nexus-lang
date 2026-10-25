@@ -237,13 +237,33 @@ namespace nexus {
         std::string s;
         while (std::isdigit(static_cast<unsigned char>(peek())))
             s += take();
+
+        bool isFloat = false;
         if (peek() == '.' && std::isdigit(static_cast<unsigned char>(peek(1)))) {
+            isFloat = true;
             s += take();
             while (std::isdigit(static_cast<unsigned char>(peek())))
                 s += take();
-            return {TokenKind::Float, s, p, pos_, true};
         }
-        return {TokenKind::Integer, s, p, pos_, true};
+
+        // Scientific notation is a floating-point literal even without a
+        // decimal point: 1e3, 2E+4, and 1.25e-3 are all valid.
+        if (peek() == 'e' || peek() == 'E') {
+            isFloat = true;
+            s += take();
+            if (peek() == '+' || peek() == '-')
+                s += take();
+
+            if (!std::isdigit(static_cast<unsigned char>(peek()))) {
+                throw std::runtime_error("expected exponent digits at " +
+                                         std::to_string(pos_.line) + ":" +
+                                         std::to_string(pos_.column));
+            }
+            while (std::isdigit(static_cast<unsigned char>(peek())))
+                s += take();
+        }
+
+        return {isFloat ? TokenKind::Float : TokenKind::Integer, s, p, pos_, true};
     }
     Token Lexer::string() {
         auto p = pos_;
