@@ -8,6 +8,7 @@
 #include <random>
 #include <string>
 #include <utility>
+#include <vector>
 
 int main() {
     // A fixed seed makes failures reproducible on Windows, Linux and macOS.
@@ -53,6 +54,36 @@ int main() {
 
     // Numeric conversion errors must remain ordinary, location-aware parser
     // diagnostics rather than escaping as an unclassified standard exception.
+    // Scientific-notation literals must be tokenized as one floating-point token.
+    const std::vector<std::string> validScientific = {"1e3", "2E+4", "1.25e-3"};
+    for (const auto& literal : validScientific) {
+        try {
+            const auto tokens = nexus::Lexer(literal).tokenize();
+            if (tokens.size() < 2 || tokens[0].kind != nexus::TokenKind::Float ||
+                tokens[0].text != literal || tokens[1].kind != nexus::TokenKind::End) {
+                std::cerr << "scientific-notation tokenization failed for: " << literal << "\n";
+                return 10;
+            }
+        } catch (const std::exception& error) {
+            std::cerr << "valid scientific-notation literal rejected: " << literal
+                      << ": " << error.what() << "\n";
+            return 11;
+        }
+    }
+    for (const std::string literal : {"1e", "1E+", "5.2e-"}) {
+        try {
+            (void)nexus::Lexer(literal).tokenize();
+            std::cerr << "malformed exponent was accepted: " << literal << "\n";
+            return 12;
+        } catch (const std::exception&) {
+            // Malformed literals must be rejected by the lexer.
+        }
+    }
+    if (!rejects("fn main(){ print(1e309) }")) {
+        std::cerr << "out-of-range floating-point literal was accepted\n";
+        return 13;
+    }
+
     if (!rejects("fn main(){ print(9223372036854775808) }")) {
         std::cerr << "out-of-range integer literal was accepted\n";
         return 1;

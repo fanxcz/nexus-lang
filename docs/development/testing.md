@@ -32,7 +32,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_paint_smoke` | Paint template compile/run smoke checks |
 | `nexus_diagnostics_smoke` | Error/diagnostic formatting |
 | `nexus_lsp_smoke` | Actual LSP initialize, document-change, completion, definition, formatting and shutdown messages |
-| `nexus_frontend_fuzz_smoke` | Runs 1,500 deterministic generated inputs through the lexer and parser to catch crashes and hangs; malformed input is an expected outcome |
+| `nexus_frontend_fuzz_smoke` | Runs 5,000 deterministic generated inputs through the lexer and parser to catch crashes and hangs; malformed input is an expected outcome |
 | `nexus_regression_check` | Selected regression programs |
 | `nexus_native_smoke` | Built-in machine-code backend execution, on supported platforms |
 | `nexus_backend_parity` | Compare built-in and LLVM backend behavior where available |
