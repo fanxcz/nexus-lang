@@ -16,6 +16,7 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.crypto](crypto.md) | `hash_sha256` |
 | [std.os](os.md) | `args_count`, `args_get` |
 | [std.string](string.md) | `len`, `byte_at`, `byte_len` |
+| [std.tilemap](../runtime/game2d.md) | Tilemap creation, tile access, viewport drawing and collision helpers |
 
 ## Combined example
 
