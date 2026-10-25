@@ -23,6 +23,8 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 |---|---|
 | `nexus_tests` | C++ lexer/parser/semantic/compiler unit checks |
 | `nexus_runtime_memory_test` | Runtime memory behavior |
+| `nexus_runtime_json_test` | JSON grammar, escape decoding, Unicode, bounded parsing, top-level lookup and array access |
+| `nexus_runtime_http_test` | Ensures URL input is passed to the HTTP client without shell interpretation |
 | `nexus_version_smoke` | CLI version output |
 | `nexus_self_test` | Compile a tiny program and verify its expected exit code |
 | `nexus_doctor_json_smoke` | Parse the doctor response and validate required JSON field types |
