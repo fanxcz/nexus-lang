@@ -1,4 +1,4 @@
-# NEXUS Language Reference
+# NEXUS Language Manual
 
 Version 2.0.0  
 Author: fanxcz  
@@ -6,17 +6,78 @@ Repository: https://github.com/fanxcz/nexus-lang
 
 ------------------------------------------------------------------------
 
-## 1. Overview
+## 1. Introduction
 
-NEXUS is a compiled programming language with two backends:
+NEXUS is a compiled programming language designed for native applications,
+tools, and games. The reference compiler is written in C++20. Programs are
+compiled to native code through LLVM IR or through a small built-in native
+backend.
 
-- **LLVM backend** — full language support, used for all serious programs.
-- **Native backend** — small subset, useful for tiny programs and experiments.
+The language is intentionally small, explicit, and predictable. It does not
+hide control flow or memory operations. Variables are stack slots, function
+calls are direct, and the generated LLVM IR can be inspected and compiled
+with a normal C++ toolchain.
 
-The compiler is written in C++20. The runtime is written in C++. The standard
-library and a self-hosting toolchain are written in NEXUS itself.
+NEXUS has three major parts:
 
-A NEXUS program is a set of declarations. The entry point is `fn main()`.
+1. **Compiler** (`src/`) — lexer, parser, semantic analysis, and code
+   generation.
+2. **Runtime** (`src/runtime/runtime.cpp`) — console, files, networking,
+   graphics, audio, input, and helper functions.
+3. **Standard library** (`stdlib/`) — convenience wrappers written in NEXUS.
+4. **Self-hosting toolchain** (`selfhost/`) — lexer, parser, type checker,
+   and code generator written in NEXUS.
+
+The LLVM backend is the recommended backend. It supports the full language.
+The native backend supports only a small subset and exists for experiments and
+tiny programs.
+
+------------------------------------------------------------------------
+
+## 2. Compilation model
+
+A NEXUS program is compiled in several stages:
+
+1. **Lexical analysis** converts source text into tokens.
+2. **Parsing** builds an abstract syntax tree.
+3. **Semantic analysis** checks types and variable usage.
+4. **Code generation** emits LLVM IR or native code.
+5. **External compilation** (for LLVM) compiles `.ll` files with a
+   clang-compatible driver and links the runtime.
+
+This separation makes the compiler easier to debug. The generated `.ll` file
+is ordinary text and can be inspected directly.
+
+------------------------------------------------------------------------
+
+## 3. Installation and build
+
+### 3.1 Building from source
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+ctest --test-dir build
+```
+
+The compiler is produced as `build/nexus` (or `build/nexus.exe` on Windows).
+
+### 3.2 Environment variables
+
+- `NEXUS_CXX` — clang-compatible driver used by self-hosting tests and by
+  generated program compilation.
+- `NEXUS_SOURCE_ROOT` — source root used by the compiler (set by CMake).
+
+### 3.3 Self-hosting environment
+
+For self-hosting tests on Windows, `NEXUS_CXX` can point to
+`build/clang++.cmd`, which wraps the bundled Zig toolchain.
+
+------------------------------------------------------------------------
+
+## 4. First program
+
+Create `hello.nx`:
 
 ```nx
 fn main() {
@@ -30,156 +91,95 @@ Run it:
 nexus run hello.nx --backend llvm
 ```
 
-------------------------------------------------------------------------
+What happens:
 
-## 2. Installation and build
-
-### 2.1 Build from source
-
-```bash
-cmake -S . -B build -G Ninja
-cmake --build build -j
-ctest --test-dir build
-```
-
-The compiler binary is `build/nexus` (or `build/nexus.exe` on Windows).
-
-### 2.2 Environment
-
-For self-hosting tests and `.ll` compilation, set `NEXUS_CXX` to a
-clang-compatible driver:
-
-```bash
-export NEXUS_CXX="/path/to/clang++"
-```
-
-On Windows the project provides `build/clang++.cmd`, which wraps the bundled
-Zig toolchain.
-
-### 2.3 Project layout
-
-```text
-src/        C++ compiler and runtime
-stdlib/     Standard library written in NEXUS
-selfhost/   Lexer, parser, type checker, code generator written in NEXUS
-docs/       Documentation
-examples/   Example programs
-tests/      Compiler and runtime tests
-```
+1. The compiler reads `hello.nx`.
+2. It generates LLVM IR.
+3. The runtime is linked.
+4. The resulting program prints the message.
 
 ------------------------------------------------------------------------
 
-## 3. Quick start
+## 5. Lexical structure
 
-Create `add.nx`:
+### 5.1 Comments
 
-```nx
-fn add(a: i64, b: i64) -> i64 {
-    return a + b
-}
-
-fn main() {
-    print(add(40, 2))
-    let x = add(add(1, 2), 3)
-    print(x)
-}
-```
-
-Run:
-
-```bash
-nexus run add.nx --backend llvm
-```
-
-Expected output:
-
-```text
-42
-6
-```
-
-------------------------------------------------------------------------
-
-## 4. Lexical structure
-
-### 4.1 Comments
-
-Line comment:
+Line comments begin with `//` and continue to the end of the line:
 
 ```nx
-// this is a comment
+let x = 10 // comment
 ```
 
-Block comment:
+Block comments use `/*` and `*/`:
 
 ```nx
-/* this is
-   a block comment */
+/* This is
+   a block comment. */
 ```
 
-### 4.2 Identifiers
+### 5.2 Identifiers
 
-Identifiers consist of letters, digits, and underscores. They must not start
-with a digit.
+Identifiers consist of letters, digits, and underscores. They must not begin
+with a digit. Identifiers are case-sensitive.
 
-### 4.3 Keywords
+### 5.3 Keywords
+
+Keywords are reserved and cannot be used as identifiers:
 
 ```text
 fn let const mut return if else while for in break continue
 struct enum import extern unsafe as match true false print
 ```
 
-### 4.4 Literals
+### 5.4 Literals
 
-Integer:
+Integer literals are written in decimal form:
 
 ```nx
+0
 42
 -7
 ```
 
-Floating point:
+Floating point literals contain a decimal point:
 
 ```nx
 3.14
 1.0
+0.5
 ```
 
-String:
+String literals are enclosed in double quotes:
 
 ```nx
 "hello"
-"line one\nline two"
 ```
 
-Boolean:
+Boolean literals are:
 
 ```nx
 true
 false
 ```
 
-### 4.5 Operators
-
-```text
-+  -  *  /  %  ==  !=  <  <=  >  >=  &&  ||  !  =
-```
-
 ------------------------------------------------------------------------
 
-## 5. Types
+## 6. Types
 
-NEXUS supports the following basic types:
+NEXUS has a small, explicit type system.
 
-| Type | Description |
-|------|-------------|
+| Type | Meaning |
+|------|---------|
 | `i64` | signed 64-bit integer |
-| `f64` | 64-bit floating point |
-| `bool` | boolean |
+| `f64` | 64-bit floating point number |
+| `bool` | boolean value |
 | `string` | text |
 | `void` | no value |
 
-Type annotations are used in function parameters and return types:
+Types are not inferred for function parameters. Function signatures must
+state parameter and return types explicitly.
+
+Type annotations are part of the function declaration:
 
 ```nx
 fn scale(x: f64, factor: f64) -> f64 {
@@ -189,30 +189,41 @@ fn scale(x: f64, factor: f64) -> f64 {
 
 ------------------------------------------------------------------------
 
-## 6. Variables
+## 7. Variables
 
-### 6.1 Immutable variables
+### 7.1 Immutable variables
+
+Use `let` to declare a variable whose value does not change:
 
 ```nx
 let x = 10
 ```
 
-### 6.2 Mutable variables
+After declaration, `x` cannot be reassigned.
+
+### 7.2 Mutable variables
+
+Use `let mut` when the value will change:
 
 ```nx
 let mut i = 0
 i = i + 1
 ```
 
-### 6.3 Discard
+### 7.3 Discarding values
+
+Use `let _` to explicitly discard a value:
 
 ```nx
 let _ = some_function()
 ```
 
-### 6.4 Type stability
+This is useful when a function returns a value that is not needed.
 
-Assignment must preserve the variable type:
+### 7.4 Type stability
+
+A variable keeps its type for its entire lifetime. Reassigning a value of a
+different type is an error:
 
 ```nx
 let x = 10
@@ -220,11 +231,16 @@ x = 20      // ok
 x = "text"  // error
 ```
 
+### 7.5 Scope
+
+Variables are scoped to the block in which they are declared. A variable
+declared inside an `if` or `while` block is not visible outside that block.
+
 ------------------------------------------------------------------------
 
-## 7. Expressions
+## 8. Expressions
 
-### 7.1 Arithmetic
+### 8.1 Arithmetic
 
 ```nx
 a + b
@@ -234,10 +250,10 @@ a / b
 a % b
 ```
 
-Integer division is signed. Floating point division is used when either
-operand is `f64`.
+Integer operations use signed 64-bit arithmetic. If either operand is `f64`,
+the operation is performed in floating point.
 
-### 7.2 Comparisons
+### 8.2 Comparisons
 
 ```nx
 a == b
@@ -248,7 +264,9 @@ a > b
 a >= b
 ```
 
-### 7.3 Logical operators
+Comparisons produce a `bool`.
+
+### 8.3 Logical operators
 
 ```nx
 a && b
@@ -256,57 +274,68 @@ a || b
 !a
 ```
 
-### 7.4 Unary minus
+`&&` and `||` operate on boolean values.
+
+### 8.4 Unary minus
 
 ```nx
 -x
 ```
 
-### 7.5 String concatenation
+For `i64`, this computes zero minus the value. For `f64`, it negates the
+floating point value.
+
+### 8.5 String concatenation
 
 ```nx
 let s = "hello" + " " + "world"
 ```
 
-### 7.6 Operator precedence
+The `+` operator concatenates strings when at least one operand is a string.
+
+### 8.6 Precedence
 
 From highest to lowest:
 
-1. function calls and primary expressions
-2. unary `-`, `!`
+1. Primary expressions and function calls
+2. Unary `-` and `!`
 3. `*`, `/`, `%`
 4. `+`, `-`
-5. comparisons
+5. Comparisons
 6. `&&`
 7. `||`
 
+Parentheses can be used to override precedence.
+
 ------------------------------------------------------------------------
 
-## 8. Control flow
+## 9. Control flow
 
-### 8.1 If statement
+### 9.1 If statement
 
 ```nx
-if x > 0 {
-    print("positive")
+if condition {
+    ...
 } else {
-    print("not positive")
+    ...
 }
 ```
 
-### 8.2 While loop
+The condition must be boolean. The `else` branch is optional.
+
+### 9.2 While loop
 
 ```nx
-let mut i = 0
-while i < 5 {
-    print(i)
-    i = i + 1
+while condition {
+    ...
 }
 ```
 
-### 8.3 Blocks
+The condition is evaluated before each iteration.
 
-Blocks use braces:
+### 9.3 Blocks
+
+Blocks are delimited by braces. They introduce a new scope:
 
 ```nx
 {
@@ -317,9 +346,9 @@ Blocks use braces:
 
 ------------------------------------------------------------------------
 
-## 9. Functions
+## 10. Functions
 
-### 9.1 Declaration
+### 10.1 Declaration
 
 ```nx
 fn name(param: type, ...) -> type {
@@ -327,9 +356,9 @@ fn name(param: type, ...) -> type {
 }
 ```
 
-### 9.2 Parameters
+### 10.2 Parameters
 
-Parameters are declared with name and type:
+Parameters are named and typed:
 
 ```nx
 fn add(a: i64, b: i64) -> i64 {
@@ -337,16 +366,16 @@ fn add(a: i64, b: i64) -> i64 {
 }
 ```
 
-### 9.3 Return
+### 10.3 Return
 
 ```nx
 return value
 ```
 
-A function may end without an explicit return in some contexts; the compiler
-inserts a default return where supported.
+A function may return early. If a function does not explicitly return, the
+compiler may insert a default return where supported.
 
-### 9.4 Main
+### 10.4 Main function
 
 ```nx
 fn main() {
@@ -354,16 +383,16 @@ fn main() {
 }
 ```
 
-`main` returns `i32` at the LLVM level.
+`main` is the program entry point. At the LLVM level it returns `i32`.
 
-### 9.5 Calls
+### 10.5 Function calls
 
 ```nx
 let x = add(1, 2)
 print(add(x, 3))
 ```
 
-### 9.6 Recursion
+### 10.6 Recursion
 
 Functions may call themselves:
 
@@ -376,41 +405,53 @@ fn factorial(n: i64) -> i64 {
 }
 ```
 
+### 10.7 Function order
+
+Functions must be declared before they are called. The compiler processes
+declarations in source order.
+
 ------------------------------------------------------------------------
 
-## 10. Strings
+## 11. Strings
 
-### 10.1 Literals
+### 11.1 Literals
 
 ```nx
 let s = "hello"
 ```
 
-### 10.2 Escapes
+### 11.2 Escape sequences
 
 ```nx
 "\n"   // newline
 "\t"   // tab
 "\r"   // carriage return
 "\\"   // backslash
-"\""   // quote
+"\""   // double quote
 ```
 
-### 10.3 Concatenation
+### 11.3 Concatenation
 
 ```nx
-let s = "a" + "b"
+let s = "a" + " " + "b"
 ```
 
-### 10.4 Printing
+### 11.4 Printing strings
 
 ```nx
 print("hello")
 ```
 
+### 11.5 Byte-oriented operations
+
+String operations in the standard library are byte-oriented. This keeps the
+implementation simple and predictable.
+
 ------------------------------------------------------------------------
 
-## 11. Floating point
+## 12. Floating point
+
+Floating point values use the `f64` type:
 
 ```nx
 let x = 1.5
@@ -428,23 +469,26 @@ if x < y {
 }
 ```
 
+Floating point arithmetic follows IEEE-754 semantics through LLVM.
+
 ------------------------------------------------------------------------
 
-## 12. Modules and imports
+## 13. Modules and imports
 
-Import a module:
+Import a module by file name:
 
 ```nx
 import "io.nx"
 ```
 
-The standard library is located in `stdlib/`.
+The standard library is located in `stdlib/`. Imports make the module's
+functions available.
 
 ------------------------------------------------------------------------
 
-## 13. Standard library
+## 14. Standard library
 
-### 13.1 io
+### 14.1 io
 
 ```nx
 read_line(prompt: string) -> string
@@ -452,7 +496,7 @@ read_i64(prompt: string) -> i64
 read_f64(prompt: string) -> f64
 ```
 
-### 13.2 fs
+### 14.2 fs
 
 ```nx
 fs_read(path: string) -> string
@@ -460,7 +504,7 @@ fs_write(path: string, data: string) -> i64
 fs_exists(path: string) -> bool
 ```
 
-### 13.3 string
+### 14.3 string
 
 ```nx
 len(s: string) -> i64
@@ -468,26 +512,26 @@ byte_at(s: string, index: i64) -> i64
 byte_len(s: string) -> i64
 ```
 
-### 13.4 os
+### 14.4 os
 
 ```nx
 args_count() -> i64
 args_get(index: i64) -> string
 ```
 
-### 13.5 net
+### 14.5 net
 
 ```nx
 http_get_text(url: string) -> string
 ```
 
-### 13.6 json
+### 14.6 json
 
 ```nx
 json_field(json: string, key: string) -> string
 ```
 
-### 13.7 db
+### 14.7 db
 
 ```nx
 db_open(path: string) -> i64
@@ -495,13 +539,13 @@ db_exec(db: i64, sql: string) -> i64
 db_close(db: i64)
 ```
 
-### 13.8 crypto
+### 14.8 crypto
 
 ```nx
 hash_sha256(text: string) -> string
 ```
 
-### 13.9 memory
+### 14.9 memory
 
 ```nx
 memory_alloc(bytes: i64) -> i64
@@ -510,63 +554,86 @@ memory_free(ptr: i64)
 
 ------------------------------------------------------------------------
 
-## 14. Runtime functions
+## 15. Runtime functions
 
-The compiler declares runtime functions such as:
+The runtime provides low-level functions used by generated code:
 
 ```text
 nexus_print_i64(i64)
 nexus_print_f64(double)
 nexus_print_bool(i1)
 nexus_print_str(ptr)
+
 nexus_str_concat(ptr, ptr) -> ptr
 nexus_str_equal(ptr, ptr) -> i1
+
 nexus_file_read(ptr) -> ptr
 nexus_file_write(ptr, ptr) -> i64
 nexus_file_exists(ptr) -> i1
+
 nexus_env(ptr) -> ptr
 nexus_system(ptr) -> i64
 nexus_exit(i64)
 ```
 
-These are available to generated LLVM IR.
+These functions are declared automatically in generated LLVM IR.
 
 ------------------------------------------------------------------------
 
-## 15. Tooling
+## 16. Tooling
 
-### 15.1 Commands
+### 16.1 Running programs
 
 ```bash
 nexus run file.nx --backend llvm
-nexus check file.nx
-nexus build
-nexus repl
-nexus fmt file.nx
-nexus self-test
-nexus doctor
 ```
 
-### 15.2 Backends
+### 16.2 Type checking
 
-- `llvm` — full language support.
-- native — small subset only.
+```bash
+nexus check file.nx
+```
 
-Use `--backend llvm` for all real programs.
+### 16.3 Building
 
-### 15.3 Formatter
+```bash
+nexus build
+```
+
+### 16.4 REPL
+
+```bash
+nexus repl
+```
+
+### 16.5 Formatting
 
 ```bash
 nexus fmt file.nx
 ```
 
-### 15.4 LSP
+### 16.6 Self-test
 
-NEXUS includes an LSP server for editor integration.
+```bash
+nexus self-test
+```
+
+### 16.7 Doctor
+
+```bash
+nexus doctor
+```
+
+### 16.8 Backends
+
+- `llvm` supports the full language.
+- native supports only a small subset.
+
+Use `--backend llvm` for all real programs.
 
 ------------------------------------------------------------------------
 
-## 16. Build system
+## 17. Build system
 
 NEXUS uses CMake:
 
@@ -576,26 +643,27 @@ cmake --build build
 ctest --test-dir build
 ```
 
-Targets include the compiler, tests, and runtime tests.
+The build produces the compiler, tests, and runtime tests.
 
 ------------------------------------------------------------------------
 
-## 17. Native backend
+## 18. Native backend
 
-The native backend supports only a tiny subset:
+The native backend is intentionally small. It is useful for experiments
+but does not support strings, functions with full type support, or most
+standard library features.
 
-- basic arithmetic
-- simple control flow
-- minimal runtime calls
+For any non-trivial program, use:
 
-Use the LLVM backend for strings, functions, f64, and standard library
-features.
+```bash
+nexus run file.nx --backend llvm
+```
 
 ------------------------------------------------------------------------
 
-## 18. Self-hosting
+## 19. Self-hosting
 
-The `selfhost/` directory contains:
+The `selfhost/` directory contains a compiler written in NEXUS:
 
 - `lexer_lib.nx`
 - `parser_lib.nx`
@@ -611,43 +679,41 @@ The self-hosted code generator supports:
 - comparisons
 - logical operators
 - unary minus
-- `if` / `else`
+- `if` and `else`
 - `while`
 - functions and calls
 - string literals
 - `f64`
 
-Self-hosting is declared complete only when the self-hosted compiler
-reproduces the C++ compiler output on the test corpus.
+Self-hosting is considered complete only when the self-hosted compiler
+produces output matching the C++ compiler on the test corpus.
 
 ------------------------------------------------------------------------
 
-## 19. Grammar
-
-Simplified grammar:
+## 20. Grammar
 
 ```text
-program     := declaration*
-declaration := function | statement
-function    := "fn" IDENT "(" params ")" ("->" type)? block
-params      := (param ("," param)*)?
-param       := IDENT ":" type
-type        := "i64" | "f64" | "bool" | "string" | "void"
-block       := "{" statement* "}"
-statement   := let | assign | print | if | while | return | expr
-let         := "let" "mut"? IDENT "=" expression
-assign      := IDENT "=" expression
-print       := "print" "(" expression ")"
-if          := "if" expression block ("else" block)?
-while       := "while" expression block
-return      := "return" expression?
+program      := declaration*
+declaration  := function | statement
+function     := "fn" IDENT "(" params ")" ("->" type)? block
+params       := (param ("," param)*)?
+param        := IDENT ":" type
+type         := "i64" | "f64" | "bool" | "string" | "void"
+block        := "{" statement* "}"
+statement    := let | assign | print | if | while | return | expr
+let          := "let" "mut"? IDENT "=" expression
+assign       := IDENT "=" expression
+print        := "print" "(" expression ")"
+if           := "if" expression block ("else" block)?
+while        := "while" expression block
+return       := "return" expression?
 ```
 
 ------------------------------------------------------------------------
 
-## 20. Examples
+## 21. Examples
 
-### 20.1 Factorial
+### 21.1 Factorial
 
 ```nx
 fn factorial(n: i64) -> i64 {
@@ -662,7 +728,7 @@ fn main() {
 }
 ```
 
-### 20.2 Floating point
+### 21.2 Floating point
 
 ```nx
 fn main() {
@@ -673,7 +739,7 @@ fn main() {
 }
 ```
 
-### 20.3 Strings
+### 21.3 Strings
 
 ```nx
 fn main() {
@@ -682,7 +748,7 @@ fn main() {
 }
 ```
 
-### 20.4 Loop
+### 21.4 Loop and sum
 
 ```nx
 fn main() {
@@ -696,9 +762,21 @@ fn main() {
 }
 ```
 
+### 21.5 Functions
+
+```nx
+fn mul(a: i64, b: i64) -> i64 {
+    return a * b
+}
+
+fn main() {
+    print(mul(6, 7))
+}
+```
+
 ------------------------------------------------------------------------
 
-## 21. Troubleshooting
+## 22. Troubleshooting
 
 ### Program does not run
 
@@ -726,9 +804,19 @@ Ensure a clang-compatible compiler is available and `NEXUS_CXX` is set.
 
 ------------------------------------------------------------------------
 
-## 22. Notes
+## 23. Design notes
+
+NEXUS favors explicitness over implicit behavior. Types are stated in
+function signatures, variables must be declared before use, and the generated
+LLVM IR is readable. This makes the language suitable for learning,
+tooling, and systems-oriented programming.
+
+------------------------------------------------------------------------
+
+## 24. Notes
 
 - Functions must be declared before use.
 - Use `let mut` for mutable variables.
-- The native backend is limited.
-- For full language support, use `--backend llvm`.
+- `let _ = ...` discards a value.
+- Native backend is limited; use LLVM backend for full programs.
+- Documentation is versioned with the repository.
