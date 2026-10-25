@@ -250,6 +250,14 @@ if (NEXUS_BUILD_TESTS)
   target_link_libraries(nexus_runtime_json_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
   add_test(NAME nexus_runtime_json_test COMMAND nexus_runtime_json_test)
 
+  add_executable(nexus_runtime_http_test
+      tests/runtime_http_test.cpp
+      src/runtime/runtime.cpp
+  )
+  target_compile_features(nexus_runtime_http_test PRIVATE cxx_std_20)
+  target_link_libraries(nexus_runtime_http_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
+  add_test(NAME nexus_runtime_http_test COMMAND nexus_runtime_http_test)
+
   add_executable(nexus_frontend_fuzz_smoke
       tests/frontend_fuzz_smoke.cpp
       src/compiler/frontend/lexer/lexer.cpp
