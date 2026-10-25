@@ -1,5 +1,7 @@
 # Downloads
 
+[Download the complete documentation as PDF](pdf/NEXUS-Documentation.pdf){ .md-button }
+
 Choose the official NEXUS package for your system. The Windows x64 package is assembled and tested by GitHub Actions from this repository. Downloads are published to GitHub Pages only when the packaging and documentation workflow succeeds.
 
 **Important for direct downloads:** use the published URL below, not `raw.githubusercontent.com/.../docs/assets/downloads/NEXUS_Windows_Portable.zip`. The source tree previously contained an old, incomplete ZIP at that path; it is not the current package built by CI.

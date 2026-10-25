@@ -39,6 +39,11 @@ theme:
 
 plugins:
   - search
+  - with-pdf:
+      output_path: pdf/NEXUS-Documentation.pdf
+      cover_title: NEXUS Programming Language
+      cover_subtitle: Documentation
+      author: fanxcz
   - git-revision-date-localized:
       enable_creation_date: true
       enable_git_follow: false
