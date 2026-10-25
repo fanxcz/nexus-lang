@@ -1,0 +1,31 @@
+// Small, predictable scalar helpers for gameplay and simulation.
+fn math_clamp(value: f64, minimum: f64, maximum: f64) -> f64 {
+    if value < minimum { return minimum }
+    if value > maximum { return maximum }
+    return value
+}
+
+fn math_lerp(start: f64, finish: f64, amount: f64) -> f64 {
+    return start + (finish - start) * math_clamp(amount, 0.0, 1.0)
+}
+
+fn math_approach(value: f64, target: f64, amount: f64) -> f64 {
+    if amount < 0.0 { return value }
+    if value < target {
+        let next = value + amount
+        if next > target { return target }
+        return next
+    }
+    if value > target {
+        let next = value - amount
+        if next < target { return target }
+        return next
+    }
+    return target
+}
+
+fn math_sign(value: f64) -> f64 {
+    if value < 0.0 { return -1.0 }
+    if value > 0.0 { return 1.0 }
+    return 0.0
+}
