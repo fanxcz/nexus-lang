@@ -87,5 +87,73 @@ fn main() {
         print("FAIL fn line1: " + string.trim(string.split_at(out2, "\n", 1)))
         exit(1)
     }
+    // Third case: string literals in print.
+    let src3 = file_read("selfhost/tests/str_subset.nx")
+    if string.len(src3) == 0 {
+        print("FAIL cannot read selfhost/tests/str_subset.nx")
+        exit(1)
+    }
+    let ll3 = codegen(src3)
+    if string.slice(ll3, 0, 5) == "error" {
+        print("FAIL codegen str: " + ll3)
+        exit(1)
+    }
+    file_write("build/selfhost-str.ll", ll3)
+    let rc3 = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-str.ll src/runtime/runtime.cpp -o build/selfhost-str.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    if rc3 != 0 {
+        print("FAIL clang++ str rc=" + rc3)
+        exit(1)
+    }
+    let run_rc3 = system("build\\selfhost-str.exe > build\\selfhost-str-out.txt 2>&1")
+    if run_rc3 != 0 {
+        print("FAIL run str rc=" + run_rc3)
+        exit(1)
+    }
+    let out3 = string.trim(file_read("build/selfhost-str-out.txt"))
+    if !line_is(out3, 0, "hello") {
+        print("FAIL str line0: " + string.trim(string.split_at(out3, "\n", 0)))
+        exit(1)
+    }
+    if !line_is(out3, 1, "a b") {
+        print("FAIL str line1: " + string.trim(string.split_at(out3, "\n", 1)))
+        exit(1)
+    }
+    if !line_is(out3, 2, "7") {
+        print("FAIL str line2: " + string.trim(string.split_at(out3, "\n", 2)))
+        exit(1)
+    }
+
+    // Fourth case: f64 arithmetic and print.
+    let src4 = file_read("selfhost/tests/float_subset.nx")
+    if string.len(src4) == 0 {
+        print("FAIL cannot read selfhost/tests/float_subset.nx")
+        exit(1)
+    }
+    let ll4 = codegen(src4)
+    if string.slice(ll4, 0, 5) == "error" {
+        print("FAIL codegen float: " + ll4)
+        exit(1)
+    }
+    file_write("build/selfhost-float.ll", ll4)
+    let rc4 = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-float.ll src/runtime/runtime.cpp -o build/selfhost-float.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    if rc4 != 0 {
+        print("FAIL clang++ float rc=" + rc4)
+        exit(1)
+    }
+    let run_rc4 = system("build\\selfhost-float.exe > build\\selfhost-float-out.txt 2>&1")
+    if run_rc4 != 0 {
+        print("FAIL run float rc=" + run_rc4)
+        exit(1)
+    }
+    let out4 = string.trim(file_read("build/selfhost-float-out.txt"))
+    if !line_is(out4, 0, "3.5") {
+        print("FAIL float line0: " + string.trim(string.split_at(out4, "\n", 0)))
+        exit(1)
+    }
+    if !line_is(out4, 1, "3") {
+        print("FAIL float line1: " + string.trim(string.split_at(out4, "\n", 1)))
+        exit(1)
+    }
+
     print("all codegen tests passed")
 }

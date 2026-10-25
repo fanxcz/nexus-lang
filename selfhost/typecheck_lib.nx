@@ -238,10 +238,49 @@ fn infer(node: string, names: i64, types: i64) -> string {
     return "unknown"
 }
 
+// ---- function checking ----
+
+fn check_fn(node: string, names: i64, types: i64) -> string {
+    let p = ilist_new()
+    ilist_push(p, 0)
+    let body = node_body(node)
+    skip_ws(body, p)
+    read_node(body, p)  // fn
+    read_node(body, p)  // name
+    let params_node = read_node(body, p)
+    read_node(body, p)  // ret
+    let fn_body = read_node(body, p)
+
+    let lnames = slist_new()
+    let ltypes = slist_new()
+    let pp = ilist_new()
+    ilist_push(pp, 0)
+    let params_body = node_body(params_node)
+    skip_ws(params_body, pp)
+    read_node(params_body, pp)  // params
+    let mut pr = read_node(params_body, pp)
+    while pr != "" {
+        let rpp = ilist_new()
+        ilist_push(rpp, 0)
+        let pb = node_body(pr)
+        skip_ws(pb, rpp)
+        read_node(pb, rpp)  // param
+        let pname = read_node(pb, rpp)
+        let ptype = read_node(pb, rpp)
+        slist_push(lnames, pname)
+        slist_push(ltypes, ptype)
+        pr = read_node(params_body, pp)
+    }
+    return check_block(fn_body, lnames, ltypes)
+}
+
 // ---- statement checking ----
 
 fn check_stmt(node: string, names: i64, types: i64) -> string {
     let h = head_of(node)
+    if h == "fn" {
+        return check_fn(node, names, types)
+    }
     if h == "let" {
         let p = ilist_new()
         ilist_push(p, 0)
