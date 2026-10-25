@@ -14,9 +14,9 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
     Recommended for most Windows users. Installs NEXUS for the current user, offers Start menu and desktop shortcuts, and can add the launcher to the user PATH. No administrator rights are required.
 
-    [Download NEXUS-Setup-1.1.0.exe](assets/downloads/NEXUS-Setup-1.1.0.exe){ .md-button .md-button--primary }
+    [Download NEXUS-Setup-2.0.0.exe](assets/downloads/NEXUS-Setup-2.0.0.exe){ .md-button .md-button--primary }
 
-    [Installer SHA-256](assets/downloads/NEXUS-Setup-1.1.0.exe.sha256.txt)
+    [Installer SHA-256](assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt)
 
 -   :material-archive: **Portable Windows x64 package**
 
@@ -30,17 +30,15 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
     Syntax highlighting, snippets, diagnostics, and completion for `.nx` source files.
 
-    [Download VSIX](assets/downloads/NEXUS-Language-1.1.0.vsix){ .md-button }
+    [Download VSIX](assets/downloads/NEXUS-Language-2.0.2.vsix){ .md-button }
 
-    [VSIX SHA-256](assets/downloads/NEXUS-Language-1.1.0.vsix.sha256.txt)
+    [VSIX SHA-256](assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt)
 
 -   :material-monitor: **NEXUS Studio — Windows x64 desktop IDE**
 
     Standalone desktop editor with a project explorer, `.nx` editor, compiler selection, Build/Run buttons, and output terminal. Install the NEXUS compiler separately and select it inside Studio.
 
-    [Download NEXUS Studio Windows EXE](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe){ .md-button }
-
-    [Studio installer SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256)
+    [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio){ .md-button }
 
 -   :material-palette: **NEXUS Paint — native drawing app for Windows x64**
 
@@ -48,7 +46,7 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
     [Download NEXUS Paint portable ZIP](assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button .md-button--primary }
 
-    [Direct ZIP download from the repository](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip)
+    [Direct ZIP download from the repository](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip)
 
     [Download EXE only (requires DLLs from the ZIP)](assets/downloads/NEXUS-Paint-Windows-x64.exe)
 
@@ -72,7 +70,7 @@ Choose the official NEXUS package for your system. The Windows x64 package is as
 
 ## Install on Windows
 
-1. Download `NEXUS-Setup-1.1.0.exe` from this page after the artifact is available.
+1. Download `NEXUS-Setup-2.0.0.exe` from this page after the artifact is available.
 2. Run the installer and follow the prompts. It installs under `%LOCALAPPDATA%\\Programs\\NEXUS` by default.
 3. Select the optional shortcuts and PATH integration you want.
 4. Close and reopen PowerShell, then verify:
@@ -130,7 +128,7 @@ The portable package is designed to avoid requiring a separately installed LLVM/
 Use PowerShell to calculate the checksum of a downloaded file:
 
 ```powershell
-Get-FileHash .\\NEXUS-Setup-1.1.0.exe -Algorithm SHA256
+Get-FileHash .\\NEXUS-Setup-2.0.0.exe -Algorithm SHA256
 Get-FileHash .\\NEXUS_Windows_Portable.zip -Algorithm SHA256
 ```
 

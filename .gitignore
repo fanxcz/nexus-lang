@@ -52,3 +52,6 @@ nexus_paint.bmp
 !.nx
 .github/project-tools/vscode-extension/node_modules/
 *.vsix
+
+# Temporary self-hosted compiler test output
+selfhost-*-out.txt

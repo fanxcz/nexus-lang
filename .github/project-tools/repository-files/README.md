@@ -8,7 +8,7 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
-**Windows installer:** download `NEXUS-Setup-1.1.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**Windows installer:** download `NEXUS-Setup-2.0.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
@@ -21,7 +21,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 ## Install on Windows 11
 
 1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-2. Download `NEXUS-Setup-1.1.0.exe` only from an official project artifact.
+2. Download `NEXUS-Setup-2.0.0.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
 5. Open a **new** PowerShell window and verify:
@@ -133,17 +133,16 @@ Consult the template and current documentation for its supported features.
 
 ## Downloadable applications
 
-**NEXUS Studio (Windows x64)** is a standalone desktop editor with a project explorer, `.nx` editor, compiler selection, and Build/Run controls. It does not bundle the NEXUS compiler; install NEXUS separately, then select `nexus.cmd` in Studio.
+**NEXUS Studio** is a source-buildable desktop editor with a project explorer, `.nx` editor, compiler selection, and Build/Run controls. The prebuilt 89 MB installer has been removed from the source tree to keep repository downloads smaller; see the source build instructions. Install NEXUS separately, then select `nexus.cmd` in Studio.
 
-- [Download NEXUS Studio Windows installer](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe)
-- [Verify Studio installer SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256)
+- [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
 
 **NEXUS Paint (Windows x64)** is a native raster drawing app written in NEXUS. The portable ZIP contains the EXE, runtime DLLs and editable NEXUS source. Download it directly from this repository (no Pages deployment required):
 
-- [Download NEXUS Paint portable ZIP](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip)
-- [Download NEXUS Paint EXE](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe)
-- [Verify Paint EXE SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
-- [Verify Paint ZIP SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
+- [Download NEXUS Paint portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip)
+- [Download NEXUS Paint EXE](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe)
+- [Verify Paint EXE SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
+- [Verify Paint ZIP SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
 - [View Paint source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 ## Build from source
 

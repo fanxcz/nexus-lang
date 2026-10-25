@@ -145,7 +145,7 @@ Syntax highlighting, snippets and LSP integration for `.nx` files.
 
 Install without a marketplace account:
 
-1. Download [`nexus-language-2.0.0.vsix`](https://github.com/fanxcz/nexus-lang/releases/download/vscode-extension-v2.0.0/nexus-language-2.0.0.vsix) from the [release page](https://github.com/fanxcz/nexus-lang/releases/tag/vscode-extension-v2.0.0).
+1. Download [`nexus-language-2.0.0.vsix`](https://github.com/fanxcz/nexus-lang/releases/download/vscode-extension-v2.0.0/nexus-language-2.0.2.vsix) from the [release page](https://github.com/fanxcz/nexus-lang/releases/tag/vscode-extension-v2.0.0).
 2. VS Code → Extensions (`Ctrl+Shift+X`) → `...` → **Install from VSIX...** → select the file.
 
 ## Standard library and runtime
@@ -179,17 +179,16 @@ Consult the template and current documentation for its supported features.
 
 ## Downloadable applications
 
-**NEXUS Studio (Windows x64)** is a standalone desktop editor with a project explorer, `.nx` editor, compiler selection, and Build/Run controls. It does not bundle the NEXUS compiler; install NEXUS separately, then select `nexus.cmd` in Studio.
+**NEXUS Studio** is a source-buildable desktop editor with a project explorer, `.nx` editor, compiler selection, and Build/Run controls. The prebuilt 89 MB installer has been removed from the source tree to keep repository downloads smaller; see the source build instructions. Install NEXUS separately, then select `nexus.cmd` in Studio.
 
-- [Download NEXUS Studio Windows installer](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe)
-- [Verify Studio installer SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256)
+- [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
 
 **NEXUS Paint (Windows x64)** is a native raster drawing app written in NEXUS. The portable ZIP contains the EXE, runtime DLLs and editable NEXUS source. Download it directly from this repository (no Pages deployment required):
 
-- [Download NEXUS Paint portable ZIP](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip)
-- [Download NEXUS Paint EXE](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe)
-- [Verify Paint EXE SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
-- [Verify Paint ZIP SHA-256](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
+- [Download NEXUS Paint portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip)
+- [Download NEXUS Paint EXE](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe)
+- [Verify Paint EXE SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
+- [Verify Paint ZIP SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
 - [View Paint source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 ## Build from source
 

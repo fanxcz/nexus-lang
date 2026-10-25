@@ -79,12 +79,12 @@ jobs:
           done
 
           assets=(
-            'NEXUS-Setup-1.1.0.exe'
-            'NEXUS-Setup-1.1.0.exe.sha256.txt'
+            'NEXUS-Setup-2.0.0.exe'
+            'NEXUS-Setup-2.0.0.exe.sha256.txt'
             'NEXUS_Windows_Portable.zip'
             'NEXUS_Windows_Portable.zip.sha256.txt'
-            'NEXUS-Language-1.1.0.vsix'
-            'NEXUS-Language-1.1.0.vsix.sha256.txt'
+            'NEXUS-Language-2.0.2.vsix'
+            'NEXUS-Language-2.0.2.vsix.sha256.txt'
             'NEXUS-Paint-Windows-x64.exe'
             'NEXUS-Paint-Windows-x64.exe.sha256.txt'
             'NEXUS-Paint-Windows-x64.zip'
@@ -99,12 +99,7 @@ jobs:
           # Repository file URLs are path-checked locally. Verify large direct
           # download URLs with HEAD requests rather than fetching binary bodies.
           repository_assets=(
-            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe'
-            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/nexus-studio/downloads/NEXUS-Studio-Windows-x64.exe.sha256'
-            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe'
-            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt'
-            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip'
-            'https://raw.githubusercontent.com/fanxcz/nexus-lang/main/.github/project-tools/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt'
+            'https://github.com/fanxcz/nexus-lang/releases/download/vscode-extension-v2.0.0/nexus-language-2.0.2.vsix'
           )
           for url in "${repository_assets[@]}"; do
             echo "Checking direct repository download: $url"
