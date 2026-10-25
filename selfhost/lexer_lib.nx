@@ -122,11 +122,15 @@ fn tokenize(src: string) -> string {
             continue
         }
 
-        // number
+        // integer, decimal, and scientific-notation numeric literals.
+        // Underscores are accepted only between digits.
         if is_digit(b) {
             let mut num = ""
             let mut isfloat = false
-            while i < len && is_digit(b) {
+            while i < len && (is_digit(b) || b == 95) {
+                if b == 95 && (i + 1 >= len || !is_digit(string.byte_at(src, i + 1))) {
+                    return out + "error " + line + ":" + col + " misplaced numeric separator\n"
+                }
                 num = num + string.slice(src, i, i + 1)
                 i = i + 1
                 col = col + 1
@@ -142,7 +146,41 @@ fn tokenize(src: string) -> string {
                 if i < len {
                     b = string.byte_at(src, i)
                 }
-                while i < len && is_digit(b) {
+                while i < len && (is_digit(b) || b == 95) {
+                    if b == 95 && (i + 1 >= len || !is_digit(string.byte_at(src, i + 1))) {
+                        return out + "error " + line + ":" + col + " misplaced numeric separator\n"
+                    }
+                    num = num + string.slice(src, i, i + 1)
+                    i = i + 1
+                    col = col + 1
+                    if i < len {
+                        b = string.byte_at(src, i)
+                    }
+                }
+            }
+            if b == 101 || b == 69 {
+                isfloat = true
+                num = num + string.slice(src, i, i + 1)
+                i = i + 1
+                col = col + 1
+                if i < len {
+                    b = string.byte_at(src, i)
+                }
+                if b == 43 || b == 45 {
+                    num = num + string.slice(src, i, i + 1)
+                    i = i + 1
+                    col = col + 1
+                    if i < len {
+                        b = string.byte_at(src, i)
+                    }
+                }
+                if i >= len || !is_digit(b) {
+                    return out + "error " + line + ":" + col + " expected exponent digits\n"
+                }
+                while i < len && (is_digit(b) || b == 95) {
+                    if b == 95 && (i + 1 >= len || !is_digit(string.byte_at(src, i + 1))) {
+                        return out + "error " + line + ":" + col + " misplaced numeric separator\n"
+                    }
                     num = num + string.slice(src, i, i + 1)
                     i = i + 1
                     col = col + 1

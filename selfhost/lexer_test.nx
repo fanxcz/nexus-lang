@@ -27,6 +27,21 @@ fn main() {
         "1:1 Integer 42\n1:4 Float 3.14\n1:9 Integer 7\n1:10 Dot .\n1:12 Integer 100\n1:15 End \n")
 
     failed = failed + check(
+        "numeric separators and scientific notation",
+        "1_000 2.5e-3 1E+4",
+        "1:1 Integer 1_000\n1:7 Float 2.5e-3\n1:14 Float 1E+4\n1:18 End \n")
+
+    failed = failed + check(
+        "error: malformed numeric separator",
+        "1__0",
+        "error 1:2 misplaced numeric separator\n")
+
+    failed = failed + check(
+        "error: missing exponent digits",
+        "1e+",
+        "error 1:4 expected exponent digits\n")
+
+    failed = failed + check(
         "two-char operators",
         "== => -> :: <= >= != && || += *= a+=b",
         "1:1 EqualEqual ==\n1:4 FatArrow =>\n1:7 Arrow ->\n1:10 ColonColon ::\n1:13 LessEqual <=\n1:16 GreaterEqual >=\n1:19 BangEqual !=\n1:22 AndAnd &&\n1:25 OrOr ||\n1:28 PlusEqual +=\n1:31 StarEqual *=\n1:34 Identifier a\n1:35 PlusEqual +=\n1:37 Identifier b\n1:38 End \n")

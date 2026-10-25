@@ -8,6 +8,14 @@ fn line_is(out: string, index: i64, want: string) -> bool {
 }
 
 fn main() {
+    // Keep self-hosted compile-and-run checks portable across Windows, Linux and macOS.
+    let mut platformLinkFlags = ""
+    let mut executablePrefix = "./"
+    if env("OS") == "Windows_NT" {
+        platformLinkFlags = " -lkernel32 -luser32 -lgdi32 -lshell32 -lole32"
+        executablePrefix = ""
+    }
+
     let src = file_read("selfhost/tests/hello_subset.nx")
     if string.len(src) == 0 {
         print("FAIL cannot read selfhost/tests/hello_subset.nx")
@@ -24,12 +32,12 @@ fn main() {
     if cxx == "" {
         cxx = "clang++"
     }
-    let rc = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-test.ll src/runtime/runtime.cpp -o build/selfhost-test.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-test.ll src/runtime/runtime.cpp -o build/selfhost-test.exe" + platformLinkFlags)
     if rc != 0 {
         print("FAIL clang++ rc=" + rc)
         exit(1)
     }
-    let run_rc = system("build\\selfhost-test.exe > build\\selfhost-out.txt 2>&1")
+    let run_rc = system(executablePrefix + "build/selfhost-test.exe > build/selfhost-out.txt 2>&1")
     if run_rc != 0 {
         print("FAIL run rc=" + run_rc)
         exit(1)
@@ -64,12 +72,12 @@ fn main() {
     }
     file_write("build/selfhost-fn.ll", ll2)
 
-    let rc2 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-fn.ll src/runtime/runtime.cpp -o build/selfhost-fn.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc2 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-fn.ll src/runtime/runtime.cpp -o build/selfhost-fn.exe" + platformLinkFlags)
     if rc2 != 0 {
         print("FAIL clang++ fn rc=" + rc2)
         exit(1)
     }
-    let run_rc2 = system("build\\selfhost-fn.exe > build\\selfhost-fn-out.txt 2>&1")
+    let run_rc2 = system(executablePrefix + "build/selfhost-fn.exe > build/selfhost-fn-out.txt 2>&1")
     if run_rc2 != 0 {
         print("FAIL run fn rc=" + run_rc2)
         exit(1)
@@ -99,12 +107,12 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-str.ll", ll3)
-    let rc3 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-str.ll src/runtime/runtime.cpp -o build/selfhost-str.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc3 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-str.ll src/runtime/runtime.cpp -o build/selfhost-str.exe" + platformLinkFlags)
     if rc3 != 0 {
         print("FAIL clang++ str rc=" + rc3)
         exit(1)
     }
-    let run_rc3 = system("build\\selfhost-str.exe > build\\selfhost-str-out.txt 2>&1")
+    let run_rc3 = system(executablePrefix + "build/selfhost-str.exe > build/selfhost-str-out.txt 2>&1")
     if run_rc3 != 0 {
         print("FAIL run str rc=" + run_rc3)
         exit(1)
@@ -135,12 +143,12 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-float.ll", ll4)
-    let rc4 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-float.ll src/runtime/runtime.cpp -o build/selfhost-float.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc4 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-float.ll src/runtime/runtime.cpp -o build/selfhost-float.exe" + platformLinkFlags)
     if rc4 != 0 {
         print("FAIL clang++ float rc=" + rc4)
         exit(1)
     }
-    let run_rc4 = system("build\\selfhost-float.exe > build\\selfhost-float-out.txt 2>&1")
+    let run_rc4 = system(executablePrefix + "build/selfhost-float.exe > build/selfhost-float-out.txt 2>&1")
     if run_rc4 != 0 {
         print("FAIL run float rc=" + run_rc4)
         exit(1)
@@ -167,12 +175,12 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-bool.ll", ll5)
-    let rc5 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-bool.ll src/runtime/runtime.cpp -o build/selfhost-bool.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc5 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-bool.ll src/runtime/runtime.cpp -o build/selfhost-bool.exe" + platformLinkFlags)
     if rc5 != 0 {
         print("FAIL clang++ bool rc=" + rc5)
         exit(1)
     }
-    let run_rc5 = system("build\\selfhost-bool.exe > build\\selfhost-bool-out.txt 2>&1")
+    let run_rc5 = system(executablePrefix + "build/selfhost-bool.exe > build/selfhost-bool-out.txt 2>&1")
     if run_rc5 != 0 {
         print("FAIL run bool rc=" + run_rc5)
         exit(1)
@@ -203,12 +211,12 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-loop.ll", ll6)
-    let rc6 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-loop.ll src/runtime/runtime.cpp -o build/selfhost-loop.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc6 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-loop.ll src/runtime/runtime.cpp -o build/selfhost-loop.exe" + platformLinkFlags)
     if rc6 != 0 {
         print("FAIL clang++ loop rc=" + rc6)
         exit(1)
     }
-    let run_rc6 = system("build\\selfhost-loop.exe > build\\selfhost-loop-out.txt 2>&1")
+    let run_rc6 = system(executablePrefix + "build/selfhost-loop.exe > build/selfhost-loop-out.txt 2>&1")
     if run_rc6 != 0 {
         print("FAIL run loop rc=" + run_rc6)
         exit(1)
@@ -239,12 +247,12 @@ fn main() {
         exit(1)
     }
     file_write("build/selfhost-for.ll", ll7)
-    let rc7 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-for.ll src/runtime/runtime.cpp -o build/selfhost-for.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    let rc7 = system("\"" + cxx + "\" -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-for.ll src/runtime/runtime.cpp -o build/selfhost-for.exe" + platformLinkFlags)
     if rc7 != 0 {
         print("FAIL clang++ for rc=" + rc7)
         exit(1)
     }
-    let run_rc7 = system("build\\selfhost-for.exe > build\\selfhost-for-out.txt 2>&1")
+    let run_rc7 = system(executablePrefix + "build/selfhost-for.exe > build/selfhost-for-out.txt 2>&1")
     if run_rc7 != 0 {
         print("FAIL run for rc=" + run_rc7)
         exit(1)
