@@ -11,12 +11,12 @@ mirrored against it feature by feature and must not diverge.
 | Lexer | `lexer_lib.nx` | Works; covers the full token set of `src/compiler/frontend/lexer/lexer.cpp` |
 | Lexer tests | `lexer_test.nx` | 10 cases: keywords, numbers, operators, escapes, comments, 4 error cases |
 | Self-lexing smoke | `lex_self.nx` | The NEXUS lexer tokenizes its own sources plus real stdlib/example files |
-| Parser (subset) | `parser_lib.nx` | Works; recursive descent with correct precedence for expressions plus `let`/assignment/`print`/`if`/`else`/`while`/blocks |
+| Parser (subset) | `parser_lib.nx` | Works; recursive descent with correct precedence for expressions plus `let`/assignment/`print`/`if`/`else`/`while`/blocks/`fn`/`return` |
 | Parser tests | `parser_test.nx` | 12 cases: precedence, associativity, calls, blocks, 3 error cases |
 | Type checker (subset) | `typecheck_lib.nx` | Works; variable environment, numeric/string/bool rules, bool conditions for `if`/`while`, assignment type stability |
 | Type checker tests | `typecheck_test.nx` | 13 cases: 3 valid programs, 10 diagnostics |
-| Code generator (subset) | `codegen_lib.nx` | Works; emits a complete LLVM IR module (alloca/load/store SSA, branches, loops) for the i64 statement subset |
-| Code generator tests | `codegen_test.nx` | End-to-end: NEXUS compiles `tests/hello_subset.nx` to `.ll`, clang++ builds it, the binary runs and prints the expected 42/10/1 |
+| Code generator (subset) | `codegen_lib.nx` | Works; emits a complete LLVM IR module (alloca/load/store SSA, branches, loops) for the i64 statement subset, plus function declarations/calls and string literals in print |
+| Code generator tests | `codegen_test.nx` | End-to-end: NEXUS compiles `tests/hello_subset.nx` and `tests/fn_subset.nx` to `.ll`, clang++ builds them, the binaries run and print the expected outputs |
 
 `tokenize(src: string) -> string` emits one token per line as
 `LINE:COL KIND TEXT` (`Integer 42`, `KwFn fn`, `String decoded-text`, ...).

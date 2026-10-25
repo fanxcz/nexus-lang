@@ -51,5 +51,41 @@ fn main() {
         print("FAIL line2: " + string.trim(string.split_at(out, "\n", 2)))
         exit(1)
     }
+    // Second case: functions and calls.
+    let src2 = file_read("selfhost/tests/fn_subset.nx")
+    if string.len(src2) == 0 {
+        print("FAIL cannot read selfhost/tests/fn_subset.nx")
+        exit(1)
+    }
+    let ll2 = codegen(src2)
+    if string.slice(ll2, 0, 5) == "error" {
+        print("FAIL codegen fn: " + ll2)
+        exit(1)
+    }
+    file_write("build/selfhost-fn.ll", ll2)
+
+    let rc2 = system(cxx + " -std=c++20 -D_CRT_SECURE_NO_WARNINGS build/selfhost-fn.ll src/runtime/runtime.cpp -o build/selfhost-fn.exe -lkernel32 -luser32 -lgdi32 -lshell32 -lole32")
+    if rc2 != 0 {
+        print("FAIL clang++ fn rc=" + rc2)
+        exit(1)
+    }
+    let run_rc2 = system("build\\selfhost-fn.exe > build\\selfhost-fn-out.txt 2>&1")
+    if run_rc2 != 0 {
+        print("FAIL run fn rc=" + run_rc2)
+        exit(1)
+    }
+    let out2 = string.trim(file_read("build/selfhost-fn-out.txt"))
+    if string.split_count(out2, "\n") < 2 {
+        print("FAIL unexpected fn output: [" + out2 + "]")
+        exit(1)
+    }
+    if !line_is(out2, 0, "42") {
+        print("FAIL fn line0: " + string.trim(string.split_at(out2, "\n", 0)))
+        exit(1)
+    }
+    if !line_is(out2, 1, "6") {
+        print("FAIL fn line1: " + string.trim(string.split_at(out2, "\n", 1)))
+        exit(1)
+    }
     print("all codegen tests passed")
 }

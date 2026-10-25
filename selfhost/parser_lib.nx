@@ -273,6 +273,73 @@ fn parse_or(t: i64, p: i64) -> string {
     return fold_level(t, p, 5, 0)
 }
 
+// ---- function declarations ----
+
+fn parse_param(t: i64, p: i64) -> string {
+    if cur_kind(t, p) != "Identifier" {
+        return "error expected parameter name"
+    }
+    let name = cur_text(t, p)
+    bump(t, p)
+    if !eat(t, p, "Colon") {
+        return "error expected : in parameter"
+    }
+    if cur_kind(t, p) != "Identifier" {
+        return "error expected parameter type"
+    }
+    let ty = cur_text(t, p)
+    bump(t, p)
+    return "(param " + name + " " + ty + ")"
+}
+
+fn parse_fn(t: i64, p: i64) -> string {
+    if !eat(t, p, "KwFn") {
+        return "error expected fn"
+    }
+    if cur_kind(t, p) != "Identifier" {
+        return "error expected function name"
+    }
+    let name = cur_text(t, p)
+    bump(t, p)
+    if !eat(t, p, "LParen") {
+        return "error expected ( after function name"
+    }
+    let mut params = "(params"
+    if cur_kind(t, p) != "RParen" {
+        let first = parse_param(t, p)
+        if string.slice(first, 0, 5) == "error" {
+            return first
+        }
+        params = params + " " + first
+        while eat(t, p, "Comma") {
+            let nxt = parse_param(t, p)
+            if string.slice(nxt, 0, 5) == "error" {
+                return nxt
+            }
+            params = params + " " + nxt
+        }
+    }
+    params = params + ")"
+    if !eat(t, p, "RParen") {
+        return "error expected ) in parameter list"
+    }
+    let mut ret = "(ret)"
+    if cur_kind(t, p) == "Arrow" {
+        bump(t, p)
+        if cur_kind(t, p) != "Identifier" {
+            return "error expected return type"
+        }
+        let rty = cur_text(t, p)
+        bump(t, p)
+        ret = "(ret " + rty + ")"
+    }
+    let body = parse_block(t, p)
+    if string.slice(body, 0, 5) == "error" {
+        return body
+    }
+    return "(fn " + name + " " + params + " " + ret + " " + body + ")"
+}
+
 // ---- statements ----
 
 fn parse_block(t: i64, p: i64) -> string {
@@ -295,6 +362,9 @@ fn parse_block(t: i64, p: i64) -> string {
 
 fn parse_stmt(t: i64, p: i64) -> string {
     let kind = cur_kind(t, p)
+    if kind == "KwFn" {
+        return parse_fn(t, p)
+    }
     if kind == "KwLet" {
         bump(t, p)
         if cur_kind(t, p) == "KwMut" {
@@ -367,6 +437,17 @@ fn parse_stmt(t: i64, p: i64) -> string {
             return body
         }
         return "(while " + cond + "\n  " + body + ")"
+    }
+    if kind == "KwReturn" {
+        bump(t, p)
+        if cur_kind(t, p) == "RBrace" || at_end(t, p) {
+            return "(return)"
+        }
+        let value = parse_or(t, p)
+        if string.slice(value, 0, 5) == "error" {
+            return value
+        }
+        return "(return " + value + ")"
     }
     // bare expression statement
     let value = parse_or(t, p)
