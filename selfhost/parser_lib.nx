@@ -430,6 +430,14 @@ fn parse_stmt(t: i64, p: i64) -> string {
         }
         return "(if " + cond + "\n  " + then + ")"
     }
+    if kind == "KwBreak" {
+        bump(t, p)
+        return "(break)"
+    }
+    if kind == "KwContinue" {
+        bump(t, p)
+        return "(continue)"
+    }
     if kind == "KwWhile" {
         bump(t, p)
         let cond = parse_or(t, p)
