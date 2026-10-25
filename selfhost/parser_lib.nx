@@ -365,7 +365,8 @@ fn parse_stmt(t: i64, p: i64) -> string {
     if kind == "KwFn" {
         return parse_fn(t, p)
     }
-    if kind == "KwLet" {
+    if kind == "KwLet" || kind == "KwConst" {
+        let is_const = kind == "KwConst"
         bump(t, p)
         if cur_kind(t, p) == "KwMut" {
             bump(t, p)
@@ -381,6 +382,9 @@ fn parse_stmt(t: i64, p: i64) -> string {
         let init = parse_or(t, p)
         if string.slice(init, 0, 5) == "error" {
             return init
+        }
+        if is_const {
+            return "(const " + name + " " + init + ")"
         }
         return "(let " + name + " " + init + ")"
     }

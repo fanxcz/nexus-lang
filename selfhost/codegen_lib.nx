@@ -354,7 +354,7 @@ fn gen_stmt(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
     let body = node_body(node)
     skip_ws(body, p)
     let h = read_node(body, p)
-    if h == "let" {
+    if h == "const" || h == "let" {
         skip_ws(body, p)
         let name = read_node(body, p)
         let init = read_node(body, p)

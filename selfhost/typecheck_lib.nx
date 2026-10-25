@@ -281,7 +281,7 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
     if h == "fn" {
         return check_fn(node, names, types)
     }
-    if h == "let" {
+    if h == "const" || h == "let" {
         let p = ilist_new()
         ilist_push(p, 0)
         let body = node_body(node)
