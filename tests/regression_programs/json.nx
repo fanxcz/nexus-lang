@@ -1,0 +1,13 @@
+fn main() {
+    let data = "{\"name\":\"NEXUS\",\"items\":[\"first\",\"second\"],\"active\":true}"
+    let valid = json_valid(data)
+    let name = json_get(data, "name")
+    let kind = json_type(data, "items")
+    let count = json_array_len(data, "items")
+    let item = json_array_get(data, "items", 1)
+    print(valid)
+    print(name)
+    print(kind)
+    print(count)
+    print(item)
+}
