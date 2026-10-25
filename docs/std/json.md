@@ -1,6 +1,6 @@
 # `std.json`
 
-NEXUS includes a bounded JSON parser in its runtime. The parser accepts standard JSON values and validates syntax, string escapes, UTF-8, number grammar and matching object/array delimiters. For safety, JSON input is limited to 16 MiB, nesting is limited to 128 levels, and the parser caps parsed values at one million nodes.
+NEXUS includes a bounded JSON parser in its runtime. The parser accepts standard JSON values and validates syntax, string escapes, UTF-8, number grammar and matching object/array delimiters. For safety, JSON input is limited to 16 MiB, nesting is limited to 128 levels, and the parser caps parsed values at 100,000 nodes.
 
 ## API
 
