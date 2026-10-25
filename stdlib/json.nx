@@ -1,1 +1,11 @@
 fn json_field(json: string, key: string) -> string { return json_get(json, key) }
+
+fn json_is_valid(json: string) -> bool { return json_valid(json) }
+
+fn json_value_type(json: string, key: string) -> string { return json_type(json, key) }
+
+fn json_array_length(json: string, key: string) -> i64 { return json_array_len(json, key) }
+
+fn json_array_item(json: string, key: string, index: i64) -> string {
+    return json_array_get(json, key, index)
+}
