@@ -878,8 +878,37 @@ The string functions in the standard library are byte-oriented:
 - `string.slice` uses byte offsets.
 - `string.upper` and `string.lower` change ASCII letters only.
 
+### 11.7 UTF-8 character helpers
+
+A second group of functions works with Unicode code points instead of bytes:
+
+| Function | Result |
+|----------|--------|
+| `string.chars(s)` | number of Unicode code points |
+| `string.char_at(s, index)` | code point at a character index, or `-1` |
+| `string.from_char(code)` | a string containing that code point |
+| `string.valid_utf8(s)` | `true` when `s` is valid UTF-8 |
+
+```nx
+let text = "Привет"
+print(string.len(text))        // 12 bytes
+print(string.chars(text))      // 6 characters
+print(string.char_at(text, 0)) // 1055 (U+041F, Cyrillic capital Pe)
+
+let smile = string.from_char(128578) // U+1F642, slightly smiling face
+print(smile)
+print(string.chars(smile)) // 1
+```
+
+Invalid code points passed to `string.from_char` produce the Unicode
+replacement character `U+FFFD`. Invalid bytes encountered by `string.chars`
+and `string.char_at` count as one character and are returned as their byte
+value; use `string.valid_utf8` to detect malformed input. Character indexes
+count code points, so they are not the same as byte offsets.
+
 There are no `\u` escape sequences in the current language. Write non-ASCII
-text directly in the source file as UTF-8.
+text directly in the source file as UTF-8, or build it with
+`string.from_char`.
 
 ------------------------------------------------------------------------
 
@@ -1364,7 +1393,7 @@ suite or by a documented example in this manual.
 | Imports | `import "file.nx"` and dotted module names |
 | Control flow | `if`/`else`, `while`, `for` over ranges and arrays, `break`, `continue` |
 | Pattern matching | literals, enums, booleans, ranges, bindings, guards |
-| Strings | concatenation, equality, UTF-8 pass-through, byte operations |
+| Strings | concatenation, equality, UTF-8 pass-through, byte and code-point helpers |
 | Floating point | IEEE-754 arithmetic and comparisons |
 | Diagnostics | `NX1001` syntax, `NX2000`/`NX2001` semantic errors with locations |
 | LSP | hover, completion, definition, references, rename, symbols, formatting |
@@ -1392,7 +1421,7 @@ that documentation and examples do not imply support that does not exist.
 | LLVM optimization passes | not implemented; the LLVM backend emits textual IR |
 | Full native backend parity | partial; the native backend supports a small subset |
 | Full self-hosting parity | partial; the self-hosted compiler covers a subset |
-| Unicode-aware string indexing | not implemented; string APIs are byte-oriented |
+| Grapheme-cluster and locale-aware text operations | not implemented; character helpers operate on code points, not grapheme clusters |
 | `\u` escape sequences | not implemented; write UTF-8 directly in source |
 | Doc comments and generated API docs | not implemented |
 

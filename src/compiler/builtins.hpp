@@ -98,6 +98,20 @@ namespace nexus {
             return BuiltinSignature{
                 name, {T::string(), T::i64()}, T::i64(), "nexus_string_byte_at"};
 
+        if (name == "string.chars")
+            return BuiltinSignature{name, {T::string()}, T::i64(), "nexus_string_char_count"};
+
+        if (name == "string.char_at")
+            return BuiltinSignature{
+                name, {T::string(), T::i64()}, T::i64(), "nexus_string_char_at"};
+
+        if (name == "string.from_char")
+            return BuiltinSignature{name, {T::i64()}, T::string(), "nexus_string_from_char"};
+
+        if (name == "string.valid_utf8")
+            return BuiltinSignature{
+                name, {T::string()}, T::boolean(), "nexus_string_valid_utf8"};
+
         if (name == "string.contains")
             return BuiltinSignature{
                 name, {T::string(), T::string()}, T::boolean(), "nexus_string_contains"};

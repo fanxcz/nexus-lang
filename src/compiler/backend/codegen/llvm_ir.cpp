@@ -901,6 +901,10 @@ namespace nexus {
             emitModule("declare ptr @nexus_os_args_get(i64)");
             emitModule("declare i64 @nexus_string_len(ptr)");
             emitModule("declare i64 @nexus_string_byte_at(ptr, i64)");
+            emitModule("declare i64 @nexus_string_char_count(ptr)");
+            emitModule("declare i64 @nexus_string_char_at(ptr, i64)");
+            emitModule("declare ptr @nexus_string_from_char(i64)");
+            emitModule("declare i1 @nexus_string_valid_utf8(ptr)");
             emitModule("declare i1 @nexus_string_contains(ptr, ptr)");
             emitModule("declare i64 @nexus_string_find(ptr, ptr)");
             emitModule("declare ptr @nexus_string_trim(ptr)");

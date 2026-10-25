@@ -2699,6 +2699,146 @@ int64_t nexus_string_byte_at(const char* s, int64_t index) {
     return static_cast<int64_t>(static_cast<unsigned char>(s[static_cast<size_t>(index)]));
 }
 
+// Decode one UTF-8 code point starting at `index`. Invalid bytes are consumed
+// one at a time and reported as their byte value, so callers always make
+// progress even on malformed input. Returns false when the sequence is invalid.
+static bool nx_utf8_next(const unsigned char* s, size_t len, size_t& index, int64_t& cp) {
+    if (index >= len)
+        return false;
+    const unsigned char first = s[index];
+    if (first < 0x80) {
+        cp = first;
+        ++index;
+        return true;
+    }
+
+    size_t extra = 0;
+    int64_t value = 0;
+    if ((first & 0xE0) == 0xC0) {
+        extra = 1;
+        value = first & 0x1F;
+    } else if ((first & 0xF0) == 0xE0) {
+        extra = 2;
+        value = first & 0x0F;
+    } else if ((first & 0xF8) == 0xF0) {
+        extra = 3;
+        value = first & 0x07;
+    } else {
+        cp = first;
+        ++index;
+        return false;
+    }
+
+    if (index + extra >= len) {
+        cp = first;
+        ++index;
+        return false;
+    }
+
+    for (size_t k = 1; k <= extra; ++k) {
+        const unsigned char next = s[index + k];
+        if ((next & 0xC0) != 0x80) {
+            cp = first;
+            ++index;
+            return false;
+        }
+        value = (value << 6) | (next & 0x3F);
+    }
+
+    const bool overlong = (extra == 1 && value < 0x80) || (extra == 2 && value < 0x800) ||
+                          (extra == 3 && value < 0x10000);
+    const bool surrogate = value >= 0xD800 && value <= 0xDFFF;
+    if (overlong || surrogate || value > 0x10FFFF) {
+        cp = first;
+        ++index;
+        return false;
+    }
+
+    cp = value;
+    index += extra + 1;
+    return true;
+}
+
+// string.chars: number of UTF-8 code points (invalid bytes count as one each)
+int64_t nexus_string_char_count(const char* s) {
+    if (!s)
+        return 0;
+    const auto* bytes = reinterpret_cast<const unsigned char*>(s);
+    const size_t len = std::strlen(s);
+    size_t index = 0;
+    int64_t count = 0;
+    while (index < len) {
+        int64_t cp = 0;
+        (void)nx_utf8_next(bytes, len, index, cp);
+        ++count;
+    }
+    return count;
+}
+
+// string.char_at: code point at a character index, or -1 if out of range
+int64_t nexus_string_char_at(const char* s, int64_t index) {
+    if (!s || index < 0)
+        return -1;
+    const auto* bytes = reinterpret_cast<const unsigned char*>(s);
+    const size_t len = std::strlen(s);
+    size_t byteIndex = 0;
+    int64_t charIndex = 0;
+    while (byteIndex < len) {
+        int64_t cp = 0;
+        (void)nx_utf8_next(bytes, len, byteIndex, cp);
+        if (charIndex == index)
+            return cp;
+        ++charIndex;
+    }
+    return -1;
+}
+
+// string.valid_utf8: true when every byte sequence is a valid UTF-8 code point
+bool nexus_string_valid_utf8(const char* s) {
+    if (!s)
+        return true;
+    const auto* bytes = reinterpret_cast<const unsigned char*>(s);
+    const size_t len = std::strlen(s);
+    size_t index = 0;
+    while (index < len) {
+        int64_t cp = 0;
+        if (!nx_utf8_next(bytes, len, index, cp))
+            return false;
+    }
+    return true;
+}
+
+// string.from_char: encode a Unicode code point (invalid values use U+FFFD)
+char* nexus_string_from_char(int64_t code) {
+    if (code < 0 || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF))
+        code = 0xFFFD;
+
+    char out[4];
+    size_t n = 0;
+    if (code < 0x80) {
+        out[n++] = static_cast<char>(code);
+    } else if (code < 0x800) {
+        out[n++] = static_cast<char>(0xC0 | (code >> 6));
+        out[n++] = static_cast<char>(0x80 | (code & 0x3F));
+    } else if (code < 0x10000) {
+        out[n++] = static_cast<char>(0xE0 | (code >> 12));
+        out[n++] = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+        out[n++] = static_cast<char>(0x80 | (code & 0x3F));
+    } else {
+        out[n++] = static_cast<char>(0xF0 | (code >> 18));
+        out[n++] = static_cast<char>(0x80 | ((code >> 12) & 0x3F));
+        out[n++] = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+        out[n++] = static_cast<char>(0x80 | (code & 0x3F));
+    }
+
+    char* result = (char*)nx_managed_alloc(n + 1);
+    if (!result)
+        return nx_strdup("");
+    std::memcpy(result, out, n);
+    result[n] = 0;
+    return result;
+}
+
 // capture_output: run a shell command and return its stdout as a string.
 char* nexus_capture_output(const char* cmd) {
     if (!cmd || !*cmd)

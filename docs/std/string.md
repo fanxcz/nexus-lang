@@ -34,8 +34,12 @@ The runtime additionally provides these built-ins directly (no import needed):
 - `string.slice(s, start, end) -> string` — substring by byte range, boundaries clamped
 - `string.split_count(s, sep) -> i64` — number of separator-separated fields (at least 1)
 - `string.split_at(s, sep, index) -> string` — field `index` (0-based) after splitting by `sep`; empty string when out of range
+- `string.chars(s) -> i64` — number of Unicode code points
+- `string.char_at(s, index) -> i64` — code point at a character index, or -1
+- `string.from_char(code) -> string` — encode one code point (invalid values become U+FFFD)
+- `string.valid_utf8(s) -> bool` — validate the UTF-8 encoding
 
-Because the language has no string arrays yet, splitting is exposed through the `split_count` + `split_at` pair. All indexes and lengths are UTF-8 byte offsets.
+Because the language has no string arrays yet, splitting is exposed through the `split_count` + `split_at` pair. All indexes and lengths are UTF-8 byte offsets except the `char_*` helpers, which count code points.
 
 ```nx
 fn main() {

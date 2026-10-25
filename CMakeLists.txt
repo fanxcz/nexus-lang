@@ -364,6 +364,13 @@ if (NEXUS_BUILD_TESTS)
             -P ${CMAKE_SOURCE_DIR}/tests/for_smoke.cmake)
     set_tests_properties(nexus_for_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    add_test(NAME nexus_utf8_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/utf8_smoke.cmake)
+    set_tests_properties(nexus_utf8_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
   endif()
 
   # The built-in emitters currently target x86-64 Linux and Windows.

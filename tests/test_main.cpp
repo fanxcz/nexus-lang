@@ -68,6 +68,14 @@ int main() {
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
+            auto p = parse(
+                "fn main(){ let text = \"nexus\"; print(string.len(text)); "
+                "print(string.chars(text)); print(string.char_at(text, 0)); "
+                "print(string.from_char(65)); print(string.valid_utf8(text)) }");
+
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
             bool failed = false;
             try {
                 auto p = parse("fn main(){ for ch in \"abc\" { print(ch) } }");
