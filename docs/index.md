@@ -6,9 +6,9 @@ hide:
 
 # NEXUS
 
-Компилируемый язык программирования и нативный рантайм для приложений,
-инструментов и игр. Компилятор написан на C++20, часть экосистемы уже
-переписывается на самом NEXUS ([self-hosting](development/roadmap.md)).
+NEXUS is a compiled programming language and native runtime for applications,
+tools, and games. The compiler is written in C++20. The runtime, standard
+library, and a self-hosting toolchain are part of the same repository.
 
 ```nx
 fn main() {
@@ -23,22 +23,28 @@ nexus build
 nexus run
 ```
 
-MIT · Windows · Linux · macOS
+License: MIT  
+Platforms: Windows, Linux, macOS
 
-## Документация
+## Documentation
 
-- [Быстрый старт](getting-started/index.md)
-- [Синтаксис языка](language/syntax.md)
-- [Стандартная библиотека](std/index.md)
-- [Команды CLI](tooling/commands.md)
-- [Дорожная карта и self-hosting](development/roadmap.md)
-- [Репозиторий на GitHub](https://github.com/fanxcz/nexus-lang)
+- [Manual](manual.md)
+- [Getting Started](getting-started/index.md)
+- [Language Reference](language/syntax.md)
+- [Standard Library](std/index.md)
+- [Command Line Tooling](tooling/commands.md)
+- [Self-Hosting Roadmap](development/roadmap.md)
+- [GitHub Repository](https://github.com/fanxcz/nexus-lang)
 
-## Контакты
+## Downloads
 
-Автор: **fanxcz**
+- [Complete documentation as PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf)
+
+## Contact
+
+Author: fanxcz
 
 - Telegram: [@fanxcz](https://t.me/fanxcz)
-- Почта: [sad098184@gmail.com](mailto:sad098184@gmail.com)
+- Email: [sad098184@gmail.com](mailto:sad098184@gmail.com)
 
-Баг-репорты и предложения — в [issues на GitHub](https://github.com/fanxcz/nexus-lang/issues).
+Please report issues on [GitHub Issues](https://github.com/fanxcz/nexus-lang/issues).
