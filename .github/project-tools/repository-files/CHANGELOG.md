@@ -6,7 +6,8 @@
 - Added `examples/game2d_platformer.nx`, a no-assets platformer starter with frame-time clamping, keyboard movement, gravity, jumping and simple platform landing.
 - Added `stdlib/math.nx` with clamp, interpolation, approach and sign helpers, plus an executable CTest smoke test.
 - Added a compile-time API contract test for the 2D helper module and documented measurable engine/language roadmap milestones.
-- This is a foundation, not yet a full engine: tilemap editing, a rigid-body solver, an asset pipeline, integrated debugger and complete self-hosting remain future work.
+- Added `stdlib/tilemap.nx` with bounded tilemap creation, checked cell access, viewport-aware colored tile drawing, AABB overlap checks, axis-separated movement and collision resolution. The platformer example now uses these helpers; CTest covers edge-of-tile contact and both collision axes.
+- This remains a foundation rather than a full engine: Tiled-map import/editor, per-tile collision metadata, texture atlases, a rigid-body solver, a general asset pipeline, integrated debugger and complete self-hosting remain future work.
 
 ## Runtime parsing and process safety (2026-10-26)
 
