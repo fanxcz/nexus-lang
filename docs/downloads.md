@@ -1,6 +1,6 @@
 # Downloads
 
-[Download the complete documentation as PDF](pdf/NEXUS-Documentation.pdf){ .md-button }
+[Download the complete documentation as PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
 
 Choose the official NEXUS package for your system. The Windows x64 package is assembled and tested by GitHub Actions from this repository. Downloads are published to GitHub Pages only when the packaging and documentation workflow succeeds.
 
