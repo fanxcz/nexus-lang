@@ -2146,7 +2146,7 @@ namespace {
     private:
         static constexpr size_t kMaxInputBytes = 16u * 1024u * 1024u;
         static constexpr size_t kMaxDepth = 128;
-        static constexpr size_t kMaxNodes = 1'000'000;
+        static constexpr size_t kMaxNodes = 100'000;
 
         std::string_view input_;
         size_t position_ = 0;
