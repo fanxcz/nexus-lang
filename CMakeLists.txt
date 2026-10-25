@@ -341,6 +341,10 @@ if (NEXUS_BUILD_TESTS)
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
           -P ${CMAKE_SOURCE_DIR}/tests/regression_check.cmake)
+  add_test(NAME nexus_game2d_platformer_check
+      COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/examples/game2d_platformer.nx)
+  set_tests_properties(nexus_game2d_platformer_check PROPERTIES
+      PASS_REGULAR_EXPRESSION "check: OK")
   # The built-in executable image emitter is only runnable on x86-64
   # Linux and Windows. Keep its end-to-end executable tests off macOS.
   if (WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -394,6 +398,14 @@ if (NEXUS_BUILD_TESTS)
             -P ${CMAKE_SOURCE_DIR}/tests/math_helpers_smoke.cmake)
     set_tests_properties(nexus_math_helpers_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    add_test(NAME nexus_tilemap_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/tilemap_smoke.cmake)
+    set_tests_properties(nexus_tilemap_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 45)
     add_test(NAME nexus_engine2d_api_smoke
         COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/tests/regression_programs/engine2d_api.nx)
     set_tests_properties(nexus_engine2d_api_smoke PROPERTIES
