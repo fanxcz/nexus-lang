@@ -43,3 +43,5 @@ Drawing colours are supplied as separate red, green, blue and alpha floating-poi
 2D rendering includes rectangles, circles, lines, text, textures, custom fonts and a CPU-side raster canvas. The 3D API currently provides a camera setup, grid, coloured cubes and experimental model loading. Input covers keyboard/mouse state and the most recent event. Audio is dynamically loaded and may be unavailable. ECS/UI/particles/physics/scenes are small helper systems rather than complete engine subsystems.
 
 See [Graphics 2D](graphics-2d.md), [Input](input.md), [Audio](audio.md), [ECS](ecs.md), [Physics](physics.md) and [Scenes](scenes.md) for exact APIs and limitations.
+
+For a small convenience layer over the current APIs, see [2D game helpers](game2d.md) and the self-contained [platformer example](../../examples/game2d_platformer.nx).
