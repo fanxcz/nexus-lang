@@ -1,0 +1,211 @@
+// Small tilemap and axis-separated AABB collision helpers for NEXUS games.
+// Tile IDs: 0 = empty; any positive ID is solid. Rendering uses simple debug colors.
+
+fn tilemap_floor(value: f64) -> i64 {
+    let mut whole = to_i64(value)
+    if to_f64(whole) > value {
+        whole = whole - 1
+    }
+    return whole
+}
+
+fn tilemap_valid(map: i64, width: i64, height: i64) -> bool {
+    if map <= 0 || width <= 0 || height <= 0 { return false }
+    if width > 262144 / height { return false }
+    if ilist_len(map) < width * height { return false }
+    return true
+}
+
+fn tilemap_create(width: i64, height: i64) -> i64 {
+    if width <= 0 || height <= 0 { return 0 }
+    if width > 262144 / height { return 0 }
+
+    let cells = ilist_new()
+    let mut i = 0
+    while i < width * height {
+        ilist_push(cells, 0)
+        i = i + 1
+    }
+    return cells
+}
+
+fn tilemap_get(map: i64, width: i64, height: i64, x: i64, y: i64) -> i64 {
+    if !tilemap_valid(map, width, height) { return 0 }
+    if x < 0 || y < 0 || x >= width || y >= height { return 0 }
+    return ilist_get(map, y * width + x)
+}
+
+fn tilemap_set(map: i64, width: i64, height: i64, x: i64, y: i64, tile: i64) {
+    if !tilemap_valid(map, width, height) { return }
+    if x < 0 || y < 0 || x >= width || y >= height { return }
+    ilist_set(map, y * width + x, tile)
+}
+
+fn tilemap_solid_at(map: i64, width: i64, height: i64, x: i64, y: i64) -> bool {
+    return tilemap_get(map, width, height, x, y) > 0
+}
+
+fn tilemap_collides_box(map: i64, map_width: i64, map_height: i64,
+                        tile_size: f64, x: f64, y: f64,
+                        box_width: f64, box_height: f64) -> bool {
+    if !tilemap_valid(map, map_width, map_height) { return false }
+    if tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 { return false }
+
+    let left = tilemap_floor(x / tile_size)
+    let top = tilemap_floor(y / tile_size)
+    let right = tilemap_floor((x + box_width - 0.0001) / tile_size)
+    let bottom = tilemap_floor((y + box_height - 0.0001) / tile_size)
+
+    let mut ty = top
+    while ty <= bottom {
+        let mut tx = left
+        while tx <= right {
+            if tilemap_solid_at(map, map_width, map_height, tx, ty) {
+                return true
+            }
+            tx = tx + 1
+        }
+        ty = ty + 1
+    }
+    return false
+}
+
+// Move along one axis at a time. Substeps prevent tunnelling through tiles;
+// binary search refines the last safe position when a substep touches a wall.
+fn tilemap_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                  x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
+        return x
+    }
+
+    let mut step_limit = tile_size * 0.25
+    if box_width * 0.25 < step_limit { step_limit = box_width * 0.25 }
+    if box_height * 0.25 < step_limit { step_limit = box_height * 0.25 }
+    if step_limit < 0.01 { step_limit = 0.01 }
+
+    let mut distance = delta
+    if distance < 0.0 { distance = 0.0 - distance }
+    let mut steps = to_i64(distance / step_limit) + 1
+    if steps > 10000 { steps = 10000 }
+    if steps < 1 { steps = 1 }
+    let step = delta / to_f64(steps)
+
+    let mut current = x
+    let mut i = 0
+    while i < steps {
+        let candidate = current + step
+        if tilemap_collides_box(map, map_width, map_height, tile_size,
+                                candidate, y, box_width, box_height) {
+            let mut safe = current
+            let mut blocked = candidate
+            let mut refine = 0
+            while refine < 14 {
+                let middle = (safe + blocked) * 0.5
+                if tilemap_collides_box(map, map_width, map_height, tile_size,
+                                        middle, y, box_width, box_height) {
+                    blocked = middle
+                } else {
+                    safe = middle
+                }
+                refine = refine + 1
+            }
+            return safe
+        }
+        current = candidate
+        i = i + 1
+    }
+    return current
+}
+
+fn tilemap_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                  x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
+        return y
+    }
+
+    let mut step_limit = tile_size * 0.25
+    if box_width * 0.25 < step_limit { step_limit = box_width * 0.25 }
+    if box_height * 0.25 < step_limit { step_limit = box_height * 0.25 }
+    if step_limit < 0.01 { step_limit = 0.01 }
+
+    let mut distance = delta
+    if distance < 0.0 { distance = 0.0 - distance }
+    let mut steps = to_i64(distance / step_limit) + 1
+    if steps > 10000 { steps = 10000 }
+    if steps < 1 { steps = 1 }
+    let step = delta / to_f64(steps)
+
+    let mut current = y
+    let mut i = 0
+    while i < steps {
+        let candidate = current + step
+        if tilemap_collides_box(map, map_width, map_height, tile_size,
+                                x, candidate, box_width, box_height) {
+            let mut safe = current
+            let mut blocked = candidate
+            let mut refine = 0
+            while refine < 14 {
+                let middle = (safe + blocked) * 0.5
+                if tilemap_collides_box(map, map_width, map_height, tile_size,
+                                        x, middle, box_width, box_height) {
+                    blocked = middle
+                } else {
+                    safe = middle
+                }
+                refine = refine + 1
+            }
+            return safe
+        }
+        current = candidate
+        i = i + 1
+    }
+    return current
+}
+
+// Draw a viewport-sized subset of the map using built-in colored rectangles.
+// Call from inside gfx_begin()/gfx_end(); this does not own the render loop.
+fn tilemap_draw(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                view_x: f64, view_y: f64, view_width: f64, view_height: f64) {
+    if !tilemap_valid(map, map_width, map_height) { return }
+    if tile_size < 1.0 || view_width <= 0.0 || view_height <= 0.0 { return }
+
+    let mut start_x = tilemap_floor(view_x / tile_size)
+    let mut start_y = tilemap_floor(view_y / tile_size)
+    let mut end_x = tilemap_floor((view_x + view_width) / tile_size)
+    let mut end_y = tilemap_floor((view_y + view_height) / tile_size)
+
+    if start_x < 0 { start_x = 0 }
+    if start_y < 0 { start_y = 0 }
+    if end_x >= map_width { end_x = map_width - 1 }
+    if end_y >= map_height { end_y = map_height - 1 }
+    if start_x >= map_width || start_y >= map_height { return }
+    if end_x < start_x || end_y < start_y { return }
+
+    let mut ty = start_y
+    while ty <= end_y {
+        let mut tx = start_x
+        while tx <= end_x {
+            let tile = tilemap_get(map, map_width, map_height, tx, ty)
+            if tile == 1 {
+                gfx_rect(to_f64(tx) * tile_size, to_f64(ty) * tile_size,
+                         tile_size, tile_size, 0.20, 0.48, 0.22, 1.0)
+                gfx_rect(to_f64(tx) * tile_size, to_f64(ty) * tile_size,
+                         tile_size, 4.0, 0.46, 0.72, 0.28, 1.0)
+            } else if tile == 2 {
+                gfx_rect(to_f64(tx) * tile_size, to_f64(ty) * tile_size,
+                         tile_size, tile_size, 0.48, 0.30, 0.17, 1.0)
+            } else if tile == 3 {
+                gfx_rect(to_f64(tx) * tile_size, to_f64(ty) * tile_size,
+                         tile_size, tile_size, 0.36, 0.40, 0.48, 1.0)
+            } else if tile == 4 {
+                gfx_rect(to_f64(tx) * tile_size, to_f64(ty) * tile_size,
+                         tile_size, tile_size, 0.86, 0.16, 0.10, 1.0)
+            } else if tile > 0 {
+                gfx_rect(to_f64(tx) * tile_size, to_f64(ty) * tile_size,
+                         tile_size, tile_size, 0.20, 0.42, 0.70, 1.0)
+            }
+            tx = tx + 1
+        }
+        ty = ty + 1
+    }
+}
