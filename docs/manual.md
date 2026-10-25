@@ -991,8 +991,14 @@ http_get_text(url: string) -> string
 ### 14.6 json
 
 ```nx
+json_is_valid(json: string) -> bool
 json_field(json: string, key: string) -> string
+json_value_type(json: string, key: string) -> string
+json_array_length(json: string, key: string) -> i64
+json_array_item(json: string, key: string, index: i64) -> string
 ```
+
+The runtime parses valid JSON with size/depth limits. Property lookup is at the root object only; strings are returned decoded, while numbers, booleans, null, arrays and objects are returned as JSON text. Array helpers address a root-level array property. Schema validation, JSON serialization and arbitrary JSONPath expressions are not provided. See [the JSON module guide](std/json.md).
 
 ### 14.7 db
 
@@ -1592,7 +1598,11 @@ This appendix lists the runtime functions available to generated programs.
 
 | Function |
 |----------|
+| `nexus_json_array_get` |
+| `nexus_json_array_len` |
 | `nexus_json_get` |
+| `nexus_json_type` |
+| `nexus_json_valid` |
 
 ### Lists
 
