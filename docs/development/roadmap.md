@@ -12,6 +12,24 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 - This release's environment doctor, JSON diagnostic output, built-in compile/run self-test, token-accurate AST source spans (including escaped string literals), shared CLI/LSP whole-document formatter with comment/string-aware token spacing, token-stream preservation checks for already-parseable input, and regression coverage for decimal literals, escaped strings, comments, adjacent unary operators, parseability and idempotency, top-level parser recovery that reports multiple syntax errors, and deterministic frontend fuzz smoke test.
 - The GitHub Actions matrix builds/tests Ubuntu, Windows, and macOS hosts. A separate Linux workflow runs ASan/UBSan on compiler and runtime tests; refer to the [platform support matrix](platform-support.md) for output-target boundaries.
 
+## Priority 3 — 2D game runtime and coherent APIs
+
+1. Build on the existing SDL-backed renderer, texture loading, animation, input, camera, audio and AABB primitives instead of presenting them as a complete engine.
+2. Keep a small consistent 2D convenience module in `stdlib/engine2d.nx`; add regression examples that can be built from a clean checkout and use only shipped APIs.
+3. Extend the runtime incrementally with tilemaps, collision resolution and sprite/animation lifecycle tests. The current `physics_aabb` helper detects overlap; it is not a rigid-body solver.
+4. Test frame timing under stalls, keyboard input, missing assets and unavailable audio/graphics libraries on supported platforms.
+
+**Completion criterion:** a documented platformer example builds with the shipped compiler, runs without external assets, handles movement/jumping and collisions, and shuts down cleanly.
+
+## Priority 4 — Language and standard-library ergonomics
+
+1. Add small, well-tested standard-library helpers before expanding syntax or the type system; current `stdlib/math.nx` supplies clamp, interpolation, approach and sign helpers for simulation/gameplay.
+2. Add tests for numeric edge cases (negative values, exact boundaries, reversed ranges and non-finite inputs where supported) and ensure examples use declared mutable bindings for state.
+3. Prioritize clear diagnostics, deterministic formatting and self-host compiler parity before introducing broad syntax changes.
+4. Track classes/inheritance, richer enums, dynamic arrays and ownership/lifetime design as separate language proposals; do not imply these features are implemented by adding facade APIs.
+
+**Completion criterion:** standard-library additions have executable regression coverage, are documented, and pass the same clean-checkout CI matrix as the compiler.
+
 ## Priority 1 — Trustworthy development workflow
 
 1. Keep the full test suite green on clean Linux, Windows, and macOS runners; run the sanitizer workflow for frontend/runtime changes.
