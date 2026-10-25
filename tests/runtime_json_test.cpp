@@ -69,6 +69,15 @@ int main() {
     tooDeep.append(129, ']');
     expect(!nexus_json_valid(tooDeep.c_str()), "excessive nesting is rejected");
 
+    std::string tooManyValues = "[";
+    for (int i = 0; i < 100001; ++i) {
+        if (i != 0)
+            tooManyValues += ',';
+        tooManyValues += '0';
+    }
+    tooManyValues += ']';
+    expect(!nexus_json_valid(tooManyValues.c_str()), "excessive node count is rejected");
+
     expectString("top-level key", nexus_json_get(json, "version"), "-1.25e+3");
     expectString("nested key is not mistaken for a root key",
                  nexus_json_get(R"json({"nested":{"version":99}})json", "version"),
