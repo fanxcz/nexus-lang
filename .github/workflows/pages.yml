@@ -252,7 +252,7 @@ jobs:
               throw "PATH resolved nexus.cmd to the wrong location: $($resolvedLauncher.Source)"
             }
             $version = & 'nexus.cmd' --version 2>&1
-            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 1\.1\.0')) {
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.0\.0')) {
               throw "nexus --version failed: $($version -join "`n")"
             }
 
@@ -372,7 +372,7 @@ jobs:
             }
 
             $version = & $nexus --version 2>&1
-            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 1\.1\.0')) {
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.0\.0')) {
               throw "Installed nexus --version failed: $($version -join "`n")"
             }
             $doctor = & $nexus doctor 2>&1
