@@ -36,6 +36,10 @@ namespace nexus {
         const StructDecl& getStruct(const std::string& n) const;
 
         const EnumDecl& getEnum(const std::string& n) const;
+
+        // Parser produces Type::named for every identifier, so resolve names
+        // against the declaration tables once they are known.
+        void normalize(Type& type) const;
     };
 
 } // namespace nexus

@@ -166,7 +166,11 @@ false
 
 ## 6. Types
 
-NEXUS has a small, explicit type system.
+NEXUS has a small, explicit type system. Every value has a type that is known
+before the program runs. Function parameters and return types are always
+written explicitly; local variables may be inferred from their initializer.
+
+### 6.1 Primitive types
 
 | Type | Meaning |
 |------|---------|
@@ -176,16 +180,185 @@ NEXUS has a small, explicit type system.
 | `string` | text |
 | `void` | no value |
 
-Types are not inferred for function parameters. Function signatures must
-state parameter and return types explicitly.
+`int`, `isize`, and `usize` are accepted as aliases for `i64`. `float` is an
+alias for `f64`.
 
-Type annotations are part of the function declaration:
+Type annotations are part of a function declaration:
 
 ```nx
 fn scale(x: f64, factor: f64) -> f64 {
     return x * factor
 }
 ```
+
+A local variable can state its type explicitly:
+
+```nx
+let count: i64 = 10
+let name: string = "Nexus"
+```
+
+### 6.2 Struct types
+
+A struct groups named fields. Each field has its own type:
+
+```nx
+struct Point {
+    x: i64,
+    y: i64
+}
+```
+
+Create a value by listing every field:
+
+```nx
+let p = Point { x: 3, y: 4 }
+print(p.x + p.y)
+```
+
+Fields are accessed with a dot. A mutable binding allows field assignment:
+
+```nx
+let mut p = Point { x: 3, y: 4 }
+p.x = p.x + 10
+print(p.x)
+```
+
+The initializer must provide every field exactly once, and each value must
+match the field type. Structs may contain other structs:
+
+```nx
+struct Line {
+    start: Point,
+    end: Point
+}
+
+let line = Line {
+    start: Point { x: 0, y: 0 },
+    end: Point { x: 10, y: 10 }
+}
+print(line.end.x)
+```
+
+Structs are value types: assigning one struct variable to another copies the
+value. They are not nullable and there is no inheritance.
+
+### 6.3 Enum types
+
+An enum is a named set of variants:
+
+```nx
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+```
+
+A variant is written with `::`:
+
+```nx
+let color = Color::Green
+```
+
+Enums are compared with `==` and `!=` and are usually consumed with `match`:
+
+```nx
+match color {
+    Color::Red => { print("red") }
+    Color::Green => { print("green") }
+    Color::Blue => { print("blue") }
+}
+```
+
+Enum values may be passed to functions, returned from functions, stored in
+struct fields, and stored in arrays:
+
+```nx
+fn color_name(color: Color) -> string {
+    match color {
+        Color::Red => { return "red" }
+        Color::Green => { return "green" }
+        Color::Blue => { return "blue" }
+        _ => { return "unknown" }
+    }
+}
+```
+
+Variants do not carry payload data in the current language. Enum values have an
+integer representation, but the compiler does not expose it; use `match` rather
+than relying on numeric values.
+
+### 6.4 Array types
+
+An array is a fixed-size, homogeneous sequence:
+
+```nx
+let numbers = [10, 20, 30]
+print(numbers[0])
+```
+
+The type of `numbers` is `[i64; 3]`. The size may also be written explicitly:
+
+```nx
+let names: [string; 2] = ["Ada", "Grace"]
+```
+
+Indexes start at zero and must be `i64`. Constant indexes are checked at
+compile time; dynamic indexes are checked at run time and a failed check stops
+the program with a runtime error instead of reading invalid memory.
+
+Arrays are mutable only through a mutable binding:
+
+```nx
+let mut values = [1, 2, 3]
+values[1] = 42
+print(values[0] + values[1])
+```
+
+The element type is inferred from the first element; every other element must
+have the same type. Empty array literals are not supported. Arrays are value
+types, so assigning an array copies its elements.
+
+### 6.5 Pointer types
+
+A pointer stores the address of a value. Take an address with `&` and read the
+pointee with `*`:
+
+```nx
+let value = 7
+let pointer = &value
+print(*pointer)
+```
+
+The type of `pointer` is `*i64`. Address-of works for variables, struct fields,
+and array elements. A pointer type is written with `*` before the element type:
+
+```nx
+let pointer: *i64 = &value
+```
+
+Pointers are primarily useful for external functions. NEXUS does not have
+pointer arithmetic or manual memory management in the language; memory for
+strings, lists, and runtime objects is managed by the runtime.
+
+### 6.6 Type compatibility
+
+- `i64` and `f64` are different types. There is no implicit conversion between
+  them; use `to_f64` and `to_i64` from the runtime.
+- `bool` is not an integer. It cannot be used in arithmetic.
+- Two struct types are compatible only when they have the same name.
+- Two enum types are compatible only when they have the same name.
+- Array types are compatible when their element types and lengths match.
+- String concatenation with `+` accepts a string on either side and converts an
+  `i64`, `f64`, or `bool` operand to text automatically:
+
+  ```nx
+  let message = "count = " + 42
+  ```
+
+- A `let` without an annotation takes the type of its initializer. A `let` with
+  an annotation requires the initializer to have exactly that type.
 
 ------------------------------------------------------------------------
 
@@ -210,7 +383,19 @@ let mut i = 0
 i = i + 1
 ```
 
-### 7.3 Discarding values
+### 7.3 Constants
+
+Use `const` for a binding that is declared once and never reassigned:
+
+```nx
+const limit: i64 = 10
+const greeting = "hello"
+```
+
+`const` requires an initializer and, like `let`, produces an immutable binding.
+An explicit type is optional.
+
+### 7.4 Discarding values
 
 Use `let _` to explicitly discard a value:
 
@@ -218,23 +403,30 @@ Use `let _` to explicitly discard a value:
 let _ = some_function()
 ```
 
-This is useful when a function returns a value that is not needed.
+This is useful when a function returns a value that is not needed. Each `_`
+is independent, so `let _` may be repeated in the same block.
 
-### 7.4 Type stability
+### 7.5 Type stability
 
 A variable keeps its type for its entire lifetime. Reassigning a value of a
 different type is an error:
 
 ```nx
-let x = 10
+let mut x = 10
 x = 20      // ok
 x = "text"  // error
 ```
 
-### 7.5 Scope
+A mutable binding is required for any assignment. `let x = 10; x = 20` is an
+error because `x` is immutable.
+
+### 7.6 Scope
 
 Variables are scoped to the block in which they are declared. A variable
-declared inside an `if` or `while` block is not visible outside that block.
+declared inside an `if`, `while`, `for`, or `match` block is not visible outside
+that block. An inner block may declare a new variable with the same name as an
+outer one; the inner declaration shadows the outer one only inside that block.
+Two variables with the same name in the same block are an error.
 
 ------------------------------------------------------------------------
 
@@ -335,16 +527,180 @@ The condition is evaluated before each iteration.
 
 ### 9.3 For loop
 
-```
+A numeric range loop runs from a start value up to, but not including, an end
+value:
+
+```nx
 for i in 0..5 {
     print(i)
 }
 ```
 
-The loop variable is declared automatically. The range is half-open:
-`start..end` includes `start` and excludes `end`.
+The loop variable is declared by the loop and is visible only inside the loop
+body. Like `let`, it is immutable. The bounds are evaluated once, before the
+loop starts, and must be `i64`.
 
-### 9.4 Blocks
+A second form iterates over the elements of an array:
+
+```nx
+let names = ["Ada", "Grace", "Linus"]
+for name in names {
+    print(name)
+}
+```
+
+The array expression is evaluated once. Each element is copied into the loop
+variable in order, so the loop variable has the element type. Modifying the
+array inside the loop does not change which elements the loop visits.
+
+`break` leaves the loop and `continue` starts the next iteration. Both work in
+range and array loops:
+
+```nx
+for i in 0..10 {
+    if i == 3 {
+        continue
+    }
+    if i == 6 {
+        break
+    }
+    print(i)
+}
+```
+
+Iteration over strings is not supported; use `string.len`, `string.byte_at`, or
+`string.slice` with a numeric range instead.
+
+### 9.4 Break and continue
+
+Inside a loop, `break` leaves the loop immediately and `continue` jumps to the
+next iteration:
+
+```nx
+let mut i = 0
+while i < 10 {
+    i = i + 1
+    if i == 3 {
+        continue
+    }
+    if i == 6 {
+        break
+    }
+    print(i)
+}
+```
+
+The same statements work inside `for` loops and inside a `while` loop that was
+generated from a `for` loop.
+
+### 9.5 Pattern matching
+
+`match` compares a value against a list of arms. The first arm that matches is
+executed. Each arm has a pattern, an optional guard, an arrow, and a block:
+
+```nx
+let status = 2
+match status {
+    0 => { print("idle") }
+    1 => { print("starting") }
+    _ => { print("running") }
+}
+```
+
+The value may be an `i64`, a `bool`, or an enum value.
+
+#### Literal patterns
+
+Integer, boolean, and enum patterns match by equality:
+
+```nx
+match color {
+    Color::Red => { print("red") }
+    Color::Green => { print("green") }
+    _ => { print("other") }
+}
+```
+
+Two identical literal patterns in the same `match` are an error.
+
+#### Range patterns
+
+Integer ranges use the same `start..end` syntax as `for` loops. Both ends are
+inclusive:
+
+```nx
+match age {
+    0..12 => { print("child") }
+    13..17 => { print("teenager") }
+    18..64 => { print("adult") }
+    _ => { print("senior") }
+}
+```
+
+Range patterns require an `i64` value. The lower bound must not be greater than
+the upper bound when both are literals.
+
+#### Binding patterns
+
+A bare identifier followed by `=>` or by a guard binds the matched value to a
+local variable:
+
+```nx
+match score {
+    100 => { print("perfect") }
+    value if value > 90 => { print("great: " + str_i64(value)) }
+    value => { print("scored " + str_i64(value)) }
+}
+```
+
+A binding is local to its arm. It does not modify or shadow the matched
+expression outside the arm.
+
+#### Guards
+
+An arm may add `if condition` after the pattern. The arm runs only when the
+pattern matches **and** the guard is `true`. Guards may use bound values and any
+variables from the surrounding scope:
+
+```nx
+let limit = 10
+match n {
+    value if value < limit => { print("below limit") }
+    _ => { print("at or above limit") }
+}
+```
+
+A guard must have type `bool`.
+
+#### Catch-all and reachability
+
+`_` is the wildcard pattern and matches every value. A binding without a guard
+also matches every value. Either form is a catch-all, so it must be the last
+arm:
+
+```nx
+match value {
+    1 => { print("one") }
+    _ => { print("other") }
+}
+```
+
+The compiler rejects arms that appear after a catch-all because they would be
+unreachable. A `match` does not have to be exhaustive: if no arm matches, the
+`match` simply does nothing and execution continues after it. To make a
+function return on every path, include a catch-all arm or add a `return` after
+the `match`.
+
+#### Matching booleans
+
+```nx
+match ready {
+    true => { print("ready") }
+    false => { print("waiting") }
+}
+```
+
+### 9.6 Blocks
 
 Blocks are delimited by braces. They introduce a new scope:
 
@@ -383,8 +739,9 @@ fn add(a: i64, b: i64) -> i64 {
 return value
 ```
 
-A function may return early. If a function does not explicitly return, the
-compiler may insert a default return where supported.
+A function may return early. A non-void function must return a value on every
+reachable path; otherwise the compiler reports an error. `main` may omit a
+return and exits with status `0`.
 
 ### 10.4 Main function
 
@@ -421,6 +778,38 @@ fn factorial(n: i64) -> i64 {
 Functions must be declared before they are called. The compiler processes
 declarations in source order.
 
+### 10.8 Void functions
+
+A function without `-> type` returns `void`:
+
+```nx
+fn greet(name: string) {
+    print("hello, " + name)
+}
+```
+
+A void function may use `return` without a value to exit early, but it cannot
+return a value.
+
+### 10.9 External functions
+
+`extern "C" fn` declares a function that is provided outside the NEXUS
+program, usually by the runtime or the operating system:
+
+```nx
+extern "C" fn strlen(text: string) -> i64
+
+fn main() {
+    print(strlen("hello"))
+}
+```
+
+The string after `extern` names the calling convention; `"C"` is the supported
+convention. A declaration has no body and ends with `;` (the semicolon is
+optional because NEXUS generally allows omitted semicolons). `string` maps to a
+C string pointer and the primitive numeric types map to their C equivalents.
+The symbol must be available when the generated program is linked.
+
 ------------------------------------------------------------------------
 
 ## 11. Strings
@@ -447,16 +836,50 @@ let s = "hello"
 let s = "a" + " " + "b"
 ```
 
-### 11.4 Printing strings
+### 11.4 Comparison
+
+Strings can be compared for equality and inequality:
+
+```nx
+print("nexus" == "nexus")
+print("a" != "b")
+```
+
+Ordering comparisons (`<`, `<=`, `>`, `>=`) are not supported for strings.
+
+### 11.5 Printing strings
 
 ```nx
 print("hello")
 ```
 
-### 11.5 Byte-oriented operations
+`print` writes the string followed by a newline. A string expression can be
+built from text and numbers with `+`:
 
-String operations in the standard library are byte-oriented. This keeps the
-implementation simple and predictable.
+```nx
+print("answer = " + 42)
+```
+
+### 11.6 UTF-8 and byte operations
+
+Source files and string literals are UTF-8. The compiler stores a string as a
+sequence of UTF-8 bytes and prints those bytes unchanged, so non-ASCII text
+works as long as the terminal or output target interprets UTF-8:
+
+```nx
+print("Привет, мир")
+```
+
+The string functions in the standard library are byte-oriented:
+
+- `string.len` returns the number of bytes, not the number of Unicode
+  characters.
+- `string.byte_at` returns one byte (0-255).
+- `string.slice` uses byte offsets.
+- `string.upper` and `string.lower` change ASCII letters only.
+
+There are no `\u` escape sequences in the current language. Write non-ASCII
+text directly in the source file as UTF-8.
 
 ------------------------------------------------------------------------
 
@@ -709,20 +1132,49 @@ produces output matching the C++ compiler on the test corpus.
 
 ```text
 program      := declaration*
-declaration  := function | statement
+declaration  := import | struct | enum | extern | function
+import       := "import" (STRING | IDENT ("." IDENT)*) ";"
+struct       := "struct" IDENT "{" field* "}"
+field        := IDENT ":" type ("," | ";")?
+enum         := "enum" IDENT "{" IDENT ("," | ";")* "}"
+extern       := "extern" STRING function_signature ";"
 function     := "fn" IDENT "(" params ")" ("->" type)? block
+function_signature := IDENT "(" params ")" ("->" type)?
 params       := (param ("," param)*)?
 param        := IDENT ":" type
 type         := "i64" | "f64" | "bool" | "string" | "void"
+              | "*" type
+              | "[" type ";" INTEGER "]"
+              | IDENT
+
 block        := "{" statement* "}"
-statement    := let | assign | print | if | while | for | return | expr
-let          := "let" "mut"? IDENT "=" expression
-assign       := IDENT "=" expression
+statement    := let | const | assign | print | if | while | for | match
+              | break | continue | return | block | expression
+let          := "let" "mut"? IDENT (":" type)? "=" expression
+const        := "const" IDENT (":" type)? "=" expression
+assign       := lvalue ("=" | "+=" | "-=" | "*=" | "/=" | "%=") expression
+lvalue       := IDENT | expression "." IDENT | expression "[" expression "]"
 print        := "print" "(" expression ")"
-if           := "if" expression block ("else" block)?
+if           := "if" expression block ("else" (block | if))?
 while        := "while" expression block
-for          := "for" IDENT "in" expression ".." expression block
+for          := "for" IDENT "in" (expression ".." expression | expression) block
+match        := "match" expression "{" arm* "}"
+arm          := pattern ("if" expression)? "=>" block
+pattern      := expression (".." expression)? | IDENT | "_"
+break        := "break"
+continue     := "continue"
 return       := "return" expression?
+
+expression   := binary expression with precedence:
+                ||  <  &&  <  comparison  <  + -  <  * / %
+unary        := ("-" | "!" | "&" | "*") unary | postfix
+postfix      := primary ("(" arguments ")")? ("." IDENT | "[" expression "]")*
+primary      := INTEGER | FLOAT | STRING | "true" | "false"
+              | IDENT | IDENT "::" IDENT
+              | IDENT "{" field_initializer ("," field_initializer)* "}"
+              | "[" expression ("," expression)* "]"
+              | "(" expression ")"
+arguments    := (expression ("," expression)*)?
 ```
 
 ------------------------------------------------------------------------
@@ -790,6 +1242,57 @@ fn main() {
 }
 ```
 
+### 21.6 Structs, enums, arrays, and match
+
+```nx
+struct Task {
+    title: string,
+    priority: i64
+}
+
+enum State {
+    Todo,
+    Doing,
+    Done
+}
+
+fn state_name(state: State) -> string {
+    match state {
+        State::Todo => { return "todo" }
+        State::Doing => { return "doing" }
+        State::Done => { return "done" }
+        _ => { return "unknown" }
+    }
+}
+
+fn priority_label(priority: i64) -> string {
+    match priority {
+        0..3 => { return "low" }
+        4..7 => { return "normal" }
+        value if value > 7 => { return "urgent(" + str_i64(value) + ")" }
+        _ => { return "unset" }
+    }
+}
+
+fn main() {
+    let mut tasks = [
+        Task { title: "write docs", priority: 3 },
+        Task { title: "ship it", priority: 9 },
+        Task { title: "review", priority: 7 }
+    ]
+    tasks[0].priority = 5
+
+    let states = [State::Todo, State::Doing, State::Done]
+    for i in 0..3 {
+        print(tasks[i].title + ": " + state_name(states[i]) + ", " +
+              priority_label(tasks[i].priority))
+    }
+}
+```
+
+This example writes `write docs: todo, normal`, `ship it: doing, urgent(9)`,
+and `review: done, normal`.
+
 ------------------------------------------------------------------------
 
 ## 22. Troubleshooting
@@ -839,7 +1342,69 @@ tooling, and systems-oriented programming.
 
 ------------------------------------------------------------------------
 
-## 25. Runtime function reference
+## 25. Language features and status
+
+This section records what the current compiler implements and what is still
+planned. A feature is listed as implemented only when it is covered by the test
+suite or by a documented example in this manual.
+
+### 25.1 Implemented
+
+| Feature | Notes |
+|---------|-------|
+| Primitive types | `i64`, `f64`, `bool`, `string`, `void` |
+| Structs | named fields, nesting, field assignment |
+| Enums | named variants, equality, `match`, function parameters and results |
+| Arrays | fixed size, indexing, assignment, runtime bounds checks |
+| Pointers | address-of, dereference, pointer types |
+| Immutable and mutable bindings | `let`, `let mut`, `const` |
+| Local type inference | inferred from the initializer, explicit annotations checked |
+| Functions | parameters, return values, recursion, void functions |
+| External functions | `extern "C" fn` declarations |
+| Imports | `import "file.nx"` and dotted module names |
+| Control flow | `if`/`else`, `while`, `for` over ranges and arrays, `break`, `continue` |
+| Pattern matching | literals, enums, booleans, ranges, bindings, guards |
+| Strings | concatenation, equality, UTF-8 pass-through, byte operations |
+| Floating point | IEEE-754 arithmetic and comparisons |
+| Diagnostics | `NX1001` syntax, `NX2000`/`NX2001` semantic errors with locations |
+| LSP | hover, completion, definition, references, rename, symbols, formatting |
+| Self-hosted compiler | lexer, parser, type checker, and LLVM IR subset |
+
+### 25.2 Planned, not implemented yet
+
+The following features are not part of the current language. They are listed so
+that documentation and examples do not imply support that does not exist.
+
+| Feature | Current status |
+|---------|----------------|
+| Generic functions and types | not implemented |
+| Traits or interfaces | not implemented |
+| Async/await and concurrency | not implemented |
+| Lambdas and closures | not implemented |
+| Function overloading | not implemented; function names must be unique |
+| `Option<T>` / `Result<T, E>` | not implemented; enums have no payloads |
+| Enum payloads and destructuring | not implemented |
+| `match` exhaustiveness checking | not implemented; unmatched values fall through |
+| Iterators and lazy sequences | not implemented |
+| Macros, attributes, `#[...]` | not implemented |
+| Compile-time evaluation of `const` | not implemented; `const` is an immutable binding |
+| Incremental compilation cache | not implemented |
+| LLVM optimization passes | not implemented; the LLVM backend emits textual IR |
+| Full native backend parity | partial; the native backend supports a small subset |
+| Full self-hosting parity | partial; the self-hosted compiler covers a subset |
+| Unicode-aware string indexing | not implemented; string APIs are byte-oriented |
+| `\u` escape sequences | not implemented; write UTF-8 directly in source |
+| Doc comments and generated API docs | not implemented |
+
+### 25.3 Compatibility promise
+
+The implemented features in section 25.1 are exercised by the repository test
+suite. Planned features may change before release. Programs that need a stable
+target should use the LLVM backend and the features listed as implemented.
+
+------------------------------------------------------------------------
+
+## 26. Runtime function reference
 
 This appendix lists the runtime functions available to generated programs.
 

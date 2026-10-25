@@ -20,6 +20,16 @@ namespace nexus {
             throw std::runtime_error("unknown enum: " + n);
         return *it->second;
     }
+    void SemanticAnalyzer::normalize(Type& type) const {
+        if ((type.kind == TypeKind::Struct || type.kind == TypeKind::Enum) &&
+            enums_.contains(type.name)) {
+            type.kind = TypeKind::Enum;
+        }
+        if (type.kind == TypeKind::Pointer && type.pointee)
+            normalize(*type.pointee);
+        if (type.kind == TypeKind::Array && type.element)
+            normalize(*type.element);
+    }
     static const StructField* fieldOf(const StructDecl& s, const std::string& n) {
         for (auto& f : s.fields)
             if (f.name == n)
@@ -78,7 +88,8 @@ namespace nexus {
                 bool hasWildcard = false;
                 bool everyArmReturns = !match->arms.empty();
                 for (const auto& arm : match->arms) {
-                    hasWildcard = hasWildcard || arm.wildcard;
+                    hasWildcard = hasWildcard ||
+                                  ((arm.wildcard || !arm.binding.empty()) && !arm.guard);
                     if (!arm.body || !blockAlwaysReturns(*arm.body)) {
                         everyArmReturns = false;
                     }
@@ -176,12 +187,17 @@ namespace nexus {
         };
 
         for (auto& s : p.structs)
-            for (auto& field : s.fields)
+            for (auto& field : s.fields) {
+                normalize(field.type);
                 validateTypeAt(field.type, field.span.valid ? field.span : s.span);
+            }
 
         for (auto& f : p.functions) {
-            for (auto& a : f.params)
+            for (auto& a : f.params) {
+                normalize(a.type);
                 validateTypeAt(a.type, a.span.valid ? a.span : f.span);
+            }
+            normalize(f.ret);
             validateTypeAt(f.ret, f.span);
             if (f.external)
                 continue;
@@ -485,6 +501,7 @@ namespace nexus {
                     if (env.contains(l->name))
                         throw std::runtime_error("duplicate variable: " + l->name);
                     auto t = expr(l->init.get(), env);
+                    normalize(l->type);
                     if (l->type.kind != TypeKind::Unknown && !sameType(l->type, t))
                         throw std::runtime_error("cannot initialize '" + l->name + "': expected '" +
                                                  describeType(l->type) + "' but got '" +
@@ -571,20 +588,69 @@ namespace nexus {
                     }
                     auto a = env;
                     block(*w->body, a, ret, true);
+                } else if (auto* f = dynamic_cast<ForStmt*>(s.get())) {
+                    Type varType;
+                    if (f->rangeEnd) {
+                        auto startType = expr(f->start.get(), env);
+                        auto endType = expr(f->rangeEnd.get(), env);
+                        if (startType.kind != TypeKind::I64 || endType.kind != TypeKind::I64)
+                            throw std::runtime_error(
+                                "for range bounds must be i64");
+                        varType = Type::i64();
+                    } else {
+                        auto collectionType = expr(f->collection.get(), env);
+                        if (collectionType.kind != TypeKind::Array || !collectionType.element)
+                            throw std::runtime_error(
+                                "for iteration requires an array; use 'for i in start..end' "
+                                "for numeric ranges");
+                        varType = *collectionType.element;
+                    }
+                    auto local = env;
+                    local[f->name] = {varType, false};
+                    block(*f->body, local, ret, true);
                 } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
 
                     auto vt = expr(mm->value.get(), env);
                     if (vt.kind != TypeKind::I64 && vt.kind != TypeKind::Bool &&
                         vt.kind != TypeKind::Enum)
                         throw std::runtime_error("match supports i64, bool, or enum values");
-                    bool wildcard = false;
+                    bool sawCatchAll = false;
                     std::unordered_map<std::string, bool> seenPatterns;
                     for (auto& arm : mm->arms) {
-                        if (arm.wildcard) {
-                            if (wildcard)
-                                throw std::runtime_error("duplicate wildcard match arm");
-                            wildcard = true;
-                        } else {
+                        const bool catchAll =
+                            (arm.wildcard || !arm.binding.empty()) && !arm.guard;
+                        if (sawCatchAll)
+                            throw std::runtime_error(
+                                "unreachable match arm after a catch-all arm");
+                        if (catchAll)
+                            sawCatchAll = true;
+
+                        auto local = env;
+                        if (!arm.binding.empty()) {
+                            if (local.contains(arm.binding))
+                                throw std::runtime_error("duplicate variable: " + arm.binding);
+                            local[arm.binding] = {vt, false};
+                        }
+
+                        if (arm.rangeEnd) {
+                            if (vt.kind != TypeKind::I64)
+                                throw std::runtime_error(
+                                    "range patterns require an i64 value");
+                            auto startType = expr(arm.pattern.get(), env);
+                            auto endType = expr(arm.rangeEnd.get(), env);
+                            if (!sameType(startType, vt) || !sameType(endType, vt))
+                                throw std::runtime_error(
+                                    "match range bounds must have the same type as the value");
+                            if (const auto* start =
+                                    dynamic_cast<const IntExpr*>(arm.pattern.get())) {
+                                if (const auto* end =
+                                        dynamic_cast<const IntExpr*>(arm.rangeEnd.get())) {
+                                    if (start->value > end->value)
+                                        throw std::runtime_error(
+                                            "match range lower bound exceeds upper bound");
+                                }
+                            }
+                        } else if (!arm.wildcard && arm.binding.empty()) {
                             auto pt = expr(arm.pattern.get(), env);
                             if (!sameType(pt, vt))
                                 throw std::runtime_error("match pattern type mismatch");
@@ -608,7 +674,13 @@ namespace nexus {
                                 throw std::runtime_error("duplicate match pattern '" + display +
                                                          "'");
                         }
-                        auto local = env;
+
+                        if (arm.guard) {
+                            auto guardType = expr(arm.guard.get(), local);
+                            if (guardType.kind != TypeKind::Bool)
+                                throw std::runtime_error("match guard must be bool");
+                        }
+
                         block(*arm.body, local, ret, inLoop);
                     }
                 } else if (dynamic_cast<BreakStmt*>(s.get()) ||

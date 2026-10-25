@@ -1,0 +1,38 @@
+// For loops over numeric ranges and arrays, including break/continue.
+fn main() {
+    for i in 0..3 {
+        print(i)
+    }
+
+    let values = [10, 20, 30]
+    for value in values {
+        print(value)
+    }
+
+    let mut total = 0
+    for i in 0..10 {
+        if i == 2 {
+            continue
+        }
+        if i == 5 {
+            break
+        }
+        total = total + i
+    }
+    print(total)
+
+    for i in 0..3 {
+        for j in 0..2 {
+            if j == 1 {
+                continue
+            }
+            print(i * 10 + j)
+        }
+    }
+
+    let value = 99
+    for value in [7, 8] {
+        print(value)
+    }
+    print(value)
+}

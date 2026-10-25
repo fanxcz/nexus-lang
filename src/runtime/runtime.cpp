@@ -2612,8 +2612,11 @@ char* nexus_sha256(const char* text) {
     return nx_strdup(hex);
 }
 
+} // extern "C"
+
 // os.args_count / os.args_get: command-line arguments (excluding executable name).
 // Platform-specific implementation to avoid requiring argc/argv from the compiler.
+// Kept outside the C-linkage block because it returns a C++ standard container.
 static std::vector<std::string> get_os_args() {
     std::vector<std::string> args;
 #if defined(_WIN32)
@@ -2663,6 +2666,8 @@ static std::vector<std::string> get_os_args() {
 #endif
     return args;
 }
+
+extern "C" {
 
 int64_t nexus_os_args_count() {
     auto args = get_os_args();

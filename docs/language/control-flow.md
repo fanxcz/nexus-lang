@@ -42,7 +42,24 @@ for value in values {
 }
 ```
 
-The `..` range is half-open: the start is included and the end is excluded. The current parser does not implement the Rust-style `..=` range syntax or iterator methods such as `.enumerate()` / `.rev()`.
+The `..` range is half-open: the start is included and the end is excluded. Both
+bounds are evaluated once, before the loop starts, and must be `i64`. The loop
+variable is scoped to the loop body and is immutable.
+
+A `for` loop can also iterate over a fixed-size array:
+
+```nx
+let values = [10, 20, 30]
+for value in values {
+    print(value)
+}
+```
+
+The array is evaluated once and each element is copied into the loop variable.
+String iteration is not supported; use a numeric range with `string.len` and
+`string.byte_at` if byte-level access is needed. The current parser does not
+implement the Rust-style `..=` range syntax or iterator methods such as
+`.enumerate()` / `.rev()`.
 
 ## Match statements
 
@@ -63,7 +80,23 @@ fn main() {
 }
 ```
 
-Match arms have expression patterns and statement blocks. Unit enum variants and the wildcard `_` are supported. Match is not a general expression in this compiler version; payload enum variants, match guards, destructured struct patterns, or-patterns and range patterns are not supported.
+Match arms have patterns, optional guards, and statement blocks. Unit enum
+variants, integer and boolean literals, inclusive integer ranges, binding
+patterns, the wildcard `_`, and `if` guards are supported:
+
+```nx
+match score {
+    100 => { print("perfect") }
+    value if value > 90 => { print("great") }
+    1..89 => { print("scored") }
+    _ => { print("out of range") }
+}
+```
+
+Match is not a general expression in this compiler version; payload enum
+variants, destructured struct patterns, and or-patterns are not supported.
+`match` does not perform exhaustiveness checking: if no arm matches, execution
+continues after the `match` statement.
 
 ## Returns
 

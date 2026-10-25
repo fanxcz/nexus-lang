@@ -339,6 +339,10 @@ if (NEXUS_BUILD_TESTS)
   # The .ll pipeline needs a clang-compatible driver, so plain g++ is skipped.
   find_program(NEXUS_SELFHOST_CXX NAMES clang++ clang++-18 clang++-17)
   if (NEXUS_SELFHOST_CXX)
+    # The Paint project uses the LLVM backend, which needs a clang-compatible
+    # driver. Reuse the driver found for the self-hosting tests.
+    set_tests_properties(nexus_paint_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
     add_test(NAME nexus_selfhost_lexer
         COMMAND ${CMAKE_COMMAND}
             -DNEXUS_BIN=$<TARGET_FILE:nexus>
@@ -346,11 +350,30 @@ if (NEXUS_BUILD_TESTS)
             -P ${CMAKE_SOURCE_DIR}/tests/selfhost_lexer.cmake)
     set_tests_properties(nexus_selfhost_lexer PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    add_test(NAME nexus_match_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/match_smoke.cmake)
+    set_tests_properties(nexus_match_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    add_test(NAME nexus_for_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/for_smoke.cmake)
+    set_tests_properties(nexus_for_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
   endif()
 
   # The built-in emitters currently target x86-64 Linux and Windows.
   if (WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_program(NEXUS_PARITY_CXX NAMES clang++ clang++-18 g++ c++)
+    if (NEXUS_SELFHOST_CXX)
+      # Prefer the clang-compatible driver already used by the self-hosting
+      # tests. A plain g++ cannot consume textual LLVM IR.
+      set(NEXUS_PARITY_CXX ${NEXUS_SELFHOST_CXX})
+    endif()
     if (NEXUS_PARITY_CXX)
       add_test(NAME nexus_backend_parity
           COMMAND ${CMAKE_COMMAND}

@@ -622,6 +622,112 @@ namespace nexus {
                 terminated = false;
                 return false;
             }
+            if (auto* f = dynamic_cast<const ForStmt*>(s)) {
+                auto lc = lab("for.cond"), lb = lab("for.body"), li = lab("for.inc"),
+                     le = lab("for.end");
+                const auto savedVars = vars;
+                const auto savedTypes = types;
+                Type varType;
+
+                if (f->rangeEnd) {
+                    varType = Type::i64();
+                    auto varPtr = next();
+                    vars[f->name] = varPtr;
+                    types[f->name] = varType;
+                    emit(varPtr + " = alloca i64");
+                    auto startValue = expr(f->start.get());
+                    emit("store i64 " + startValue + ", ptr " + varPtr);
+
+                    // The range end is evaluated once, before the loop starts.
+                    auto endPtr = next();
+                    emit(endPtr + " = alloca i64");
+                    auto endValue = expr(f->rangeEnd.get());
+                    emit("store i64 " + endValue + ", ptr " + endPtr);
+
+                    emit("br label %" + lc);
+                    emit(lc + ":");
+                    auto current = next();
+                    emit(current + " = load i64, ptr " + varPtr);
+                    auto limit = next();
+                    emit(limit + " = load i64, ptr " + endPtr);
+                    auto inRange = next();
+                    emit(inRange + " = icmp slt i64 " + current + ", " + limit);
+                    emit("br i1 " + inRange + ", label %" + lb + ", label %" + le);
+                } else {
+                    auto collectionType = typeOf(f->collection.get());
+                    varType = *collectionType.element;
+                    auto collectionPtr = next();
+                    emit(collectionPtr + " = alloca " + llvmType(collectionType));
+                    auto collectionValue = expr(f->collection.get());
+                    emit("store " + llvmType(collectionType) + " " + collectionValue + ", ptr " +
+                         collectionPtr);
+                    auto indexPtr = next();
+                    emit(indexPtr + " = alloca i64");
+                    emit("store i64 0, ptr " + indexPtr);
+                    auto varPtr = next();
+                    vars[f->name] = varPtr;
+                    types[f->name] = varType;
+                    emit(varPtr + " = alloca " + llvmType(varType));
+
+                    emit("br label %" + lc);
+                    emit(lc + ":");
+                    auto current = next();
+                    emit(current + " = load i64, ptr " + indexPtr);
+                    auto inRange = next();
+                    emit(inRange + " = icmp slt i64 " + current + ", " +
+                         std::to_string(collectionType.arraySize));
+                    emit("br i1 " + inRange + ", label %" + lb + ", label %" + le);
+                    emit(lb + ":");
+                    auto elementPtr = next();
+                    emit(elementPtr + " = getelementptr inbounds " + llvmType(collectionType) +
+                         ", ptr " + collectionPtr + ", i64 0, i64 " + current);
+                    auto element = next();
+                    emit(element + " = load " + llvmType(varType) + ", ptr " + elementPtr);
+                    emit("store " + llvmType(varType) + " " + element + ", ptr " + varPtr);
+                    terminated = false;
+                    breakLabels.push_back(le);
+                    continueLabels.push_back(li);
+                    for (auto& x : f->body->statements)
+                        stmt(x.get(), ret);
+                    breakLabels.pop_back();
+                    continueLabels.pop_back();
+                    if (!terminated)
+                        emit("br label %" + li);
+                    emit(li + ":");
+                    auto index = next();
+                    emit(index + " = load i64, ptr " + indexPtr);
+                    auto nextIndex = next();
+                    emit(nextIndex + " = add i64 " + index + ", 1");
+                    emit("store i64 " + nextIndex + ", ptr " + indexPtr);
+                    emit("br label %" + lc);
+                }
+
+                if (f->rangeEnd) {
+                    emit(lb + ":");
+                    terminated = false;
+                    breakLabels.push_back(le);
+                    continueLabels.push_back(li);
+                    for (auto& x : f->body->statements)
+                        stmt(x.get(), ret);
+                    breakLabels.pop_back();
+                    continueLabels.pop_back();
+                    if (!terminated)
+                        emit("br label %" + li);
+                    emit(li + ":");
+                    auto current = next();
+                    emit(current + " = load i64, ptr " + vars[f->name]);
+                    auto nextValue = next();
+                    emit(nextValue + " = add i64 " + current + ", 1");
+                    emit("store i64 " + nextValue + ", ptr " + vars[f->name]);
+                    emit("br label %" + lc);
+                }
+
+                vars = savedVars;
+                types = savedTypes;
+                emit(le + ":");
+                terminated = false;
+                return false;
+            }
             if (auto* mm = dynamic_cast<const MatchStmt*>(s)) {
 
                 auto value = expr(mm->value.get());
@@ -634,30 +740,72 @@ namespace nexus {
                 std::string first = lab("match.test");
                 emit("br label %" + first);
                 std::string current = first;
+                bool allTerminated = true;
+                bool hasCatchAll = false;
                 for (std::size_t k = 0; k < mm->arms.size(); ++k) {
                     emit(current + ":");
                     auto& arm = mm->arms[k];
-                    if (arm.wildcard) {
-                        emit("br label %" + bodies[k]);
+                    const auto savedVars = vars;
+                    const auto savedTypes = types;
+                    Type vt = typeOf(mm->value.get());
+                    if (!arm.binding.empty()) {
+                        auto ptr = next();
+                        vars[arm.binding] = ptr;
+                        types[arm.binding] = vt;
+                        emit(ptr + " = alloca " + llvmType(vt));
+                        emit("store " + llvmType(vt) + " " + value + ", ptr " + ptr);
+                    }
+                    const std::string matched =
+                        arm.guard ? lab("match.guard") : bodies[k];
+                    if (arm.wildcard || !arm.binding.empty()) {
+                        emit("br label %" + matched);
                     } else {
                         auto pat = expr(arm.pattern.get());
-                        auto cmp = next();
-                        Type vt = typeOf(mm->value.get());
-                        if (vt.kind == TypeKind::Bool)
-                            emit(cmp + " = icmp eq i1 " + value + ", " + pat);
-                        else
-                            emit(cmp + " = icmp eq i64 " + value + ", " + pat);
-                        emit("br i1 " + cmp + ", label %" + bodies[k] + ", label %" + tests[k]);
+                        if (arm.rangeEnd) {
+                            auto upper = expr(arm.rangeEnd.get());
+                            auto lowerOk = next();
+                            auto upperOk = next();
+                            emit(lowerOk + " = icmp sge i64 " + value + ", " + pat);
+                            emit(upperOk + " = icmp sle i64 " + value + ", " + upper);
+                            auto cmp = next();
+                            emit(cmp + " = and i1 " + lowerOk + ", " + upperOk);
+                            emit("br i1 " + cmp + ", label %" + matched + ", label %" +
+                                 tests[k]);
+                        } else {
+                            auto cmp = next();
+                            if (vt.kind == TypeKind::Bool)
+                                emit(cmp + " = icmp eq i1 " + value + ", " + pat);
+                            else
+                                emit(cmp + " = icmp eq i64 " + value + ", " + pat);
+                            emit("br i1 " + cmp + ", label %" + matched + ", label %" +
+                                 tests[k]);
+                        }
+                    }
+                    if (arm.guard) {
+                        emit(matched + ":");
+                        auto guard = expr(arm.guard.get());
+                        emit("br i1 " + guard + ", label %" + bodies[k] + ", label %" +
+                             tests[k]);
                     }
                     emit(bodies[k] + ":");
                     terminated = false;
                     for (auto& x : arm.body->statements)
                         stmt(x.get(), ret);
-                    if (!terminated)
+                    if (!terminated) {
+                        allTerminated = false;
                         emit("br label %" + end);
+                    }
+                    if ((arm.wildcard || !arm.binding.empty()) && !arm.guard)
+                        hasCatchAll = true;
                     terminated = false;
-                    if (!arm.wildcard && k + 1 < mm->arms.size())
+                    vars = savedVars;
+                    types = savedTypes;
+                    if (k + 1 < mm->arms.size())
                         current = tests[k];
+                }
+                if (hasCatchAll && allTerminated) {
+                    terminated = true;
+                    return true;
                 }
                 emit(end + ":");
                 terminated = false;

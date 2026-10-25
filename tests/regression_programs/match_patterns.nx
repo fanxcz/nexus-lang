@@ -1,0 +1,51 @@
+// Pattern matching with ranges, bindings, guards, enums, and booleans.
+// Used by the regression (check + IR) suite and the match smoke test.
+
+enum Level {
+    Low,
+    High
+}
+
+fn classify(n: i64) -> string {
+    match n {
+        0 => { return "zero" }
+        1..9 => { return "unit" }
+        10..99 => { return "tens" }
+        value if value < 0 => { return "negative" }
+        _ => { return "large" }
+    }
+    return "unreachable"
+}
+
+fn level_name(level: Level) -> string {
+    match level {
+        Level::Low => { return "low" }
+        Level::High => { return "high" }
+        _ => { return "unknown" }
+    }
+}
+
+fn print_flag(flag: bool) {
+    match flag {
+        true => { print("yes") }
+        false => { print("no") }
+    }
+}
+
+fn main() {
+    print(classify(0))
+    print(classify(5))
+    print(classify(42))
+    print(classify(-3))
+    print(classify(500))
+    print(level_name(Level::Low))
+    print(level_name(Level::High))
+    print_flag(true)
+    print_flag(false)
+
+    let n: i64 = 12
+    match n {
+        small if small < 10 => { print("small") }
+        big => { print("big=" + str_i64(big)) }
+    }
+}

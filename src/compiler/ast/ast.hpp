@@ -217,11 +217,29 @@ namespace nexus {
         std::unique_ptr<Block> body;
     };
 
+    // `for name in start..end` or `for name in array`.
+    // Exactly one of (rangeEnd, collection) is set.
+    struct ForStmt : Stmt {
+        std::string name;
+        Expr::Ptr start;
+        Expr::Ptr rangeEnd;
+        Expr::Ptr collection;
+        std::unique_ptr<Block> body;
+    };
+
     struct BreakStmt : Stmt {};
     struct ContinueStmt : Stmt {};
 
     struct MatchArm {
         Expr::Ptr pattern;
+        // For range patterns (`start..end`), pattern holds the lower bound and
+        // rangeEnd the inclusive upper bound.
+        Expr::Ptr rangeEnd;
+        // For binding patterns (`value =>`), the matched value is stored in a
+        // local variable with this name for the guard and the arm body.
+        std::string binding;
+        // Optional `if condition` guard evaluated after the pattern matches.
+        Expr::Ptr guard;
         std::unique_ptr<Block> body;
         bool wildcard = false;
     };

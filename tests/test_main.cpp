@@ -54,6 +54,67 @@ int main() {
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
+            auto p = parse(
+                "fn main(){ let n: i64 = 42; match n { 1..10 => { print(1) } "
+                "value if value > 100 => { print(value) } _ => { print(0) } } }");
+
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
+            auto p = parse(
+                "fn main(){ let values = [1, 2, 3]; let mut total = 0; "
+                "for value in values { total = total + value } print(total) }");
+
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("fn main(){ for ch in \"abc\" { print(ch) } }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception&) {
+                failed = true;
+            }
+            if (!failed)
+                return 6;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse(
+                    "fn main(){ let values = [1, 2]; for value in values { print(value) } "
+                    "print(value) }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception&) {
+                failed = true;
+            }
+            if (!failed)
+                return 7;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("fn main(){ let n = 1; match n { _ => { print(1) } 1 => { print(2) } "
+                               "} }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception&) {
+                failed = true;
+            }
+            if (!failed)
+                return 4;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("fn main(){ let n = 1; match n { 1 if 2 => { print(1) } } }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception&) {
+                failed = true;
+            }
+            if (!failed)
+                return 5;
+        }
+        {
 
             auto p =
                 parse("fn main(){ let mut a = [1, 2, 3]; a[1] = 99; let i: i64 = 2; print(a[i]) }");

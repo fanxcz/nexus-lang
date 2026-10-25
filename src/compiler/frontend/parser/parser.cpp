@@ -409,36 +409,22 @@ namespace nexus {
 
             auto start = parseExpr();
 
-            expect(TokenKind::Range);
+            auto loop = std::make_unique<ForStmt>();
 
-            auto end = parseExpr();
+            loop->name = std::move(name);
 
-            auto body = parseBlock();
+            if (accept(TokenKind::Range)) {
+                loop->start = std::move(start);
+                loop->rangeEnd = parseExpr();
+            } else {
+                // `for value in array` evaluates the array once and binds each
+                // element in turn.
+                loop->collection = std::move(start);
+            }
 
-            auto init = std::make_unique<LetStmt>();
-            init->name = name;
-            init->mut = true;
-            init->init = std::move(start);
+            loop->body = parseBlock();
 
-            auto cond = std::make_unique<BinaryExpr>(
-                TokenKind::Less, std::make_unique<VarExpr>(name), std::move(end));
-
-            auto inc = std::make_unique<AssignStmt>();
-            inc->name = name;
-            inc->value = std::make_unique<BinaryExpr>(
-                TokenKind::Plus, std::make_unique<VarExpr>(name), std::make_unique<IntExpr>(1));
-
-            body->statements.push_back(std::move(inc));
-
-            auto loop = std::make_unique<WhileStmt>();
-            loop->cond = std::move(cond);
-            loop->body = std::move(body);
-
-            auto wrap = std::make_unique<Block>();
-            wrap->statements.push_back(std::move(init));
-            wrap->statements.push_back(std::move(loop));
-
-            return wrap;
+            return loop;
         }
         if (accept(TokenKind::KwWhile)) {
             auto c = parseExpr();
@@ -459,16 +445,28 @@ namespace nexus {
             auto s = std::make_unique<MatchStmt>();
             s->value = std::move(value);
             while (cur().kind != TokenKind::RBrace && cur().kind != TokenKind::End) {
-                bool wildcard = false;
-                Expr::Ptr pattern;
+                MatchArm arm;
+                const auto nextKind = [&]() {
+                    return i_ + 1 < tokens_.size() ? tokens_[i_ + 1].kind : TokenKind::End;
+                };
                 if (cur().kind == TokenKind::Identifier && cur().text == "_") {
-                    wildcard = true;
-                    pattern = std::make_unique<VarExpr>(expectIdentifier());
-                } else
-                    pattern = parseExpr();
+                    arm.wildcard = true;
+                    arm.pattern = std::make_unique<VarExpr>(expectIdentifier());
+                } else if (cur().kind == TokenKind::Identifier &&
+                           (nextKind() == TokenKind::KwIf || nextKind() == TokenKind::FatArrow)) {
+                    // A bare identifier followed by a guard or an arrow is a
+                    // binding pattern, not a reference to an existing variable.
+                    arm.binding = expectIdentifier();
+                } else {
+                    arm.pattern = parseExpr();
+                    if (accept(TokenKind::Range))
+                        arm.rangeEnd = parseExpr();
+                }
+                if (accept(TokenKind::KwIf))
+                    arm.guard = parseExpr();
                 expect(TokenKind::FatArrow);
-                auto body = parseBlock();
-                s->arms.push_back({std::move(pattern), std::move(body), wildcard});
+                arm.body = parseBlock();
+                s->arms.push_back(std::move(arm));
                 accept(TokenKind::Comma);
             }
             expect(TokenKind::RBrace);
