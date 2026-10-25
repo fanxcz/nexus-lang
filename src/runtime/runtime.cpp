@@ -2431,9 +2431,10 @@ namespace {
                                     NxJsonValue& root) {
         if (!input)
             return false;
-        source.assign(input);
-        if (source.size() > 16u * 1024u * 1024u)
+        const size_t length = std::strlen(input);
+        if (length > 16u * 1024u * 1024u)
             return false;
+        source.assign(input, length);
         return NxJsonParser(source).parse(root);
     }
 
