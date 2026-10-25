@@ -1,5 +1,7 @@
-// NEXUS 2D platformer starter. Uses the shipped runtime, no external assets required.
+// NEXUS 2D platformer starter with tilemap rendering and axis-separated collision.
 // Controls: A/D or LEFT/RIGHT to move, SPACE to jump, ESC to exit.
+
+import std.tilemap
 
 fn main() {
     if !gfx_init(960, 540, "NEXUS 2D Platformer") {
@@ -7,10 +9,41 @@ fn main() {
         return
     }
 
+    let map_width = 30
+    let map_height = 17
+    let tile_size = 32.0
+    let map = tilemap_create(map_width, map_height)
+    if map <= 0 {
+        print("Could not allocate tilemap")
+        gfx_shutdown()
+        return
+    }
+
+    // Ground: tile 1 is grass; tile 2 is dirt. Positive tile IDs are solid.
+    let mut tx = 0
+    while tx < map_width {
+        tilemap_set(map, map_width, map_height, tx, 14, 1)
+        tilemap_set(map, map_width, map_height, tx, 15, 2)
+        tilemap_set(map, map_width, map_height, tx, 16, 2)
+        tx = tx + 1
+    }
+
+    // Floating platforms.
+    tx = 7
+    while tx < 13 {
+        tilemap_set(map, map_width, map_height, tx, 12, 2)
+        tx = tx + 1
+    }
+    tx = 16
+    while tx < 21 {
+        tilemap_set(map, map_width, map_height, tx, 9, 3)
+        tx = tx + 1
+    }
+
     let mut player_x = 96.0
-    let mut player_y = 360.0
-    let mut player_w = 30.0
-    let mut player_h = 38.0
+    let mut player_y = 340.0
+    let player_w = 24.0
+    let player_h = 28.0
     let mut velocity_x = 0.0
     let mut velocity_y = 0.0
     let mut grounded = false
@@ -24,7 +57,6 @@ fn main() {
         let mut frame_dt = dt
         if frame_dt > 0.05 { frame_dt = 0.05 }
         if frame_dt < 0.0 { frame_dt = 0.0 }
-
         if gfx_key_down("ESC") { break }
 
         velocity_x = 0.0
@@ -35,69 +67,56 @@ fn main() {
             velocity_x = world_speed
         }
 
-        player_x = player_x + velocity_x * frame_dt
+        let desired_x = player_x + velocity_x * frame_dt
+        let resolved_x = tilemap_move_x(map, map_width, map_height, tile_size,
+                                        player_x, player_y, player_w, player_h,
+                                        velocity_x * frame_dt)
+        if resolved_x != desired_x { velocity_x = 0.0 }
+        player_x = resolved_x
         if player_x < 0.0 { player_x = 0.0 }
-        if player_x > 930.0 { player_x = 930.0 }
+        if player_x > 936.0 { player_x = 936.0 }
 
         if grounded && gfx_key_down("SPACE") {
             velocity_y = jump_speed
             grounded = false
         }
 
-        velocity_y = velocity_y + gravity * frame_dt
-        player_y = player_y + velocity_y * frame_dt
         grounded = false
+        velocity_y = velocity_y + gravity * frame_dt
+        let desired_y = player_y + velocity_y * frame_dt
+        let resolved_y = tilemap_move_y(map, map_width, map_height, tile_size,
+                                        player_x, player_y, player_w, player_h,
+                                        velocity_y * frame_dt)
+        if resolved_y != desired_y {
+            if velocity_y > 0.0 { grounded = true }
+            velocity_y = 0.0
+        }
+        player_y = resolved_y
 
-        // Platforms are simple solid AABBs. Resolve vertical landing separately.
-        if physics_aabb(player_x, player_y, player_w, player_h,
-                       0.0, 470.0, 960.0, 70.0) && velocity_y >= 0.0 {
-            player_y = 470.0 - player_h
-            velocity_y = 0.0
-            grounded = true
-        }
-        if physics_aabb(player_x, player_y, player_w, player_h,
-                       250.0, 390.0, 170.0, 18.0) && velocity_y >= 0.0 {
-            player_y = 390.0 - player_h
-            velocity_y = 0.0
-            grounded = true
-        }
-        if physics_aabb(player_x, player_y, player_w, player_h,
-                       520.0, 320.0, 150.0, 18.0) && velocity_y >= 0.0 {
-            player_y = 320.0 - player_h
-            velocity_y = 0.0
-            grounded = true
-        }
         if player_y > 540.0 {
             player_x = 96.0
-            player_y = 360.0
+            player_y = 340.0
             velocity_y = 0.0
+            grounded = false
         }
 
         gfx_begin()
         gfx_clear(0.035, 0.055, 0.12, 1.0)
 
-        // Distant hills
+        // Distant hills.
         gfx_circle(130.0, 480.0, 170.0, 0.08, 0.22, 0.28, 1.0)
         gfx_circle(460.0, 500.0, 210.0, 0.06, 0.18, 0.25, 1.0)
         gfx_circle(850.0, 480.0, 190.0, 0.08, 0.22, 0.28, 1.0)
 
-        // Platforms and ground
-        gfx_rect(0.0, 470.0, 960.0, 70.0, 0.20, 0.35, 0.20, 1.0)
-        gfx_rect(0.0, 470.0, 960.0, 8.0, 0.42, 0.72, 0.28, 1.0)
-        gfx_rect(250.0, 390.0, 170.0, 18.0, 0.48, 0.31, 0.18, 1.0)
-        gfx_rect(250.0, 390.0, 170.0, 5.0, 0.82, 0.58, 0.28, 1.0)
-        gfx_rect(520.0, 320.0, 150.0, 18.0, 0.48, 0.31, 0.18, 1.0)
-        gfx_rect(520.0, 320.0, 150.0, 5.0, 0.82, 0.58, 0.28, 1.0)
+        tilemap_draw(map, map_width, map_height, tile_size, 0.0, 0.0, 960.0, 540.0)
 
-        // Player, eyes and simple shadow
-        gfx_circle(player_x + 15.0, 474.0, 9.0, 0.01, 0.02, 0.03, 0.4)
+        // Player and face.
         gfx_rect(player_x, player_y, player_w, player_h, 0.95, 0.25, 0.18, 1.0)
-        gfx_rect(player_x + 5.0, player_y + 8.0, 6.0, 6.0, 1.0, 0.94, 0.78, 1.0)
-        gfx_rect(player_x + 19.0, player_y + 8.0, 6.0, 6.0, 1.0, 0.94, 0.78, 1.0)
+        gfx_rect(player_x + 4.0, player_y + 6.0, 5.0, 5.0, 1.0, 0.94, 0.78, 1.0)
+        gfx_rect(player_x + 15.0, player_y + 6.0, 5.0, 5.0, 1.0, 0.94, 0.78, 1.0)
 
-        gfx_text(24.0, 24.0, 1.4, "NEXUS PLATFORMER DEMO", 0.85, 0.92, 1.0, 1.0)
+        gfx_text(24.0, 24.0, 1.4, "NEXUS TILEMAP PLATFORMER", 0.85, 0.92, 1.0, 1.0)
         gfx_text(24.0, 48.0, 1.0, "Move: A/D or arrows   Jump: SPACE   Exit: ESC", 0.72, 0.80, 0.90, 1.0)
-        gfx_text(24.0, 515.0, 1.0, "Runtime demo - built-in shapes, physics AABB and frame timing", 0.65, 0.78, 0.70, 1.0)
         gfx_end()
     }
 
