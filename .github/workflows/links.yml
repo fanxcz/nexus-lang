@@ -59,50 +59,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify live Pages routes and downloadable assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          base='https://fanxcz.github.io/nexus-lang'
-          routes=(
-            '/'
-            '/downloads/'
-            '/getting-started/quickstart/'
-            '/language/overview/'
-            '/runtime/overview/'
-            '/std/overview/'
-            '/tooling/commands/'
-          )
-          for route in "${routes[@]}"; do
-            echo "Checking page: $base$route"
-            curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --retry-all-errors --max-time 45 --output /dev/null "$base$route"
-          done
-
-          assets=(
-            'NEXUS-Setup-2.0.0.exe'
-            'NEXUS-Setup-2.0.0.exe.sha256.txt'
-            'NEXUS_Windows_Portable.zip'
-            'NEXUS_Windows_Portable.zip.sha256.txt'
-            'NEXUS-Language-2.0.2.vsix'
-            'NEXUS-Language-2.0.2.vsix.sha256.txt'
-            'NEXUS-Paint-Windows-x64.exe'
-            'NEXUS-Paint-Windows-x64.exe.sha256.txt'
-            'NEXUS-Paint-Windows-x64.zip'
-            'NEXUS-Paint-Windows-x64.zip.sha256.txt'
-          )
-          for asset in "${assets[@]}"; do
-            url="$base/assets/downloads/$asset"
-            echo "Checking download: $url"
-            curl --fail --silent --show-error --head --location --retry 3 --retry-delay 2 --retry-all-errors --max-time 45 --output /dev/null "$url"
-          done
-
-          # Repository file URLs are path-checked locally. Verify large direct
-          # download URLs with HEAD requests rather than fetching binary bodies.
-          repository_assets=(
-            'https://github.com/fanxcz/nexus-lang/releases/download/vscode-extension-v2.0.0/nexus-language-2.0.2.vsix'
-          )
-          for url in "${repository_assets[@]}"; do
-            echo "Checking direct repository download: $url"
-            curl --fail --silent --show-error --head --location --retry 3 --retry-delay 2 --retry-all-errors --max-time 45 --output /dev/null "$url"
-          done
-          echo 'PASS: published documentation pages, Pages assets and direct repository downloads respond successfully.'
+      # Published Pages routes and generated download assets are verified after deployment
+      # by pages.yml, avoiding a race with the previous live site during simultaneous pushes.
