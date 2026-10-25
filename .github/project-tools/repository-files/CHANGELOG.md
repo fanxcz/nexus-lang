@@ -1,5 +1,13 @@
 # Changelog
 
+## 2D game runtime and language ergonomics (2026-10-26)
+
+- Added `stdlib/engine2d.nx`, a consistent convenience API over the existing graphics, texture, animation, input, camera, audio and AABB runtime functions.
+- Added `examples/game2d_platformer.nx`, a no-assets platformer starter with frame-time clamping, keyboard movement, gravity, jumping and simple platform landing.
+- Added `stdlib/math.nx` with clamp, interpolation, approach and sign helpers, plus an executable CTest smoke test.
+- Added a compile-time API contract test for the 2D helper module and documented measurable engine/language roadmap milestones.
+- This is a foundation, not yet a full engine: tilemap editing, a rigid-body solver, an asset pipeline, integrated debugger and complete self-hosting remain future work.
+
 ## Runtime parsing and process safety (2026-10-26)
 
 - Replaced text-search JSON extraction with a bounded parser that validates JSON grammar, decodes escape sequences and Unicode, checks raw UTF-8, and enforces input-size, nesting and node limits.
