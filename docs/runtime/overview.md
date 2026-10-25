@@ -44,4 +44,4 @@ Drawing colours are supplied as separate red, green, blue and alpha floating-poi
 
 See [Graphics 2D](graphics-2d.md), [Input](input.md), [Audio](audio.md), [ECS](ecs.md), [Physics](physics.md) and [Scenes](scenes.md) for exact APIs and limitations.
 
-For a small convenience layer over the current APIs, see [2D game helpers](game2d.md) and the self-contained [platformer example](../../examples/game2d_platformer.nx).
+For a small convenience layer over the current APIs, see [2D game helpers and tilemaps](game2d.md) and the [self-contained platformer example](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx).
