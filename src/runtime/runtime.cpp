@@ -5,6 +5,7 @@
 #include <array>
 #include <atomic>
 #include <cctype>
+#include <cerrno>
 #include <cmath>
 #include <csetjmp>
 #include <cstdbool>
