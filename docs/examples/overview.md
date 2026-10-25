@@ -46,6 +46,7 @@ The names describe individual sample programs, not claims that each is a complet
 |---|---|
 | `native_app.nx` | Window, text, rectangle and mouse polling |
 | `native_graphics_game.nx` | Simple 2D movement, mouse state and primitive drawing |
+| `game2d_platformer.nx` | Tilemap platforms, axis-separated collision resolution, gravity and jumping |
 | `native_3d.nx` | 3D grid/cubes and camera setup |
 | `model_demo.nx` | Load and draw the repository's OBJ cube asset |
 | `particles_demo.nx` | Create, update, draw and clear simple runtime particles |
