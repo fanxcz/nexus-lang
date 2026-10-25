@@ -23,9 +23,9 @@ theme:
   logo: assets/images/nexus-mark.svg
   favicon: assets/images/nexus-mark.svg
   palette:
-    - scheme: slate
-      primary: deep purple
-      accent: purple
+    - scheme: default
+      primary: black
+      accent: black
   features:
     - navigation.tabs
     - navigation.sections
