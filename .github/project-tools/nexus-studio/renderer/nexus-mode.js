@@ -15,7 +15,7 @@ ace.define("ace/mode/nexus_highlight_rules", [
         { token: "constant.language", regex: "\\b(?:true|false|null|none)\\b" },
         { token: "keyword", regex: "\\b(?:fn|let|mut|const|if|else|while|for|in|return|break|continue|match|struct|enum|import|as|pub|private|extern|type|impl|trait|self)\\b" },
         { token: "support.type", regex: "\\b(?:i64|i32|i16|i8|u64|u32|u16|u8|usize|isize|f64|f32|bool|string|str|char|void|Result|Option|Vec)\\b" },
-        { token: "support.function", regex: "\\b(?:print|input|str_i64|len|assert|panic|gfx_[A-Za-z0-9_]+)\\b" },
+        { token: "support.function", regex: "\\b(?:print|input|str_i64|len|assert|panic|json_[A-Za-z0-9_]+|http_get|http_get_text|gfx_[A-Za-z0-9_]+)\\b" },
         { token: "keyword.operator", regex: "===?|!==?|==|!=|<=|>=|=>|->|\\.\\.|\\+|-|\\*|/|%|&&|\\|\\||!|=|<|>" },
         { token: "paren.lparen", regex: "[({\\[]" },
         { token: "paren.rparen", regex: "[)}\\]]" },
