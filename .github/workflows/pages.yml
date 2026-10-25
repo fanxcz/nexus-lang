@@ -426,7 +426,6 @@ jobs:
           retention-days: 7
 
   publish-paint-exe:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Commit NEXUS Paint EXE into main
     # Disabled: bot commits break the single-author history of this repository.
     if: false
