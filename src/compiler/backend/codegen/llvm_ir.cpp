@@ -28,6 +28,10 @@ namespace nexus {
 
         std::vector<std::string> globals;
         std::vector<std::string> breakLabels, continueLabels;
+        // Each entry represents one lexical scope; calls are stored as fully typed IR
+        // instructions after their arguments have been evaluated at the defer site.
+        std::vector<std::vector<std::string>> deferredCalls;
+        std::vector<std::size_t> loopDeferScopeDepth;
 
         std::string next() {
             return "%" + std::to_string(++reg);
@@ -496,24 +500,92 @@ namespace nexus {
             }
             throw std::runtime_error("unsupported expression in codegen");
         }
+        std::string deferredCall(const CallExpr* c) {
+            if (!c)
+                throw std::runtime_error("defer requires a function call");
+
+            if (c->callee == "print") {
+                if (c->args.size() != 1)
+                    throw std::runtime_error("defer print expects one argument");
+                const auto value = expr(c->args[0].get());
+                const auto type = typeOf(c->args[0].get());
+                if (type.kind == TypeKind::I64)
+                    return "call void @nexus_print_i64(i64 " + value + ")";
+                if (type.kind == TypeKind::F64)
+                    return "call void @nexus_print_f64(double " + value + ")";
+                if (type.kind == TypeKind::Bool)
+                    return "call void @nexus_print_bool(i1 " + value + ")";
+                if (type.kind == TypeKind::String)
+                    return "call void @nexus_print_str(ptr " + value + ")";
+                throw std::runtime_error("defer print: unsupported type");
+            }
+
+            std::ostringstream call;
+            if (auto bi = builtinSignature(c->callee)) {
+                if (bi->ret.kind != TypeKind::Void)
+                    throw std::runtime_error("defer requires a call returning void");
+                call << "call void @" << bi->runtimeName << "(";
+                for (std::size_t i = 0; i < c->args.size(); ++i) {
+                    if (i)
+                        call << ", ";
+                    const auto value = expr(c->args[i].get());
+                    call << llvmType(bi->params[i]) << " " << value;
+                }
+            } else {
+                const auto it = functions.find(c->callee);
+                if (it == functions.end())
+                    throw std::runtime_error("unknown function in defer: " + c->callee);
+                const auto* fn = it->second;
+                if (fn->ret.kind != TypeKind::Void)
+                    throw std::runtime_error("defer requires a call returning void");
+                call << "call void @" << fn->name << "(";
+                for (std::size_t i = 0; i < c->args.size(); ++i) {
+                    if (i)
+                        call << ", ";
+                    const auto value = expr(c->args[i].get());
+                    call << llvmType(fn->params[i].type) << " " << value;
+                }
+            }
+            call << ")";
+            return call.str();
+        }
+
+        // Emit pending calls in reverse registration order. A depth of zero means
+        // all active scopes; a loop records its entry depth so break/continue only
+        // clean up scopes they actually leave.
+        void emitDefersFrom(std::size_t keepDepth) {
+            for (std::size_t depth = deferredCalls.size(); depth > keepDepth; --depth) {
+                const auto& calls = deferredCalls[depth - 1];
+                for (auto it = calls.rbegin(); it != calls.rend(); ++it)
+                    emit(*it);
+            }
+        }
+
+        bool stmtBlock(const Block* nested, Type ret) {
+            auto savedVars = vars;
+            auto savedTypes = types;
+            deferredCalls.emplace_back();
+            for (const auto& x : nested->statements) {
+                stmt(x.get(), ret);
+                if (terminated)
+                    break;
+            }
+            const bool blockTerminated = terminated;
+            if (!blockTerminated)
+                emitDefersFrom(deferredCalls.size() - 1);
+            deferredCalls.pop_back();
+            vars = std::move(savedVars);
+            types = std::move(savedTypes);
+            return blockTerminated;
+        }
+
         bool stmt(const Stmt* s, Type ret) {
 
             if (terminated)
                 return true;
 
-            if (auto* nested = dynamic_cast<const Block*>(s)) {
-                auto savedVars = vars;
-                auto savedTypes = types;
-                bool t = false;
-                for (auto& x : nested->statements) {
-                    t = stmt(x.get(), ret);
-                    if (terminated)
-                        break;
-                }
-                vars = std::move(savedVars);
-                types = std::move(savedTypes);
-                return t;
-            }
+            if (auto* nested = dynamic_cast<const Block*>(s))
+                return stmtBlock(nested, ret);
             if (auto* l = dynamic_cast<const LetStmt*>(s)) {
                 auto ptr = next();
                 vars[l->name] = ptr;
@@ -561,10 +633,22 @@ namespace nexus {
                 expr(static_cast<const ExprStmt*>(s)->expr.get());
                 return false;
             }
+            if (auto* d = dynamic_cast<const DeferStmt*>(s)) {
+                if (deferredCalls.empty())
+                    throw std::runtime_error("defer used outside a lexical scope");
+                const auto* call = dynamic_cast<const CallExpr*>(d->call.get());
+                deferredCalls.back().push_back(deferredCall(call));
+                return false;
+            }
             if (auto* r = dynamic_cast<const ReturnStmt*>(s)) {
+                // Evaluate the return value before running cleanup calls, but emit
+                // the actual return only after every active scope has been cleaned.
+                std::string value;
+                if (r->expr)
+                    value = expr(r->expr.get());
+                emitDefersFrom(0);
                 if (r->expr) {
-                    auto v = expr(r->expr.get());
-                    emit("ret " + llvmType(ret) + " " + v);
+                    emit("ret " + llvmType(ret) + " " + value);
                 } else if (ret.kind == TypeKind::Void) {
                     emit("ret void");
                 } else {
@@ -579,18 +663,14 @@ namespace nexus {
                 emit("br i1 " + c + ", label %" + lt + ", label %" + lf);
                 emit(lt + ":");
                 terminated = false;
-                for (auto& x : i->thenBlock->statements)
-                    stmt(x.get(), ret);
-                bool tt = terminated;
+                const bool tt = stmtBlock(i->thenBlock.get(), ret);
                 if (!tt)
                     emit("br label %" + le);
                 emit(lf + ":");
                 terminated = false;
                 bool et = false;
                 if (i->elseBlock) {
-                    for (auto& x : i->elseBlock->statements)
-                        stmt(x.get(), ret);
-                    et = terminated;
+                    et = stmtBlock(i->elseBlock.get(), ret);
                 }
                 if (!et)
                     emit("br label %" + le);
@@ -612,8 +692,9 @@ namespace nexus {
                 terminated = false;
                 breakLabels.push_back(le);
                 continueLabels.push_back(lc);
-                for (auto& x : w->body->statements)
-                    stmt(x.get(), ret);
+                loopDeferScopeDepth.push_back(deferredCalls.size());
+                stmtBlock(w->body.get(), ret);
+                loopDeferScopeDepth.pop_back();
                 breakLabels.pop_back();
                 continueLabels.pop_back();
                 if (!terminated)
@@ -709,13 +790,15 @@ namespace nexus {
                     terminated = false;
                     breakLabels.push_back(le);
                     continueLabels.push_back(li);
-                    for (auto& x : f->body->statements)
-                        stmt(x.get(), ret);
+                    loopDeferScopeDepth.push_back(deferredCalls.size());
+                    stmtBlock(f->body.get(), ret);
+                    loopDeferScopeDepth.pop_back();
                     breakLabels.pop_back();
                     continueLabels.pop_back();
                     if (!terminated)
                         emit("br label %" + li);
                     emit(li + ":");
+                    terminated = false;
                     auto index = next();
                     emit(index + " = load i64, ptr " + indexPtr);
                     auto nextIndex = next();
@@ -729,13 +812,15 @@ namespace nexus {
                     terminated = false;
                     breakLabels.push_back(le);
                     continueLabels.push_back(li);
-                    for (auto& x : f->body->statements)
-                        stmt(x.get(), ret);
+                    loopDeferScopeDepth.push_back(deferredCalls.size());
+                    stmtBlock(f->body.get(), ret);
+                    loopDeferScopeDepth.pop_back();
                     breakLabels.pop_back();
                     continueLabels.pop_back();
                     if (!terminated)
                         emit("br label %" + li);
                     emit(li + ":");
+                    terminated = false;
                     auto current = next();
                     emit(current + " = load i64, ptr " + vars[f->name]);
                     auto nextValue = next();
@@ -811,8 +896,7 @@ namespace nexus {
                     }
                     emit(bodies[k] + ":");
                     terminated = false;
-                    for (auto& x : arm.body->statements)
-                        stmt(x.get(), ret);
+                    stmtBlock(arm.body.get(), ret);
                     if (!terminated) {
                         allTerminated = false;
                         emit("br label %" + end);
@@ -834,15 +918,17 @@ namespace nexus {
                 return false;
             }
             if (dynamic_cast<const BreakStmt*>(s)) {
-                if (breakLabels.empty())
+                if (breakLabels.empty() || loopDeferScopeDepth.empty())
                     throw std::runtime_error("break outside loop");
+                emitDefersFrom(loopDeferScopeDepth.back());
                 emit("br label %" + breakLabels.back());
                 terminated = true;
                 return true;
             }
             if (dynamic_cast<const ContinueStmt*>(s)) {
-                if (continueLabels.empty())
+                if (continueLabels.empty() || loopDeferScopeDepth.empty())
                     throw std::runtime_error("continue outside loop");
+                emitDefersFrom(loopDeferScopeDepth.back());
                 emit("br label %" + continueLabels.back());
                 terminated = true;
                 return true;
@@ -1247,6 +1333,8 @@ namespace nexus {
                 terminated = false;
                 breakLabels.clear();
                 continueLabels.clear();
+                deferredCalls.clear();
+                loopDeferScopeDepth.clear();
                 body.str("");
                 body.clear();
                 Type codegenRet = f.ret;
@@ -1270,8 +1358,7 @@ namespace nexus {
                     emit("store " + llvmType(f.params[i].type) + " %arg" + std::to_string(i) +
                          ", ptr " + ptr);
                 }
-                for (auto& s : f.body->statements)
-                    stmt(s.get(), codegenRet);
+                stmtBlock(f.body.get(), codegenRet);
                 if (!terminated) {
                     if (codegenRet.kind == TypeKind::Void)
                         emit("ret void");
