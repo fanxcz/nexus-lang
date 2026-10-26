@@ -45,6 +45,15 @@ jobs:
         shell: pwsh
         run: .\build\nexus.exe --version
 
+      - name: Check graphical poker example (POSIX)
+        if: runner.os != 'Windows'
+        run: ./build/nexus check examples/poker_gui.nx
+
+      - name: Check graphical poker example (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\build\nexus.exe check examples/poker_gui.nx
+
       - name: Builtin native backend test (Linux)
         if: runner.os == 'Linux'
         run: |
