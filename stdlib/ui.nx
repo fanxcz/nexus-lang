@@ -96,3 +96,12 @@ fn ui2d_separator(x1: f64, y1: f64, x2: f64, y2: f64, thickness: f64,
     if thickness <= 0.0 { return }
     gfx_line(x1, y1, x2, y2, thickness, red, green, blue, alpha)
 }
+
+
+// Editable UTF-8 text. max_bytes is a UTF-8 byte limit (1..8192); non-positive
+// limits make the field read-only. Click to focus; Enter or Tab commits/blurs.
+fn ui2d_text_field(rect: UIRect, value: string, placeholder: string, max_bytes: i64) -> string {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return value }
+    return ui_text_field(rect.x, rect.y, rect.width, rect.height,
+                         value, placeholder, max_bytes)
+}

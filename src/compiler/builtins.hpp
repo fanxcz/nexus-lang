@@ -700,6 +700,13 @@ namespace nexus {
                                     T::boolean(),
                                     "nexus_ui_button"};
 
+        if (name == "ui_text_field")
+            return BuiltinSignature{name,
+                                    {T::f64(), T::f64(), T::f64(), T::f64(),
+                                     T::string(), T::string(), T::i64()},
+                                    T::string(),
+                                    "nexus_ui_text_field"};
+
         if (name == "ui_panel")
             return BuiltinSignature{
                 name,

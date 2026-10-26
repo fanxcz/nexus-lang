@@ -14,6 +14,7 @@ fn main() {
     let mut notifications = true
     let mut sound_enabled = true
     let mut volume = 0.65
+    let mut display_name = "Developer"
     let mut about_open = false
     engine2d_vsync(true)
 
@@ -37,6 +38,11 @@ fn main() {
         ui2d_label(content.x + 620.0, content.y + 270.0,
                    str_i64(math_floor(volume * 100.0)) + "%", 1.2)
 
+        ui2d_label(content.x + 636.0, content.y + 146.0, "PROFILE NAME", 1.0)
+        display_name = ui2d_text_field(
+            ui2d_rect(content.x + 636.0, content.y + 174.0, 260.0, 42.0),
+            display_name, "Type your name", 96)
+
         let actions = ui2d_rect(content.x, content.y + 372.0, 600.0, 56.0)
         let reset_button = ui2d_row_cell(actions, 0, 2, 16.0)
         let about_button = ui2d_row_cell(actions, 1, 2, 16.0)
@@ -49,12 +55,14 @@ fn main() {
             about_open = !about_open
         }
 
-        let status = ui2d_rect(content.x, content.y + 452.0, 600.0, 82.0)
+        let status = ui2d_rect(content.x, content.y + 452.0, 600.0, 104.0)
         ui2d_panel(status, 0.035, 0.05, 0.095, 1.0)
         ui2d_label(status.x + 16.0, status.y + 14.0, "STATE", 1.0)
-        ui2d_label(status.x + 16.0, status.y + 42.0,
+        ui2d_label(status.x + 16.0, status.y + 38.0,
                    "Notifications: " + str_bool(notifications) +
                    "   Sound: " + str_bool(sound_enabled), 1.0)
+        ui2d_label(status.x + 16.0, status.y + 70.0,
+                   "Profile: " + display_name, 1.0)
 
         if about_open {
             let about = ui2d_rect(content.x + 636.0, content.y + 372.0, 260.0, 162.0)

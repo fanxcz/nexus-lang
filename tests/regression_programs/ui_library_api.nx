@@ -46,5 +46,14 @@ fn main() {
         print("NEXUS UI library: FAIL invalid layout input")
         return
     }
+    // No graphics window is open in this smoke test, so text input should
+    // return the current value safely without requiring an SDL session.
+    let field = ui2d_text_field(ui2d_rect(20.0, 20.0, 180.0, 36.0),
+                                "NEXUS", "placeholder", 32)
+    if field != "NEXUS" {
+        print("NEXUS UI library: FAIL text field fallback")
+        return
+    }
+
     print("NEXUS UI library: PASS")
 }

@@ -1414,6 +1414,7 @@ namespace nexus {
             emitModule("declare void @nexus_gfx_cursor_visible(i1)");
 
             emitModule("declare i1 @nexus_ui_button(double,double,double,double,ptr)");
+            emitModule("declare ptr @nexus_ui_text_field(double,double,double,double,ptr,ptr,i64)");
 
             emitModule("declare void "
                        "@nexus_ui_panel(double,double,double,double,double,double,double,double)");

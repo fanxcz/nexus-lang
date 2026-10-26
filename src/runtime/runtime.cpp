@@ -228,6 +228,11 @@ namespace {
         int data1, data2;
     };
 
+    struct SDL_TextInputEvent {
+        uint32_t type, timestamp, windowID;
+        char text[32];
+    };
+
     union SDL_Event {
 
         uint32_t type;
@@ -243,6 +248,8 @@ namespace {
         SDL_MouseWheelEvent wheel;
 
         SDL_WindowEvent window;
+
+        SDL_TextInputEvent text;
     };
 
     struct SDL_Rect {
@@ -299,6 +306,8 @@ namespace {
     constexpr uint32_t SDL_KEYDOWN = 0x300u;
 
     constexpr uint32_t SDL_KEYUP = 0x301u;
+
+    constexpr uint32_t SDL_TEXTINPUT = 0x303u;
 
     constexpr uint32_t SDL_MOUSEMOTION = 0x400u;
 
@@ -466,6 +475,8 @@ namespace {
     SDLPROC(SDL_GetKeyboardState, const uint8_t*, (int*))
     SDLPROC(SDL_GetMouseState, uint32_t, (int*, int*))
     SDLPROC(SDL_ShowCursor, int, (int))
+    SDLPROC(SDL_StartTextInput, void, ())
+    SDLPROC(SDL_StopTextInput, void, ())
     SDLPROC(SDL_LoadBMP, SDL_Surface*, (const char*))
     SDLPROC(SDL_ConvertSurfaceFormat, SDL_Surface*, (SDL_Surface*, uint32_t, uint32_t))
     SDLPROC(SDL_FreeSurface, void, (SDL_Surface*))
@@ -604,6 +615,8 @@ namespace {
     static std::vector<uint8_t> gKeys(512, 0);
     // Keys pressed during the current event-poll frame (edge-triggered).
     static std::vector<uint8_t> gKeyPressed(512, 0);
+    // UTF-8 text from SDL_TEXTINPUT events, collected once per poll frame.
+    static std::string gTextInputThisFrame;
 
     static std::array<uint8_t, 8> gMouseButtons{};
 
@@ -702,6 +715,14 @@ namespace {
     static double gUiSliderY = 0.0;
     static double gUiSliderWidth = 0.0;
     static double gUiSliderHeight = 0.0;
+
+    // Immediate-mode text field focus is keyed by its rectangle. Apps should
+    // keep each field's rectangle stable while the control remains visible.
+    static bool gUiTextFieldFocused = false;
+    static double gUiTextFieldX = 0.0;
+    static double gUiTextFieldY = 0.0;
+    static double gUiTextFieldWidth = 0.0;
+    static double gUiTextFieldHeight = 0.0;
 
     struct EcsEntity {
 
@@ -942,6 +963,8 @@ namespace {
         LOAD_REQUIRED_SDL(SDL_GetKeyboardState);
         LOAD_REQUIRED_SDL(SDL_GetMouseState);
         LOAD_REQUIRED_SDL(SDL_ShowCursor);
+        LOAD_OPTIONAL_SDL(SDL_StartTextInput);
+        LOAD_OPTIONAL_SDL(SDL_StopTextInput);
 
         LOAD_REQUIRED_SDL(SDL_GetPerformanceCounter);
         LOAD_REQUIRED_SDL(SDL_GetPerformanceFrequency);
@@ -1394,6 +1417,7 @@ namespace {
         gLastMouseButton = 0;
         std::fill(gKeyPressed.begin(), gKeyPressed.end(), uint8_t(0));
         gMouseClickedButtons.fill(0);
+        gTextInputThisFrame.clear();
     }
     static void process_events() {
 
@@ -1409,6 +1433,11 @@ namespace {
 
             if (e.type == SDL_QUIT) {
                 gClose = true;
+            } else if (e.type == SDL_TEXTINPUT) {
+                size_t textLength = 0;
+                while (textLength < sizeof(e.text.text) && e.text.text[textLength] != '\0')
+                    ++textLength;
+                gTextInputThisFrame.append(e.text.text, textLength);
             } else if (e.type == SDL_KEYDOWN) {
                 gLastKey = int(e.key.keysym.scancode);
                 if (gLastKey >= 0 && gLastKey < int(gKeys.size())) {
@@ -1843,6 +1872,10 @@ namespace {
     }
 
     static void shutdown_graphics() {
+        if (gUiTextFieldFocused && SDL_StopTextInput)
+            SDL_StopTextInput();
+        gUiTextFieldFocused = false;
+        gTextInputThisFrame.clear();
         if (gMusic && Mix_FreeMusic)
             Mix_FreeMusic(gMusic);
         gMusic = nullptr;
@@ -5161,6 +5194,135 @@ int64_t nexus_gfx_canvas_width(int64_t id) {
 int64_t nexus_gfx_canvas_height(int64_t id) {
     auto it = gCanvases.find(id);
     return it == gCanvases.end() ? 0 : it->second.h;
+}
+
+
+// UTF-8 byte-count-limited immediate-mode text input. The field has pointer
+// focus, handles text events and Backspace by Unicode code point, and finishes
+// editing on Enter or Tab. Selection/caret movement and IME editing commands
+// are outside this minimal runtime widget.
+char* nexus_ui_text_field(double x, double y, double w, double h,
+                          const char* current, const char* placeholder, int64_t maxBytes) {
+    std::string value = current ? current : "";
+    auto safePrefix = [](const std::string& text, size_t limit) -> size_t {
+        size_t end = std::min(limit, text.size());
+        // If the cutoff is inside a UTF-8 code point, discard that whole code point.
+        while (end > 0 && end < text.size() &&
+               (static_cast<uint8_t>(text[end]) & 0xC0u) == 0x80u)
+            --end;
+        return end;
+    };
+    auto popCodePoint = [](std::string& text) {
+        if (text.empty())
+            return;
+        size_t start = text.size() - 1;
+        while (start > 0 &&
+               (static_cast<uint8_t>(text[start]) & 0xC0u) == 0x80u)
+            --start;
+        text.resize(start);
+    };
+
+    const bool editable = maxBytes > 0;
+    const size_t limit = editable
+        ? static_cast<size_t>(std::clamp<int64_t>(maxBytes, 1, 8192))
+        : std::max<size_t>(value.size(), 1);
+    if (value.size() > limit)
+        value.resize(safePrefix(value, limit));
+
+    if (w <= 0.0 || h <= 0.0 || !gGraphics)
+        return nx_strdup(value.c_str());
+
+    const double mx = nexus_gfx_mouse_x();
+    const double my = nexus_gfx_mouse_y();
+    const bool hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
+    const bool sameField = gUiTextFieldFocused &&
+        gUiTextFieldX == x && gUiTextFieldY == y &&
+        gUiTextFieldWidth == w && gUiTextFieldHeight == h;
+
+    if (nexus_gfx_mouse_clicked(1)) {
+        if (hover && editable) {
+            if (!sameField && SDL_StartTextInput)
+                SDL_StartTextInput();
+            gUiTextFieldFocused = true;
+            gUiTextFieldX = x;
+            gUiTextFieldY = y;
+            gUiTextFieldWidth = w;
+            gUiTextFieldHeight = h;
+        } else if (sameField) {
+            gUiTextFieldFocused = false;
+            if (SDL_StopTextInput)
+                SDL_StopTextInput();
+            gTextInputThisFrame.clear();
+        }
+    }
+
+    const bool focused = gUiTextFieldFocused &&
+        gUiTextFieldX == x && gUiTextFieldY == y &&
+        gUiTextFieldWidth == w && gUiTextFieldHeight == h;
+
+    if (focused && editable) {
+        // SDL_SCANCODE_BACKSPACE == 42.
+        if (gKeyPressed.size() > 42 && gKeyPressed[42])
+            popCodePoint(value);
+
+        if (!gTextInputThisFrame.empty() && value.size() < limit) {
+            const size_t allowed = limit - value.size();
+            const size_t addBytes = safePrefix(gTextInputThisFrame, allowed);
+            value.append(gTextInputThisFrame.data(), addBytes);
+        }
+        gTextInputThisFrame.clear();
+
+        // Enter finishes editing; Tab releases this field for application navigation.
+        if ((gKeyPressed.size() > 40 && gKeyPressed[40]) ||
+            (gKeyPressed.size() > 43 && gKeyPressed[43])) {
+            gUiTextFieldFocused = false;
+            if (SDL_StopTextInput)
+                SDL_StopTextInput();
+        }
+    }
+
+    const bool currentlyFocused = gUiTextFieldFocused &&
+        gUiTextFieldX == x && gUiTextFieldY == y &&
+        gUiTextFieldWidth == w && gUiTextFieldHeight == h;
+    const double bg = editable ? 0.035 : 0.025;
+    nexus_gfx_rect(x, y, w, h, bg, bg + 0.018, bg + 0.035, 1.0);
+    const double borderR = currentlyFocused ? 0.20 : (hover ? 0.20 : 0.12);
+    const double borderG = currentlyFocused ? 0.72 : (hover ? 0.42 : 0.18);
+    const double borderB = currentlyFocused ? 0.96 : (hover ? 0.58 : 0.28);
+    const double thickness = currentlyFocused ? 2.0 : 1.0;
+    nexus_gfx_rect(x, y, w, thickness, borderR, borderG, borderB, 1.0);
+    nexus_gfx_rect(x, y + h - thickness, w, thickness, borderR, borderG, borderB, 1.0);
+    nexus_gfx_rect(x, y + thickness, thickness, std::max(0.0, h - 2.0 * thickness),
+                    borderR, borderG, borderB, 1.0);
+    nexus_gfx_rect(x + w - thickness, y + thickness, thickness,
+                    std::max(0.0, h - 2.0 * thickness), borderR, borderG, borderB, 1.0);
+
+    const size_t visibleBudget = w > 28.0 ? static_cast<size_t>((w - 24.0) / 9.0) : 0u;
+    std::string visible = value;
+    if (visible.size() > visibleBudget) {
+        size_t start = visible.size() - visibleBudget;
+        while (start < visible.size() &&
+               (static_cast<uint8_t>(visible[start]) & 0xC0u) == 0x80u)
+            ++start;
+        visible = visible.substr(start);
+    }
+
+    const bool empty = value.empty();
+    const char* displayed = empty ? (placeholder ? placeholder : "") : visible.c_str();
+    const double textY = y + std::max(3.0, (h - 19.0) * 0.5);
+    if (empty)
+        nexus_gfx_text(x + 10.0, textY, 1.2, displayed, 0.43, 0.51, 0.62, 1.0);
+    else
+        nexus_gfx_text(x + 10.0, textY, 1.2, displayed, 0.91, 0.95, 1.0, 1.0);
+
+    if (currentlyFocused && editable && std::fmod(now_seconds(), 1.0) < 0.55) {
+        const double cursorOffset = std::min(std::max(0.0, w - 22.0),
+                                             static_cast<double>(visible.size()) * 9.0);
+        nexus_gfx_rect(x + 10.0 + cursorOffset, y + 8.0, 1.5,
+                       std::max(2.0, h - 16.0), 0.35, 0.84, 1.0, 1.0);
+    }
+
+    return nx_strdup(value.c_str());
 }
 
 bool nexus_ui_button(double x, double y, double w, double h, const char* label) {
