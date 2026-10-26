@@ -17,7 +17,7 @@ ARTIFACTS = (
     "NEXUS-Paint-Windows-x64.zip",
 )
 
-DOWNLOAD_LINK = re.compile(r"\]\(\s*(?:<)?assets/downloads/([^)>\s]+)")
+DOWNLOAD_LINK = re.compile(r"\]\(\s*(?:<)?[^)]*?assets/downloads/([^)>\s]+)")
 
 ZIP_CONTENTS = {
     "NEXUS_Windows_Portable.zip": {
