@@ -12,6 +12,39 @@ fn collision2d_circle(ax: f64, ay: f64, ar: f64,
     return physics_circle(ax, ay, ar, bx, by, br)
 }
 
+// Point-vs-AABB and circle-vs-AABB helpers for UI, pickups and projectiles.
+fn collision2d_point_aabb(px: f64, py: f64, x: f64, y: f64,
+                          width: f64, height: f64) -> bool {
+    if width <= 0.0 || height <= 0.0 { return false }
+    return px >= x && py >= y && px <= x + width && py <= y + height
+}
+
+fn collision2d_circle_aabb(cx: f64, cy: f64, radius: f64,
+                           x: f64, y: f64, width: f64, height: f64) -> bool {
+    if radius < 0.0 || width <= 0.0 || height <= 0.0 { return false }
+    let mut closest_x = cx
+    let mut closest_y = cy
+    if closest_x < x { closest_x = x }
+    if closest_x > x + width { closest_x = x + width }
+    if closest_y < y { closest_y = y }
+    if closest_y > y + height { closest_y = y + height }
+    let dx = cx - closest_x
+    let dy = cy - closest_y
+    return dx * dx + dy * dy <= radius * radius
+}
+
+// Returns overlapping rectangle area; zero means separated or just touching.
+fn collision2d_aabb_overlap_area(ax: f64, ay: f64, aw: f64, ah: f64,
+                                 bx: f64, by: f64, bw: f64, bh: f64) -> f64 {
+    if aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0 { return 0.0 }
+    let left = math_max(ax, bx)
+    let top = math_max(ay, by)
+    let right = math_min(ax + aw, bx + bw)
+    let bottom = math_min(ay + ah, by + bh)
+    if right <= left || bottom <= top { return 0.0 }
+    return (right - left) * (bottom - top)
+}
+
 fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
                             tile_size: f64, x: f64, y: f64,
                             box_width: f64, box_height: f64) -> bool {
