@@ -42,6 +42,8 @@ From the repository root:
 nexus check examples/hello.nx
 nexus run examples/hello.nx
 nexus check examples/poker_gui.nx
+nexus check examples/vector_lab.nx
+nexus run examples/vector_lab.nx
 ```
 
 On Windows, `run_poker.bat` builds and launches the Poker GUI using the installed NEXUS toolchain. The script expects NEXUS under `%LOCALAPPDATA%\\Programs\\NEXUS`; edit the script if the installation is elsewhere.
