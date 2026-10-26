@@ -2687,6 +2687,52 @@ char* nexus_file_read(const char* p) {
     o[got] = 0;
     return o;
 }
+// Checked file read: success is independent of the returned text length, so an
+// existing empty file is distinct from an open/read/allocation failure.
+bool nexus_file_read_checked(const char* p, char** out) {
+    if (!out)
+        return false;
+    *out = nullptr;
+    if (!p)
+        return false;
+
+    std::FILE* f = std::fopen(p, "rb");
+    if (!f)
+        return false;
+    if (std::fseek(f, 0, SEEK_END) != 0) {
+        std::fclose(f);
+        return false;
+    }
+    const long length = std::ftell(f);
+    if (length < 0 || std::fseek(f, 0, SEEK_SET) != 0) {
+        std::fclose(f);
+        return false;
+    }
+    const auto size = static_cast<unsigned long long>(length);
+    if (size >= static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) {
+        std::fclose(f);
+        return false;
+    }
+
+    char* data = static_cast<char*>(nx_managed_alloc(static_cast<size_t>(length) + 1));
+    if (!data) {
+        std::fclose(f);
+        return false;
+    }
+    const size_t expected = static_cast<size_t>(length);
+    const size_t read = std::fread(data, 1, expected, f);
+    bool ok = read == expected && std::ferror(f) == 0;
+    if (std::fclose(f) != 0)
+        ok = false;
+    if (!ok) {
+        nx_managed_free(data);
+        return false;
+    }
+    data[read] = '\0';
+    *out = data;
+    return true;
+}
+
 int64_t nexus_file_write(const char* p, const char* d) {
     if (!p)
         return -1;
