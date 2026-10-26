@@ -1,7 +1,17 @@
 @echo off
 setlocal
 set NEXUS=%LOCALAPPDATA%\Programs\NEXUS
+if not exist "%NEXUS%\bin\nexus.exe" (
+  echo NEXUS is not installed in %NEXUS%.
+  echo Install it first or edit the NEXUS path in this script.
+  exit /b 1
+)
 set PATH=%NEXUS%\runtime;%PATH%
-"%NEXUS%\bin\nexus.exe" build "%~dp0poker_gui.nx" -o "%~dp0poker_gui.exe" --backend llvm
-if errorlevel 1 exit /b 1
-"%~dp0poker_gui.exe"
+pushd "%~dp0"
+"%NEXUS%\bin\nexus.exe" build "poker_gui.nx" -o "poker_gui.exe" --backend llvm
+if errorlevel 1 (
+  popd
+  exit /b 1
+)
+"poker_gui.exe"
+popd

@@ -18,18 +18,22 @@ if(NOT build_rc EQUAL 0)
   message(FATAL_ERROR "Failed to compile Unicode escape test:\n${build_out}\n${build_err}")
 endif()
 
+set(OUT_FILE "${SCRATCH}/unicode_escapes.out")
 execute_process(
   COMMAND "${EXE}"
   RESULT_VARIABLE run_rc
-  OUTPUT_VARIABLE run_out
+  OUTPUT_FILE "${OUT_FILE}"
   ERROR_VARIABLE run_err
 )
 if(NOT run_rc EQUAL 0)
   message(FATAL_ERROR "Unicode escape test exited ${run_rc}:\n${run_err}")
 endif()
-string(REPLACE "\r\n" "\n" run_out "${run_out}")
-string(HEX "${run_out}" output_hex)
+# Read the program's stdout as raw bytes. CMake's OUTPUT_VARIABLE decodes
+# through the host code page on Windows, which corrupts UTF-8 such as the
+# emoji below; HEX comparison checks the exact bytes the runtime emitted.
+file(READ "${OUT_FILE}" output_hex HEX)
 string(TOLOWER "${output_hex}" output_hex)
+string(REPLACE "0d0a" "0a" output_hex "${output_hex}")
 if(NOT output_hex STREQUAL "41f09f99825a0ac2a90a")
   message(FATAL_ERROR "Incorrect Unicode escape output (hex): [${output_hex}]\n${run_err}")
 endif()
