@@ -334,7 +334,7 @@ fn main() {
             chips = chips - 25
             pot = 50
             player_bet = 0
-            dealer_bet = 25
+            dealer_bet = 0
             state = 1
             result_text = ""
             dealer_text = "Dealer posts ante 25."
@@ -386,8 +386,8 @@ fn main() {
                 }
                 if !can_call {
                     state = 2
-                    dealer_text = "Dealer raises " + str_i64(dact) + " - you cannot call."
-                    result_text = "You fold. Dealer takes the pot."
+                    dealer_text = "Dealer raises " + str_i64(dact) + " - you fold."
+                    result_text = "Dealer takes the pot."
                     result_r = 1.0; result_g = 0.35
                     audio2d_play(snd_lose, false)
                 } else {
@@ -407,13 +407,14 @@ fn main() {
                         audio2d_play(snd_lose, false)
                     } else {
                         chips = chips + pot / 2
-                        result_text = "Tie - half the pot returned."
+                        result_text = "Tie - half pot returned."
                         result_r = 0.9; result_g = 0.9
                         audio2d_play(snd_fold, false)
                     }
                 }
             }
             save_chips(chips)
+            pot = 0
         }
 
         last_space = space
@@ -431,11 +432,11 @@ fn main() {
         let t_c4 = anim_t(anim, 0.64)
 
         let deck_x = 790.0
-        let deck_y = 430.0
+        let deck_y = 540.0
 
         // table background details
-        engine2d_draw_rect(140.0, 260.0, 500.0, 190.0, 0.03, 0.18, 0.05, 1.0)
-        engine2d_draw_rect(150.0, 268.0, 480.0, 174.0, 0.05, 0.30, 0.10, 1.0)
+        engine2d_draw_rect(140.0, 260.0, 500.0, 330.0, 0.03, 0.18, 0.05, 1.0)
+        engine2d_draw_rect(150.0, 268.0, 480.0, 314.0, 0.05, 0.30, 0.10, 1.0)
 
         // title
         engine2d_draw_text(40.0, 14.0, 2.5, "NEXUS POKER", 1.0, 0.85, 0.1, 1.0)
@@ -447,7 +448,7 @@ fn main() {
         engine2d_draw_rect(690.0, 54.0, 250.0, 34.0, 0.0, 0.0, 0.0, 0.55)
         engine2d_draw_text(700.0, 61.0, 1.6, "Pot: " + str_i64(pot), 1.0, 0.85, 0.2, 1.0)
         engine2d_draw_rect(690.0, 94.0, 250.0, 34.0, 0.0, 0.0, 0.0, 0.55)
-        engine2d_draw_text(700.0, 101.0, 1.4, "Your bet " + str_i64(player_bet) + " / dealer " + str_i64(dealer_bet), 0.85, 0.9, 0.85, 1.0)
+        engine2d_draw_text(700.0, 101.0, 1.2, "Bet " + str_i64(player_bet) + " / dealer " + str_i64(dealer_bet), 0.85, 0.9, 0.85, 1.0)
 
         // dealer
         engine2d_draw_text(400.0, 74.0, 1.4, "DEALER", 0.85, 0.9, 0.85, 1.0)
@@ -471,12 +472,12 @@ fn main() {
         }
 
         // player
-        engine2d_draw_text(400.0, 452.0, 1.4, "YOU", 0.85, 0.9, 0.85, 1.0)
+        engine2d_draw_text(400.0, 440.0, 1.4, "YOU", 0.85, 0.9, 0.85, 1.0)
         if state >= 1 {
-            draw_card(lerp(deck_x, 400.0, t_p0), lerp(deck_y, 478.0, t_p0), card_tex[p0], back_tex, false)
-            draw_card(lerp(deck_x, 492.0, t_p1), lerp(deck_y, 478.0, t_p1), card_tex[p1], back_tex, false)
+            draw_card(lerp(deck_x, 400.0, t_p0), lerp(deck_y, 466.0, t_p0), card_tex[p0], back_tex, false)
+            draw_card(lerp(deck_x, 492.0, t_p1), lerp(deck_y, 466.0, t_p1), card_tex[p1], back_tex, false)
             if player_rank_text != "" {
-                engine2d_draw_text(400.0, 590.0, 1.2, player_rank_text, 0.9, 0.95, 0.9, 1.0)
+                engine2d_draw_text(400.0, 576.0, 1.0, player_rank_text, 0.9, 0.95, 0.9, 1.0)
             }
         }
 
@@ -493,7 +494,7 @@ fn main() {
         // result
         if result_text != "" {
             engine2d_draw_rect(690.0, 420.0, 250.0, 76.0, 0.0, 0.0, 0.0, 0.6)
-            engine2d_draw_text(700.0, 440.0, 1.4, result_text, result_r, result_g, 0.5, 1.0)
+            engine2d_draw_text(700.0, 440.0, 1.2, result_text, result_r, result_g, 0.5, 1.0)
             if state == 2 {
                 engine2d_draw_text(700.0, 466.0, 1.0, "SPACE = next hand", 0.8, 0.9, 0.8, 1.0)
             }
