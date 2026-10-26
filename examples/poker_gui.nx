@@ -693,6 +693,96 @@ fn text_r(font: i64, right: f64, y: f64, s: string,
 // ---------------------------------------------------------------------------
 // Table graphics.
 // ---------------------------------------------------------------------------
+// Small illustrated seat portraits built from native vector primitives.
+// This keeps the table readable without requiring external avatar downloads.
+fn draw_avatar(seat: i64, x: f64, y: f64, folded: bool) {
+    let mut hair_r = 0.12
+    let mut hair_g = 0.07
+    let mut hair_b = 0.05
+    let mut skin_r = 0.82
+    let mut skin_g = 0.61
+    let mut skin_b = 0.46
+    let mut shirt_r = 0.12
+    let mut shirt_g = 0.24
+    let mut shirt_b = 0.38
+
+    if seat == 0 {
+        hair_r = 0.66; hair_g = 0.14; hair_b = 0.11
+        skin_r = 0.94; skin_g = 0.72; skin_b = 0.58
+        shirt_r = 0.35; shirt_g = 0.08; shirt_b = 0.12
+    }
+    if seat == 1 {
+        hair_r = 0.06; hair_g = 0.05; hair_b = 0.05
+        skin_r = 0.66; skin_g = 0.43; skin_b = 0.30
+        shirt_r = 0.10; shirt_g = 0.24; shirt_b = 0.39
+    }
+    if seat == 2 {
+        hair_r = 0.04; hair_g = 0.12; hair_b = 0.18
+        skin_r = 0.76; skin_g = 0.59; skin_b = 0.45
+        shirt_r = 0.05; shirt_g = 0.33; shirt_b = 0.39
+    }
+    if seat == 3 {
+        hair_r = 0.17; hair_g = 0.08; hair_b = 0.05
+        skin_r = 0.86; skin_g = 0.66; skin_b = 0.50
+        shirt_r = 0.29; shirt_g = 0.15; shirt_b = 0.38
+    }
+    if seat == 4 {
+        hair_r = 0.28; hair_g = 0.09; hair_b = 0.25
+        skin_r = 0.95; skin_g = 0.75; skin_b = 0.62
+        shirt_r = 0.45; shirt_g = 0.14; shirt_b = 0.28
+    }
+    if seat == 5 {
+        hair_r = 0.04; hair_g = 0.14; hair_b = 0.16
+        skin_r = 0.61; skin_g = 0.40; skin_b = 0.29
+        shirt_r = 0.08; shirt_g = 0.22; shirt_b = 0.30
+    }
+
+    let mut dim = 1.0
+    if folded { dim = 0.48 }
+    let hr = hair_r * dim
+    let hg = hair_g * dim
+    let hb = hair_b * dim
+    let sr = skin_r * dim
+    let sg = skin_g * dim
+    let sb = skin_b * dim
+    let tr = shirt_r * dim
+    let tg = shirt_g * dim
+    let tb = shirt_b * dim
+
+    // Shoulders, neck, hair silhouette and face, layered like a compact portrait.
+    engine2d_draw_circle(x, y + 25.0, 21.0, tr, tg, tb, 1.0)
+    engine2d_draw_circle(x, y + 16.0, 9.0, sr, sg, sb, 1.0)
+    engine2d_draw_circle(x, y, 24.0, hr, hg, hb, 1.0)
+    engine2d_draw_circle(x, y + 1.0, 18.0, sr, sg, sb, 1.0)
+    engine2d_draw_circle(x - 10.0, y - 12.0, 9.0, hr, hg, hb, 1.0)
+    engine2d_draw_circle(x + 2.0, y - 16.0, 12.0, hr, hg, hb, 1.0)
+    engine2d_draw_circle(x + 12.0, y - 10.0, 9.0, hr, hg, hb, 1.0)
+
+    // Brows and eyes are high-contrast so portraits still read at seat size.
+    engine2d_draw_rect(x - 10.0, y - 5.0, 7.0, 2.0, hr, hg, hb, 1.0)
+    engine2d_draw_rect(x + 3.0, y - 5.0, 7.0, 2.0, hr, hg, hb, 1.0)
+    engine2d_draw_circle(x - 6.5, y - 1.0, 2.0, 0.04, 0.04, 0.05, dim)
+    engine2d_draw_circle(x + 6.5, y - 1.0, 2.0, 0.04, 0.04, 0.05, dim)
+    engine2d_draw_circle(x, y + 4.0, 1.8, 0.66 * dim, 0.34 * dim, 0.25 * dim, 1.0)
+    engine2d_draw_rect(x - 4.0, y + 8.0, 8.0, 2.0,
+                       0.34 * dim, 0.08 * dim, 0.10 * dim, 1.0)
+
+    // Two characters wear distinctive glasses; two have a short beard.
+    if seat == 0 || seat == 4 {
+        engine2d_draw_rect(x - 14.0, y - 4.0, 12.0, 6.0,
+                           0.025, 0.035, 0.05, 0.98)
+        engine2d_draw_rect(x + 2.0, y - 4.0, 12.0, 6.0,
+                           0.025, 0.035, 0.05, 0.98)
+        engine2d_draw_rect(x - 2.0, y - 2.0, 4.0, 2.0,
+                           0.025, 0.035, 0.05, 0.98)
+    }
+    if seat == 1 || seat == 5 {
+        engine2d_draw_circle(x - 6.0, y + 10.0, 5.0, hr, hg, hb, 1.0)
+        engine2d_draw_circle(x, y + 13.0, 7.0, hr, hg, hb, 1.0)
+        engine2d_draw_circle(x + 6.0, y + 10.0, 5.0, hr, hg, hb, 1.0)
+    }
+}
+
 fn draw_card(x: f64, y: f64, w: f64, h: f64, tex: i64, back_tex: i64,
              face: bool) {
     engine2d_draw_rect(x + 5.0, y + 8.0, w, h, 0.0, 0.0, 0.0, 0.34)
@@ -832,13 +922,12 @@ fn paint_button(x: f64, y: f64, w: f64, h: f64, label: string, font: i64,
     return hot
 }
 
-// Classic arrow pointer drawn at the mouse position. The PNG hotspot is the
-// tip of the arrow, so there is no offset between the click point and the art.
+// Fixed-size spade pointer. Its transparent PNG has a sharp outline and no hover
+// animation, so it stays visually solid over both felt and dark panels.
 fn draw_cursor(cursor_tex: i64, hot: bool) {
-    // Fixed-size cursor: hover-edge scaling/glow made the pointer look like it blinked.
     let mx = engine2d_mouse_x()
     let my = engine2d_mouse_y()
-    let s = 0.80
+    let s = 0.90
     let w = 60.0 * s
     let h = 78.0 * s
     if cursor_tex > 0 {
@@ -2154,25 +2243,7 @@ fn main() {
                     engine2d_draw_circle(ax + 3.0, ay + 5.0, 48.0,
                                          0.0, 0.0, 0.0, 0.38)
                     engine2d_draw_circle(ax, ay, 48.0, 0.10, 0.12, 0.16, 1.0)
-                    let mut ar = 0.16
-                    let mut ag = 0.34
-                    let mut ab = 0.62
-                    if s == 1 { ar = 0.58; ag = 0.26; ab = 0.18 }
-                    if s == 2 { ar = 0.16; ag = 0.48; ab = 0.40 }
-                    if s == 3 { ar = 0.46; ag = 0.28; ab = 0.56 }
-                    if s == 4 { ar = 0.58; ag = 0.44; ab = 0.16 }
-                    if s == 5 { ar = 0.18; ag = 0.40; ab = 0.56 }
-                    if players[s].folded { ar = 0.20; ag = 0.21; ab = 0.23 }
-                    engine2d_draw_circle(ax, ay, 42.0, ar, ag, ab, 1.0)
-                    engine2d_draw_circle(ax - 8.0, ay - 10.0, 22.0,
-                                         1.0, 1.0, 1.0, 0.10)
-                    if s == 0 {
-                        text_c(f_tiny, ax, ay - 9.0, "YOU",
-                               1.0, 1.0, 1.0, 1.0)
-                    } else {
-                        text_c(f_tiny, ax, ay - 9.0,
-                               "P" + str_i64(s), 1.0, 1.0, 1.0, 1.0)
-                    }
+                    draw_avatar(s, ax, ay, players[s].folded)
 
                     // Three small lights orbiting the active player.
                     if is_turn {
