@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 
 ARTIFACTS = (
-    "NEXUS-Setup-2.1.0.exe",
+    "NEXUS-Setup-2.1.1.exe",
     "NEXUS_Windows_Portable.zip",
     "NEXUS-Language-2.1.0.vsix",
     "NEXUS-Paint-Windows-x64.exe",
