@@ -767,6 +767,18 @@ namespace nexus {
                 if (fs::is_regular_file(candidate))
                     return fs::weakly_canonical(candidate);
             }
+#ifdef NEXUS_SOURCE_ROOT
+            const fs::path sourceRuntime = fs::path(NEXUS_SOURCE_ROOT) / "src/runtime/runtime.cpp";
+            if (fs::is_regular_file(sourceRuntime))
+                return fs::weakly_canonical(sourceRuntime);
+#endif
+#ifdef NEXUS_INSTALL_RUNTIME_DIR
+            // Prefer the runtime that "cmake --install" refreshed over older
+            // side-by-side copies that packaging scripts may have left behind.
+            const fs::path installed = fs::path(NEXUS_INSTALL_RUNTIME_DIR) / "runtime.cpp";
+            if (fs::is_regular_file(installed))
+                return fs::weakly_canonical(installed);
+#endif
             if (!gExecutable.empty()) {
                 const fs::path bin = fs::weakly_canonical(gExecutable).parent_path();
                 const std::vector<fs::path> candidates = {bin / "../runtime/runtime.cpp",
@@ -781,19 +793,9 @@ namespace nexus {
                         return fs::weakly_canonical(candidate, ec);
                 }
             }
-#ifdef NEXUS_SOURCE_ROOT
-            const fs::path sourceRuntime = fs::path(NEXUS_SOURCE_ROOT) / "src/runtime/runtime.cpp";
-            if (fs::is_regular_file(sourceRuntime))
-                return fs::weakly_canonical(sourceRuntime);
-#endif
             const fs::path local = fs::current_path() / "runtime/runtime.cpp";
             if (fs::is_regular_file(local))
                 return fs::weakly_canonical(local);
-#ifdef NEXUS_INSTALL_RUNTIME_DIR
-            const fs::path installed = fs::path(NEXUS_INSTALL_RUNTIME_DIR) / "runtime.cpp";
-            if (fs::is_regular_file(installed))
-                return fs::weakly_canonical(installed);
-#endif
             throw std::runtime_error(
                 "Nexus runtime not found; set NEXUS_RUNTIME_DIR or install the runtime files");
         }
