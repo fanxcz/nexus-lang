@@ -7,13 +7,13 @@ The repository's `examples/` directory contains standalone `.nx` programs and as
 | Topic | Description |
 |---|---|
 | [Overview](overview.md) | Index of examples in the source tree |
-| [Native app sample](../../examples/native_app.nx) | Minimal native window and interactive drawing sample |
+| [Native app sample](https://github.com/fanxcz/nexus-lang/blob/main/examples/native_app.nx) | Minimal native window and interactive drawing sample |
 | [Project templates](../templates/index.md) | Starter projects for applications, CLI tools, games, and libraries |
 | [Games](games.md) | Terminal and graphical game prototypes |
 | [Graphics](graphics.md) | Valid 2D, 3D and drawing examples |
 | [Audio](audio.md) | The current sound-runtime demo |
-| [Application UI Playground](../../examples/ui_playground.nx) | Immediate-mode UI widgets and layout |
-| [2D Starter](../../examples/game2d_starter.nx) | Asset-free tilemap/physics/camera/animation demonstration |
+| [Application UI Playground](https://github.com/fanxcz/nexus-lang/blob/main/examples/ui_playground.nx) | Immediate-mode UI widgets and layout |
+| [2D Starter](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_starter.nx) | Asset-free tilemap/physics/camera/animation demonstration |
 
 ## Run an example
 
