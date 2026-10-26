@@ -1,0 +1,46 @@
+// Regression: error propagation through ? must execute every active defer.
+// The enum declares Err first to guard against assumptions about tag order.
+enum Outcome {
+    Err(string),
+    Ok(i64)
+}
+
+fn emit(text: string) {
+    print(text)
+}
+
+fn source(value: i64) -> Outcome {
+    if value < 0 {
+        return Outcome::Err("source failed")
+    }
+    return Outcome::Ok(value)
+}
+
+fn transform(value: i64) -> Outcome {
+    defer emit("outer:first")
+    defer emit("outer:second")
+
+    {
+        defer emit("inner")
+        let number = source(value)?
+        if number == 99 {
+            return Outcome::Err("special failure")
+        }
+    }
+
+    return Outcome::Ok(value + 1)
+}
+
+fn main() {
+    let success = transform(41)
+    match success {
+        Outcome::Err(message) => { print("unexpected:" + message) }
+        Outcome::Ok(value) => { print("ok=" + value) }
+    }
+
+    let failure = transform(-1)
+    match failure {
+        Outcome::Err(message) => { print("error=" + message) }
+        Outcome::Ok(value) => { print("unexpected-value=" + value) }
+    }
+}

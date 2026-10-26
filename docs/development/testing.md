@@ -32,6 +32,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_backend_explain_smoke` | Backend-selection explanation |
 | `nexus_project_smoke` | Project creation/build workflow, formatter check mode, and VS Code settings |
 | `nexus_paint_smoke` | Paint template compile/run smoke checks |
+| `nexus_defer_try_propagation_smoke` | Verifies `?` error returns execute all deferred cleanups in reverse order |
 | `nexus_diagnostics_smoke` | Error/diagnostic formatting |
 | `nexus_lsp_smoke` | Actual LSP initialize, document-change, completion, definition, formatting and shutdown messages |
 | `nexus_frontend_fuzz_smoke` | Runs 5,000 deterministic generated inputs through the lexer and parser to catch crashes and hangs; malformed input is an expected outcome |

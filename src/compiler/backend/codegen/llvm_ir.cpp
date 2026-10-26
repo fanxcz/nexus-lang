@@ -302,6 +302,9 @@ namespace nexus {
                 const auto okLabel = lab("try.ok");
                 emit("br i1 " + cmp + ", label %" + okLabel + ", label %" + errLabel);
                 emit(errLabel + ":");
+                // Error propagation is an early return just like an explicit
+                // return statement, so every active lexical defer must run.
+                emitDefersFrom(0);
                 emit("ret " + llvmType(currentReturnType) + " " + inner);
                 terminated = true;
                 emit(okLabel + ":");

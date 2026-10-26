@@ -123,7 +123,7 @@ fn work() -> i64 {
 }
 ```
 
-Arguments are evaluated immediately and deferred calls run in reverse order of registration. The LLVM backend runs them on normal block exit, `return`, `break`, and `continue`; the built-in native backend currently rejects `defer` with an explicit diagnostic. A runtime abort does not guarantee cleanup.
+Arguments are evaluated immediately and deferred calls run in reverse order of registration. The LLVM backend runs them on normal block exit, `return`, `break`, `continue`, and the error-return path of `?` propagation; the built-in native backend currently rejects `defer` with an explicit diagnostic. A runtime abort does not guarantee cleanup.
 
 ## Runtime failure signals
 

@@ -55,11 +55,7 @@ for value in values {
 }
 ```
 
-The array is evaluated once and each element is copied into the loop variable.
-String iteration is not supported; use a numeric range with `string.len` and
-`string.byte_at` if byte-level access is needed. The current parser does not
-implement the Rust-style `..=` range syntax or iterator methods such as
-`.enumerate()` / `.rev()`.
+The array or string is evaluated once before iteration. Array elements are copied into the loop variable; string iteration yields Unicode code points as `i64` values (not UTF-8 bytes). The current parser does not implement the Rust-style `..=` range syntax or iterator methods such as `.enumerate()` / `.rev()`.
 
 ## Match statements
 
@@ -80,9 +76,10 @@ fn main() {
 }
 ```
 
-Match arms have patterns, optional guards, and statement blocks. Unit enum
-variants, integer and boolean literals, inclusive integer ranges, binding
-patterns, the wildcard `_`, and `if` guards are supported:
+Match arms have patterns, optional guards, and statement blocks. Unit and
+payload enum variants, integer and boolean literals, inclusive integer ranges,
+binding patterns, the wildcard `_`, and `if` guards are supported. Bind a
+payload with `EnumName::Variant(value)`:
 
 ```nx
 match score {
@@ -93,8 +90,8 @@ match score {
 }
 ```
 
-Match is not a general expression in this compiler version; payload enum
-variants, destructured struct patterns, and or-patterns are not supported.
+Match is not a general expression in this compiler version. Destructured struct
+patterns and or-patterns are not supported.
 `match` does not perform exhaustiveness checking: if no arm matches, execution
 continues after the `match` statement.
 
@@ -112,4 +109,4 @@ fn max(a: i64, b: i64) -> i64 {
 }
 ```
 
-The compiler checks that a non-void function returns a value on every path it can prove. It does not support Rust-style `loop { break value }` expressions, block expressions that return a value, or `?` error propagation in the current parser.
+The compiler checks that a non-void function returns a value on every path it can prove. It does not support Rust-style `loop { break value }` expressions or block expressions that return a value. The `?` operator is supported for matching payload-enum success/failure variants on the LLVM backend; see [Error Handling](error-handling.md#propagate-an-enum-with-) for its constraints. The built-in native backend does not yet support this operator.

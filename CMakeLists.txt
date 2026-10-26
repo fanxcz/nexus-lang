@@ -515,6 +515,14 @@ if (NEXUS_BUILD_TESTS)
     set_tests_properties(nexus_defer_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
         TIMEOUT 45)
+    add_test(NAME nexus_defer_try_propagation_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/defer_try_propagation_smoke.cmake)
+    set_tests_properties(nexus_defer_try_propagation_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 45)
 
     add_test(NAME nexus_checked_file_read_smoke
         COMMAND ${CMAKE_COMMAND}
