@@ -81,6 +81,8 @@ namespace nexus {
             return "break";
         case TokenKind::KwContinue:
             return "continue";
+        case TokenKind::KwDefer:
+            return "defer";
         case TokenKind::KwStruct:
             return "struct";
         case TokenKind::KwEnum:
@@ -247,6 +249,8 @@ namespace nexus {
             k = TokenKind::KwBreak;
         else if (s == "continue")
             k = TokenKind::KwContinue;
+        else if (s == "defer")
+            k = TokenKind::KwDefer;
         else if (s == "struct")
             k = TokenKind::KwStruct;
         else if (s == "enum")
