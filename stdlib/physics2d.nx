@@ -18,7 +18,37 @@ fn physics2d_integrate_y(y: f64, vy: f64, dt: f64) -> f64 {
 
 // Clamp vertical velocity to a maximum fall speed.
 fn physics2d_clamp_fall(vy: f64, max_fall: f64) -> f64 {
+    if max_fall < 0.0 { return 0.0 }
     if vy > max_fall { return max_fall }
+    return vy
+}
+
+// Coordinates grow downward, so an upward jump launch velocity is negative.
+fn physics2d_jump_velocity(gravity: f64, jump_height: f64) -> f64 {
+    if gravity <= 0.0 || jump_height <= 0.0 { return 0.0 }
+    return 0.0 - sqrt(2.0 * gravity * jump_height)
+}
+
+// Linear friction moves velocity toward zero without reversing its direction.
+fn physics2d_apply_friction(velocity: f64, friction: f64, dt: f64) -> f64 {
+    if friction <= 0.0 || dt <= 0.0 || velocity == 0.0 { return velocity }
+    let step = friction * dt
+    if velocity > 0.0 {
+        if step >= velocity { return 0.0 }
+        return velocity - step
+    }
+    if step >= 0.0 - velocity { return 0.0 }
+    return velocity + step
+}
+
+// Clamp vertical velocity for a coordinate system where positive Y points down.
+fn physics2d_clamp_vertical(vy: f64, max_rise: f64, max_fall: f64) -> f64 {
+    let mut rise = max_rise
+    let mut fall = max_fall
+    if rise < 0.0 { rise = 0.0 }
+    if fall < 0.0 { fall = 0.0 }
+    if vy < 0.0 - rise { return 0.0 - rise }
+    if vy > fall { return fall }
     return vy
 }
 

@@ -7,6 +7,7 @@ import std.animation2d
 import std.sprite2d
 import std.camera2d
 import std.audio2d
+import std.physics2d
 
 fn main() {
     if math_floor(-0.2) != -1 || math_floor(1.9) != 1 {
@@ -44,6 +45,19 @@ fn main() {
         return
     }
     tilemap_set(map, 4, 4, 1, 2, 1)
+    if !tilemap_fill_rect(map, 4, 4, 0, 0, 2, 2, 3) {
+        print("NEXUS game libraries: FAIL tilemap fill rect")
+        return
+    }
+    if tilemap_count(map, 4, 4, 3) != 4 {
+        print("NEXUS game libraries: FAIL tilemap count")
+        return
+    }
+    if !tilemap_fill(map, 4, 4, 2) || tilemap_count(map, 4, 4, 2) != 16 {
+        print("NEXUS game libraries: FAIL tilemap fill")
+        return
+    }
+    tilemap_set(map, 4, 4, 1, 2, 1)
     if !collision2d_aabb(0.0, 0.0, 10.0, 10.0, 5.0, 5.0, 10.0, 10.0) {
         print("NEXUS game libraries: FAIL AABB")
         return
@@ -57,5 +71,24 @@ fn main() {
         return
     }
 
+    if physics2d_jump_velocity(800.0, 64.0) != -320.0 {
+        print("NEXUS game libraries: FAIL jump velocity")
+        return
+    }
+    if physics2d_apply_friction(50.0, 100.0, 1.0) != 0.0 ||
+       physics2d_apply_friction(-80.0, 20.0, 2.0) != -40.0 {
+        print("NEXUS game libraries: FAIL friction")
+        return
+    }
+    if physics2d_clamp_vertical(-600.0, 300.0, 500.0) != -300.0 ||
+       physics2d_clamp_vertical(800.0, 300.0, 500.0) != 500.0 {
+        print("NEXUS game libraries: FAIL vertical clamp")
+        return
+    }
+    if animation2d_progress(1.25, 1.0, true) != 0.25 ||
+       animation2d_progress(2.0, 1.0, false) != 1.0 {
+        print("NEXUS game libraries: FAIL animation progress")
+        return
+    }
     print("NEXUS game libraries: PASS")
 }

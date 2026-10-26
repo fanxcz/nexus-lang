@@ -74,3 +74,14 @@ fn engine2d_draw_text(x: f64, y: f64, scale: f64, value: string,
 fn engine2d_should_close() -> bool {
     return gfx_should_close()
 }
+
+
+fn engine2d_vsync(enabled: bool) {
+    gfx_vsync(enabled)
+}
+
+fn engine2d_draw_line(x1: f64, y1: f64, x2: f64, y2: f64,
+                      thickness: f64, red: f64, green: f64, blue: f64, alpha: f64) {
+    if thickness <= 0.0 { return }
+    gfx_line(x1, y1, x2, y2, thickness, red, green, blue, alpha)
+}

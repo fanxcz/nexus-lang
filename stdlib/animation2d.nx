@@ -54,3 +54,19 @@ fn animation2d_ping_pong(elapsed_seconds: f64, duration: f64) -> f64 {
     if phase == 0 { return local }
     return 1.0 - local
 }
+
+
+fn animation2d_duration(frame_count: i64, frames_per_second: f64) -> f64 {
+    if frame_count <= 0 || frames_per_second <= 0.0 { return 0.0 }
+    return to_f64(frame_count) / frames_per_second
+}
+
+// Normalized progress: looped animations wrap to [0, 1); one-shots clamp to [0, 1].
+fn animation2d_progress(elapsed_seconds: f64, duration: f64, looped: bool) -> f64 {
+    if duration <= 0.0 { return 1.0 }
+    let mut elapsed = elapsed_seconds
+    if elapsed < 0.0 { elapsed = 0.0 }
+    let amount = elapsed / duration
+    if !looped { return math_clamp(amount, 0.0, 1.0) }
+    return amount - to_f64(math_floor(amount))
+}

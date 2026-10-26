@@ -50,6 +50,48 @@ fn tilemap_destroy(map: i64) -> bool {
     return ilist_free(map)
 }
 
+// Set every cell to the same tile ID. Returns false for invalid maps or failed writes.
+fn tilemap_fill(map: i64, width: i64, height: i64, tile: i64) -> bool {
+    if !tilemap_valid(map, width, height) { return false }
+    let mut index = 0
+    while index < width * height {
+        if !ilist_set_checked(map, index, tile) { return false }
+        index = index + 1
+    }
+    return true
+}
+
+// Fill a rectangle of cells. The full requested rectangle must be inside the map.
+fn tilemap_fill_rect(map: i64, width: i64, height: i64,
+                      x: i64, y: i64, rect_width: i64, rect_height: i64,
+                      tile: i64) -> bool {
+    if !tilemap_valid(map, width, height) { return false }
+    if rect_width <= 0 || rect_height <= 0 || x < 0 || y < 0 { return false }
+    if x >= width || y >= height { return false }
+    if rect_width > width - x || rect_height > height - y { return false }
+    let mut row = y
+    while row < y + rect_height {
+        let mut col = x
+        while col < x + rect_width {
+            if !ilist_set_checked(map, row * width + col, tile) { return false }
+            col = col + 1
+        }
+        row = row + 1
+    }
+    return true
+}
+
+fn tilemap_count(map: i64, width: i64, height: i64, tile: i64) -> i64 {
+    if !tilemap_valid(map, width, height) { return 0 }
+    let mut count = 0
+    let mut index = 0
+    while index < width * height {
+        if ilist_get(map, index) == tile { count = count + 1 }
+        index = index + 1
+    }
+    return count
+}
+
 // Void-returning companion suitable for a defer statement.
 fn tilemap_dispose(map: i64) {
     let _ = tilemap_destroy(map)

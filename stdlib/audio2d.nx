@@ -1,4 +1,6 @@
 // Optional runtime audio helpers. A zero handle means loading failed.
+import std.math
+
 fn audio2d_load(path: string) -> i64 {
     return gfx_sound_load(path)
 }
@@ -6,4 +8,34 @@ fn audio2d_load(path: string) -> i64 {
 fn audio2d_play(sound: i64, looped: bool) {
     if sound <= 0 { return }
     gfx_sound_play(sound, looped)
+}
+
+fn audio2d_unload(sound: i64) {
+    if sound <= 0 { return }
+    gfx_sound_unload(sound)
+}
+
+fn audio2d_stop() {
+    gfx_sound_stop()
+}
+
+fn audio2d_set_volume(volume: f64) {
+    gfx_sound_volume(math_clamp(volume, 0.0, 1.0))
+}
+
+fn audio2d_is_playing() -> bool {
+    return gfx_sound_playing()
+}
+
+fn audio2d_available() -> bool {
+    return gfx_audio_available() != 0
+}
+
+fn audio2d_error() -> string {
+    return gfx_audio_error()
+}
+
+fn audio2d_tone(frequency: f64, duration_ms: i64, volume: f64) {
+    if frequency <= 0.0 || duration_ms <= 0 { return }
+    gfx_sound_tone(frequency, duration_ms, math_clamp(volume, 0.0, 1.0))
 }
