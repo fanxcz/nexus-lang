@@ -1,0 +1,38 @@
+import std.fs
+
+fn main() {
+    let mut content = "sentinel"
+
+    if fs_write("empty.txt", "") != 0 {
+        print("write-empty: FAIL")
+        return
+    }
+    if !fs_read_checked("empty.txt", &content) {
+        print("read-empty: FAIL")
+        return
+    }
+    if content != "" {
+        print("empty-content: FAIL")
+        return
+    }
+
+    if fs_read_checked("missing-file.txt", &content) {
+        print("missing-file: FAIL")
+        return
+    }
+
+    if fs_write("payload.txt", "NEXUS") != 0 {
+        print("write-payload: FAIL")
+        return
+    }
+    if !fs_read_checked("payload.txt", &content) {
+        print("read-payload: FAIL")
+        return
+    }
+    if content != "NEXUS" {
+        print("payload-content: FAIL")
+        return
+    }
+
+    print("NEXUS checked file read: PASS")
+}
