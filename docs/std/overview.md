@@ -18,6 +18,12 @@ The current checked-in standard library consists of small wrapper modules. Impor
 | [`std.string`](string.md) | `len`, `byte_at`, `byte_len` | UTF-8 byte length and byte access |
 | [`std.vec2`](vec2.md) | `Vec2`, arithmetic, dot, length, normalize, lerp, move-towards | 2D vector values |
 | [`std.vec3`](vec3.md) | `Vec3`, arithmetic, dot/cross, length, normalize, lerp | 3D vector values |
+| [`std.engine2d`](engine2d.md) | Window, frame loop, input, primitive drawing | Core 2D runtime wrappers |
+| [`std.tilemap`](tilemap.md) | Bounded grid storage and access | Tile data for simple worlds |
+| [`std.collision2d`](collision2d.md) | AABB/circle, tile movement, point and circle-box tests | 2D collision helpers |
+| [`std.animation2d`](animation2d.md) | Sprite frames, easing curves, ping-pong | Time-based animation helpers |
+| [`std.sprite2d`](sprite2d.md) | Texture and sprite-sheet rendering | Sprite resources and drawing |
+| [`std.camera2d`](camera2d.md) | Follow, transforms, bounds clamp and runtime camera | 2D camera helpers |
 
 ## Import and call a function
 
