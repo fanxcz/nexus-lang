@@ -10,7 +10,7 @@ For the broader feature guides, start at [the examples documentation](../docs/ex
 - [`new_features_demo.nx`](new_features_demo.nx) — compact feature showcase.
 - [`native_graphics_game.nx`](native_graphics_game.nx) — simple native 2D game loop.
 - [`game2d_platformer.nx`](game2d_platformer.nx) — tilemap-based platformer.
-- [`poker_gui.nx`](poker_gui.nx) — NEXUS Poker 2.1.0, mouse-driven Texas Hold'em with shared art and audio in [`assets/`](assets/README.md).
+- [`poker_gui.nx`](poker_gui.nx) — NEXUS Poker 2.1.0, mouse-driven Texas Hold'em with a stable custom cursor, persistent cosmetic table-skin shop, and shared art/audio in [`assets/`](assets/README.md).
 
 ## Language basics
 
