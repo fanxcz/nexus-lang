@@ -29,6 +29,33 @@ fn engine2d_key_down(key: string) -> bool {
     return gfx_key_down(key)
 }
 
+fn engine2d_mouse_x() -> f64 {
+    return gfx_mouse_x()
+}
+
+fn engine2d_mouse_y() -> f64 {
+    return gfx_mouse_y()
+}
+
+fn engine2d_mouse_down(button: i64) -> bool {
+    return gfx_mouse_down(button)
+}
+
+// True only on the frame the button was pressed, so one click fires once.
+fn engine2d_mouse_clicked(button: i64) -> bool {
+    return gfx_mouse_clicked(button)
+}
+
+fn engine2d_mouse_over(x: f64, y: f64, width: f64, height: f64) -> bool {
+    let mx = gfx_mouse_x()
+    let my = gfx_mouse_y()
+    return mx >= x && mx <= x + width && my >= y && my <= y + height
+}
+
+fn engine2d_mouse_clicked_in(x: f64, y: f64, width: f64, height: f64) -> bool {
+    return engine2d_mouse_over(x, y, width, height) && gfx_mouse_clicked(1)
+}
+
 fn engine2d_draw_rect(x: f64, y: f64, width: f64, height: f64,
                       red: f64, green: f64, blue: f64, alpha: f64) {
     gfx_rect(x, y, width, height, red, green, blue, alpha)

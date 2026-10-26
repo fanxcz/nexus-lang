@@ -21,6 +21,26 @@ while !gfx_should_close() {
 
 `gfx_key_down(name)` checks held key state. Examples use names such as `"W"`, `"A"`, `"S"`, `"D"`, `"ENTER"`, `"ESC"` and `"F11"`. `gfx_mouse_down(1)` checks left, `2` middle, and `3` right mouse button. These functions report held state, not just a one-frame press.
 
+`gfx_mouse_clicked(button)` is the edge-triggered companion: it returns `true` only on the frame the button went down. Use it for buttons and cards so a single press cannot fire an action twice.
+
+```nx
+if gfx_mouse_clicked(1) {
+    // one-shot click
+}
+```
+
+`gfx_mouse_x()` / `gfx_mouse_y()` return the current pointer position, so they can be combined with the click helper for hit-testing:
+
+```nx
+fn clicked_in(x: f64, y: f64, w: f64, h: f64) -> bool {
+    let mx = gfx_mouse_x()
+    let my = gfx_mouse_y()
+    return gfx_mouse_clicked(1) && mx >= x && mx <= x + w && my >= y && my <= y + h
+}
+```
+
+For convenience, `std.engine2d` wraps these as `engine2d_mouse_x()`, `engine2d_mouse_y()`, `engine2d_mouse_down(button)`, `engine2d_mouse_clicked(button)`, `engine2d_mouse_over(x, y, w, h)` and `engine2d_mouse_clicked_in(x, y, w, h)`.
+
 Escape also sets the window-closed flag, so `gfx_should_close()` returns `true` after the user presses it. Loops that already test `gfx_should_close()` therefore quit on Escape without an explicit `gfx_key_down("ESC")` check; keep the explicit check if you want to run cleanup before leaving the loop.
 
 ## Events

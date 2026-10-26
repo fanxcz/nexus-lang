@@ -58,3 +58,7 @@ selfhost-*-out.txt
 
 # Poker example save state
 poker_save.txt
+
+# Python cache
+__pycache__/
+*.py[cod]

@@ -1180,6 +1180,8 @@ namespace nexus {
 
             emitModule("declare i1 @nexus_gfx_mouse_down(i64)");
 
+            emitModule("declare i1 @nexus_gfx_mouse_clicked(i64)");
+
             emitModule("declare i1 @nexus_gfx_key_down(ptr)");
 
             emitModule("declare double @nexus_gfx_dt()");

@@ -33,14 +33,19 @@ nexus run examples/nexus_arena.nx
 
 ## NEXUS Poker
 
-[`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed Texas Hold'em game against an AI dealer built on `std.engine2d`, `std.sprite2d` and `std.audio2d`.
+[`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed no-limit Texas Hold'em table for the mouse, built on `std.engine2d`, `std.sprite2d` and `std.audio2d`.
 
-- 52 generated card textures plus a card back under `examples/assets/cards/`.
+- Main menu with a 1-5 bot selector. Every seat starts with 1,000 chips and blinds are 10 / 20.
+- Complete Hold'em betting: pre-flop, flop, turn and river; check, call, fold, raise with a draggable slider, and all-in. Side pots, split pots and seven-card hand evaluation are handled at showdown.
+- Mouse-first controls: `START TABLE`, bot-count buttons, `FOLD`, `CHECK` / `CALL`, `ALL-IN`, `RAISE`, `NEXT HAND`, `MENU` and `F11` fullscreen. Keyboard shortcuts (`SPACE`, `F`, `C`, `R`, `A`, `N`, `M`, `ESC`) still work.
+- System TTF typography via `gfx_font_default` (Segoe UI / DejaVu Sans / Helvetica) instead of the bitmap font; the game falls back to `gfx_text` when the TTF backend is unavailable.
+- A pre-rendered 1920x1080 canvas: oval table texture with a wooden rail, gold rim, stitched felt and felt speckles under `examples/assets/table/felt.png`.
+- 52 generated card textures plus a card back under `examples/assets/cards/`, and a custom arrow pointer at `examples/assets/ui/cursor.png` (the OS cursor is hidden while the table is open).
 - Staggered deal animation: each card slides from the deck to its seat.
-- Bet-size buttons on keys `1`-`5` (50 / 100 / 200 / 500 / all-in, plus a 25 ante).
-- Dealer AI evaluates its made seven-card hand and folds, calls or raises; a raise the player cannot match forces a fold.
+- Chip-stack rendering by denomination (`1000` gold, `500` purple, `100` black, `25` green, `5` red) for the pot and for each seat's committed chips.
+- Each bot evaluates its made seven-card hand and folds, calls or raises with a little per-seat aggression; showdowns reveal the cards and print the winning hand category.
 - Distinct WAV effects for deal, chips, win, lose and fold under `examples/assets/sounds/`.
-- Chip stack persists between sessions in `poker_save.txt`; `R` resets it to 1000.
+- Chip stack persists between sessions in `poker_save.txt`; `PLAY AGAIN` restores 1,000 chips after a bust.
 
 ```bash
 cd examples

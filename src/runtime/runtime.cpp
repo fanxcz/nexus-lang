@@ -456,7 +456,9 @@ namespace {
     SDLPROC(SDL_CreateTextureFromSurface, SDL_Texture*, (SDL_Renderer*, SDL_Surface*))
     SDLPROC(SDL_DestroyTexture, void, (SDL_Texture*))
     SDLPROC(SDL_UpdateTexture, int, (SDL_Texture*, const SDL_Rect*, const void*, int))
+    SDLPROC(SDL_SetHint, int, (const char*, const char*))
     SDLPROC(SDL_SetTextureBlendMode, int, (SDL_Texture*, int))
+    SDLPROC(SDL_SetRenderDrawBlendMode, int, (SDL_Renderer*, int))
     SDLPROC(SDL_RenderSetLogicalSize, int, (SDL_Renderer*, int, int))
     SDLPROC(SDL_RenderSetViewport, int, (SDL_Renderer*, const SDL_Rect*))
     SDLPROC(SDL_GL_SetSwapInterval, int, (int))
@@ -599,6 +601,9 @@ namespace {
     static std::vector<uint8_t> gKeys(512, 0);
 
     static std::array<uint8_t, 8> gMouseButtons{};
+
+    // Buttons pressed during the current frame (edge-triggered click helper).
+    static std::array<uint8_t, 8> gMouseClickedButtons{};
 
     static SDL_AudioDeviceID gAudioDevice = 0;
     static SDL_Renderer* gRenderer = nullptr;
@@ -911,7 +916,9 @@ namespace {
         LOAD_REQUIRED_SDL(SDL_CreateTextureFromSurface);
         LOAD_REQUIRED_SDL(SDL_DestroyTexture);
         LOAD_REQUIRED_SDL(SDL_UpdateTexture);
+        LOAD_OPTIONAL_SDL(SDL_SetHint);
         LOAD_REQUIRED_SDL(SDL_SetTextureBlendMode);
+        LOAD_OPTIONAL_SDL(SDL_SetRenderDrawBlendMode);
         LOAD_REQUIRED_SDL(SDL_RenderSetLogicalSize);
         LOAD_REQUIRED_SDL(SDL_RenderSetViewport);
         LOAD_REQUIRED_SDL(SDL_GL_SetSwapInterval);
@@ -1019,6 +1026,12 @@ namespace {
         const int logicalH = gUiHeight > 0.0 ? int(std::llround(gUiHeight)) : gHeight;
         SDL_RenderSetLogicalSize(gRenderer, logicalW, logicalH);
         SDL_RenderSetViewport(gRenderer, nullptr);
+        // SDL's software renderer defaults to SDL_BLENDMODE_NONE, which silently
+        // ignores the alpha channel of the draw colour. Enable blending so
+        // translucent rectangles, overlays, circles and bitmap text compose
+        // correctly instead of painting as opaque blocks.
+        if (SDL_SetRenderDrawBlendMode)
+            SDL_SetRenderDrawBlendMode(gRenderer, SDL_BLENDMODE_BLEND);
     }
 
     static void software_color(double r, double g, double b, double a) {
@@ -1343,6 +1356,22 @@ namespace {
             return 81;
         if (s == "TAB")
             return 43;
+        if (s.size() >= 2 && s[0] == 'F' && s[1] >= '1' && s[1] <= '9') {
+            // SDL scancodes for F1..F10 are 58..67; F11/F12 are 68/69.
+            int n = 0;
+            for (size_t i = 1; i < s.size(); ++i) {
+                if (s[i] < '0' || s[i] > '9')
+                    return -1;
+                n = n * 10 + (s[i] - '0');
+            }
+            if (n >= 1 && n <= 10)
+                return 58 + (n - 1);
+            if (n == 11)
+                return 68;
+            if (n == 12)
+                return 69;
+            return -1;
+        }
         if (s == "SHIFT")
             return 225;
         if (s == "CTRL" || s == "CONTROL")
@@ -1355,6 +1384,7 @@ namespace {
         gLastKey = -1;
         gLastMouseButton = 0;
         gMouseClicked = false;
+        gMouseClickedButtons.fill(0);
     }
     static void process_events() {
 
@@ -1391,6 +1421,8 @@ namespace {
                 gLastY = e.button.y;
                 if (e.button.button < gMouseButtons.size())
                     gMouseButtons[e.button.button] = 1;
+                if (e.button.button < gMouseClickedButtons.size())
+                    gMouseClickedButtons[e.button.button] = 1;
             } else if (e.type == SDL_MOUSEBUTTONUP) {
                 gLastMouseButton = int(e.button.button);
                 gLastX = e.button.x;
@@ -1692,6 +1724,14 @@ namespace {
         gOpenGL3D = false;
         if (!load_sdl())
             return false;
+        // Keep window size and pointer coordinates in the same physical-pixel
+        // space on high-DPI displays. Without this, SDL reports a 1600x900
+        // window but DPI-scaled mouse events, so hit-testing drifts by the
+        // display scale factor.
+        if (SDL_SetHint) {
+            SDL_SetHint("SDL_WINDOWS_DPI_AWARENESS", "permonitorv2");
+            SDL_SetHint("SDL_WINDOWS_DPI_SCALING", "0");
+        }
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
             gGraphicsError = std::string("SDL_Init failed: ") + sdl_error();
             return false;
@@ -3902,6 +3942,13 @@ bool nexus_gfx_mouse_down(int64_t button) {
     }
     return gMouseButtons[size_t(button)] != 0;
 }
+// True only on the frame a button went down. Use this for buttons and cards
+// so one physical click cannot trigger the same action twice.
+bool nexus_gfx_mouse_clicked(int64_t button) {
+    if (button < 0 || button >= int64_t(gMouseClickedButtons.size()))
+        return false;
+    return gMouseClickedButtons[size_t(button)] != 0;
+}
 bool nexus_gfx_key_down(const char* name) {
     if (!gGraphics || !SDL_GetKeyboardState)
         return false;
@@ -4063,7 +4110,10 @@ void nexus_gfx_circle(double x, double y, double radius, double r, double g, dou
         return;
     if (gSoftware2D) {
         software_color(r, g, b, a);
-        constexpr int segments = 40;
+        // Scale the scanline count with the radius: small chips and cursors do
+        // not need 80 lines, and thousands of tiny circles are the usual
+        // software-renderer bottleneck.
+        int segments = int(std::clamp(radius * 1.6, 8.0, 40.0));
         for (int i = -segments; i <= segments; ++i) {
             double dy = radius * double(i) / double(segments);
             double half = std::sqrt(std::max(0.0, radius * radius - dy * dy));
