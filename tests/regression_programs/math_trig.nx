@@ -1,0 +1,52 @@
+import std.math
+
+fn main() {
+    let pi = 3.141592653589793
+
+    if sin(0.0) < -0.00001 || sin(0.0) > 0.00001 {
+        print("sin zero failed")
+        return
+    }
+    let quarter_sine = sin(pi / 2.0)
+    if quarter_sine < 0.99999 || quarter_sine > 1.00001 {
+        print("sin pi/2 failed")
+        return
+    }
+    let zero_cosine = cos(pi / 2.0)
+    if zero_cosine < -0.00001 || zero_cosine > 0.00001 {
+        print("cos pi/2 failed")
+        return
+    }
+    let half_cosine = cos(pi)
+    if half_cosine < -1.00001 || half_cosine > -0.99999 {
+        print("cos pi failed")
+        return
+    }
+    let quarter_tangent = tan(pi / 4.0)
+    if quarter_tangent < 0.99999 || quarter_tangent > 1.00001 {
+        print("tan pi/4 failed")
+        return
+    }
+    let angle = atan2(1.0, 0.0)
+    if angle < 1.57078 || angle > 1.57082 {
+        print("atan2 failed")
+        return
+    }
+    if floor(-1.25) != -2.0 {
+        print("floor negative failed")
+        return
+    }
+    if ceil(-1.25) != -1.0 {
+        print("ceil negative failed")
+        return
+    }
+    if pow(2.0, 3.0) != 8.0 {
+        print("pow failed")
+        return
+    }
+    if sqrt(81.0) != 9.0 {
+        print("sqrt regression failed")
+        return
+    }
+    print("NEXUS trig builtins: PASS")
+}
