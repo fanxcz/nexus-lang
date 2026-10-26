@@ -146,7 +146,7 @@ Syntax highlighting, snippets and LSP integration for `.nx` files.
 
 Install without a marketplace account:
 
-1. Download [`nexus-language-2.0.0.vsix`](https://github.com/fanxcz/nexus-lang/releases/download/vscode-extension-v2.0.0/nexus-language-2.0.2.vsix) from the [release page](https://github.com/fanxcz/nexus-lang/releases/tag/vscode-extension-v2.0.0).
+1. Download [`NEXUS-Language-2.1.0.vsix`](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.1.0.vsix) from the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/).
 2. VS Code → Extensions (`Ctrl+Shift+X`) → `...` → **Install from VSIX...** → select the file.
 
 ## Standard library and runtime

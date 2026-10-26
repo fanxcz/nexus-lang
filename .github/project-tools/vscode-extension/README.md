@@ -26,14 +26,14 @@ This creates a `.vsix` file in this directory. The production dependency `vscode
 1. Open VS Code.
 2. Press **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**).
 3. Run **Extensions: Install from VSIX...**.
-4. Select the generated `fanxcz.nexus-language-2.0.2.vsix` file.
+4. Select the generated `fanxcz.nexus-language-2.1.0.vsix` file.
 5. Reload the window.
 6. Open a `.nx` file; the language selector should show **NEXUS**.
 
 Or install from a terminal:
 
 ```sh
-code --install-extension fanxcz.nexus-language-2.0.2.vsix
+code --install-extension fanxcz.nexus-language-2.1.0.vsix
 ```
 
 ## Custom compiler path
