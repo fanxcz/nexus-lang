@@ -1035,6 +1035,27 @@ memory_alloc(bytes: i64) -> i64
 memory_free(ptr: i64)
 ```
 
+### 14.10 math built-ins
+
+These floating-point functions are available without an import and are supported by
+the LLVM backend:
+
+```nx
+sqrt(x: f64) -> f64
+sin(radians: f64) -> f64
+cos(radians: f64) -> f64
+tan(radians: f64) -> f64
+atan2(y: f64, x: f64) -> f64
+floor(x: f64) -> f64
+ceil(x: f64) -> f64
+pow(base: f64, exponent: f64) -> f64
+```
+
+Angles use radians. These functions are intended for camera movement, trajectories,
+animation, easing curves and other game/simulation calculations. The built-in
+native backend has a narrower supported language subset; use the LLVM backend for
+these floating-point operations.
+
 ------------------------------------------------------------------------
 
 ## 15. Runtime functions
