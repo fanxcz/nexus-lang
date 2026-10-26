@@ -23,6 +23,7 @@ namespace nexus {
         KwIn,
         KwBreak,
         KwContinue,
+        KwDefer,
         KwStruct,
         KwEnum,
         KwImport,
