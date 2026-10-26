@@ -8,6 +8,8 @@
 - `std.memory`: `memory_alloc`, `memory_free`
 - `std.crypto`: `hash_sha256`
 - `std.math`: scalar math helpers and floor rounding
+- `std.vec2`: Vec2 construction, arithmetic, length, normalization and movement
+- `std.vec3`: Vec3 arithmetic, dot/cross product, length and normalization
 - `std.engine2d`: core 2D window, frame, input and primitive drawing
 - `std.tilemap`: bounded grid data and cell access
 - `std.collision2d`: AABB/circle tests and tilemap movement resolution
