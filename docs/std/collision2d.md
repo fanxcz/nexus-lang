@@ -4,6 +4,9 @@ Import `std.collision2d` for simple collision predicates and movement against th
 
 - `collision2d_aabb(ax, ay, aw, ah, bx, by, bw, bh) -> bool`: overlap test for axis-aligned boxes.
 - `collision2d_circle(ax, ay, ar, bx, by, br) -> bool`: overlap test for circles represented by center and radius.
+- `collision2d_point_aabb(px, py, x, y, width, height) -> bool`: point test for UI and hitboxes.
+- `collision2d_circle_aabb(cx, cy, radius, x, y, width, height) -> bool`: circle vs. rectangle test.
+- `collision2d_aabb_overlap_area(...) -> f64`: area of the overlap; zero for separated or merely touching boxes.
 - `collision2d_map_overlaps(map, map_width, map_height, tile_size, x, y, box_width, box_height) -> bool`.
 - `collision2d_move_x(..., delta) -> f64` and `collision2d_move_y(..., delta) -> f64`: resolve a proposed move along one axis.
 
