@@ -62,7 +62,7 @@ print(scores[1])
 
 Array types require a compile-time length, and the array literal must contain at least one element. The semantic checker verifies array element types and constant out-of-range indices; runtime handling of variable indices depends on the active backend.
 
-Slices and dynamically sized generic vectors are not currently supported by this type system.
+Slices and dynamically sized generic vectors are not currently supported by this type system. The `std.collections` module does provide separately typed growable lists for `i64` values and strings, but these are opaque runtime handles rather than generic value types.
 
 ## Structs and unit enums
 
