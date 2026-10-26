@@ -19,7 +19,7 @@ nexus run hello.nx
 
 ## Supported language basics
 
-The current compiler implements functions, typed parameters and returns, inferred bindings, mutable bindings, primitive types, fixed arrays, structs, unit enums, file imports, conditionals, numeric/array/Unicode-string loops, `match` statements, pointers and external function declarations in a limited form.
+The current compiler implements functions, typed parameters and returns, inferred bindings, mutable bindings, primitive types, fixed arrays, structs, unit and single-scalar-payload enums, file imports, conditionals, numeric/array/Unicode-string loops, `match` statements, pointers, and limited external function declarations. Backend support differs for some language features.
 
 ```nx
 fn add(a: i64, b: i64) -> i64 {
@@ -41,6 +41,6 @@ The built-in machine-code backend emits Windows PE or Linux ELF executables for 
 
 ## Current limitations
 
-Generics, traits, closure/async lowering, Rust-style `impl` blocks, `defer`, `Result` / `Option`, `?` error propagation, a full JSON object model and complete FFI support are not implemented by the current parser. Some older documentation drafts described planned features as available; the current [Syntax](syntax.md), [Types](types.md) and [Functions](functions.md) pages separate implemented syntax from future work.
+Generic types, traits, closures/async, and Rust-style `impl` blocks are not implemented. Concrete enum payloads support one payload of `i64`, `f64`, `bool`, `string`, or pointer type; generic/nested payloads are not supported. The `?` operator works for matching `Some(T)/None` and `Ok(T)/Err` enums on the LLVM backend when the enclosing function returns the same enum type. `defer` supports void-returning calls on the LLVM backend, while the built-in native backend reports it as unsupported. Generic `Option<T>` / `Result<T, E>`, cross-enum propagation, a full JSON object model and complete FFI support remain unimplemented. See [Syntax](syntax.md), [Types](types.md), and [Error Handling](error-handling.md) for exact boundaries.
 
 Read [Quick Start](../getting-started/quickstart.md), the [Language Syntax](syntax.md), [Standard Library](../std/index.md) and [Runtime API](../runtime/index.md) to get started.
