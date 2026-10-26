@@ -70,8 +70,18 @@ execute_process(
 if(native_rc EQUAL 0)
   message(FATAL_ERROR "The native backend unexpectedly accepted defer")
 endif()
-if(NOT "${native_out}${native_err}" MATCHES "defer is outside the builtin native v0 subset")
-  message(FATAL_ERROR "Native-backend defer limitation was not explicit: ${native_out}\n${native_err}")
+# Linux and Windows can inspect the native subset and should name defer
+# explicitly. macOS has no native target emitter at all, so it must instead
+# reject the target clearly without pretending defer support exists.
+set(native_diagnostic "${native_out}${native_err}")
+if(APPLE)
+  if(NOT native_diagnostic MATCHES "has no emitter for target")
+    message(FATAL_ERROR "Unsupported native target was not explained: ${native_diagnostic}")
+  endif()
+else()
+  if(NOT native_diagnostic MATCHES "defer is outside the builtin native v0 subset")
+    message(FATAL_ERROR "Native-backend defer limitation was not explicit: ${native_diagnostic}")
+  endif()
 endif()
 
 message(STATUS "NEXUS defer cleanup smoke test: PASS")
