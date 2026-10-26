@@ -1,0 +1,65 @@
+// Two-dimensional vector value and pure operations for gameplay/math code.
+struct Vec2 {
+    x: f64
+    y: f64
+}
+
+fn vec2(x: f64, y: f64) -> Vec2 {
+    return Vec2 { x: x, y: y }
+}
+
+fn vec2_zero() -> Vec2 {
+    return vec2(0.0, 0.0)
+}
+
+fn vec2_add(a: Vec2, b: Vec2) -> Vec2 {
+    return vec2(a.x + b.x, a.y + b.y)
+}
+
+fn vec2_sub(a: Vec2, b: Vec2) -> Vec2 {
+    return vec2(a.x - b.x, a.y - b.y)
+}
+
+fn vec2_scale(value: Vec2, scalar: f64) -> Vec2 {
+    return vec2(value.x * scalar, value.y * scalar)
+}
+
+fn vec2_dot(a: Vec2, b: Vec2) -> f64 {
+    return a.x * b.x + a.y * b.y
+}
+
+fn vec2_length_squared(value: Vec2) -> f64 {
+    return vec2_dot(value, value)
+}
+
+fn vec2_length(value: Vec2) -> f64 {
+    return sqrt(vec2_length_squared(value))
+}
+
+fn vec2_distance(a: Vec2, b: Vec2) -> f64 {
+    return vec2_length(vec2_sub(a, b))
+}
+
+fn vec2_normalize(value: Vec2) -> Vec2 {
+    let length = vec2_length(value)
+    if length <= 0.0000001 { return vec2_zero() }
+    return vec2_scale(value, 1.0 / length)
+}
+
+fn vec2_perpendicular(value: Vec2) -> Vec2 {
+    return vec2(0.0 - value.y, value.x)
+}
+
+fn vec2_lerp(a: Vec2, b: Vec2, amount: f64) -> Vec2 {
+    let t = math_clamp(amount, 0.0, 1.0)
+    return vec2(a.x + (b.x - a.x) * t,
+                a.y + (b.y - a.y) * t)
+}
+
+fn vec2_move_towards(current: Vec2, target: Vec2, max_delta: f64) -> Vec2 {
+    if max_delta <= 0.0 { return current }
+    let delta = vec2_sub(target, current)
+    let distance = vec2_length(delta)
+    if distance <= max_delta || distance <= 0.0000001 { return target }
+    return vec2_add(current, vec2_scale(delta, max_delta / distance))
+}
