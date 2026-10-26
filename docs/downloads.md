@@ -1,79 +1,73 @@
 # Downloads
 
-[Download the complete documentation as PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
+Choose the package for your system. Windows executables, ZIP files and checksums are produced by GitHub Actions. A new set is published only after packaging tests, checksum validation, link validation and the site build pass.
 
-Choose the official NEXUS package for your system. The Windows x64 package is assembled and tested by GitHub Actions from this repository. Downloads are published to GitHub Pages only when the packaging and documentation workflow succeeds.
-
-**Important for direct downloads:** use the published URL below, not `raw.githubusercontent.com/.../docs/assets/downloads/NEXUS_Windows_Portable.zip`. The source tree previously contained an old, incomplete ZIP at that path; it is not the current package built by CI.
-
-[Direct download of the current portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip) · [Matching SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt)
+<div class="admonition info">
+<p class="admonition-title">Recommended Windows download</p>
+For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Paint, use the Paint installer or the portable ZIP. The portable ZIP is the best choice when you do not want to install anything.
+</div>
 
 <div class="grid cards" markdown>
 
--   :material-microsoft-windows: **NEXUS Setup for Windows 10/11 x64**
+-   :material-microsoft-windows: **NEXUS Setup · Windows 10/11 x64**
 
-    Recommended for most Windows users. Installs NEXUS for the current user, offers Start menu and desktop shortcuts, and can add the launcher to the user PATH. No administrator rights are required.
+    Installs the NEXUS compiler for the current user, including the bundled fallback toolchain, runtime files and standard library. It can add NEXUS to your user PATH and create shortcuts; administrator rights are not required.
 
-    [Download NEXUS-Setup-2.0.0.exe](assets/downloads/NEXUS-Setup-2.0.0.exe){ .md-button .md-button--primary }
+    [Download NEXUS Setup (.exe)](assets/downloads/NEXUS-Setup-2.0.0.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.0.0.exe" }
 
-    [Installer SHA-256](assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt)
+    [Download SHA-256 checksum](assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt){ download="NEXUS-Setup-2.0.0.exe.sha256.txt" }
 
--   :material-archive: **Portable Windows x64 package**
+-   :material-archive: **NEXUS Portable · Windows x64**
 
-    Includes the compiler launcher and executable, bundled Zig-based C++ toolchain, runtime DLLs, standard library, templates, examples, and helper scripts. Extract to a permanent folder before running it.
+    Contains the compiler launcher, compiler, bundled Zig-based toolchain, SDL runtime DLLs, standard library, templates, examples and helper scripts. Extract the entire ZIP to a writable folder; do not move component folders separately.
 
-    [Download Windows ZIP](assets/downloads/NEXUS_Windows_Portable.zip){ .md-button }
+    [Download portable ZIP](assets/downloads/NEXUS_Windows_Portable.zip){ .md-button .md-button--primary download="NEXUS_Windows_Portable.zip" }
 
-    [ZIP SHA-256](assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt)
+    [Download SHA-256 checksum](assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt){ download="NEXUS_Windows_Portable.zip.sha256.txt" }
 
--   :material-code-tags: **NEXUS language extension for VS Code**
+-   :material-palette: **NEXUS Paint · Windows x64**
 
-    Syntax highlighting, snippets, diagnostics, and completion for `.nx` source files.
+    Desktop raster drawing application with brush, eraser, line/rectangle tools, fill, colour palette, undo/redo and BMP save/load. The **EXE is a setup installer**: it installs the app with all required runtime DLLs and creates a Start menu shortcut.
 
-    [Download VSIX](assets/downloads/NEXUS-Language-2.0.2.vsix){ .md-button }
+    [Download NEXUS Paint installer (.exe)](assets/downloads/NEXUS-Paint-Windows-x64.exe){ .md-button .md-button--primary download="NEXUS-Paint-Windows-x64.exe" }
 
-    [VSIX SHA-256](assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt)
+    [Installer SHA-256 checksum](assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt){ download="NEXUS-Paint-Windows-x64.exe.sha256.txt" }
 
--   :material-monitor: **NEXUS Studio — Windows x64 desktop IDE**
+    Prefer no installation? The portable ZIP includes `NEXUS-Paint.exe`, its runtime DLLs and editable `.nx` source.
 
-    Standalone desktop editor with a project explorer, `.nx` editor, compiler selection, Build/Run buttons, and output terminal. Install the NEXUS compiler separately and select it inside Studio.
+    [Download Paint portable ZIP](assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button download="NEXUS-Paint-Windows-x64.zip" }
 
-    [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio){ .md-button }
+    [ZIP SHA-256 checksum](assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt){ download="NEXUS-Paint-Windows-x64.zip.sha256.txt" }
 
--   :material-palette: **NEXUS Paint — native drawing app for Windows x64**
+    [View Paint source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 
-    A desktop raster editor written in the NEXUS language. It includes a brush, eraser, line and rectangle tools, fill, colour palette, adjustable brush size, undo/redo and BMP save/load. The portable ZIP is recommended because it bundles the SDL runtime DLLs and editable .nx source.
+-   :material-code-tags: **NEXUS extension · VS Code**
 
-    [Download NEXUS Paint portable ZIP](assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button .md-button--primary }
+    Syntax highlighting and snippets for `.nx` files, with project LSP integration guidance.
 
-    [Direct ZIP download from the repository](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip)
+    [Download VSIX](assets/downloads/NEXUS-Language-2.0.2.vsix){ .md-button download="NEXUS-Language-2.0.2.vsix" }
 
-    [Download EXE only (requires DLLs from the ZIP)](assets/downloads/NEXUS-Paint-Windows-x64.exe)
+    [VSIX SHA-256 checksum](assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt){ download="NEXUS-Language-2.0.2.vsix.sha256.txt" }
 
-    [EXE SHA-256](assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt) · [ZIP SHA-256](assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
+-   :material-monitor: **NEXUS Studio**
 
-    [View the NEXUS source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
+    Source-buildable Windows desktop editor with project explorer, source editor, compiler selection and Build/Run controls. Install the NEXUS compiler separately.
 
--   :material-laptop: **Linux and macOS compiler builds**
+    [Source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio){ .md-button }
 
-    Linux x86-64 and macOS Apple Silicon/Intel archives are built by the tagged-release workflow. They become downloadable when a version-tag release has completed successfully; check the official Releases page for currently published assets.
+-   :material-laptop: **Linux and macOS**
+
+    Compiler archives are published through the official GitHub Releases workflow when a version-tag build completes. The available architecture depends on the release assets currently listed.
 
     [Browse GitHub Releases](https://github.com/fanxcz/nexus-lang/releases){ .md-button }
 
--   :material-source-repository: **Source code**
-
-    Compiler, standard library, runtime, tests, examples, templates, and documentation.
-
-    [Open the repository](https://github.com/fanxcz/nexus-lang){ .md-button }
-
 </div>
 
-## Install on Windows
+## Install and verify NEXUS on Windows
 
-1. Download `NEXUS-Setup-2.0.0.exe` from this page after the artifact is available.
-2. Run the installer and follow the prompts. It installs under `%LOCALAPPDATA%\\Programs\\NEXUS` by default.
-3. Select the optional shortcuts and PATH integration you want.
-4. Close and reopen PowerShell, then verify:
+1. Download `NEXUS-Setup-2.0.0.exe` above and run it.
+2. Choose whether to create Start menu/desktop shortcuts and add the launcher to your user PATH.
+3. Open a **new** PowerShell window and run:
 
 ```powershell
 nexus --version
@@ -81,17 +75,17 @@ nexus doctor
 nexus self-test
 ```
 
-If the command is not found, first open a new terminal. You can test the installed launcher directly:
+If the command is not found, reopen the terminal. You can test the launcher directly:
 
 ```powershell
-& "$env:LOCALAPPDATA\\Programs\\NEXUS\\nexus.cmd" --version
+& "$env:LOCALAPPDATA\Programs\NEXUS\nexus.cmd" --version
 ```
 
-The installer is not code-signed. Only run it if you downloaded it from this repository's official GitHub Pages output or GitHub Actions artifact and are comfortable with the unsigned-app warning Windows may display.
+The installers are currently unsigned. Download them only from this official website or the project's GitHub Actions output; Windows may show an unsigned-app warning.
 
-## Verify and unpack the current Windows portable package with PowerShell
+## Verify the portable ZIP checksum
 
-The ZIP and its checksum must both be downloaded from the published Pages URL. This command validates the hash and confirms the archive really contains `nexus.cmd` before you install it.
+This PowerShell example downloads the portable bundle and matching checksum, verifies SHA-256, and confirms the expected compiler launcher exists before extracting it.
 
 ```powershell
 $ErrorActionPreference = 'Stop'
@@ -111,25 +105,10 @@ if ($actual -ne $expected) { throw 'SHA-256 mismatch; archive rejected.' }
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 Expand-Archive -LiteralPath $zip -DestinationPath $stage -Force
 $launcher = Get-ChildItem -LiteralPath $stage -Filter 'nexus.cmd' -File -Recurse | Select-Object -First 1
-if (-not $launcher) { throw 'The published ZIP does not contain nexus.cmd. Do not install it.' }
+if (-not $launcher) { throw 'Archive does not contain nexus.cmd; do not install it.' }
 Write-Host "Verified launcher: $($launcher.FullName)"
 ```
 
-## Portable installation
+## Integrity and availability
 
-1. Extract the ZIP to a permanent writable folder, for example `C:\\NEXUS`.
-2. Double-click `Install-NEXUS.bat` if you want to add that folder to your user PATH.
-3. Open a new terminal and run `nexus --version`, `nexus doctor`, or `nexus self-test`.
-
-The portable package is designed to avoid requiring a separately installed LLVM/Clang toolchain for its bundled Windows workflow. Feature availability still depends on the selected compiler backend and target.
-
-## Integrity
-
-Use PowerShell to calculate the checksum of a downloaded file:
-
-```powershell
-Get-FileHash .\\NEXUS-Setup-2.0.0.exe -Algorithm SHA256
-Get-FileHash .\\NEXUS_Windows_Portable.zip -Algorithm SHA256
-```
-
-Compare each hash with the matching `.sha256.txt` file published alongside the download.
+The website copies artifacts created during the same workflow. Before publication, CI verifies that every expected download exists, executable files have valid Windows PE signatures, ZIP/VSIX archives are readable and contain required files, and each `.sha256.txt` value matches the corresponding file. After deployment, another workflow step requests every documentation page and download URL.

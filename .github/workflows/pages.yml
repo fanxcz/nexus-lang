@@ -17,6 +17,7 @@ on:
       - '.github/project-tools/repository-files/**'
       - '.github/project-tools/installer/**'
       - '.github/project-tools/vscode-extension/**'
+      - 'scripts/**'
   pull_request:
   workflow_dispatch:
 
@@ -36,6 +37,7 @@ jobs:
   package-windows:
     name: Build and package Windows compiler
     runs-on: windows-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -319,15 +321,11 @@ jobs:
           Stop-Process -Id $paintProcess.Id -Force
           Start-Sleep -Milliseconds 250
 
-          $exeOut = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe'
-          Copy-Item -LiteralPath $exe -Destination $exeOut -Force
           $zipOut = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.zip'
           if (Test-Path -LiteralPath $zipOut) { Remove-Item -LiteralPath $zipOut -Force }
           Compress-Archive -Path (Join-Path $paintDir '*') -DestinationPath $zipOut -CompressionLevel Optimal
-          $hash = (Get-FileHash -LiteralPath $exeOut -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  NEXUS-Paint-Windows-x64.exe" | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe.sha256.txt') -Encoding ASCII
-          Write-Host "Built and smoke-tested NEXUS Paint: $exeOut"
-          Write-Host "Portable ZIP: $zipOut"
+          Write-Host "Built and smoke-tested NEXUS Paint app: $exe"
+          Write-Host "Portable ZIP with runnable EXE, runtime DLLs and source: $zipOut"
 
       - name: Build graphical setup installer
         shell: pwsh
@@ -350,6 +348,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path -LiteralPath $installer)) { throw 'The NEXUS Setup EXE was not produced.' }
           Write-Host "Created graphical installer: $installer"
+
+          # Publish Paint as a real setup executable so its SDL/SQLite DLLs are installed beside the app.
+          $paintDir = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64'
+          $paintInstaller = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe'
+          & $iscc "/O$env:RUNNER_TEMP" "/DSourceDir=$paintDir" '.github/project-tools/installer/NEXUS-Paint-Setup.iss'
+          if ($LASTEXITCODE -ne 0) { throw "NEXUS Paint installer compilation failed with exit code $LASTEXITCODE." }
+          if (-not (Test-Path -LiteralPath $paintInstaller)) { throw 'The NEXUS Paint installer EXE was not produced.' }
+          Write-Host "Created NEXUS Paint installer: $paintInstaller"
 
       - name: Verify setup installs and launches NEXUS
         shell: pwsh
@@ -413,6 +419,34 @@ jobs:
             Remove-Item -LiteralPath $startMenuShortcut -Recurse -Force -ErrorAction SilentlyContinue
           }
 
+          # Verify the Paint download installs a runnable app and all of its runtime DLLs.
+          $paintInstaller = Join-Path $env:RUNNER_TEMP 'NEXUS-Paint-Windows-x64.exe'
+          $paintInstallRoot = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS Paint'
+          try {
+            $paintSetup = Start-Process -FilePath $paintInstaller -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/TASKS=startmenuicon') -Wait -PassThru
+            if ($paintSetup.ExitCode -ne 0) { throw "NEXUS Paint Setup exited with code $($paintSetup.ExitCode)." }
+            $paintExe = Join-Path $paintInstallRoot 'NEXUS-Paint.exe'
+            foreach ($required in @($paintExe, (Join-Path $paintInstallRoot 'SDL2.dll'), (Join-Path $paintInstallRoot 'SDL2_image.dll'), (Join-Path $paintInstallRoot 'SDL2_ttf.dll'), (Join-Path $paintInstallRoot 'SDL2_mixer.dll'), (Join-Path $paintInstallRoot 'sqlite3.dll'))) {
+              if (-not (Test-Path -LiteralPath $required)) { throw "Paint Setup did not install required file: $required" }
+            }
+            $paintProcess = Start-Process -FilePath $paintExe -WorkingDirectory $paintInstallRoot -PassThru
+            Start-Sleep -Seconds 3
+            $paintProcess.Refresh()
+            if ($paintProcess.HasExited) { throw "Installed NEXUS Paint exited during startup (exit code $($paintProcess.ExitCode))." }
+            Stop-Process -Id $paintProcess.Id -Force
+            $paintShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'NEXUS Paint\NEXUS Paint.lnk'
+            if (-not (Test-Path -LiteralPath $paintShortcut)) { throw 'Paint Setup did not create its Start menu shortcut.' }
+            Write-Host 'NEXUS Paint installer passed: app, runtime DLLs, shortcut and startup verified.'
+          } finally {
+            $paintUninstaller = Get-ChildItem -LiteralPath $paintInstallRoot -Filter 'unins*.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($paintUninstaller) {
+              $paintUninstall = Start-Process -FilePath $paintUninstaller.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+              if ($paintUninstall.ExitCode -ne 0) { Write-Warning "Paint uninstall returned $($paintUninstall.ExitCode)." }
+            }
+            Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Programs')) 'NEXUS Paint') -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Desktop')) 'NEXUS Paint.lnk') -Force -ErrorAction SilentlyContinue
+          }
+
       - name: Upload Windows installer, portable compiler and NEXUS Paint
         uses: actions/upload-artifact@v4
         with:
@@ -458,6 +492,9 @@ jobs:
           sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt
           sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.zip | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt
       
+      - name: Validate every binary, archive and checksum before publishing
+        run: python3 scripts/validate_downloads.py docs/assets/downloads
+
       - name: Validate links across README and documentation
         uses: lycheeverse/lychee-action@v2
         with:

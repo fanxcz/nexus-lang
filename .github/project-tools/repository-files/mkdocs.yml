@@ -24,13 +24,25 @@ theme:
   favicon: assets/images/nexus-mark.svg
   palette:
     - scheme: default
-      primary: black
-      accent: black
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   features:
+    - navigation.instant
+    - navigation.instant.progress
     - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.top
+    - navigation.tracking
     - search.highlight
     - search.share
     - content.code.copy

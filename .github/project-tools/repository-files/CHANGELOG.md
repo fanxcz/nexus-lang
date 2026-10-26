@@ -1,5 +1,13 @@
 # Changelog
 
+## Download reliability and site usability (2026-10-26)
+
+- The Paint `.exe` download is a setup installer that installs the app and its SDL/SQLite runtime DLLs; the ZIP remains a portable app bundle.
+- Switched the NEXUS installer away from the ultra/64 MB compression preset to a faster LZMA2 preset to reduce delays during publishing.
+- Added pre-publish validation for every Windows/VS Code download: checksum matching, PE signature checks, ZIP/VSIX CRC checks, and required-content validation. The post-deploy workflow verifies every published download URL.
+- Refreshed the landing page, downloads cards, responsive styles, navigation and light/dark colour modes.
+
+
 ## 2D game runtime and language ergonomics (2026-10-26)
 
 - Added `stdlib/engine2d.nx`, a consistent convenience API over the existing graphics, texture, animation, input, camera, audio and AABB runtime functions.

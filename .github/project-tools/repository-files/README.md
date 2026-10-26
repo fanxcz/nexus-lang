@@ -137,11 +137,11 @@ Consult the template and current documentation for its supported features.
 
 - [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
 
-**NEXUS Paint (Windows x64)** is a native raster drawing app written in NEXUS. The portable ZIP contains the EXE, runtime DLLs and editable NEXUS source. Download it directly from this repository (no Pages deployment required):
+**NEXUS Paint (Windows x64)** is a native raster drawing app written in NEXUS. The Paint setup EXE installs the app and all runtime DLLs. The portable ZIP contains the runnable app EXE, runtime DLLs and editable NEXUS source. Download both from the official site:
 
 - [Download NEXUS Paint portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip)
-- [Download NEXUS Paint EXE](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe)
-- [Verify Paint EXE SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
+- [Download NEXUS Paint installer EXE (installs the runtime DLLs)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe)
+- [Verify Paint installer SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt)
 - [Verify Paint ZIP SHA-256](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt)
 - [View Paint source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 ## Build from source

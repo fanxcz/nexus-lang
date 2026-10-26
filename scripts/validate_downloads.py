@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Fail the Pages build unless every published download and checksum is real and usable."""
+from __future__ import annotations
+
+import hashlib
+import re
+import struct
+import sys
+import zipfile
+from pathlib import Path, PurePosixPath
+
+ARTIFACTS = (
+    "NEXUS-Setup-2.0.0.exe",
+    "NEXUS_Windows_Portable.zip",
+    "NEXUS-Language-2.0.2.vsix",
+    "NEXUS-Paint-Windows-x64.exe",
+    "NEXUS-Paint-Windows-x64.zip",
+)
+
+ZIP_CONTENTS = {
+    "NEXUS_Windows_Portable.zip": {
+        "nexus.cmd", "bin/nexus-core.exe", "toolchain/zig.exe",
+        "runtime/SDL2.dll", "stdlib/engine2d.nx",
+    },
+    "NEXUS-Language-2.0.2.vsix": {"extension/package.json"},
+    "NEXUS-Paint-Windows-x64.zip": {
+        "NEXUS-Paint.exe", "NEXUS-Paint.nx", "README-WINDOWS.txt",
+        "SDL2.dll", "SDL2_image.dll", "SDL2_ttf.dll", "SDL2_mixer.dll", "sqlite3.dll",
+    },
+}
+
+
+def fail(message: str) -> None:
+    raise SystemExit("DOWNLOAD VALIDATION FAILED: " + message)
+
+
+def check_pe(path: Path) -> None:
+    data = path.read_bytes()
+    if len(data) < 64 or data[:2] != b"MZ":
+        fail(f"{path.name} is not a Windows PE executable (missing MZ header)")
+    offset = struct.unpack_from("<I", data, 0x3C)[0]
+    if offset > len(data) - 4 or data[offset:offset + 4] != b"PE\0\0":
+        fail(f"{path.name} has an invalid PE signature")
+
+
+def check_zip(path: Path, required: set[str]) -> None:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            raw_names = archive.namelist()
+            names = {PurePosixPath(n.replace("\\", "/")).as_posix().lstrip("./") for n in raw_names}
+            unsafe = [n for n in raw_names
+                      if PurePosixPath(n.replace("\\", "/")).is_absolute()
+                      or ".." in PurePosixPath(n.replace("\\", "/")).parts]
+            if unsafe:
+                fail(f"{path.name} contains unsafe archive paths: {unsafe[:3]}")
+            bad_member = archive.testzip()
+            if bad_member:
+                fail(f"{path.name} failed CRC validation at {bad_member}")
+            missing = sorted(required - names)
+            if missing:
+                fail(f"{path.name} is missing required content: {', '.join(missing)}")
+    except zipfile.BadZipFile as exc:
+        fail(f"{path.name} is not a readable ZIP: {exc}")
+
+
+def main() -> int:
+    root = Path(sys.argv[1] if len(sys.argv) > 1 else "docs/assets/downloads").resolve()
+    if not root.is_dir():
+        fail(f"download directory does not exist: {root}")
+
+    for name in ARTIFACTS:
+        asset = root / name
+        checksum = root / (name + ".sha256.txt")
+        if not asset.is_file():
+            fail(f"missing download asset: {asset}")
+        if asset.stat().st_size < 4096:
+            fail(f"{name} is unexpectedly small ({asset.stat().st_size} bytes)")
+        if not checksum.is_file():
+            fail(f"missing checksum: {checksum.name}")
+        recorded = checksum.read_text(encoding="ascii", errors="replace").strip()
+        match = re.fullmatch(r"([0-9a-fA-F]{64})(?:\s+.*)?", recorded)
+        if not match:
+            fail(f"{checksum.name} does not contain a SHA-256 digest")
+        actual = hashlib.sha256(asset.read_bytes()).hexdigest()
+        if actual.lower() != match.group(1).lower():
+            fail(f"{checksum.name} does not match {name}")
+        print(f"PASS checksum: {name}")
+
+        if name.endswith(".exe"):
+            check_pe(asset)
+            print(f"PASS Windows executable: {name}")
+        if name.endswith(".zip") or name.endswith(".vsix"):
+            check_zip(asset, ZIP_CONTENTS[name])
+            print(f"PASS archive contents: {name}")
+
+    print("PASS all published downloads are present, valid and checksummed")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
