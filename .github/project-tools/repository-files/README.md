@@ -1,6 +1,6 @@
 # NEXUS
 
-**NEXUS is an open-source programming language and native runtime for applications, tools, and games.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support.
+**NEXUS is an open-source programming language for native desktop applications, command-line utilities, and developer tools.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support. Graphics and games are supported uses, not the project's only purpose.
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
@@ -46,14 +46,17 @@ The [portable package](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXU
 
 ## Quick start
 
-Create a project from a template:
+Create a native windowed application from the app template:
 
 ```powershell
-nexus new MyGame --template game
-cd MyGame
+nexus new MyApp --template app
+cd MyApp
+nexus check
 nexus build
 nexus run
 ```
+
+For a terminal utility, choose `--template cli`; for a game, choose `--template game`. The app template is a minimal native window and drawing/event loop, not yet a complete desktop widget framework.
 
 Try a small source file named `hello.nx`:
 
@@ -102,6 +105,10 @@ nexus lsp
 
 Exact options can vary by command and current implementation. Use `nexus <command> --help` where supported and consult the [command reference](https://fanxcz.github.io/nexus-lang/tooling/commands/).
 
+## Application development focus
+
+NEXUS is being developed first for desktop apps, CLI utilities, and developer tools. The current native app template, NEXUS Paint, and source-buildable NEXUS Studio provide starting points. The UI helper module is immediate-mode; text inputs, focus management and native dialogs are still roadmap work.
+
 ## Standard library and runtime
 
 The repository includes standard modules for common operations, including I/O, filesystem access, networking, JSON utilities, database access, memory helpers, and cryptographic utilities. Runtime foundations include SDL-based 2D rendering, optional OpenGL 3D, audio, UI, ECS, scenes, particles, and physics components. Availability can depend on the backend, target platform, and bundled runtime dependencies.
@@ -118,7 +125,7 @@ import std.memory
 import std.crypto
 ```
 
-## Nexus Paint template
+## Creative application example: NEXUS Paint
 
 The repository includes a raster-canvas application template:
 

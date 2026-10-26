@@ -1,11 +1,11 @@
-// Example: Ultimate NEXUS Showcase v1.1.0
+// Example: NEXUS Feature Showcase
 // Run: nexus run examples/nexus_showcase.nx
 // Confirmed API from game.nx, nexus_paint.nx, neon_survivor.nx
 
 import std.io
 
 fn main() {
-    print("=== NEXUS Ultimate Showcase v1.1.0 ===")
+    print("=== NEXUS Feature Showcase ===")
     print("")
     print("[CONFIRMED FEATURES FROM EXAMPLES]")
     print("  - Graphics 2D (SDL2): gfx_init, gfx_clear, gfx_circle, gfx_rect, gfx_line, gfx_text")

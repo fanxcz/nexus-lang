@@ -15,7 +15,7 @@ This writes:
 - `.vscode/settings.json` — associates `.nx` files with the `nexus` language ID and sets indentation defaults.
 - `.vscode/tasks.json` — adds a basic `NEXUS Build` task which runs `nexus build --release`.
 
-Install the [NEXUS VS Code language extension](vscode-extension.md) to get syntax colors, bracket behavior, snippets, diagnostics and basic completion. The extension is source-only in this repository and is not currently on the VS Code Marketplace.
+Install the [NEXUS VS Code language extension](vscode-extension.md) to get syntax colors, bracket behavior, snippets, and access to the NEXUS Language Server. The extension is source-only in this repository and is not currently on the VS Code Marketplace.
 
 ## Graphical editor example
 
@@ -27,7 +27,7 @@ This experimental path compiles and launches the bundled editor example. It can 
 
 ## Language server
 
-The extension starts `nexus lsp` for live compiler diagnostics and basic completion. The server also has limited go-to-definition for common declarations in currently open documents. References, rename, hover/type details, full workspace indexing, a debugger and formatter-on-save are not complete.
+The extension starts `nexus lsp` for live compiler diagnostics, completion, signature help, hover, go-to-definition, references, rename, document/range formatting, quick fixes, and workspace-symbol search. Workspace indexing uses lexical declarations and known inferred types rather than a complete semantic model; import aliases and some cross-file field inference remain limited. A source debugger/debug adapter and format-on-save workflow are not included.
 
 ## Limits
 

@@ -1,6 +1,6 @@
 # Memory Model
 
-NEXUS 1.1.0 generates native code and does not provide a tracing garbage collector. Programs can use stack values, pointers, and runtime allocation helpers; ownership abstractions such as fully implemented smart pointers are still planned.
+NEXUS generates native code and does not provide a tracing garbage collector. Programs can use stack values, pointers, and runtime allocation helpers; ownership abstractions such as fully implemented smart pointers are still planned.
 
 ## Practical guidance
 

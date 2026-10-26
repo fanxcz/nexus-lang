@@ -1,6 +1,6 @@
 // Concrete Option and Result helpers built on payload enums.
 // NEXUS does not yet have generics, so these operate on i64 payloads.
-// Users can define their own enums with any payload types.
+// Other enums can use one payload of i64, f64, bool, string, or pointer type.
 
 enum Option { Some(i64), None }
 

@@ -55,7 +55,7 @@ body:
     attributes:
       label: NEXUS Version
       description: What version are you using? (run `nexus --version`)
-      placeholder: "1.1.0"
+      placeholder: "2.1.0"
     validations:
       required: false
   - type: checkboxes

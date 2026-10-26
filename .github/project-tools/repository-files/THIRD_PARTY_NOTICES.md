@@ -1,4 +1,4 @@
-# NEXUS third-party dependency and license notices (v1.1.0).
+# NEXUS third-party dependency and license notices (v2.1.0).
 #
 # The NEXUS compiler, standard library sources, project templates, and the
 # default runtime (src/runtime/runtime.cpp) are original works of the NEXUS
@@ -15,16 +15,17 @@
 #   implemented from scratch in src/compiler/backend/native/ and has no
 #   third-party code or data.
 # - SDL2, SDL2_image, SDL2_mixer, and SDL2_ttf are OPTIONAL runtime libraries.
-#   They are never linked at build time: the graphics/audio backend loads them
-#   dynamically when present (dlopen/LoadLibrary) and otherwise reports a
-#   clean runtime error. They are NOT shipped in NEXUS packages. If you install
-#   them separately, their own licenses (zlib license) apply; see
-#   https://raw.githubusercontent.com/libsdl-org/SDL/main/LICENSE.txt.
-# - CI validates an optional self-contained configuration where a
-#   Zig-provided `clang++.cmd` wrapper sits beside the NEXUS binary. Zig is a
-#   separate project (MIT license, https://ziglang.org) and is NOT vendored in
-#   this repository; operators who add it to a package must include its
-#   license and respect its terms.
+#   They are not linked at build time: the runtime loads them dynamically
+#   (dlopen/LoadLibrary). The official Windows portable package and app
+#   installers bundle these runtime DLLs with accompanying license notices;
+#   local source builds do not automatically bundle them. SDL components use
+#   their own license terms; see https://raw.githubusercontent.com/libsdl-org/SDL/main/LICENSE.txt.
+# - The official Windows portable package includes the Zig 0.14.1 toolchain
+#   and a `clang++.cmd` compatibility wrapper to compile LLVM-backed programs
+#   without a separate toolchain installation. Zig is a separate project
+#   (MIT license, https://ziglang.org), not source-vendored into this repo;
+#   the package includes Zig's license/readme. Redistribution must preserve
+#   applicable notices and satisfy the toolchain's terms.
 #
 # Build tooling used to compile NEXUS itself (CMake, Ninja, platform C/C++
 # compilers) is not distributed with NEXUS packages.
