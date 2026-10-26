@@ -1,99 +1,170 @@
 # NEXUS Roadmap
 
-This roadmap distinguishes shipped behavior from goals. A directory, example, or API facade is not evidence that a feature is complete.
+This roadmap separates implemented behavior from planned work. A wrapper, directory,
+demo or API name is not proof that a complete subsystem exists; completion means the
+feature is implemented, documented and covered by tests on the platforms it claims
+to support.
 
-## Product direction: native applications first
+## Product direction
 
-The main product goal is to make NEXUS a dependable language for building native desktop applications, command-line utilities, and developer tools. Games and graphics remain useful examples and optional use cases, but should not drive every language or runtime decision.
+NEXUS is focused first on **native desktop applications, command-line utilities and
+developer tools**. Graphics and games remain supported use cases. The near-term goal
+is a dependable developer experience: understandable compiler errors, predictable
+builds, useful standard-library functions and reliable packaging.
 
-## Priority — Native application workflow
+## What exists today
 
-1. Make the app template a reliable starting point for real tools, with a clear project structure and documented event/window lifecycle.
-2. Build a consistent desktop UI layer incrementally: layout, buttons, text inputs, checkboxes, menus, keyboard focus, scaling, and accessible keyboard navigation. Do not present drawing primitives alone as a mature widget toolkit.
-3. Expand platform services through tested runtime implementations: file dialogs, clipboard, configuration paths, environment access, process launching, and predictable error reporting.
-4. Make resource and dependency packaging reproducible so an app can be built into a distributable folder or installer without relying on the repository checkout or manually copied files.
-5. Add end-to-end example apps that test a practical workflow (for example, a small notes or file-inspection tool) from a clean install through build, launch, and shutdown.
+- **Compiler:** C++20 lexer, parser, AST, semantic analysis, LLVM IR generation and a
+  built-in x86-64 code emitter for a documented subset. The LLVM path uses an available
+  Clang-compatible toolchain for native linking.
+- **Language:** fixed-size arrays, structs, enums with one supported scalar payload,
+  pointers, imports, loops, pattern matching, `defer` on the LLVM path, and concrete
+  enum error propagation with `?` on the LLVM path. Generic types, generic
+  `Option<T>`/`Result<T, E>`, ownership checking and cross-enum error conversion are
+  not implemented.
+- **CLI and project workflow:** project templates, check/build/run, formatting,
+  linting, tests, project inspection, asset listing, packaging workflows, package
+  manifest/lockfile support for local dependencies and an environment doctor.
+- **Editor tooling:** a Language Server Protocol implementation with diagnostics,
+  completion, hover, signature help, document symbols, workspace symbol search,
+  navigation, references, rename, formatting and quick-fix actions. Cross-file type
+  inference and import-alias resolution remain limited.
+- **Standard library:** file helpers including checked reads, strings, typed integer
+  and string lists, math, JSON inspection, HTTP GET, SQLite operations, SHA-256,
+  memory helpers, concrete Option/Result helper enums, and UI/application helpers.
+  The APIs are narrower than mature standard libraries in other languages.
+- **Runtime:** SDL-backed drawing, window/input handling, textures, fonts, optional
+  audio, immediate-mode UI widgets, basic ECS/scene helpers, particles and simple
+  collision functions. Optional host libraries affect runtime availability.
+- **2D modules:** `std.vec2`, `std.vec3`, `std.engine2d`, `std.tilemap`,
+  `std.tilemap_render`, `std.collision2d`, `std.physics2d`, `std.animation2d`,
+  `std.sprite2d`, `std.camera2d` and `std.audio2d` provide small composable
+  helpers. They are not a complete game engine or rigid-body solver.
+- **Verification:** CI build/test jobs cover Ubuntu, Windows and macOS; a separate
+  Linux workflow runs AddressSanitizer and UndefinedBehaviorSanitizer tests. Check
+  the linked workflow runs for the status of the latest commit rather than assuming
+  every job has already completed.
 
-**Completion criterion:** a multi-file desktop utility can be created from the documented template, built on a declared supported host, and packaged with its runtime resources so it works on a clean machine. Each advertised platform needs its own CI or release-artifact validation.
+## Milestone 1 — Reliability before feature breadth
 
-## Available today
+**Goal:** a clean checkout and a freshly installed compiler behave predictably.
 
-- C++20 compiler with lexer, parser, semantic analysis, LLVM IR generation, and a Clang-based native fallback. Acyclic source imports load once per compilation; circular import chains are rejected with a path trace.
-- Built-in x86-64 machine-code emitter for a documented subset of programs on supported Windows/Linux hosts. It does not replace the LLVM fallback for the full language.
-- Project templates and CLI workflows for creating, checking, building, running, testing, formatting, linting, exporting, and packaging projects.
-- Runtime modules for file and input operations, networking helpers, a bounded JSON parser (validation, top-level property extraction/type inspection and top-level array access), SQLite access, SHA-256, memory helpers, SDL-based graphics, and audio. HTTP still depends on the system `curl` executable and does not expose status codes/headers; JSON schema validation, typed conversions and serialization remain future work. APIs remain limited to what is implemented in the runtime.
-- `file_read_checked(path, &out)` and `std.fs.fs_read_checked` distinguish a valid empty file from a read failure. This is an explicit status/out-parameter API. Concrete payload enums and `?` propagation are implemented on the LLVM path; generic `Result<T, E>` / `Option<T>` types and cross-enum error conversion remain unimplemented.
-- `std.collections` exposes checked reserve/push/insert/get/set/remove/pop/clear/free operations for integer and string lists. The handles are now explicitly releasable; these specialized wrappers do not yet constitute generic `Vec<T>` or a compiler-supported ownership model.
-- LSP transport with completion, hover, signature help, diagnostics, whole-document and selected-range formatting, quick-fix code actions, current-file Outline (`textDocument/documentSymbol`), and workspace-wide declaration search (`workspace/symbol`, capped at 500 results). Signature help displays parameter names/types for user functions across the workspace and known built-ins, tracking the active parameter through nested calls. Per-workspace source caching and per-file lexical indexes support go-to-definition, references and rename across open and unopened `.nx` files. Local variables, loop variables and simple parameters use brace-scope-aware resolution; global functions, structs and enums are indexed across files. Prefix-filtered completion and context-aware struct-field/enum-variant suggestions are implemented, including inferred chained access such as `person.home.` and workspace-return-type chains such as `make_person().address.` when each link has an indexed struct type. Parsed AST nodes and semantic diagnostics retain source ranges; import-alias resolution and fully inferred cross-file field typing remain future work.
-- This release's environment doctor, JSON diagnostic output, built-in compile/run self-test, token-accurate AST source spans (including escaped string literals), shared CLI/LSP whole-document formatter with comment/string-aware token spacing, token-stream preservation checks for already-parseable input, and regression coverage for decimal literals, escaped strings, comments, adjacent unary operators, parseability and idempotency, top-level parser recovery that reports multiple syntax errors, and deterministic frontend fuzz smoke test.
-- Lexical `defer` is implemented on the LLVM backend for void-returning calls, with argument capture at registration and LIFO cleanup on normal exit, `return`, `break`, and `continue`; the builtin native subset deliberately reports it as unsupported until parity is implemented.
-- The GitHub Actions matrix builds/tests Ubuntu, Windows, and macOS hosts. A separate Linux workflow runs ASan/UBSan on compiler and runtime tests; refer to the [platform support matrix](platform-support.md) for output-target boundaries.
+1. Keep compiler tests, runtime tests, regression programs and formatting checks green
+   across the supported CI matrix.
+2. Exercise spaces in project paths, missing optional dependencies, malformed files,
+   failed resource loads and unavailable audio/graphics backends.
+3. Ensure `nexus doctor`, installation packages and portable bundles describe and
+   validate the actual compiler, standard library, templates and runtime dependencies.
+4. Make CLI parsing strict and consistent: unsupported options and malformed numeric
+   arguments must fail with a clear message rather than being silently ignored.
+5. Validate newly added APIs with executable smoke/regression tests before advertising
+   them in the manual or README.
 
-## Secondary domain — 2D game runtime and coherent APIs
+**Done when:** a clean checkout builds and passes tests on the declared host matrix,
+the packaged compiler passes its self-test, and the download/package workflow verifies
+that the files it publishes are present and usable.
 
-1. Build on the existing SDL-backed renderer, texture loading, animation, input, camera, audio and AABB primitives instead of presenting them as a complete engine.
-2. Keep a small consistent 2D convenience module in `stdlib/engine2d.nx`; add regression examples that can be built from a clean checkout and use only shipped APIs.
-3. Gameplay helpers now have separate `std.tilemap`, `std.tilemap_render`, `std.collision2d`, `std.animation2d`, `std.sprite2d`, `std.camera2d` and `std.audio2d` modules. Continue with Tiled import, per-tile flags, texture-atlas lifecycle and stronger physics tests. The runtime `physics_aabb` helper remains overlap-only and is not a rigid-body solver.
-4. Test frame timing under stalls, keyboard input, missing assets and unavailable audio/graphics libraries on supported platforms.
+## Milestone 2 — A practical native-app workflow
 
-**Completion criterion:** a documented platformer example builds with the shipped compiler, runs without external assets, handles movement/jumping and collisions, and shuts down cleanly.
+**Goal:** NEXUS can comfortably build small desktop tools rather than only drawing demos.
 
-## Priority 4 — Language and standard-library ergonomics
+1. Continue the immediate-mode `std.ui` layer with text entry, focus tracking,
+   keyboard navigation, consistent control states and UI scaling.
+2. Add OS integration through tested APIs: file dialogs, clipboard, application
+   configuration directories, process launching and clear error results.
+3. Establish consistent conventions for return codes, handles, missing values and
+   error messages across filesystem, JSON, network and database helpers.
+4. Provide a multi-file example application that exercises UI controls, persistence,
+   file operations and clean shutdown.
+5. Make resource copying and packaging reproducible, with a test that launches the
+   packaged app from a clean directory without depending on the source checkout.
 
-1. Add small, well-tested standard-library helpers before expanding syntax or the type system; keep the APIs useful to general applications as well as graphics/simulation code.
-2. Add tests for numeric edge cases (negative values, exact boundaries, reversed ranges and non-finite inputs where supported) and ensure examples use declared mutable bindings for state.
-3. Prioritize clear diagnostics, deterministic formatting and self-host compiler parity before introducing broad syntax changes.
-4. Track classes/inheritance, richer enums, dynamic arrays and ownership/lifetime design as separate language proposals; do not imply these features are implemented by adding facade APIs.
+**Done when:** a documented multi-file desktop utility can be built and packaged on
+a declared supported host, and the packaged program runs from a clean location.
 
-**Completion criterion:** standard-library additions have executable regression coverage, are documented, and pass the same clean-checkout CI matrix as the compiler.
+## Milestone 3 — Language ergonomics and compiler correctness
 
-## Priority 1 — Trustworthy development workflow
+**Goal:** improve the language through small, coherent features that have precise semantics.
 
-1. Keep the full test suite green on clean Linux, Windows, and macOS runners; run the sanitizer workflow for frontend/runtime changes.
-2. Make `nexus doctor` verify the actual packaged compiler/runtime/stdlib/template layout on each platform.
-3. Extend tests for paths with spaces, clean installs, missing optional tools, malformed source, repeatable builds, and interactive-terminal editing, history navigation, and Tab completion.
-4. Keep formatter and linter behavior deterministic. `nexus fmt --all` and `nexus fmt --check --all` now process `.nx` files in sorted path order while skipping dependency and build-output directories.
-5. Keep the CLI and published documentation synchronized so examples only use implemented options.
+1. Keep diagnostics source-aware and actionable. Add regression tests for each semantic
+   bug, especially control-flow analysis, match guards, mutability, pointer operations,
+   type mismatches and invalid literals.
+2. Define the behavior of integer overflow, floating-point edge cases, array bounds,
+   pointer use and runtime failure before expanding syntax.
+3. Document the behavior shared by the LLVM and built-in native backends. If one
+   backend cannot implement a feature, it must report the limitation explicitly.
+4. Design a generic type system and ownership/lifetime model as language proposals,
+   not as library wrappers that imply unsupported semantics.
+5. Consider a richer, generic `Result<T, E>`/`Option<T>` design only after enum
+   payload layout, propagation rules, diagnostics and backend support have a coherent
+   cross-backend specification.
 
-**Completion criterion:** a fresh checkout or portable package passes build, test, and the built-in native compile/run self-test without relying on files from a developer's machine.
+**Done when:** language changes have parser/semantic/codegen tests, negative tests,
+clear documented behavior, and backend-specific support notes.
 
-## Priority 2 — Language-server and package reliability
+## Milestone 4 — Standard library and app services
 
-1. Benchmark cache refresh behavior on larger repositories; the LSP regression suite now exercises watcher invalidation after external edits, renames, and deletions.
-2. Extend semantic navigation to imported aliases and more inferred field types; build on the current selected-range formatter and field quick fixes with broader editor actions and regression tests.
-3. Keep atomic lockfile writes and preserve unrelated manifest entries. `pkg verify` now rejects malformed dependency entries, duplicate keys/tables, invalid lockfile headers, malformed lock records, and stale project metadata; keep these cases covered by smoke tests.
-4. Verify local vendored packages against SHA-256 tree checksums; `pkg verify` cross-checks manifest/lockfile dependencies and versions, rejects stale records, and confines resolved paths to the project's `vendor/` directory. Registry trust and signed packages remain future work.
-5. Expand diagnostics with stable error codes and semantic error recovery. AST expression/statement spans, aggregate syntax recovery, and multi-error semantic reporting for declarations and function bodies are implemented.
+**Goal:** make the library practical, consistent and safe to consume.
 
-**Completion criterion:** editor navigation and package operations have deterministic behavior covered by tests.
+1. Document every public function's inputs, outputs, ownership expectations, failure
+   sentinel and platform limits.
+2. Expand filesystem, process, environment, HTTP, JSON and database support through
+   real runtime implementations rather than thin placeholder wrappers.
+3. Give HTTP requests explicit success/error status and stop conflating an empty body
+   with a failed request.
+4. Expand JSON operations incrementally toward structured values, typed conversions
+   and serialization, each with malformed-input and size-limit tests.
+5. Prefer checked collection operations and explicit resource-release functions.
+   Generic containers and automatic ownership remain future language/runtime work.
 
-## Priority 3 — Standard library depth
+**Done when:** each advertised API has runnable examples and tests for invalid input,
+failure paths and the platforms on which it is claimed to work.
 
-1. Document every public runtime function, ownership rule, error result, and platform limitation.
-2. Expand filesystem, process, environment, HTTP, JSON, and database APIs through tested runtime implementations rather than thin wrappers alone.
-3. Add platform parity tests and explicit capability checks when an API cannot work on a target.
-4. Define stable error/result conventions before adding large numbers of new APIs.
+## Secondary track — 2D gameplay and graphics helpers
 
-**Completion criterion:** each advertised API has a real implementation, examples, and tests on the platforms it claims to support.
+**Goal:** keep a useful, self-contained 2D toolkit available without misrepresenting
+it as a commercial engine.
 
-## Priority 4 — Native compiler independence
+1. Keep the asset-free platformer starter compiling from a clean checkout and verify
+   movement, jumping, collisions, camera transforms and orderly shutdown.
+2. Expand tilemap import/authoring, per-tile flags, texture-atlas lifecycle and
+   deterministic resource cleanup where tests can cover the behavior.
+3. Strengthen the animation, sprite, camera, audio and collision regression suite,
+   especially frame stalls, large deltas, invalid handles and missing files.
+4. Treat rigid-body physics, advanced 3D materials, shaders and a full scene editor
+   as separate projects with their own architecture and test plans.
 
-1. Expand the built-in x86-64 backend using the existing backend-parity and native smoke tests.
-2. Add a documented intermediate representation boundary and benchmark changes against the current LLVM path.
-3. Improve optimization only when benchmarks show a repeatable win and regression tests preserve behavior.
-4. Investigate additional native targets only alongside executable-format, ABI, and CI coverage.
-5. Start self-hosting as a separate milestone after the language and compiler interfaces stabilize.
+**Done when:** the documented 2D example builds and runs without external art assets,
+uses implemented APIs only, handles the main interaction loop and cleans up resources.
 
-**Important:** the built-in emitter is currently a subset backend. A complete dependency-free compiler for every language feature and operating system is not yet available.
+## Milestone 5 — Editor and package ecosystem
 
-## Priority 5 — Editor and ecosystem
+**Goal:** reduce the friction of building and maintaining real projects.
 
-1. Improve the current LSP before building a full editor.
-2. Ship a small syntax-highlighting/editor extension and test installation instructions on clean machines.
-3. Make project generation, formatting, linting, test execution, and release packaging discoverable from the editor.
-4. Consider a package registry only after local packages and lockfiles are reliable.
-5. Treat WebAssembly, Android, and additional desktop targets as separate projects with target-specific runtimes and CI.
+1. Improve LSP correctness and performance on larger workspaces, especially imported
+   aliases, cross-file type resolution and cache invalidation.
+2. Keep completions and quick-fixes consistent with compiler behavior; do not suggest
+   syntax or APIs that the selected backend cannot compile.
+3. Continue testing local package manifests, lockfile updates, path confinement and
+   checksums. Consider an online registry only after local dependency behavior is stable.
+4. Improve the VS Code extension and project templates against clean-machine install
+   tests.
 
-## Non-goals for a quick patch
+**Done when:** editor navigation and package operations are deterministic and tested
+against the same compiler/library layout that ships with NEXUS.
 
-A self-hosting compiler, complete IDE, safe memory/ownership system, package registry, and universal zero-dependency cross-compiler cannot be completed responsibly by adding placeholders. Each needs implementation, tests, release artifacts, and an explicit supported-platform matrix.
+## Long-term projects
+
+These are not implied to be implemented by the current source tree:
+
+- Generic type parameters, traits/interfaces, function values and closure lowering.
+- A checked ownership/lifetime model or a fully specified alternative.
+- A self-hosted production compiler and broad native-backend feature parity.
+- More cross-compilation targets, including WebAssembly and mobile targets.
+- A retained, accessible, cross-platform desktop UI framework.
+- A full game engine with rigid-body physics, editor tooling, asset pipelines and
+  advanced rendering.
+
+Each project needs a design proposal, explicit support boundaries, implementation,
+tests and release validation. The priority is to keep NEXUS useful and predictable
+while its capabilities grow.
