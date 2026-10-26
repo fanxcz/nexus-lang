@@ -11,8 +11,9 @@ from any module; they do not require a separate import:
   `math_floor(x)` when you specifically need an `i64` rounded down.
 - `pow(base, exponent)` calculates a floating-point power.
 
-Angles are in radians. These built-ins are implemented by the native runtime
-and available to the LLVM compilation backend.
+Angles are in radians. The runtime implements these functions for the LLVM
+compilation backend; the built-in native code generator currently supports a
+smaller language subset and does not emit these floating-point calls.
 
 - `math_clamp(value, minimum, maximum) -> f64`: clamps to the inclusive bounds; reversed bounds are normalized.
 - `math_min(a, b) -> f64` and `math_max(a, b) -> f64`.
