@@ -17,9 +17,9 @@ TEXT_SUFFIXES = {
 SKIP_DIRS = {".git", "node_modules", "build", "site", "dist", "target", ".venv"}
 BINARY_SUFFIXES = {".exe", ".zip", ".bmp", ".wav", ".obj", ".png", ".jpg", ".jpeg", ".dll", ".vsix"}
 GENERATED_ASSETS = {
-    "NEXUS-Setup-2.0.0.exe", "NEXUS-Setup-2.0.0.exe.sha256.txt",
+    "NEXUS-Setup-2.1.0.exe", "NEXUS-Setup-2.1.0.exe.sha256.txt",
     "NEXUS_Windows_Portable.zip", "NEXUS_Windows_Portable.zip.sha256.txt",
-    "NEXUS-Language-2.0.2.vsix", "NEXUS-Language-2.0.2.vsix.sha256.txt",
+    "NEXUS-Language-2.1.0.vsix", "NEXUS-Language-2.1.0.vsix.sha256.txt",
     "NEXUS-Paint-Windows-x64.exe", "NEXUS-Paint-Windows-x64.exe.sha256.txt",
     "NEXUS-Paint-Windows-x64.zip", "NEXUS-Paint-Windows-x64.zip.sha256.txt",
 }

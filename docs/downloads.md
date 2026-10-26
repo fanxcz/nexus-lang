@@ -15,9 +15,9 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     Installs the NEXUS compiler for the current user, including the bundled fallback toolchain, runtime files and standard library. It can add NEXUS to your user PATH and create shortcuts; administrator rights are not required.
 
-    [Download NEXUS Setup (.exe)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.0.0.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.0.0.exe" }
+    [Download NEXUS Setup (.exe)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.1.0.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.1.0.exe" }
 
-    [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt){ download="NEXUS-Setup-2.0.0.exe.sha256.txt" }
+    [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.1.0.exe.sha256.txt){ download="NEXUS-Setup-2.1.0.exe.sha256.txt" }
 
 -   :material-archive: **NEXUS Portable · Windows x64**
 
@@ -47,9 +47,9 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     Syntax highlighting and snippets for `.nx` files, with project LSP integration guidance.
 
-    [Download VSIX](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.0.2.vsix){ .md-button download="NEXUS-Language-2.0.2.vsix" }
+    [Download VSIX](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.1.0.vsix){ .md-button download="NEXUS-Language-2.1.0.vsix" }
 
-    [VSIX SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt){ download="NEXUS-Language-2.0.2.vsix.sha256.txt" }
+    [VSIX SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.1.0.vsix.sha256.txt){ download="NEXUS-Language-2.1.0.vsix.sha256.txt" }
 
 -   :material-monitor: **NEXUS Studio**
 
@@ -67,7 +67,7 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
 ## Install and verify NEXUS on Windows
 
-1. Download `NEXUS-Setup-2.0.0.exe` above and run it.
+1. Download `NEXUS-Setup-2.1.0.exe` above and run it.
 2. Choose whether to create Start menu/desktop shortcuts and add the launcher to your user PATH.
 3. Open a **new** PowerShell window and run:
 

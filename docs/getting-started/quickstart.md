@@ -1,6 +1,6 @@
 # Quick Start
 
-This guide uses the command-line workflow and runtime API included with NEXUS 2.0.0. Start with a small console program, then try a native graphical app.
+This guide uses the command-line workflow and runtime API included with NEXUS 2.1.0. Start with a small console program, then try a native graphical app.
 
 ## 1. Check the compiler
 

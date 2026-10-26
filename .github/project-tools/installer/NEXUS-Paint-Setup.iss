@@ -1,5 +1,5 @@
 #define MyAppName "NEXUS Paint"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.1.0"
 #define MyAppPublisher "NEXUS Project"
 #ifndef SourceDir
   #define SourceDir "..\..\..\dist\NEXUS-Paint-Windows-x64"
@@ -30,7 +30,7 @@ ChangesEnvironment=no
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=2.0.0.0
+VersionInfoVersion=2.1.0.0
 VersionInfoProductName=NEXUS Paint
 VersionInfoProductVersion=2.0.0
 VersionInfoCompany={#MyAppPublisher}

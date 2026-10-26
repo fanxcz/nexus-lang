@@ -10,9 +10,9 @@ import zipfile
 from pathlib import Path, PurePosixPath
 
 ARTIFACTS = (
-    "NEXUS-Setup-2.0.0.exe",
+    "NEXUS-Setup-2.1.0.exe",
     "NEXUS_Windows_Portable.zip",
-    "NEXUS-Language-2.0.2.vsix",
+    "NEXUS-Language-2.1.0.vsix",
     "NEXUS-Paint-Windows-x64.exe",
     "NEXUS-Paint-Windows-x64.zip",
 )
@@ -24,7 +24,7 @@ ZIP_CONTENTS = {
         "nexus.cmd", "bin/nexus-core.exe", "toolchain/zig.exe",
         "runtime/SDL2.dll", "stdlib/engine2d.nx",
     },
-    "NEXUS-Language-2.0.2.vsix": {"extension/package.json"},
+    "NEXUS-Language-2.1.0.vsix": {"extension/package.json"},
     "NEXUS-Paint-Windows-x64.zip": {
         "NEXUS-Paint.exe", "NEXUS-Paint.nx", "README-WINDOWS.txt",
         "SDL2.dll", "SDL2_image.dll", "SDL2_ttf.dll", "SDL2_mixer.dll", "sqlite3.dll",

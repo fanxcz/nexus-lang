@@ -254,7 +254,7 @@ jobs:
               throw "PATH resolved nexus.cmd to the wrong location: $($resolvedLauncher.Source)"
             }
             $version = & 'nexus.cmd' --version 2>&1
-            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.0\.0')) {
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.1\.0')) {
               throw "nexus --version failed: $($version -join "`n")"
             }
 
@@ -343,7 +343,7 @@ jobs:
           New-Item -ItemType Directory -Path $stagedPackage -Force | Out-Null
           Copy-Item -Path (Join-Path $package '*') -Destination $stagedPackage -Recurse -Force
 
-          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.0.0.exe'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.1.0.exe'
           & $iscc "/O$env:RUNNER_TEMP" "/DSourceDir=$stagedPackage" '.github/project-tools/installer/NEXUS-Setup.iss'
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path -LiteralPath $installer)) { throw 'The NEXUS Setup EXE was not produced.' }
@@ -361,7 +361,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.0.0.exe'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.1.0.exe'
           $installRoot = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS'
           $oldUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
           $testFailed = $false
@@ -378,7 +378,7 @@ jobs:
             }
 
             $version = & $nexus --version 2>&1
-            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.0\.0')) {
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.1\.0')) {
               throw "Installed nexus --version failed: $($version -join "`n")"
             }
             $doctor = & $nexus doctor 2>&1
@@ -453,7 +453,7 @@ jobs:
           name: NEXUS_Windows_Packages
           path: |
             ${{ runner.temp }}/NEXUS_Windows_Portable.zip
-            ${{ runner.temp }}/NEXUS-Setup-2.0.0.exe
+            ${{ runner.temp }}/NEXUS-Setup-2.1.0.exe
             ${{ runner.temp }}/NEXUS-Paint-Windows-x64.exe
             ${{ runner.temp }}/NEXUS-Paint-Windows-x64.zip
           if-no-files-found: error
@@ -481,8 +481,8 @@ jobs:
           set -euo pipefail
           cd .github/project-tools/vscode-extension
           npm install --no-audit --no-fund
-          npx --yes @vscode/vsce package --out ../../../docs/assets/downloads/NEXUS-Language-2.0.2.vsix
-          test -s ../../../docs/assets/downloads/NEXUS-Language-2.0.2.vsix
+          npx --yes @vscode/vsce package --out ../../../docs/assets/downloads/NEXUS-Language-2.1.0.vsix
+          test -s ../../../docs/assets/downloads/NEXUS-Language-2.1.0.vsix
 
       - name: Create SHA-256 checksums
         shell: bash
@@ -491,8 +491,8 @@ jobs:
           cd docs/assets/downloads
           for asset in \
             NEXUS_Windows_Portable.zip \
-            NEXUS-Setup-2.0.0.exe \
-            NEXUS-Language-2.0.2.vsix \
+            NEXUS-Setup-2.1.0.exe \
+            NEXUS-Language-2.1.0.vsix \
             NEXUS-Paint-Windows-x64.exe \
             NEXUS-Paint-Windows-x64.zip; do
             sha256sum "$asset" > "$asset.sha256.txt"
@@ -625,12 +625,12 @@ jobs:
           done < <(find docs -type f -name '*.md' -print | sort)
 
           assets=(
-            'NEXUS-Setup-2.0.0.exe'
-            'NEXUS-Setup-2.0.0.exe.sha256.txt'
+            'NEXUS-Setup-2.1.0.exe'
+            'NEXUS-Setup-2.1.0.exe.sha256.txt'
             'NEXUS_Windows_Portable.zip'
             'NEXUS_Windows_Portable.zip.sha256.txt'
-            'NEXUS-Language-2.0.2.vsix'
-            'NEXUS-Language-2.0.2.vsix.sha256.txt'
+            'NEXUS-Language-2.1.0.vsix'
+            'NEXUS-Language-2.1.0.vsix.sha256.txt'
             'NEXUS-Paint-Windows-x64.exe'
             'NEXUS-Paint-Windows-x64.exe.sha256.txt'
             'NEXUS-Paint-Windows-x64.zip'
