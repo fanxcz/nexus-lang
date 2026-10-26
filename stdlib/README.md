@@ -16,5 +16,5 @@
 - `std.tilemap_render`: viewport-aware colored tile drawing
 - `std.animation2d`: time-based sprite animation frames, easing curves and ping-pong animation
 - `std.sprite2d`: texture and sprite-sheet rendering
-- `std.camera2d`: runtime camera wrappers
+- `std.camera2d`: runtime camera plus follow, world/screen conversion and bounds clamping
 - `std.audio2d`: optional runtime sound loading/playback
