@@ -8,7 +8,6 @@
 #include <cerrno>
 #include <cmath>
 #include <csetjmp>
-#include <cstdbool>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -695,7 +694,6 @@ namespace {
 
     static bool gMixerReady = false;
 
-    static bool gMouseClicked = false;
     static bool gUiSliderDragging = false;
     static double gUiSliderX = 0.0;
     static double gUiSliderY = 0.0;
@@ -1391,7 +1389,6 @@ namespace {
         gLastEvent = 0;
         gLastKey = -1;
         gLastMouseButton = 0;
-        gMouseClicked = false;
         gMouseClickedButtons.fill(0);
     }
     static void process_events() {
@@ -1423,7 +1420,6 @@ namespace {
                 gLastX = e.motion.x;
                 gLastY = e.motion.y;
             } else if (e.type == SDL_MOUSEBUTTONDOWN) {
-                gMouseClicked = true;
                 gLastMouseButton = int(e.button.button);
                 gLastX = e.button.x;
                 gLastY = e.button.y;
@@ -3242,7 +3238,7 @@ char* nexus_sha256(const char* text) {
     // Format as hex string
     char hex[65];
     for (int j = 0; j < 8; ++j) {
-        sprintf(hex + j * 8, "%08x", state[j]);
+        std::snprintf(hex + j * 8, 9, "%08x", state[j]);
     }
     hex[64] = '\0';
     return nx_strdup(hex);
