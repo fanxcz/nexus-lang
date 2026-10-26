@@ -275,6 +275,10 @@ namespace nexus::native {
                 checkExpr(e->expr.get(), env, fns, reason);
                 return;
             }
+            if (dynamic_cast<const DeferStmt*>(s)) {
+                reason = "defer is outside the builtin native v0 subset; use --backend llvm";
+                return;
+            }
             if (const auto* r = dynamic_cast<const ReturnStmt*>(s)) {
                 if (r->expr)
                     checkExpr(r->expr.get(), env, fns, reason);
