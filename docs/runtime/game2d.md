@@ -27,4 +27,4 @@ Controls: A/D or arrow keys to move, SPACE to jump, ESC to exit.
 
 ## Limits
 
-This is a modular set of helpers on top of the shipped runtime, not yet a full game engine. Tilemaps are in-memory fixed grids; there is no Tiled import/editor, per-tile collision metadata, texture-atlas management, dedicated tilemap destruction or rigid-body world. Collision movement uses axis-separated substeps and assumes an entity starts outside solid tiles. Graphics and sound still depend on optional runtime libraries.
+This is a modular set of helpers on top of the shipped runtime, not yet a full game engine. Tilemaps are in-memory fixed grids; there is no Tiled import/editor, per-tile collision metadata, texture-atlas management, dedicated tilemap destruction or rigid-body world. Collision movement uses axis-separated grid sweeps and assumes an entity starts outside solid tiles. Graphics and sound still depend on optional runtime libraries.

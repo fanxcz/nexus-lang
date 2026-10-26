@@ -44,6 +44,20 @@ fn main() {
         print("NEXUS tilemap: FAIL empty-space movement " + outside)
         return
     }
+    let left_hit = collision2d_move_x(map, 4, 4, 32.0, 80.0, 64.0, 24.0, 24.0, -32.0)
+    if left_hit < 63.9 || left_hit > 64.1 {
+        print("NEXUS tilemap: FAIL negative horizontal resolution " + left_hit)
+        return
+    }
+    let up_hit = collision2d_move_y(map, 4, 4, 32.0, 32.0, 100.0, 24.0, 24.0, -32.0)
+    if up_hit < 95.9 || up_hit > 96.1 {
+        print("NEXUS tilemap: FAIL negative vertical resolution " + up_hit)
+        return
+    }
+    if tilemap_create(1000000, 2) != 0 {
+        print("NEXUS tilemap: FAIL oversized map guard")
+        return
+    }
     if math_floor(-0.2) != -1 || math_floor(1.9) != 1 {
         print("NEXUS tilemap: FAIL floor helper")
         return

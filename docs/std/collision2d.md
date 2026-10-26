@@ -20,4 +20,4 @@ fn main() {
 }
 ```
 
-Move X then Y and compare the returned position to the desired position to detect an impact. A starting box must not already overlap a solid tile. Substeps are capped at 10,000; the helper targets ordinary frame movement, not arbitrarily large teleports. Out-of-map cells are treated as empty. This is not a rigid-body physics simulation.
+Move X then Y and compare the returned position to the desired position to detect an impact. The mover sweeps the crossed tile columns/rows and returns the exact touching position, avoiding the previous fixed-step tunnel risk for large deltas. A starting box must not already overlap a solid tile. Out-of-map cells are treated as empty. This is not a rigid-body physics simulation.

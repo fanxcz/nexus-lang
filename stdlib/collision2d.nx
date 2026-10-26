@@ -1,4 +1,4 @@
-// 2D collision helpers. Tilemap movement is axis-separated and not a rigid-body solver.
+// 2D collision helpers. Tilemap movement uses exact grid sweeps, not a rigid-body solver.
 import std.tilemap
 import std.math
 
@@ -37,93 +37,115 @@ fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
     return false
 }
 
-// Caller should move X and Y separately. Start positions must not already overlap solids.
+fn collision2d_column_solid(map: i64, map_width: i64, map_height: i64,
+                            column: i64, top: i64, bottom: i64) -> bool {
+    let mut row = top
+    while row <= bottom {
+        if tilemap_get(map, map_width, map_height, column, row) > 0 {
+            return true
+        }
+        row = row + 1
+    }
+    return false
+}
+
+fn collision2d_row_solid(map: i64, map_width: i64, map_height: i64,
+                         row: i64, left: i64, right: i64) -> bool {
+    let mut column = left
+    while column <= right {
+        if tilemap_get(map, map_width, map_height, column, row) > 0 {
+            return true
+        }
+        column = column + 1
+    }
+    return false
+}
+
+// Sweep the moving box across crossed tile columns, checking only rows occupied by the box.
+// Returns the exact touching position. Starting positions must not already overlap solids.
 fn collision2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
                       x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if !tilemap_valid(map, map_width, map_height) { return x }
     if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
         return x
     }
 
-    let mut step_limit = tile_size * 0.25
-    if box_width * 0.25 < step_limit { step_limit = box_width * 0.25 }
-    if box_height * 0.25 < step_limit { step_limit = box_height * 0.25 }
-    if step_limit < 0.01 { step_limit = 0.01 }
+    let target = x + delta
+    let mut top = math_floor(y / tile_size)
+    let mut bottom = math_floor((y + box_height - 0.0001) / tile_size)
+    if top < 0 { top = 0 }
+    if bottom >= map_height { bottom = map_height - 1 }
+    if top > bottom || top >= map_height || bottom < 0 { return target }
 
-    let mut distance = delta
-    if distance < 0.0 { distance = 0.0 - distance }
-    let mut steps = to_i64(distance / step_limit) + 1
-    if steps > 10000 { steps = 10000 }
-    if steps < 1 { steps = 1 }
-    let step = delta / to_f64(steps)
-
-    let mut current = x
-    let mut i = 0
-    while i < steps {
-        let candidate = current + step
-        if collision2d_map_overlaps(map, map_width, map_height, tile_size,
-                                    candidate, y, box_width, box_height) {
-            let mut safe = current
-            let mut blocked = candidate
-            let mut refine = 0
-            while refine < 14 {
-                let middle = (safe + blocked) * 0.5
-                if collision2d_map_overlaps(map, map_width, map_height, tile_size,
-                                            middle, y, box_width, box_height) {
-                    blocked = middle
-                } else {
-                    safe = middle
-                }
-                refine = refine + 1
+    if delta > 0.0 {
+        let mut first = math_floor((x + box_width - 0.0001) / tile_size) + 1
+        let mut last = math_floor((target + box_width - 0.0001) / tile_size)
+        if first < 0 { first = 0 }
+        if last >= map_width { last = map_width - 1 }
+        let mut column = first
+        while column <= last {
+            if collision2d_column_solid(map, map_width, map_height, column, top, bottom) {
+                return to_f64(column) * tile_size - box_width
             }
-            return safe
+            column = column + 1
         }
-        current = candidate
-        i = i + 1
+        return target
     }
-    return current
+
+    let mut first = math_floor((x + 0.0001) / tile_size) - 1
+    let mut last = math_floor((target + 0.0001) / tile_size)
+    if first >= map_width { first = map_width - 1 }
+    if last < 0 { last = 0 }
+    let mut column = first
+    while column >= last {
+        if collision2d_column_solid(map, map_width, map_height, column, top, bottom) {
+            return to_f64(column + 1) * tile_size
+        }
+        column = column - 1
+    }
+    return target
 }
 
+// Sweep vertically through crossed tile rows while checking columns occupied by the box.
 fn collision2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
                       x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if !tilemap_valid(map, map_width, map_height) { return y }
     if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
         return y
     }
 
-    let mut step_limit = tile_size * 0.25
-    if box_width * 0.25 < step_limit { step_limit = box_width * 0.25 }
-    if box_height * 0.25 < step_limit { step_limit = box_height * 0.25 }
-    if step_limit < 0.01 { step_limit = 0.01 }
+    let target = y + delta
+    let mut left = math_floor(x / tile_size)
+    let mut right = math_floor((x + box_width - 0.0001) / tile_size)
+    if left < 0 { left = 0 }
+    if right >= map_width { right = map_width - 1 }
+    if left > right || left >= map_width || right < 0 { return target }
 
-    let mut distance = delta
-    if distance < 0.0 { distance = 0.0 - distance }
-    let mut steps = to_i64(distance / step_limit) + 1
-    if steps > 10000 { steps = 10000 }
-    if steps < 1 { steps = 1 }
-    let step = delta / to_f64(steps)
-
-    let mut current = y
-    let mut i = 0
-    while i < steps {
-        let candidate = current + step
-        if collision2d_map_overlaps(map, map_width, map_height, tile_size,
-                                    x, candidate, box_width, box_height) {
-            let mut safe = current
-            let mut blocked = candidate
-            let mut refine = 0
-            while refine < 14 {
-                let middle = (safe + blocked) * 0.5
-                if collision2d_map_overlaps(map, map_width, map_height, tile_size,
-                                            x, middle, box_width, box_height) {
-                    blocked = middle
-                } else {
-                    safe = middle
-                }
-                refine = refine + 1
+    if delta > 0.0 {
+        let mut first = math_floor((y + box_height - 0.0001) / tile_size) + 1
+        let mut last = math_floor((target + box_height - 0.0001) / tile_size)
+        if first < 0 { first = 0 }
+        if last >= map_height { last = map_height - 1 }
+        let mut row = first
+        while row <= last {
+            if collision2d_row_solid(map, map_width, map_height, row, left, right) {
+                return to_f64(row) * tile_size - box_height
             }
-            return safe
+            row = row + 1
         }
-        current = candidate
-        i = i + 1
+        return target
     }
-    return current
+
+    let mut first = math_floor((y + 0.0001) / tile_size) - 1
+    let mut last = math_floor((target + 0.0001) / tile_size)
+    if first >= map_height { first = map_height - 1 }
+    if last < 0 { last = 0 }
+    let mut row = first
+    while row >= last {
+        if collision2d_row_solid(map, map_width, map_height, row, left, right) {
+            return to_f64(row + 1) * tile_size
+        }
+        row = row - 1
+    }
+    return target
 }
