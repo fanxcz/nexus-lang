@@ -256,7 +256,7 @@ def make_cursor():
     draw.polygon([(15 * scale, 35 * scale), (21 * scale, 35 * scale),
                   (19 * scale, 32 * scale), (17 * scale, 32 * scale)],
                  fill=(12, 20, 31, 255))
-    return img.resize((60, 78), Image.Resampling.LANCZOS)
+    return img.resize((60, 78), Image.LANCZOS)
 
 
 def generate_cursor():
