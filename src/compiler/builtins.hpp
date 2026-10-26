@@ -73,6 +73,12 @@ namespace nexus {
         if (name == "file_read")
             return BuiltinSignature{name, {T::string()}, T::string(), "nexus_file_read"};
 
+        if (name == "file_read_checked")
+            return BuiltinSignature{name,
+                                    {T::string(), T::ptr(T::string())},
+                                    T::boolean(),
+                                    "nexus_file_read_checked"};
+
         if (name == "file_write")
             return BuiltinSignature{name, {T::string(), T::string()}, T::i64(), "nexus_file_write"};
 
