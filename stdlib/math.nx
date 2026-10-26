@@ -54,3 +54,13 @@ fn math_sign(value: f64) -> f64 {
     if value > 0.0 { return 1.0 }
     return 0.0
 }
+
+// Thin, discoverable namespaced wrappers around the core math built-ins.
+// Angles are measured in radians.
+fn math_sin(radians: f64) -> f64 { return sin(radians) }
+fn math_cos(radians: f64) -> f64 { return cos(radians) }
+fn math_tan(radians: f64) -> f64 { return tan(radians) }
+fn math_atan2(y: f64, x: f64) -> f64 { return atan2(y, x) }
+fn math_pow(base: f64, exponent: f64) -> f64 { return pow(base, exponent) }
+fn math_floor_f64(value: f64) -> f64 { return floor(value) }
+fn math_ceil_f64(value: f64) -> f64 { return ceil(value) }
