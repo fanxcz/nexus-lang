@@ -117,6 +117,7 @@ nav:
       - std.os: std/os.md
       - std.string: std/string.md
       - std.math: std/math.md
+      - std.collections: std/collections.md
       - std.engine2d: std/engine2d.md
       - std.tilemap: std/tilemap.md
       - std.collision2d: std/collision2d.md
