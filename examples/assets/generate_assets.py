@@ -225,12 +225,7 @@ UI_DIR = os.path.join(HERE, "ui")
 
 
 def make_cursor():
-    """Classic arrow pointer with a dark outline and gold trim.
-
-    The tip of the arrow sits at (1, 1) so the texture can be drawn directly
-    at the mouse position without any hotspot offset. A soft drop shadow keeps
-    it readable over both the bright felt and the dark UI panels.
-    """
+    """Crisp spade cursor with a fixed tip hotspot, cyan keyline and solid fill."""
     scale = 4
     w, h = 60 * scale, 78 * scale
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
@@ -238,25 +233,30 @@ def make_cursor():
 
     points = [(1, 1), (1, 58), (15, 45), (25, 72), (36, 67), (26, 40), (46, 40)]
     pts = [(x * scale, y * scale) for x, y in points]
+    shadow = [(x + 2 * scale, y + 3 * scale) for x, y in pts]
+    draw.polygon(shadow, fill=(0, 0, 0, 115))
 
-    shadow = [(x + 3 * scale, y + 4 * scale) for x, y in pts]
-    draw.polygon(shadow, fill=(0, 0, 0, 110))
-
-    draw.polygon(pts, fill=(248, 244, 232, 255), outline=(16, 18, 24, 255))
-    draw.line(pts + [pts[0]], fill=(16, 18, 24, 255), width=3 * scale, joint="curve")
-
-    # Gold inner accent along the leading edge.
+    # A cyan edge separates the white cursor from both dark and green areas.
+    draw.line(pts + [pts[0]], fill=(36, 165, 245, 255), width=5 * scale, joint="curve")
+    draw.polygon(pts, fill=(245, 247, 250, 255))
+    draw.line(pts + [pts[0]], fill=(10, 17, 28, 255), width=2 * scale, joint="curve")
     draw.line(
-        [(3 * scale, 5 * scale), (3 * scale, 48 * scale)],
-        fill=(226, 178, 62, 255),
+        [(3 * scale, 5 * scale), (3 * scale, 47 * scale)],
+        fill=(255, 255, 255, 255),
         width=1 * scale,
     )
-    draw.line(
-        [(5 * scale, 5 * scale), (37 * scale, 5 * scale)],
-        fill=(226, 178, 62, 255),
-        width=1 * scale,
-    )
-    return img.resize((60, 78), Image.LANCZOS)
+
+    # High-contrast spade stamp inside the arrow body.
+    spade = [(18, 20), (13, 25), (10, 28), (11, 31), (14, 32),
+             (18, 29), (22, 32), (25, 31), (26, 28), (23, 25)]
+    draw.polygon([(x * scale, y * scale) for x, y in spade],
+                 fill=(12, 20, 31, 255))
+    draw.line([(18 * scale, 29 * scale), (18 * scale, 35 * scale)],
+              fill=(12, 20, 31, 255), width=2 * scale)
+    draw.polygon([(15 * scale, 35 * scale), (21 * scale, 35 * scale),
+                  (19 * scale, 32 * scale), (17 * scale, 32 * scale)],
+                 fill=(12, 20, 31, 255))
+    return img.resize((60, 78), Image.Resampling.LANCZOS)
 
 
 def generate_cursor():
@@ -294,7 +294,9 @@ def generate_sounds():
 if __name__ == "__main__":
     generate_cards()
     generate_table()
+    generate_cursor()
     generate_sounds()
     print("Regenerated card textures in", CARD_DIR)
     print("Regenerated table texture in", TABLE_DIR)
+    print("Regenerated cursor texture in", UI_DIR)
     print("Regenerated sounds in", SOUND_DIR)
