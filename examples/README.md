@@ -32,7 +32,7 @@ Small, focused source files cover arrays, loops, branching, functions, structs, 
 
 ## Templates
 
-[`templates/`](templates/) contains starter files used as templates. Some are intentionally similar to complete demos: keep these copies when updating project scaffolding, and do not treat them as accidental duplicate files.
+Starter files live in [`templates/app.nx`](templates/app.nx), [`templates/game.nx`](templates/game.nx), and the other files in `templates/`. Some are intentionally similar to complete demos: keep these copies when updating project scaffolding, and do not treat them as accidental duplicate files.
 
 ## Check and run
 
