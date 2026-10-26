@@ -1,5 +1,11 @@
 # Changelog
 
+## NEXUS 2.1.0 release alignment and Poker scoring (2026-10-26)
+
+- Aligned the graphical poker demo, its window/menu branding, and example documentation on NEXUS Poker 2.1.0.
+- Corrected five-card hand scoring to compare all relevant kickers in order and to detect straight flushes only when all five cards share a suit; Ace-low straights are handled explicitly.
+- Updated the Paint installer display name to NEXUS Paint 2.1.0 so its uninstall metadata matches its product version.
+
 ## Download reliability and site usability (2026-10-26)
 
 - The Paint `.exe` download is a setup installer that installs the app and its SDL/SQLite runtime DLLs; the ZIP remains a portable app bundle.

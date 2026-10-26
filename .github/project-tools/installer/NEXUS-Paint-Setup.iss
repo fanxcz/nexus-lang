@@ -35,7 +35,7 @@ VersionInfoProductName=NEXUS Paint
 VersionInfoProductVersion=2.1.0
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription=NEXUS Paint raster editor installer
-UninstallDisplayName=NEXUS Paint 2.0.0
+UninstallDisplayName=NEXUS Paint 2.1.0
 
 [Languages]
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"

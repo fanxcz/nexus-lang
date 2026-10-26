@@ -1,5 +1,6 @@
 @echo off
 setlocal
+echo NEXUS Poker 2.1.0 - Texas Hold'em
 set NEXUS=%LOCALAPPDATA%\Programs\NEXUS
 if not exist "%NEXUS%\bin\nexus.exe" (
   echo NEXUS is not installed in %NEXUS%.

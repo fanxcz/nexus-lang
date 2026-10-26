@@ -14,7 +14,12 @@
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
-## What's new in 2.0
+## What's new in 2.1.0
+
+- NEXUS Poker 2.1.0 improves five-card hand ranking and kicker tie-breaks, including suit-aware straight-flush detection.
+- Release metadata, installer names and the VS Code language extension are aligned on version 2.1.0.
+
+## Core language features introduced in 2.0
 
 - Growable lists (`ilist_*` / `slist_*`), `capture_output`, string builtins (`contains`, `find`, `trim`, `upper`, `lower`, `slice`, `split_*`)
 - Smart concatenation: `"code=" + 42` works without `str_i64`

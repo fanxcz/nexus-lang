@@ -31,9 +31,9 @@ nexus run examples/nexus_arena.nx
 
 [`examples/game2d_platformer.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx) is a no-external-assets platformer demo using `std.tilemap`: grid-based platforms, horizontal/vertical collision resolution, gravity, jumping and a simple colored tile renderer. The tilemap API is documented under [2D Game Helpers and Tilemaps](../runtime/game2d.md).
 
-## NEXUS Poker
+## NEXUS Poker 2.1.0
 
-[`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed no-limit Texas Hold'em table for the mouse, built on `std.engine2d`, `std.sprite2d` and `std.audio2d`.
+[`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed no-limit Texas Hold'em table for the mouse, built on `std.engine2d`, `std.sprite2d` and `std.audio2d`. The 2.1.0 update corrects five-card hand scoring, compares kickers in order, and requires all five cards to share a suit for a straight flush.
 
 - Main menu with a 1-5 bot selector. Every seat starts with 1,000 chips and blinds are 10 / 20.
 - Complete Hold'em betting: pre-flop, flop, turn and river; check, call, fold, raise with a draggable slider, and all-in. Side pots, split pots and seven-card hand evaluation are handled at showdown.

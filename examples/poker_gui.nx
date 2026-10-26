@@ -1,4 +1,4 @@
-// NEXUS Poker - a Full HD (1920x1080) no-limit Texas Hold'em table.
+// NEXUS Poker 2.1.0 - Full HD (1920x1080) no-limit Texas Hold'em table.
 // Mouse driven: pick the number of bots in the main menu, then use the
 // action bar to fold, check/call, raise with the slider, or move all-in.
 // Complete rules: rotating dealer, small/big blinds, four betting rounds,
@@ -228,118 +228,165 @@ fn sort5(a: i64, b: i64, c: i64, d: i64, e: i64) -> [i64; 5] {
 }
 
 fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
-    let r0 = c0 / 4
-    let s0 = c0 % 4
-    let r1 = c1 / 4
-    let s1 = c1 % 4
-    let r2 = c2 / 4
-    let s2 = c2 % 4
-    let r3 = c3 / 4
-    let s3 = c3 % 4
-    let r4 = c4 / 4
-    let s4 = c4 % 4
-
-    let mut rc0 = 0
-    let mut rc1 = 0
-    let mut rc2 = 0
-    let mut rc3 = 0
-    let mut rc4 = 0
-    let mut rc5 = 0
-    let mut rc6 = 0
-    let mut rc7 = 0
-    let mut rc8 = 0
-    let mut rc9 = 0
-    let mut rc10 = 0
-    let mut rc11 = 0
-    let mut rc12 = 0
-    let ranks = [r0, r1, r2, r3, r4]
+    let ranks = [c0 / 4, c1 / 4, c2 / 4, c3 / 4, c4 / 4]
+    let suits = [c0 % 4, c1 % 4, c2 % 4, c3 % 4, c4 % 4]
+    let mut counts: [i64; 13] = [0,0,0,0,0,0,0,0,0,0,0,0,0]
+    let mut suit_counts: [i64; 4] = [0,0,0,0]
     let mut i = 0
     while i < 5 {
-        let rv = ranks[i]
-        if rv == 0 { rc0 = rc0 + 1 }
-        if rv == 1 { rc1 = rc1 + 1 }
-        if rv == 2 { rc2 = rc2 + 1 }
-        if rv == 3 { rc3 = rc3 + 1 }
-        if rv == 4 { rc4 = rc4 + 1 }
-        if rv == 5 { rc5 = rc5 + 1 }
-        if rv == 6 { rc6 = rc6 + 1 }
-        if rv == 7 { rc7 = rc7 + 1 }
-        if rv == 8 { rc8 = rc8 + 1 }
-        if rv == 9 { rc9 = rc9 + 1 }
-        if rv == 10 { rc10 = rc10 + 1 }
-        if rv == 11 { rc11 = rc11 + 1 }
-        if rv == 12 { rc12 = rc12 + 1 }
+        counts[ranks[i]] = counts[ranks[i]] + 1
+        suit_counts[suits[i]] = suit_counts[suits[i]] + 1
         i = i + 1
     }
-    let rcs = [rc0, rc1, rc2, rc3, rc4, rc5, rc6, rc7, rc8, rc9, rc10, rc11, rc12]
-
-    let mut sc0 = 0
-    let mut sc1 = 0
-    let mut sc2 = 0
-    let mut sc3 = 0
-    if s0 == 0 { sc0 = sc0 + 1 }
-    if s0 == 1 { sc1 = sc1 + 1 }
-    if s0 == 2 { sc2 = sc2 + 1 }
-    if s0 == 3 { sc3 = sc3 + 1 }
-    if s1 == 0 { sc0 = sc0 + 1 }
-    if s1 == 1 { sc1 = sc1 + 1 }
-    if s1 == 2 { sc2 = sc2 + 1 }
-    if s1 == 3 { sc3 = sc3 + 1 }
-    if s2 == 0 { sc0 = sc0 + 1 }
-    if s2 == 1 { sc1 = sc1 + 1 }
-    if s2 == 2 { sc2 = sc2 + 1 }
-    if s2 == 3 { sc3 = sc3 + 1 }
-    if s3 == 0 { sc0 = sc0 + 1 }
-    if s3 == 1 { sc1 = sc1 + 1 }
-    if s3 == 2 { sc2 = sc2 + 1 }
-    if s3 == 3 { sc3 = sc3 + 1 }
-    if s4 == 0 { sc0 = sc0 + 1 }
-    if s4 == 1 { sc1 = sc1 + 1 }
-    if s4 == 2 { sc2 = sc2 + 1 }
-    if s4 == 3 { sc3 = sc3 + 1 }
-    let mut flush = 0
-    if sc0 >= 5 { flush = 1 }
-    if sc1 >= 5 { flush = 1 }
-    if sc2 >= 5 { flush = 1 }
-    if sc3 >= 5 { flush = 1 }
-
-    let mut straight = 0
+    let mut flush = false
     i = 0
-    while i <= 8 {
-        if rcs[i] > 0 && rcs[i + 1] > 0 && rcs[i + 2] > 0 &&
-           rcs[i + 3] > 0 && rcs[i + 4] > 0 { straight = 1 }
+    while i < 4 {
+        if suit_counts[i] == 5 { flush = true }
         i = i + 1
     }
-    if rcs[12] > 0 && rcs[0] > 0 && rcs[1] > 0 && rcs[2] > 0 && rcs[3] > 0 {
-        straight = 1
+    let mut straight_high = -1
+    let mut high = 12
+    while high >= 4 {
+        if counts[high] > 0 && counts[high - 1] > 0 && counts[high - 2] > 0 &&
+           counts[high - 3] > 0 && counts[high - 4] > 0 {
+            if straight_high < 0 { straight_high = high }
+        }
+        high = high - 1
+    }
+    if straight_high < 0 && counts[12] > 0 && counts[0] > 0 &&
+       counts[1] > 0 && counts[2] > 0 && counts[3] > 0 { straight_high = 3 }
+
+    // A straight flush requires the same suit on every card in the sequence.
+    let mut sf_high = -1
+    let mut suit = 0
+    while suit < 4 {
+        high = 12
+        while high >= 4 {
+            let mut have_straight = true
+            let mut off = 0
+            while off < 5 {
+                let wanted = high - off
+                let mut found = false
+                i = 0
+                while i < 5 {
+                    if ranks[i] == wanted && suits[i] == suit { found = true }
+                    i = i + 1
+                }
+                if !found { have_straight = false }
+                off = off + 1
+            }
+            if have_straight && high > sf_high { sf_high = high }
+            high = high - 1
+        }
+        let wheel_ranks = [12,0,1,2,3]
+        let mut wheel = true
+        i = 0
+        while i < 5 {
+            let mut found = false
+            let mut j = 0
+            while j < 5 {
+                if ranks[j] == wheel_ranks[i] && suits[j] == suit { found = true }
+                j = j + 1
+            }
+            if !found { wheel = false }
+            i = i + 1
+        }
+        if wheel && sf_high < 3 { sf_high = 3 }
+        suit = suit + 1
     }
 
-    let mut pairs = 0
-    let mut trips = 0
-    let mut quads = 0
-    i = 0
-    while i < 13 {
-        if rcs[i] == 2 { pairs = pairs + 1 }
-        if rcs[i] == 3 { trips = trips + 1 }
-        if rcs[i] == 4 { quads = quads + 1 }
-        i = i + 1
+    let mut quad = -1
+    let mut trip = -1
+    let mut pair_hi = -1
+    let mut pair_lo = -1
+    let mut singles: [i64; 5] = [0,0,0,0,0]
+    let mut single_n = 0
+    let mut rank = 12
+    while rank >= 0 {
+        if counts[rank] == 4 { quad = rank }
+        if counts[rank] == 3 { trip = rank }
+        if counts[rank] == 2 {
+            if pair_hi < 0 { pair_hi = rank }
+            else { pair_lo = rank }
+        }
+        if counts[rank] == 1 {
+            singles[single_n] = rank
+            single_n = single_n + 1
+        }
+        rank = rank - 1
     }
 
+    let mut kick: [i64; 5] = [0,0,0,0,0]
     let mut cat = 0
-    if pairs > 0 { cat = 1 }
-    if pairs >= 2 { cat = 2 }
-    if trips > 0 { cat = 3 }
-    if straight == 1 { cat = 4 }
-    if flush == 1 { cat = 5 }
-    if trips > 0 && pairs > 0 { cat = 6 }
-    if quads > 0 { cat = 7 }
-    if straight == 1 && flush == 1 { cat = 8 }
-    if straight == 1 && flush == 1 && rcs[12] > 0 && rcs[8] > 0 &&
-       rcs[9] > 0 && rcs[10] > 0 && rcs[11] > 0 { cat = 9 }
-
-    let sorted = sort5(r0, r1, r2, r3, r4)
-    let kick = sorted[0] * 100000 + sorted[1] * 1000 + sorted[2] * 10 + sorted[3]
-    return cat * 10000000 + kick
+    if sf_high >= 0 {
+        cat = 8
+        kick[0] = sf_high
+        if sf_high == 12 { cat = 9 }
+    } else if quad >= 0 {
+        cat = 7
+        kick[0] = quad
+        kick[1] = singles[0]
+    } else if trip >= 0 && pair_hi >= 0 {
+        cat = 6
+        kick[0] = trip
+        kick[1] = pair_hi
+    } else if flush {
+        cat = 5
+        i = 0
+        while i < 5 { kick[i] = ranks[i]; i = i + 1 }
+        i = 0
+        while i < 4 {
+            let mut j = 0
+            while j < 4 - i {
+                if kick[j] < kick[j + 1] {
+                    let tmp = kick[j]
+                    kick[j] = kick[j + 1]
+                    kick[j + 1] = tmp
+                }
+                j = j + 1
+            }
+            i = i + 1
+        }
+    } else if straight_high >= 0 {
+        cat = 4
+        kick[0] = straight_high
+    } else if trip >= 0 {
+        cat = 3
+        kick[0] = trip
+        kick[1] = singles[0]
+        kick[2] = singles[1]
+    } else if pair_lo >= 0 {
+        cat = 2
+        kick[0] = pair_hi
+        kick[1] = pair_lo
+        kick[2] = singles[0]
+    } else if pair_hi >= 0 {
+        cat = 1
+        kick[0] = pair_hi
+        kick[1] = singles[0]
+        kick[2] = singles[1]
+        kick[3] = singles[2]
+    } else {
+        cat = 0
+        i = 0
+        while i < 5 { kick[i] = ranks[i]; i = i + 1 }
+        i = 0
+        while i < 4 {
+            let mut j = 0
+            while j < 4 - i {
+                if kick[j] < kick[j + 1] {
+                    let tmp = kick[j]
+                    kick[j] = kick[j + 1]
+                    kick[j + 1] = tmp
+                }
+                j = j + 1
+            }
+            i = i + 1
+        }
+    }
+    // Base-13 kicker encoding compares every kicker while preserving category order.
+    let tie = kick[0] * 28561 + kick[1] * 2197 + kick[2] * 169 + kick[3] * 13 + kick[4]
+    return cat * 10000000 + tie
 }
 
 fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64,
@@ -462,7 +509,7 @@ fn preflop_label(c0: i64, c1: i64) -> string {
 // Maps a seven-card score to a 0..100 aggression strength.
 fn postflop_strength(score: i64) -> i64 {
     let cat = score / 10000000
-    let top = (score % 10000000) / 100000
+    let top = (score % 10000000) / 28561
     let mut s = 24 + top * 2
     if cat == 1 { s = 46 + top * 2 }
     if cat == 2 { s = 64 + top }
@@ -815,7 +862,7 @@ fn draw_menu(bot_count: i64, bankroll: i64, table_tex: i64,
     draw_card(185.0, 640.0, 100.0, 140.0, 0, 0, false)
     draw_card(165.0, 670.0, 100.0, 140.0, 0, 0, false)
 
-    text_c(f_tiny, 960.0, 46.0, "NEXUS ENGINE  •  FULL HD TABLE",
+    text_c(f_tiny, 960.0, 46.0, "NEXUS POKER  •  VERSION 2.1.0",
            0.62, 0.72, 0.62, 0.95)
     text_c(f_huge, 960.0, 92.0, "NEXUS", 1.0, 0.82, 0.30, 1.0)
     text_c(f_title, 960.0, 268.0, "POKER", 0.98, 0.97, 0.92, 1.0)
@@ -868,7 +915,7 @@ fn anim_t(anim: f64, start: f64) -> f64 {
 fn lerp(a: f64, b: f64, t: f64) -> f64 { return a + (b - a) * t }
 
 fn main() {
-    engine2d_init(1600, 900, "NEXUS Poker - Full HD Texas Hold'em")
+    engine2d_init(1600, 900, "NEXUS Poker 2.1.0 - Texas Hold'em")
     gfx_set_ui_resolution(1920.0, 1080.0)
     gfx_cursor_visible(false)
 
