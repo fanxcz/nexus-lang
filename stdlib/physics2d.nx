@@ -1,0 +1,59 @@
+// Simple 2D platformer physics helpers. These are not a full rigid-body engine.
+import std.math
+import std.collision2d
+
+// Apply gravity to vertical velocity over dt seconds.
+fn physics2d_apply_gravity(vy: f64, gravity: f64, dt: f64) -> f64 {
+    return vy + gravity * dt
+}
+
+// Integrate velocity into position.
+fn physics2d_integrate_x(x: f64, vx: f64, dt: f64) -> f64 {
+    return x + vx * dt
+}
+
+fn physics2d_integrate_y(y: f64, vy: f64, dt: f64) -> f64 {
+    return y + vy * dt
+}
+
+// Clamp vertical velocity to a maximum fall speed.
+fn physics2d_clamp_fall(vy: f64, max_fall: f64) -> f64 {
+    if vy > max_fall { return max_fall }
+    return vy
+}
+
+// Resolve horizontal movement against a tilemap. Returns the new x.
+fn physics2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                    x: f64, y: f64, box_width: f64, box_height: f64,
+                    vx: f64, dt: f64) -> f64 {
+    let delta = vx * dt
+    return collision2d_move_x(map, map_width, map_height, tile_size, x, y, box_width, box_height, delta)
+}
+
+// Resolve vertical movement against a tilemap. Returns the new y.
+fn physics2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                    x: f64, y: f64, box_width: f64, box_height: f64,
+                    vy: f64, dt: f64) -> f64 {
+    let delta = vy * dt
+    return collision2d_move_y(map, map_width, map_height, tile_size, x, y, box_width, box_height, delta)
+}
+
+// Returns true if the entity is on the ground (solid tile directly below).
+fn physics2d_on_ground(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                       x: f64, y: f64, box_width: f64, box_height: f64) -> bool {
+    let below = y + box_height
+    let left = math_floor(x / tile_size)
+    let right = math_floor((x + box_width - 0.0001) / tile_size)
+    let row = math_floor(below / tile_size)
+    if row >= map_height { return false }
+    let mut col = left
+    while col <= right {
+        if col >= 0 && col < map_width {
+            if tilemap_get(map, map_width, map_height, col, row) > 0 {
+                return true
+            }
+        }
+        col = col + 1
+    }
+    return false
+}
