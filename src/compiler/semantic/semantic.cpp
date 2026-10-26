@@ -279,6 +279,19 @@ namespace nexus {
                                          "::" + ev->variant);
             return Type::enumerated(ev->enumName);
         }
+        if (auto* t = dynamic_cast<TryExpr*>(e)) {
+            auto inner = expr(t->expr.get(), env);
+            // Unwrap: if Option/Result, return payload type; otherwise inner type.
+            if (inner.kind == TypeKind::Enum) {
+                const auto& en = getEnum(inner.name);
+                // Option: Some(T) -> T
+                for (const auto& v : en.variants) {
+                    if (v.name == "Some" && v.payload) return *v.payload;
+                    if (v.name == "Ok" && v.payload) return *v.payload;
+                }
+            }
+            return inner;
+        }
         if (auto* a = dynamic_cast<ArrayExpr*>(e)) {
             if (a->elements.empty())
                 throw std::runtime_error(

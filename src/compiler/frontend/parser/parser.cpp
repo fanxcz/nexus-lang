@@ -738,6 +738,10 @@ namespace nexus {
                 e = std::make_unique<IndexExpr>(std::move(e), std::move(idx));
                 continue;
             }
+            if (accept(TokenKind::Question)) {
+                e = std::make_unique<TryExpr>(std::move(e));
+                continue;
+            }
             break;
         }
         return e;

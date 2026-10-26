@@ -27,6 +27,7 @@ namespace nexus {
         std::unordered_map<std::string, EnumDecl*> enums;
 
         std::vector<std::string> globals;
+        Type currentReturnType = Type::void_();
         std::vector<std::string> breakLabels, continueLabels;
         // Each entry represents one lexical scope; calls are stored as fully typed IR
         // instructions after their arguments have been evaluated at the defer site.
@@ -262,6 +263,28 @@ namespace nexus {
 
             if (auto* x = dynamic_cast<const StringExpr*>(e))
                 return stringValue(x->value);
+
+            if (auto* t = dynamic_cast<const TryExpr*>(e)) {
+                const auto inner = expr(t->expr.get());
+                const auto tag = next();
+                emit(tag + " = extractvalue { i64, i64 } " + inner + ", 0");
+                const auto cmp = next();
+                emit(cmp + " = icmp ne i64 " + tag + ", 0");
+                const auto errLabel = lab("try.err");
+                const auto okLabel = lab("try.ok");
+                emit("br i1 " + cmp + ", label %" + errLabel + ", label %" + okLabel);
+                emit(errLabel + ":");
+                if (currentReturnType.kind == TypeKind::Void)
+                    emit("ret void");
+                else
+                    emit("ret " + llvmType(currentReturnType) + " " + inner);
+                terminated = true;
+                emit(okLabel + ":");
+                terminated = false;
+                const auto payload = next();
+                emit(payload + " = extractvalue { i64, i64 } " + inner + ", 1");
+                return payload;
+            }
 
             if (auto* x = dynamic_cast<const EnumVariantExpr*>(e)) {
                 const auto tag = enumTag(*x);
@@ -1430,6 +1453,7 @@ namespace nexus {
                 Type codegenRet = f.ret;
                 if (f.name == "main" && codegenRet.kind == TypeKind::Void)
                     codegenRet = Type::i64();
+                currentReturnType = codegenRet;
                 std::ostringstream sig;
                 sig << "define " << llvmType(codegenRet) << " @" << f.name << "(";
                 for (size_t i = 0; i < f.params.size(); ++i) {

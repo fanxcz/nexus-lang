@@ -126,6 +126,11 @@ namespace nexus {
             : enumName(std::move(e)), variant(std::move(v)) {}
     };
 
+    struct TryExpr : Expr {
+        Expr::Ptr expr;
+        TryExpr(Expr::Ptr e) : expr(std::move(e)) {}
+    };
+
     struct ArrayExpr : Expr {
         std::vector<Expr::Ptr> elements;
     };

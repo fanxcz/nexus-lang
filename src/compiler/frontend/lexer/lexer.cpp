@@ -175,6 +175,8 @@ namespace nexus {
             return "=>";
         case TokenKind::Semicolon:
             return ";";
+        case TokenKind::Question:
+            return "?";
         }
         return "?";
     }
@@ -538,6 +540,9 @@ namespace nexus {
                 break;
             case ';':
                 out.push_back({TokenKind::Semicolon, ";", p, pos_, true});
+                break;
+            case '?':
+                out.push_back({TokenKind::Question, "?", p, pos_, true});
                 break;
             default:
                 throw std::runtime_error(std::string("unexpected character '") + c + "' at " +

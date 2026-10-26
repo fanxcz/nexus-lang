@@ -69,6 +69,7 @@ namespace nexus {
         Arrow,
         FatArrow,
         Semicolon,
+        Question,
     };
 
     struct SourcePos {
