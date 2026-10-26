@@ -87,6 +87,33 @@ for item in 1..4 {
 
 Loop control supports `break` and `continue`.
 
+### Deferred cleanup
+
+Use `defer` to schedule a call that returns `void` when the current block is
+left. Arguments are evaluated when the `defer` statement is reached, and calls
+run in last-in-first-out order. Cleanup runs on normal block exit, `return`,
+`break`, and `continue`:
+
+```nx
+fn log(message: string) {
+    print(message)
+}
+
+fn main() {
+    let mut state = "before"
+    defer log(state)
+    state = "after"
+    print("body")
+}
+```
+
+This prints `body` followed by `before`: the deferred call captures the
+argument value at registration time. The current implementation supports
+deferred function calls only, and the LLVM backend is required; the built-in
+x86-64 `--backend native` subset reports an explicit unsupported-feature
+diagnostic rather than silently ignoring cleanup. `defer` does not intercept
+process aborts or add exception handling.
+
 You can also iterate over a string. The loop variable is an `i64` Unicode code point, not a UTF-8 byte. Convert a code point back to a one-character UTF-8 string with `string.from_char`:
 
 ```nx
