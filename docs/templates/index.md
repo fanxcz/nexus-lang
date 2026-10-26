@@ -4,10 +4,12 @@
 
 ## Templates accepted by the current CLI
 
+For the project's primary desktop-application workflow, begin with **App**. It provides a native window and event loop, but it is not yet a full desktop widget framework. Choose CLI for terminal utilities and the other templates for narrower examples.
+
 | Template | Command | Current starting point |
 |---|---|---|
+| [App](app.md) | `nexus new MyApp --template app` | Minimal native window, event loop and 2D primitives |
 | [CLI](cli.md) | `nexus new MyCli --template cli` | Console input and greeting |
-| [App](app.md) | `nexus new MyApp --template app` | Native window and 2D primitives |
 | [Game](game.md) | `nexus new MyGame --template game` | Single-file graphical survivor game |
 | [3D](3d.md) | `nexus new My3D --template 3d` | Grid and coloured cubes |
 | [Paint](paint.md) | `nexus new MyPaint --template paint` | Raster canvas and BMP tools |

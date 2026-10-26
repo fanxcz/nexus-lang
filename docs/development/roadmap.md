@@ -2,6 +2,19 @@
 
 This roadmap distinguishes shipped behavior from goals. A directory, example, or API facade is not evidence that a feature is complete.
 
+## Product direction: native applications first
+
+The main product goal is to make NEXUS a dependable language for building native desktop applications, command-line utilities, and developer tools. Games and graphics remain useful examples and optional use cases, but should not drive every language or runtime decision.
+
+## Priority — Native application workflow
+
+1. Make the app template a reliable starting point for real tools, with a clear project structure and documented event/window lifecycle.
+2. Build a consistent desktop UI layer incrementally: layout, buttons, text inputs, checkboxes, menus, keyboard focus, scaling, and accessible keyboard navigation. Do not present drawing primitives alone as a mature widget toolkit.
+3. Expand platform services through tested runtime implementations: file dialogs, clipboard, configuration paths, environment access, process launching, and predictable error reporting.
+4. Make resource and dependency packaging reproducible so an app can be built into a distributable folder or installer without relying on the repository checkout or manually copied files.
+5. Add end-to-end example apps that test a practical workflow (for example, a small notes or file-inspection tool) from a clean install through build, launch, and shutdown.
+
+**Completion criterion:** a multi-file desktop utility can be created from the documented template, built on a declared supported host, and packaged with its runtime resources so it works on a clean machine. Each advertised platform needs its own CI or release-artifact validation.
 ## Available today
 
 - C++20 compiler with lexer, parser, semantic analysis, LLVM IR generation, and a Clang-based native fallback. Acyclic source imports load once per compilation; circular import chains are rejected with a path trace.
@@ -15,7 +28,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 - Lexical `defer` is implemented on the LLVM backend for void-returning calls, with argument capture at registration and LIFO cleanup on normal exit, `return`, `break`, and `continue`; the builtin native subset deliberately reports it as unsupported until parity is implemented.
 - The GitHub Actions matrix builds/tests Ubuntu, Windows, and macOS hosts. A separate Linux workflow runs ASan/UBSan on compiler and runtime tests; refer to the [platform support matrix](platform-support.md) for output-target boundaries.
 
-## Priority 3 — 2D game runtime and coherent APIs
+## Secondary domain — 2D game runtime and coherent APIs
 
 1. Build on the existing SDL-backed renderer, texture loading, animation, input, camera, audio and AABB primitives instead of presenting them as a complete engine.
 2. Keep a small consistent 2D convenience module in `stdlib/engine2d.nx`; add regression examples that can be built from a clean checkout and use only shipped APIs.
@@ -26,7 +39,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 ## Priority 4 — Language and standard-library ergonomics
 
-1. Add small, well-tested standard-library helpers before expanding syntax or the type system; current `stdlib/math.nx` supplies clamp, interpolation, approach and sign helpers for simulation/gameplay.
+1. Add small, well-tested standard-library helpers before expanding syntax or the type system; keep the APIs useful to general applications as well as graphics/simulation code.
 2. Add tests for numeric edge cases (negative values, exact boundaries, reversed ranges and non-finite inputs where supported) and ensure examples use declared mutable bindings for state.
 3. Prioritize clear diagnostics, deterministic formatting and self-host compiler parity before introducing broad syntax changes.
 4. Track classes/inheritance, richer enums, dynamic arrays and ownership/lifetime design as separate language proposals; do not imply these features are implemented by adding facade APIs.

@@ -7,6 +7,8 @@ The repository's `examples/` directory contains standalone `.nx` programs and as
 | Topic | Description |
 |---|---|
 | [Overview](overview.md) | Index of examples in the source tree |
+| [Native app sample](../../examples/native_app.nx) | Minimal native window and interactive drawing sample |
+| [Project templates](../templates/index.md) | Starter projects for applications, CLI tools, games, and libraries |
 | [Games](games.md) | Terminal and graphical game prototypes |
 | [Graphics](graphics.md) | Valid 2D, 3D and drawing examples |
 | [Audio](audio.md) | The current sound-runtime demo |

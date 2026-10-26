@@ -1,5 +1,5 @@
 site_name: NEXUS Programming Language
-site_description: NEXUS is an open-source native programming language and runtime for applications, creative tools, and games.
+site_description: NEXUS is an open-source programming language for native desktop applications, command-line utilities, and developer tools.
 site_author: fanxcz
 site_url: https://fanxcz.github.io/nexus-lang/
 repo_url: https://github.com/fanxcz/nexus-lang
@@ -93,6 +93,7 @@ nav:
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
       - Project Structure: getting-started/project-structure.md
+      - Application Development: applications.md
   - Language Reference:
       - Overview: language/index.md
       - Language Basics: language/overview.md

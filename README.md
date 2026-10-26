@@ -2,7 +2,7 @@
 
 ![NEXUS](docs/assets/images/nexus-logo.svg)
 
-**NEXUS is an open-source programming language and native runtime for applications, tools, and games.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support.
+**NEXUS is an open-source programming language for native desktop applications, command-line utilities, and developer tools.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support. Graphics and games are supported use cases, not the project's only purpose.
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
@@ -14,15 +14,19 @@
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
+## Project focus
+
+NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
+
+Start with the [application-development guide](https://fanxcz.github.io/nexus-lang/applications/) or create a project with `nexus new MyApp --template app`. Games remain a supported area for graphics and runtime experimentation.
+
 ## What's new in 2.1.0
 
-- NEXUS Poker 2.1.0 improves five-card hand ranking and kicker tie-breaks, including suit-aware straight-flush detection.
-- Poker now renders distinct illustrated opponents, a stable spade cursor, smoothly orbiting turn markers and a compact hand-strength meter.
-- The poker example has a persistent cosmetic table-skin shop; its purchases use earned chips and do not change game rules or bot strength.
-- The LLVM compilation path adds floating-point `sin`, `cos`, `tan`, `atan2`, `floor`, `ceil` and `pow` built-ins for games and simulation.
-- The game standard library includes `Vec2` and `Vec3` values, camera follow and world/screen transforms, additional collision predicates, and easing/ping-pong animation curves. Try the playable [Vector Lab example](examples/vector_lab.nx).
-- Graphics runtime cursor visibility is idempotent: repeated requests for the same visibility state are skipped, avoiding redundant SDL cursor-state changes.
-- Release metadata, installer names and the VS Code language extension are aligned on version 2.1.0.
+- The compiler and project workflow include the interactive REPL, project templates, formatting and linting commands, test support, diagnostics, and VS Code language tooling.
+- The standard-library/runtime foundations cover file and input operations, filesystem helpers, networking helpers, JSON access, SQLite, SHA-256, memory utilities, graphics, and audio. Individual APIs have specific limits; consult their docs before relying on them in production.
+- The LLVM compilation path adds floating-point `sin`, `cos`, `tan`, `atan2`, `floor`, `ceil` and `pow` built-ins.
+- NEXUS includes small native-app and creative-tool examples such as [NEXUS Paint](examples/nexus_paint.nx) and [the native app sample](examples/native_app.nx), plus a source-buildable [NEXUS Studio](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio).
+- Graphics/game examples also improved in 2.1.0: NEXUS Poker has refined hand ranking and a cosmetic table-skin shop, while [Vector Lab](examples/vector_lab.nx) demonstrates vector math, camera helpers, collisions, and easing.
 
 ## Core language features introduced in 2.0
 
@@ -93,14 +97,17 @@ it is an interactive evaluator, not a Python interpreter.
 
 ## Quick start
 
-Create a project from a template:
+Create a native windowed application from the `app` template:
 
 ```powershell
-nexus new MyGame --template game
-cd MyGame
+nexus new MyApp --template app
+cd MyApp
+nexus check
 nexus build
 nexus run
 ```
+
+This starts from a minimal native-window example with a frame/event loop and drawing primitives. It is a starter, not yet a complete desktop widget toolkit. For a command-line utility, use `nexus new MyTool --template cli`; for a game, use `nexus new MyGame --template game`.
 
 Try a small source file named `hello.nx`:
 
@@ -175,7 +182,7 @@ import std.memory
 import std.crypto
 ```
 
-## Nexus Paint template
+## Creative application example: NEXUS Paint
 
 The repository includes a raster-canvas application template:
 
