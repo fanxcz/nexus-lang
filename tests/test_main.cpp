@@ -461,6 +461,52 @@ int main() {
                 return 27;
             }
         }
+        {
+            // Unicode scalar escapes decode to UTF-8, while source spans still
+            // refer to the raw source bytes, not the decoded string length.
+            const std::string unicodeSource =
+                "fn main() { let value = \"A\\u{1F642}Z\"; }";
+            const auto program = parse(unicodeSource.c_str());
+            const auto* binding = dynamic_cast<const nexus::LetStmt*>(
+                program.functions.front().body->statements.front().get());
+            const auto* literal =
+                binding ? dynamic_cast<const nexus::StringExpr*>(binding->init.get()) : nullptr;
+            const std::string expected = std::string("A") + "\xF0\x9F\x99\x82" + "Z";
+            const auto literalStart = unicodeSource.find("\"A\\u{1F642}Z\"");
+            if (!literal || literal->value != expected || !literal->span.valid ||
+                literalStart == std::string::npos ||
+                literal->span.start.offset != literalStart ||
+                literal->span.end.offset != literalStart + 13) {
+                std::cerr << "Unicode string escape decoding/span regression\n";
+                return 28;
+            }
+
+            const std::vector<std::string> invalidSources = {
+                "fn main() { print(\"\\u{}\") }",
+                "fn main() { print(\"\\u{D800}\") }",
+                "fn main() { print(\"\\u{110000}\") }",
+                "fn main() { print(\"\\u{0}\") }",
+                "fn main() { print(\"\\u{1234567}\") }",
+                "fn main() { print(\"\\u{ZZ}\") }",
+                "fn main() { print(\"\\u1234\") }",
+            };
+            for (const auto& invalidSource : invalidSources) {
+                try {
+                    const auto invalidProgram = parse(invalidSource.c_str());
+                    (void)invalidProgram;
+                    std::cerr << "invalid Unicode escape unexpectedly parsed\n";
+                    return 29;
+                } catch (const std::exception& error) {
+                    const std::string message = error.what();
+                    if (message.find("Unicode escape") == std::string::npos &&
+                        message.find("Unicode scalar value") == std::string::npos &&
+                        message.find("U+0000") == std::string::npos) {
+                        std::cerr << "unexpected Unicode escape diagnostic: " << message << "\n";
+                        return 30;
+                    }
+                }
+            }
+        }
         std::cout << "Nexus tests: PASS\n";
 
         return 0;

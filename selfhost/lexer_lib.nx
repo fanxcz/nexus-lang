@@ -1,6 +1,7 @@
 // Self-hosting step 1: the NEXUS lexer, written in NEXUS.
 // Mirrors src/compiler/frontend/lexer/lexer.cpp: keywords, identifiers,
-// i64/f64 literals, strings with escapes, operators, punctuation, comments.
+// i64/f64 literals, common and Unicode scalar string escapes, operators,
+// punctuation, and comments.
 // tokenize(src) -> string emits one token per line as "LINE:COL KIND TEXT"
 // and stops at the first error, emitting "error LINE:COL MESSAGE".
 
@@ -10,6 +11,13 @@ fn is_alpha(b: i64) -> bool {
 
 fn is_digit(b: i64) -> bool {
     return b >= 48 && b <= 57
+}
+
+fn unicode_hex_digit(b: i64) -> i64 {
+    if b >= 48 && b <= 57 { return b - 48 }
+    if b >= 65 && b <= 70 { return b - 55 }
+    if b >= 97 && b <= 102 { return b - 87 }
+    return -1
 }
 
 fn keyword_kind(name: string) -> string {
@@ -214,6 +222,7 @@ fn tokenize(src: string) -> string {
                         return out + "error " + line + ":" + col + " unterminated string\n"
                     }
                     let e = string.byte_at(src, i + 1)
+                    let mut consumed = 2
                     if e == 110 {
                         text = text + "\n"
                     } else if e == 116 {
@@ -224,11 +233,35 @@ fn tokenize(src: string) -> string {
                         text = text + "\\"
                     } else if e == 34 {
                         text = text + "\""
+                    } else if e == 117 {
+                        if i + 2 >= len || string.byte_at(src, i + 2) != 123 {
+                            return out + "error " + line + ":" + col + " Unicode escape must use \\u{...}\n"
+                        }
+                        let mut j = i + 3
+                        let mut code = 0
+                        let mut digits = 0
+                        while j < len && string.byte_at(src, j) != 125 {
+                            let hex = unicode_hex_digit(string.byte_at(src, j))
+                            if hex < 0 || digits >= 6 {
+                                return out + "error " + line + ":" + col + " invalid Unicode escape\n"
+                            }
+                            code = code * 16 + hex
+                            digits = digits + 1
+                            j = j + 1
+                        }
+                        if j >= len || digits == 0 {
+                            return out + "error " + line + ":" + col + " invalid Unicode escape\n"
+                        }
+                        if code == 0 || code > 1114111 || (code >= 55296 && code <= 57343) {
+                            return out + "error " + line + ":" + col + " invalid Unicode scalar value\n"
+                        }
+                        text = text + string.from_char(code)
+                        consumed = j - i + 1
                     } else {
                         return out + "error " + line + ":" + col + " unknown string escape\n"
                     }
-                    i = i + 2
-                    col = col + 2
+                    i = i + consumed
+                    col = col + consumed
                 } else {
                     text = text + string.slice(src, i, i + 1)
                     i = i + 1

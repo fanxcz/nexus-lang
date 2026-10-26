@@ -52,6 +52,16 @@ fn main() {
         "1:1 String a\tb\n\"q\"\\\n1:16 End \n")
 
     failed = failed + check(
+        "Unicode scalar string escapes",
+        "\"\\u{41}\\u{1F642}\"",
+        "1:1 String A🙂\n1:18 End \n")
+
+    failed = failed + check(
+        "error: invalid Unicode scalar",
+        "\"\\u{D800}\"",
+        "error 1:2 invalid Unicode scalar value\n")
+
+    failed = failed + check(
         "comments are skipped",
         "// line\nlet x = 1 /* mid\ncomment */ + 2",
         "2:1 KwLet let\n2:5 Identifier x\n2:7 Equal =\n2:9 Integer 1\n3:12 Plus +\n3:14 Integer 2\n3:15 End \n")

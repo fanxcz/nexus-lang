@@ -1,0 +1,5 @@
+// Unicode escapes decode to UTF-8 code points.
+fn main() {
+    print("A\u{1F642}Z")
+    print("\u{00A9}")
+}
