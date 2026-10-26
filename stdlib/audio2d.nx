@@ -39,3 +39,23 @@ fn audio2d_tone(frequency: f64, duration_ms: i64, volume: f64) {
     if frequency <= 0.0 || duration_ms <= 0 { return }
     gfx_sound_tone(frequency, duration_ms, math_clamp(volume, 0.0, 1.0))
 }
+
+
+// Music uses the runtime's single active music slot; the API does not expose
+// independent music channels or a handle-based unload operation yet.
+fn audio2d_load_music(path: string) -> i64 {
+    return gfx_music_load(path)
+}
+
+fn audio2d_play_music(track: i64, looped: bool) -> bool {
+    if track <= 0 { return false }
+    return gfx_music_play(track, looped)
+}
+
+fn audio2d_stop_music() {
+    gfx_music_stop()
+}
+
+fn audio2d_set_music_volume(volume: f64) {
+    gfx_music_volume(math_clamp(volume, 0.0, 1.0))
+}

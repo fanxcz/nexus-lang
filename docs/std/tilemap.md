@@ -10,6 +10,9 @@ This module owns the grid data model only. Rendering and collision are separate 
 - `tilemap_set(map, width, height, x, y, tile)`: out-of-range writes are ignored.
 - `tilemap_try_set(map, width, height, x, y, tile) -> bool`: returns false for invalid maps or coordinates instead of silently ignoring the write.
 - `tilemap_fill(map, width, height, tile) -> bool`: sets every cell to the supplied tile ID.
+- `tilemap_fill_rect(map, width, height, x, y, rect_width, rect_height, tile) -> bool`: fills only if the full rectangle is inside the map; invalid/out-of-bounds rectangles return false.
+- `tilemap_count(map, width, height, tile) -> i64`: counts cells with the requested tile ID.
+- `tilemap_fill(map, width, height, tile) -> bool`: sets every cell to the supplied tile ID.
 - `tilemap_fill_rect(map, width, height, x, y, rect_width, rect_height, tile) -> bool`: fills a rectangular region only when the full requested area fits inside the map; invalid/out-of-bounds rectangles return false.
 - `tilemap_count(map, width, height, tile) -> i64`: counts cells with the specified tile ID.
 
