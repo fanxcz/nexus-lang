@@ -86,6 +86,33 @@ The compiler checks source code before building. Run `nexus doctor` if the compi
 
 </div>
 
+## A practical development workflow
+
+Start with a small program, check it, then choose the compiler backend explicitly
+when you need to control which toolchain builds the executable.
+
+<div class="grid cards" markdown>
+
+-   **Command-line utility**
+
+    Keep the first project simple and portable.
+
+    `nexus new MyTool --template cli`
+
+-   **Native windowed app**
+
+    Try the current widget and layout layer.
+
+    `nexus new MyApp --template app`
+
+-   **Interactive UI sample**
+
+    Explore panels, checkboxes, buttons, sliders and responsive layout helpers.
+
+    [Open UI Playground source](../examples/ui_playground.nx)
+
+</div>
+
 ## What is implemented today
 
 - **Compiler:** C++20 front end, semantic checks, LLVM/Clang compilation path, and a built-in x86-64 backend for a documented subset.

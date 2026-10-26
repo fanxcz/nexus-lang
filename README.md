@@ -25,7 +25,7 @@ Start with the [application-development guide](docs/applications.md) or create a
 - The compiler and project workflow include the interactive REPL, project templates, formatting and linting commands, test support, diagnostics, and VS Code language tooling.
 - The standard-library/runtime foundations cover file and input operations, filesystem helpers, networking helpers, JSON access, SQLite, SHA-256, memory utilities, graphics, and audio. Individual APIs have specific limits; consult their docs before relying on them in production.
 - The LLVM compilation path adds floating-point `sin`, `cos`, `tan`, `atan2`, `floor`, `ceil` and `pow` built-ins.
-- NEXUS includes small native-app and creative-tool examples such as [NEXUS Paint](examples/nexus_paint.nx) and [the native app sample](examples/native_app.nx), plus a source-buildable [NEXUS Studio](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio).
+- NEXUS includes small native-app and creative-tool examples such as [NEXUS Paint](examples/nexus_paint.nx), [the native app sample](examples/native_app.nx), and the interactive [UI Playground](examples/ui_playground.nx), plus a source-buildable [NEXUS Studio](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio).
 - Graphics/game examples also improved in 2.1.0: NEXUS Poker has refined hand ranking and a cosmetic table-skin shop, while [Vector Lab](examples/vector_lab.nx) demonstrates vector math, camera helpers, collisions, and easing.
 
 ## Core language features introduced in 2.0
@@ -168,7 +168,7 @@ Install without a marketplace account:
 
 ## Standard library and runtime
 
-The repository includes standard modules for common operations, including I/O, filesystem access, networking, JSON utilities, database access, memory helpers, and cryptographic utilities. Runtime foundations include SDL-based 2D rendering, optional OpenGL 3D, audio, UI, ECS, scenes, particles, and physics components. Availability can depend on the backend, target platform, and bundled runtime dependencies.
+The repository includes standard modules for I/O, filesystem access, networking, JSON utilities, databases, memory helpers, cryptographic utilities, math, collections, UI layout and concrete error-value helpers. Runtime foundations include SDL-based 2D rendering, optional OpenGL 3D, audio, immediate-mode UI widgets, ECS, scenes, particles and collision helpers. Availability can depend on the backend, target platform and bundled runtime dependencies. The UI toolkit is an evolving immediate-mode layer, not yet a full retained desktop framework.
 
 Example imports:
 
@@ -180,6 +180,9 @@ import std.json
 import std.db
 import std.memory
 import std.crypto
+import std.ui
+import std.option
+import std.result
 ```
 
 ## Creative application example: NEXUS Paint
@@ -193,7 +196,7 @@ nexus build --release
 nexus run
 ```
 
-Consult the template and current documentation for its supported features.
+Consult the template and current documentation for its supported features. For UI layout and widget examples, see [UI Playground](examples/ui_playground.nx) and the [`std.ui` reference](docs/std/ui.md).
 
 ## Downloadable applications
 

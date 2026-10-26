@@ -115,3 +115,79 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Consistent identity and smaller interaction details across the docs. */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 2rem;
+  width: 2rem;
+  border-radius: .5rem;
+}
+.md-nav__link {
+  border-radius: .35rem;
+  margin-block: .06rem;
+  transition: background-color .12s ease, color .12s ease;
+}
+.md-nav__link:hover,
+.md-nav__link:focus-visible {
+  background: var(--nexus-soft);
+}
+.md-nav__link--active {
+  border-radius: .4rem;
+  font-weight: 750;
+}
+.md-typeset blockquote {
+  border-left-width: .22rem;
+  border-color: var(--md-accent-fg-color);
+  border-radius: 0 .55rem .55rem 0;
+  background: var(--nexus-soft);
+  padding: .1rem 1rem;
+}
+.md-typeset hr {
+  border-bottom-color: var(--nexus-border);
+}
+.md-typeset .task-list-item [type="checkbox"] {
+  accent-color: var(--md-accent-fg-color);
+}
+.md-typeset .highlight span.filename {
+  border-bottom: 1px solid var(--nexus-border);
+  border-radius: .75rem .75rem 0 0;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.md-typeset .tabbed-set > input:checked + label {
+  color: var(--md-typeset-color);
+  border-bottom-color: var(--md-accent-fg-color);
+}
+.md-typeset .grid.cards > ul > li:focus-within {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+}
+.md-typeset .nexus-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.md-typeset .nexus-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 19rem;
+  height: 19rem;
+  right: -7rem;
+  top: -9rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2rem rgb(255 255 255 / 4%), 0 0 0 4rem rgb(255 255 255 / 3%);
+  pointer-events: none;
+}
+.md-typeset .nexus-hero > * {
+  position: relative;
+}
+@media (max-width: 44rem) {
+  .md-header__button.md-logo img,
+  .md-header__button.md-logo svg {
+    height: 1.8rem;
+    width: 1.8rem;
+  }
+}
