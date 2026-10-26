@@ -182,22 +182,58 @@ void nexus_sleep_ms(int64_t ms) {
 
 #endif
 }
+static uint64_t nx_random_state;
+static int nx_random_seeded;
+
+static uint64_t nx_runtime_random_u64(void) {
+    // SplitMix64, used only for non-security-sensitive random values.
+    const uint64_t increment = UINT64_C(0x9E3779B97F4A7C15);
+    if (!nx_random_seeded) {
+        nx_random_state = ((uint64_t)time(NULL) << 32) ^
+                          (uint64_t)(uintptr_t)&nx_random_state ^ increment;
+        if (nx_random_state == 0)
+            nx_random_state = increment;
+        nx_random_seeded = 1;
+    }
+    nx_random_state += increment;
+    uint64_t value = nx_random_state;
+    value = (value ^ (value >> 30)) * UINT64_C(0xBF58476D1CE4E5B9);
+    value = (value ^ (value >> 27)) * UINT64_C(0x94D049BB133111EB);
+    return value ^ (value >> 31);
+}
+
+static int64_t nx_i64_add_unsigned_offset(int64_t base, uint64_t offset) {
+    if (base >= 0)
+        return base + (int64_t)offset;
+
+    /* Distance to zero without negating INT64_MIN. */
+    const uint64_t until_zero = (uint64_t)(-(base + 1)) + 1ULL;
+    if (offset < until_zero)
+        return base + (int64_t)offset;
+    return (int64_t)(offset - until_zero);
+}
+
 int64_t nexus_random_i64(int64_t min, int64_t max) {
-    static int seeded = 0;
-    if (!seeded) {
-        srand((unsigned)time(NULL));
-        seeded = 1;
-    }
     if (min > max) {
-        int64_t t = min;
+        int64_t temporary = min;
         min = max;
-        max = t;
+        max = temporary;
     }
-    unsigned long long span = (unsigned long long)(max - min) + 1ULL;
-    if (span == 0ULL)
-        return min;
-    unsigned long long r = ((unsigned long long)(unsigned)rand() << 32) ^ (unsigned)rand();
-    return min + (int64_t)(r % span);
+
+    /* Unsigned arithmetic also handles the complete inclusive i64 range. */
+    const uint64_t span = (uint64_t)max - (uint64_t)min + 1ULL;
+    uint64_t offset;
+    if (span == 0ULL) {
+        offset = nx_runtime_random_u64();
+    } else {
+        const uint64_t threshold = (0ULL - span) % span;
+        uint64_t value;
+        do {
+            value = nx_runtime_random_u64();
+        } while (value < threshold);
+        offset = value % span;
+    }
+    return nx_i64_add_unsigned_offset(min, offset);
 }
 int64_t nexus_time_ms(void) {
 

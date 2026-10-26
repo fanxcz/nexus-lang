@@ -33,6 +33,19 @@ An underscore must appear between digits; repeated, leading, and trailing
 separators are rejected. Scientific notation requires at least one exponent
 digit, so `1e` and `2E+` are invalid literals.
 
+## Numeric conversions and random integers
+
+`to_i64(value)` rounds to the nearest integer, with halfway values rounded
+away from zero. NaN converts to zero; positive/negative infinity and finite
+values outside the signed 64-bit range saturate to `9223372036854775807` and
+`-9223372036854775808`, respectively. This avoids undefined or
+platform-dependent conversion behavior for out-of-range floating-point input.
+
+`random_i64(minimum, maximum)` returns a pseudo-random integer in the
+**inclusive** interval. Reversed bounds are normalized, so
+`random_i64(10, 1)` behaves like `random_i64(1, 10)`. The generator is not
+cryptographically secure and must not be used for tokens, passwords, or keys.
+
 ## Inference and annotations
 
 ```nx
