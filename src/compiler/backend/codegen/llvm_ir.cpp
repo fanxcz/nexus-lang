@@ -981,6 +981,7 @@ namespace nexus {
             emitModule("declare i64 @nexus_system(ptr)");
             emitModule("declare ptr @nexus_capture_output(ptr)");
             emitModule("declare ptr @nexus_file_read(ptr)");
+            emitModule("declare i1 @nexus_file_read_checked(ptr, ptr)");
             emitModule("declare i64 @nexus_file_write(ptr, ptr)");
             emitModule("declare i1 @nexus_file_exists(ptr)");
             emitModule("declare ptr @nexus_env(ptr)");
