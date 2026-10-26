@@ -1,0 +1,223 @@
+// Texas Hold'em poker (console) for NEXUS
+fn rank_name(r: i64) -> string {
+    if r == 0 { return "2" }
+    if r == 1 { return "3" }
+    if r == 2 { return "4" }
+    if r == 3 { return "5" }
+    if r == 4 { return "6" }
+    if r == 5 { return "7" }
+    if r == 6 { return "8" }
+    if r == 7 { return "9" }
+    if r == 8 { return "10" }
+    if r == 9 { return "J" }
+    if r == 10 { return "Q" }
+    if r == 11 { return "K" }
+    return "A"
+}
+
+fn suit_name(s: i64) -> string {
+    if s == 0 { return "S" }
+    if s == 1 { return "H" }
+    if s == 2 { return "D" }
+    return "C"
+}
+
+fn card_str(c: i64) -> string {
+    let r = c / 4
+    let s = c % 4
+    return rank_name(r) + suit_name(s)
+}
+
+struct GameState {
+    player0: i64
+    player1: i64
+    dealer0: i64
+    dealer1: i64
+    community0: i64
+    community1: i64
+    community2: i64
+    community3: i64
+    community4: i64
+}
+
+fn reset_round() -> GameState {
+    let mut deck: [i64; 52] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    let mut i = 0
+    while i < 52 {
+        deck[i] = i
+        i = i + 1
+    }
+    i = 51
+    while i > 0 {
+        let j = random_i64(0, i)
+        let tmp = deck[i]
+        deck[i] = deck[j]
+        deck[j] = tmp
+        i = i - 1
+    }
+    let mut idx = 0
+    let p0 = deck[idx]; idx = idx + 1
+    let p1 = deck[idx]; idx = idx + 1
+    let d0 = deck[idx]; idx = idx + 1
+    let d1 = deck[idx]; idx = idx + 1
+    let c0 = deck[idx]; idx = idx + 1
+    let c1 = deck[idx]; idx = idx + 1
+    let c2 = deck[idx]; idx = idx + 1
+    let c3 = deck[idx]; idx = idx + 1
+    let c4 = deck[idx]; idx = idx + 1
+    return GameState { player0: p0, player1: p1, dealer0: d0, dealer1: d1, community0: c0, community1: c1, community2: c2, community3: c3, community4: c4 }
+}
+
+fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
+    let r0 = c0 / 4; let s0 = c0 % 4
+    let r1 = c1 / 4; let s1 = c1 % 4
+    let r2 = c2 / 4; let s2 = c2 % 4
+    let r3 = c3 / 4; let s3 = c3 % 4
+    let r4 = c4 / 4; let s4 = c4 % 4
+
+    let mut rc0 = 0; let mut rc1 = 0; let mut rc2 = 0; let mut rc3 = 0
+    let mut rc4 = 0; let mut rc5 = 0; let mut rc6 = 0; let mut rc7 = 0
+    let mut rc8 = 0; let mut rc9 = 0; let mut rc10 = 0; let mut rc11 = 0
+    let mut rc12 = 0
+    // count
+    if r0 == 0 { rc0 = rc0 + 1 } if r0 == 1 { rc1 = rc1 + 1 } if r0 == 2 { rc2 = rc2 + 1 }
+    if r0 == 3 { rc3 = rc3 + 1 } if r0 == 4 { rc4 = rc4 + 1 } if r0 == 5 { rc5 = rc5 + 1 }
+    if r0 == 6 { rc6 = rc6 + 1 } if r0 == 7 { rc7 = rc7 + 1 } if r0 == 8 { rc8 = rc8 + 1 }
+    if r0 == 9 { rc9 = rc9 + 1 } if r0 == 10 { rc10 = rc10 + 1 } if r0 == 11 { rc11 = rc11 + 1 }
+    if r0 == 12 { rc12 = rc12 + 1 }
+    if r1 == 0 { rc0 = rc0 + 1 } if r1 == 1 { rc1 = rc1 + 1 } if r1 == 2 { rc2 = rc2 + 1 }
+    if r1 == 3 { rc3 = rc3 + 1 } if r1 == 4 { rc4 = rc4 + 1 } if r1 == 5 { rc5 = rc5 + 1 }
+    if r1 == 6 { rc6 = rc6 + 1 } if r1 == 7 { rc7 = rc7 + 1 } if r1 == 8 { rc8 = rc8 + 1 }
+    if r1 == 9 { rc9 = rc9 + 1 } if r1 == 10 { rc10 = rc10 + 1 } if r1 == 11 { rc11 = rc11 + 1 }
+    if r1 == 12 { rc12 = rc12 + 1 }
+    if r2 == 0 { rc0 = rc0 + 1 } if r2 == 1 { rc1 = rc1 + 1 } if r2 == 2 { rc2 = rc2 + 1 }
+    if r2 == 3 { rc3 = rc3 + 1 } if r2 == 4 { rc4 = rc4 + 1 } if r2 == 5 { rc5 = rc5 + 1 }
+    if r2 == 6 { rc6 = rc6 + 1 } if r2 == 7 { rc7 = rc7 + 1 } if r2 == 8 { rc8 = rc8 + 1 }
+    if r2 == 9 { rc9 = rc9 + 1 } if r2 == 10 { rc10 = rc10 + 1 } if r2 == 11 { rc11 = rc11 + 1 }
+    if r2 == 12 { rc12 = rc12 + 1 }
+    if r3 == 0 { rc0 = rc0 + 1 } if r3 == 1 { rc1 = rc1 + 1 } if r3 == 2 { rc2 = rc2 + 1 }
+    if r3 == 3 { rc3 = rc3 + 1 } if r3 == 4 { rc4 = rc4 + 1 } if r3 == 5 { rc5 = rc5 + 1 }
+    if r3 == 6 { rc6 = rc6 + 1 } if r3 == 7 { rc7 = rc7 + 1 } if r3 == 8 { rc8 = rc8 + 1 }
+    if r3 == 9 { rc9 = rc9 + 1 } if r3 == 10 { rc10 = rc10 + 1 } if r3 == 11 { rc11 = rc11 + 1 }
+    if r3 == 12 { rc12 = rc12 + 1 }
+    if r4 == 0 { rc0 = rc0 + 1 } if r4 == 1 { rc1 = rc1 + 1 } if r4 == 2 { rc2 = rc2 + 1 }
+    if r4 == 3 { rc3 = rc3 + 1 } if r4 == 4 { rc4 = rc4 + 1 } if r4 == 5 { rc5 = rc5 + 1 }
+    if r4 == 6 { rc6 = rc6 + 1 } if r4 == 7 { rc7 = rc7 + 1 } if r4 == 8 { rc8 = rc8 + 1 }
+    if r4 == 9 { rc9 = rc9 + 1 } if r4 == 10 { rc10 = rc10 + 1 } if r4 == 11 { rc11 = rc11 + 1 }
+    if r4 == 12 { rc12 = rc12 + 1 }
+
+    let rcs = [rc0,rc1,rc2,rc3,rc4,rc5,rc6,rc7,rc8,rc9,rc10,rc11,rc12]
+
+    let mut sc0 = 0; let mut sc1 = 0; let mut sc2 = 0; let mut sc3 = 0
+    if s0 == 0 { sc0 = sc0 + 1 } if s0 == 1 { sc1 = sc1 + 1 } if s0 == 2 { sc2 = sc2 + 1 } if s0 == 3 { sc3 = sc3 + 1 }
+    if s1 == 0 { sc0 = sc0 + 1 } if s1 == 1 { sc1 = sc1 + 1 } if s1 == 2 { sc2 = sc2 + 1 } if s1 == 3 { sc3 = sc3 + 1 }
+    if s2 == 0 { sc0 = sc0 + 1 } if s2 == 1 { sc1 = sc1 + 1 } if s2 == 2 { sc2 = sc2 + 1 } if s2 == 3 { sc3 = sc3 + 1 }
+    if s3 == 0 { sc0 = sc0 + 1 } if s3 == 1 { sc1 = sc1 + 1 } if s3 == 2 { sc2 = sc2 + 1 } if s3 == 3 { sc3 = sc3 + 1 }
+    if s4 == 0 { sc0 = sc0 + 1 } if s4 == 1 { sc1 = sc1 + 1 } if s4 == 2 { sc2 = sc2 + 1 } if s4 == 3 { sc3 = sc3 + 1 }
+
+    let mut flush = 0
+    if sc0 >= 5 { flush = 1 }
+    if sc1 >= 5 { flush = 1 }
+    if sc2 >= 5 { flush = 1 }
+    if sc3 >= 5 { flush = 1 }
+
+    // straight
+    let mut straight = 0
+    let mut high = -1
+    let mut i = 0
+    while i <= 8 {
+        if rcs[i] > 0 && rcs[i+1] > 0 && rcs[i+2] > 0 && rcs[i+3] > 0 && rcs[i+4] > 0 {
+            straight = 1
+            high = i + 4
+        }
+        i = i + 1
+    }
+    if rcs[12] > 0 && rcs[0] > 0 && rcs[1] > 0 && rcs[2] > 0 && rcs[3] > 0 {
+        straight = 1
+        high = 3
+    }
+
+    let mut pairs = 0
+    let mut trips = 0
+    let mut quads = 0
+    i = 0
+    while i < 13 {
+        if rcs[i] == 2 { pairs = pairs + 1 }
+        if rcs[i] == 3 { trips = trips + 1 }
+        if rcs[i] == 4 { quads = quads + 1 }
+        i = i + 1
+    }
+
+    let mut cat = 0
+    if pairs > 0 { cat = 1 }
+    if pairs >= 2 { cat = 2 }
+    if trips > 0 { cat = 3 }
+    if straight == 1 { cat = 4 }
+    if flush == 1 { cat = 5 }
+    if trips > 0 && pairs > 0 { cat = 6 }
+    if quads > 0 { cat = 7 }
+    if straight == 1 && flush == 1 { cat = 8 }
+
+    let tie = r0 + r1 + r2 + r3 + r4
+    return cat * 1000000 + tie
+}
+
+fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64, c5: i64, c6: i64) -> i64 {
+    let cards = [c0, c1, c2, c3, c4, c5, c6]
+    let mut best = 0
+    let mut i = 0
+    while i < 7 {
+        let mut j = i + 1
+        while j < 7 {
+            let mut k = j + 1
+            while k < 7 {
+                let mut l = k + 1
+                while l < 7 {
+                    let mut m = l + 1
+                    while m < 7 {
+                        let s = score_hand(cards[i], cards[j], cards[k], cards[l], cards[m])
+                        if s > best { best = s }
+                        m = m + 1
+                    }
+                    l = l + 1
+                }
+                k = k + 1
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return best
+}
+
+fn main() {
+    print("=== NEXUS Poker (Texas Hold'em) ===")
+    let mut chips = 1000
+    let mut round = 0
+    while chips > 0 {
+        round = round + 1
+        print("")
+        print("--- Round " + round + " ---")
+        print("Chips: " + chips)
+        let g = reset_round()
+        print("Your hand: " + card_str(g.player0) + " " + card_str(g.player1))
+        print("Community: " + card_str(g.community0) + " " + card_str(g.community1) + " " + card_str(g.community2) + " " + card_str(g.community3) + " " + card_str(g.community4))
+        let pb = best_of_seven(g.player0, g.player1, g.community0, g.community1, g.community2, g.community3, g.community4)
+        let db = best_of_seven(g.dealer0, g.dealer1, g.community0, g.community1, g.community2, g.community3, g.community4)
+        print("Your score: " + pb)
+        print("Dealer score: " + db)
+        if pb > db {
+            chips = chips + 100
+            print("You win 100 chips!")
+        } else if pb < db {
+            chips = chips - 100
+            print("Dealer wins. You lose 100 chips.")
+        } else {
+            print("Push (tie).")
+        }
+        if chips <= 0 {
+            print("You are out of chips. Game over.")
+        }
+    }
+    print("Thanks for playing NEXUS Poker!")
+}
