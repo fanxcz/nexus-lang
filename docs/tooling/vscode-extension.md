@@ -23,21 +23,21 @@ npm install
 npx --yes @vscode/vsce package
 ```
 
-This creates a VSIX whose name includes the extension package version (currently `nexus-language-2.1.0.vsix`) in the extension directory. You need Node.js/npm and network access for this one-time dependency download. The resulting VSIX includes its runtime dependency; it does not bundle the NEXUS compiler.
+This creates `fanxcz.nexus-language-2.1.0.vsix` in the extension directory. The filename is based on the extension publisher, package name, and version; it differs from the release artifact named `NEXUS-Language-2.1.0.vsix` on the project downloads page. You need Node.js/npm and network access for this one-time dependency download. The resulting VSIX includes its runtime dependency; it does not bundle the NEXUS compiler.
 
 ## 3. Install in VS Code
 
 1. Open VS Code.
 2. Press **Ctrl+Shift+P** (on macOS, **Cmd+Shift+P**).
 3. Run **Extensions: Install from VSIX...**.
-4. Select `.github/project-tools/vscode-extension/nexus-language-2.1.0.vsix`.
+4. Select `.github/project-tools/vscode-extension/fanxcz.nexus-language-2.1.0.vsix`.
 5. Reload VS Code when prompted.
 6. Open any `.nx` source file. The language selector should display **NEXUS**.
 
 You can also install it from the repository root with:
 
 ```sh
-code --install-extension .github/project-tools/vscode-extension/nexus-language-2.1.0.vsix
+code --install-extension .github/project-tools/vscode-extension/fanxcz.nexus-language-2.1.0.vsix
 ```
 
 The extension is not yet published on the VS Code Marketplace, so installing from VSIX is the available route.
