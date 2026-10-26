@@ -1,0 +1,33 @@
+fn main() {
+    let mut total = 0
+    for i in 0..5 {
+        total += i
+    }
+    print(total)
+
+    let mut bound = 3
+    let mut seen = 0
+    for n in 0..bound {
+        seen += 1
+        bound = 0
+    }
+    print(seen)
+
+    let mut steps = 0
+    for k in 2..6 {
+        if k == 3 {
+            continue
+        }
+        if k == 5 {
+            break
+        }
+        steps += k
+    }
+    print(steps)
+
+    let mut empty = 0
+    for z in 3..3 {
+        empty += 1
+    }
+    print(empty)
+}
