@@ -20,6 +20,11 @@ and available to the LLVM compilation backend.
 - `math_lerp(start, finish, amount) -> f64`: interpolation with amount clamped to 0–1.
 - `math_approach(value, target, amount) -> f64`: moves toward the target without stepping past it; negative amount leaves the value unchanged.
 - `math_sign(value) -> f64`: returns -1, 0 or 1.
+- `math_sin(radians)`, `math_cos(radians)`, `math_tan(radians)`,
+  `math_atan2(y, x)`, and `math_pow(base, exponent)` are namespaced wrappers
+  around the core floating-point built-ins.
+- `math_floor_f64(value)` and `math_ceil_f64(value)` return rounded
+  `f64` values; `math_floor(value)` retains its existing `i64` result.
 
 ```nx
 import std.math
