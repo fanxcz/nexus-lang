@@ -12,9 +12,17 @@ fn tilemap_create(width: i64, height: i64) -> i64 {
     if width > 262144 / height { return 0 }
 
     let cells = ilist_new()
+    if !ilist_reserve(cells, width * height) {
+        ilist_free(cells)
+        return 0
+    }
+
     let mut i = 0
     while i < width * height {
-        ilist_push(cells, 0)
+        if !ilist_push_checked(cells, 0) {
+            ilist_free(cells)
+            return 0
+        }
         i = i + 1
     }
     return cells
@@ -30,4 +38,19 @@ fn tilemap_set(map: i64, width: i64, height: i64, x: i64, y: i64, tile: i64) {
     if !tilemap_valid(map, width, height) { return }
     if x < 0 || y < 0 || x >= width || y >= height { return }
     ilist_set(map, y * width + x, tile)
+}
+fn tilemap_try_set(map: i64, width: i64, height: i64, x: i64, y: i64, tile: i64) -> bool {
+    if !tilemap_valid(map, width, height) { return false }
+    if x < 0 || y < 0 || x >= width || y >= height { return false }
+    return ilist_set_checked(map, y * width + x, tile)
+}
+
+fn tilemap_destroy(map: i64) -> bool {
+    if map <= 0 { return false }
+    return ilist_free(map)
+}
+
+// Void-returning companion suitable for a defer statement.
+fn tilemap_dispose(map: i64) {
+    let _ = tilemap_destroy(map)
 }
