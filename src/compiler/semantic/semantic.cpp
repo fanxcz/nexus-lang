@@ -560,8 +560,13 @@ namespace nexus {
                                                  describeType(actual) + "'");
                 } else if (auto* e = dynamic_cast<ExprStmt*>(s.get()))
                     expr(e->expr.get(), env);
-
-                else if (auto* r = dynamic_cast<ReturnStmt*>(s.get())) {
+                else if (auto* d = dynamic_cast<DeferStmt*>(s.get())) {
+                    if (!dynamic_cast<CallExpr*>(d->call.get()))
+                        throw std::runtime_error("defer requires a function call");
+                    const auto deferredType = expr(d->call.get(), env);
+                    if (deferredType.kind != TypeKind::Void)
+                        throw std::runtime_error("defer requires a call returning void");
+                } else if (auto* r = dynamic_cast<ReturnStmt*>(s.get())) {
                     auto t = r->expr ? expr(r->expr.get(), env) : Type::void_();
                     if (!sameType(t, ret))
                         throw std::runtime_error("return expects '" + describeType(ret) +
