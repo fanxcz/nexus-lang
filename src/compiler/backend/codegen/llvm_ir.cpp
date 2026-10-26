@@ -1257,6 +1257,14 @@ namespace nexus {
 
             emitModule("declare double @nexus_sqrt(double)");
 
+            emitModule("declare double @nexus_sin(double)");
+            emitModule("declare double @nexus_cos(double)");
+            emitModule("declare double @nexus_tan(double)");
+            emitModule("declare double @nexus_atan2(double, double)");
+            emitModule("declare double @nexus_floor(double)");
+            emitModule("declare double @nexus_ceil(double)");
+            emitModule("declare double @nexus_pow(double, double)");
+
             emitModule("declare double @nexus_to_f64(i64)");
 
             emitModule("declare i64 @nexus_to_i64(double)");
