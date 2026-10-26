@@ -7,7 +7,9 @@ Core convenience wrappers for the existing runtime window, frame loop, input and
 - `engine2d_begin_frame(red, green, blue, alpha)`: polls events, begins drawing and clears the frame.
 - `engine2d_end_frame()`
 - `engine2d_delta_time() -> f64`: clamps the runtime delta time to 0–0.05 seconds.
-- `engine2d_key_down(key) -> bool`, `engine2d_should_close() -> bool`
+- `engine2d_key_down(key) -> bool`: held keyboard state.
+- `engine2d_key_pressed(key) -> bool`: non-repeated key-down edge for the current event-poll frame.
+- `engine2d_should_close() -> bool`
 - `engine2d_mouse_x() -> f64`, `engine2d_mouse_y() -> f64`
 - `engine2d_mouse_down(button) -> bool`: held state.
 - `engine2d_mouse_clicked(button) -> bool`: one-frame press.

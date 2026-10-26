@@ -29,6 +29,11 @@ fn engine2d_key_down(key: string) -> bool {
     return gfx_key_down(key)
 }
 
+// True only during the frame a non-repeated key-down event arrives.
+fn engine2d_key_pressed(key: string) -> bool {
+    return gfx_key_pressed(key)
+}
+
 fn engine2d_mouse_x() -> f64 {
     return gfx_mouse_x()
 }

@@ -601,6 +601,8 @@ namespace {
     static double gLastFrame = 0.0;
 
     static std::vector<uint8_t> gKeys(512, 0);
+    // Keys pressed during the current event-poll frame (edge-triggered).
+    static std::vector<uint8_t> gKeyPressed(512, 0);
 
     static std::array<uint8_t, 8> gMouseButtons{};
 
@@ -1389,6 +1391,7 @@ namespace {
         gLastEvent = 0;
         gLastKey = -1;
         gLastMouseButton = 0;
+        std::fill(gKeyPressed.begin(), gKeyPressed.end(), uint8_t(0));
         gMouseClickedButtons.fill(0);
     }
     static void process_events() {
@@ -1407,8 +1410,11 @@ namespace {
                 gClose = true;
             } else if (e.type == SDL_KEYDOWN) {
                 gLastKey = int(e.key.keysym.scancode);
-                if (gLastKey >= 0 && gLastKey < int(gKeys.size()))
+                if (gLastKey >= 0 && gLastKey < int(gKeys.size())) {
                     gKeys[size_t(gLastKey)] = 1;
+                    if (e.key.repeat == 0)
+                        gKeyPressed[size_t(gLastKey)] = 1;
+                }
                 // Escape closes the window by default (SDL_SCANCODE_ESCAPE == 41).
                 if (gLastKey == 41)
                     gClose = true;
@@ -3986,6 +3992,15 @@ bool nexus_gfx_key_down(const char* name) {
     int n = 0;
     const uint8_t* k = SDL_GetKeyboardState(&n);
     return sc < n && k != nullptr && k[sc] != 0;
+}
+
+bool nexus_gfx_key_pressed(const char* name) {
+    if (!gGraphics)
+        return false;
+    const int64_t sc = scancode_for(name);
+    if (sc < 0 || sc >= int64_t(gKeyPressed.size()))
+        return false;
+    return gKeyPressed[size_t(sc)] != 0;
 }
 double nexus_gfx_dt() {
     double n = now_seconds();

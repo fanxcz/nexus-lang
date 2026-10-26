@@ -305,6 +305,9 @@ namespace nexus {
         if (name == "gfx_key_down")
             return BuiltinSignature{name, {T::string()}, T::boolean(), "nexus_gfx_key_down"};
 
+        if (name == "gfx_key_pressed")
+            return BuiltinSignature{name, {T::string()}, T::boolean(), "nexus_gfx_key_pressed"};
+
         if (name == "gfx_dt")
             return BuiltinSignature{name, {}, T::f64(), "nexus_gfx_dt"};
 

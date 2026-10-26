@@ -1232,6 +1232,8 @@ namespace nexus {
 
             emitModule("declare i1 @nexus_gfx_key_down(ptr)");
 
+            emitModule("declare i1 @nexus_gfx_key_pressed(ptr)");
+
             emitModule("declare double @nexus_gfx_dt()");
 
             emitModule("declare void @nexus_gfx_begin()");

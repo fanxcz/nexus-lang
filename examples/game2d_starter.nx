@@ -54,7 +54,7 @@ fn main() {
 
         if physics2d_on_ground(map, map_width, map_height, tile_size,
                                player_x, player_y, player_width, player_height) &&
-           engine2d_key_down("SPACE") {
+           engine2d_key_pressed("SPACE") {
             velocity_y = physics2d_jump_velocity(900.0, 76.0)
         }
 
