@@ -22,6 +22,10 @@ fn main() {
         print("cos pi/2 failed")
         return
     }
+    if math_cos(0.0) != 1.0 {
+        print("std.math math_cos wrapper failed")
+        return
+    }
     let half_cosine = cos(pi)
     if half_cosine < -1.00001 || half_cosine > -0.99999 {
         print("cos pi failed")
@@ -32,20 +36,29 @@ fn main() {
         print("tan pi/4 failed")
         return
     }
+    if math_tan(0.0) != 0.0 {
+        print("std.math math_tan wrapper failed")
+        return
+    }
     let angle = atan2(1.0, 0.0)
     if angle < 1.57078 || angle > 1.57082 {
         print("atan2 failed")
         return
     }
-    if floor(-1.25) != -2.0 {
+    let wrapper_angle = math_atan2(1.0, 0.0)
+    if wrapper_angle < 1.57078 || wrapper_angle > 1.57082 {
+        print("std.math math_atan2 wrapper failed")
+        return
+    }
+    if floor(-1.25) != -2.0 || math_floor_f64(-1.25) != -2.0 {
         print("floor negative failed")
         return
     }
-    if ceil(-1.25) != -1.0 {
+    if ceil(-1.25) != -1.0 || math_ceil_f64(-1.25) != -1.0 {
         print("ceil negative failed")
         return
     }
-    if pow(2.0, 3.0) != 8.0 {
+    if pow(2.0, 3.0) != 8.0 || math_pow(2.0, 3.0) != 8.0 {
         print("pow failed")
         return
     }
