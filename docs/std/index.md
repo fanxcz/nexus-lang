@@ -17,6 +17,7 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.os](os.md) | `args_count`, `args_get` |
 | [std.string](string.md) | `len`, `byte_at`, `byte_len` |
 | [std.math](math.md) | Scalar math helpers |
+| [std.collections](collections.md) | Checked integer and string growable lists |
 | [std.engine2d](engine2d.md) | Core 2D window/frame/input/drawing helpers |
 | [std.tilemap](tilemap.md) | Tilemap data storage and safe access |
 | [std.collision2d](collision2d.md) | AABB, circle and tilemap collision movement |
