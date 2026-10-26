@@ -1,6 +1,18 @@
 # `std.math`
 
 Import `std.math` for scalar helpers shared by gameplay and simulations.
+NEXUS also provides floating-point math built-ins that can be called directly
+from any module; they do not require a separate import:
+
+- `sqrt(x)`, `sin(x)`, `cos(x)`, and `tan(x)` accept and return `f64`.
+- `atan2(y, x)` returns the angle in radians using the conventional
+  two-argument arctangent order.
+- `floor(x)` and `ceil(x)` return rounded `f64` values. Use
+  `math_floor(x)` when you specifically need an `i64` rounded down.
+- `pow(base, exponent)` calculates a floating-point power.
+
+Angles are in radians. These built-ins are implemented by the native runtime
+and available to the LLVM compilation backend.
 
 - `math_clamp(value, minimum, maximum) -> f64`: clamps to the inclusive bounds; reversed bounds are normalized.
 - `math_min(a, b) -> f64` and `math_max(a, b) -> f64`.
