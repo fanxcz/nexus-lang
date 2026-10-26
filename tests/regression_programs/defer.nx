@@ -1,0 +1,37 @@
+fn emit(text: string) {
+    print(text)
+}
+
+fn return_with_cleanup() -> i64 {
+    let message = "return-cleanup"
+    defer emit(message)
+    return 9
+}
+
+fn main() {
+    let mut message = "captured"
+    defer emit("first")
+    defer emit(message)
+    message = "changed"
+
+    if true {
+        defer emit("nested")
+        print("inside")
+    }
+
+    print(return_with_cleanup())
+
+    while true {
+        defer emit("break-cleanup")
+        break
+    }
+
+    let mut i = 0
+    while i < 2 {
+        i += 1
+        defer emit("iteration")
+        if i < 2 {
+            continue
+        }
+    }
+}
