@@ -20,3 +20,21 @@ fn option_unwrap(value: Option) -> i64 {
     }
     return 0
 }
+
+// Safe extraction: returns false for None and leaves the output unchanged.
+fn option_try_unwrap(value: Option, out: *i64) -> bool {
+    match value {
+        Option::Some(item) => { *out = item; return true }
+        Option::None => { return false }
+    }
+    return false
+}
+
+// Explicit fallback is safer than silently treating None as numeric zero.
+fn option_unwrap_or(value: Option, fallback: i64) -> i64 {
+    match value {
+        Option::Some(item) => { return item }
+        Option::None => { return fallback }
+    }
+    return fallback
+}

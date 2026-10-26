@@ -461,6 +461,14 @@ if (NEXUS_BUILD_TESTS)
     set_tests_properties(nexus_enum_payloads_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
         TIMEOUT 45)
+    add_test(NAME nexus_stdlib_error_helpers_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/stdlib_error_helpers_smoke.cmake)
+    set_tests_properties(nexus_stdlib_error_helpers_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 45)
     add_test(NAME nexus_ui_library_smoke
         COMMAND ${CMAKE_COMMAND}
             -DNEXUS_BIN=$<TARGET_FILE:nexus>

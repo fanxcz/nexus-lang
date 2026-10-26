@@ -1,0 +1,48 @@
+import std.option
+import std.result
+
+fn main() {
+    let some_value = option_some(17)
+    let mut output: i64 = -1
+    if !option_try_unwrap(some_value, &output) || output != 17 {
+        print("stdlib error helpers: FAIL option success")
+        return
+    }
+    if option_try_unwrap(option_none(), &output) || output != 17 {
+        print("stdlib error helpers: FAIL option none output")
+        return
+    }
+    if option_unwrap_or(option_none(), 9) != 9 ||
+       option_unwrap_or(option_some(5), 9) != 5 {
+        print("stdlib error helpers: FAIL option fallback")
+        return
+    }
+
+    let success = result_ok(42)
+    if !result_try_unwrap(success, &output) || output != 42 {
+        print("stdlib error helpers: FAIL result success")
+        return
+    }
+    let failure = result_err("read failed")
+    if result_try_unwrap(failure, &output) || output != 42 {
+        print("stdlib error helpers: FAIL result error output")
+        return
+    }
+    if result_unwrap_or(failure, -3) != -3 ||
+       result_unwrap_or(success, -3) != 42 {
+        print("stdlib error helpers: FAIL result fallback")
+        return
+    }
+
+    let mut message = "unchanged"
+    if !result_try_error(failure, &message) || message != "read failed" {
+        print("stdlib error helpers: FAIL error text")
+        return
+    }
+    if result_try_error(success, &message) || message != "read failed" {
+        print("stdlib error helpers: FAIL success has no error")
+        return
+    }
+
+    print("NEXUS stdlib error helpers: PASS")
+}

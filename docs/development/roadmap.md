@@ -15,6 +15,7 @@ The main product goal is to make NEXUS a dependable language for building native
 5. Add end-to-end example apps that test a practical workflow (for example, a small notes or file-inspection tool) from a clean install through build, launch, and shutdown.
 
 **Completion criterion:** a multi-file desktop utility can be created from the documented template, built on a declared supported host, and packaged with its runtime resources so it works on a clean machine. Each advertised platform needs its own CI or release-artifact validation.
+
 ## Available today
 
 - C++20 compiler with lexer, parser, semantic analysis, LLVM IR generation, and a Clang-based native fallback. Acyclic source imports load once per compilation; circular import chains are rejected with a path trace.

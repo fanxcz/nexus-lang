@@ -9,6 +9,7 @@ The current checked-in standard library consists of small wrapper modules. Impor
 | [`std.io`](io.md) | `read_line`, `read_i64`, `read_f64` | Prompted console input |
 | [`std.fs`](fs.md) | `fs_read`, `fs_read_checked`, `fs_write`, `fs_exists` | Whole-file string I/O, including unambiguous checked reads |
 | [`std.collections`](collections.md) | `int_list_*`, `string_list_*` | Checked typed growable lists; not generic containers |
+| [`std.option`](../language/error-handling.md) / [`std.result`](../language/error-handling.md) | `option_try_unwrap`, `result_try_unwrap`, `result_try_error` | Concrete i64 payload helpers; not generic types |
 | [`std.net`](net.md) | `http_get_text` | One simple HTTP GET text helper |
 | [`std.json`](json.md) | `json_field` | Simple scalar field extraction |
 | [`std.db`](db.md) | `db_open`, `db_exec`, `db_close` | Open SQLite, execute SQL and close |

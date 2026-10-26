@@ -89,7 +89,8 @@ namespace nexus {
                 bool everyArmReturns = !match->arms.empty();
                 for (const auto& arm : match->arms) {
                     hasWildcard = hasWildcard ||
-                                  ((arm.wildcard || !arm.binding.empty()) && !arm.guard);
+                                  ((arm.wildcard || (!arm.binding.empty() && !arm.pattern)) &&
+                                   !arm.guard);
                     if (!arm.body || !blockAlwaysReturns(*arm.body)) {
                         everyArmReturns = false;
                     }

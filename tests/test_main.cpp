@@ -248,6 +248,31 @@ int main() {
                 return 4;
         }
         {
+            // A payload binding matches only its enum variant; it is not a catch-all.
+            bool failed = false;
+            try {
+                auto p = parse(
+                    "enum Maybe { Some(i64), None } "
+                    "fn choose(value: Maybe) -> i64 { "
+                    "match value { Maybe::Some(number) => { return number } } } "
+                    "fn main(){ print(choose(Maybe::Some(3))) }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& e) {
+                failed = std::string(e.what()).find(
+                    "function may exit without returning a value: choose") != std::string::npos;
+            }
+            if (!failed)
+                return 45;
+        }
+        {
+            // A binding pattern without an explicit value pattern does cover all values.
+            auto p = parse(
+                "fn identity(value: i64) -> i64 { "
+                "match value { item => { return item } } } "
+                "fn main(){ print(identity(7)) }");
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
             auto p = parse("fn choose(flag: bool)->i64 { if flag { return 1 } return 2 } fn "
                            "main(){ print(choose(false)) }");
             nexus::SemanticAnalyzer().analyze(p);

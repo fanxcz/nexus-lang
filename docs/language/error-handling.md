@@ -50,6 +50,46 @@ fn main() {
 
 The current runtime representation supports `i64`, `f64`, `bool`, `string`, and pointer payloads. Struct, array, nested enum, and void payloads are rejected. This is not a generic algebraic data type implementation; use concrete enum declarations with a single supported payload type.
 
+## Safe helpers for concrete Option and Result enums
+
+The standard library contains non-generic `Option` and `Result` enums for
+`i64` payloads. Prefer the explicit checked extraction helpers when a zero or
+other default value would hide an error:
+
+```nx
+import std.option
+import std.result
+
+fn main() {
+    let maybe_count = option_some(12)
+    let mut count: i64 = 0
+    if option_try_unwrap(maybe_count, &count) {
+        print(count)
+    } else {
+        print("No count")
+    }
+
+    let loaded = result_err("settings file is missing")
+    let mut message = ""
+    if result_try_error(loaded, &message) {
+        print(message)
+    }
+}
+```
+
+- `option_try_unwrap(value, &out) -> bool` returns false for `None` and does
+  not overwrite the output.
+- `option_unwrap_or(value, fallback) -> i64` makes the fallback explicit.
+- `result_try_unwrap(value, &out) -> bool` returns false for `Err` and leaves
+  the output unchanged.
+- `result_unwrap_or(value, fallback) -> i64` supplies an explicit fallback.
+- `result_try_error(value, &out) -> bool` copies the error string into the
+  output only for `Err`.
+
+The legacy `option_unwrap` and `result_unwrap` still return numeric zero for a
+missing value/error; avoid them when zero could be a valid result. These are
+concrete helpers, not generic `Option<T>` or `Result<T, E>` types.
+
 ## Propagate an enum with `?`
 
 The LLVM backend supports `?` when the expression has an enum with a matching `Some(T)/None` or `Ok(T)/Err` pair, and the enclosing function returns that same enum type:
