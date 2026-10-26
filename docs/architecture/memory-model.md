@@ -7,7 +7,7 @@ NEXUS 1.1.0 generates native code and does not provide a tracing garbage collect
 - Keep ownership of allocations explicit and pair each allocation with the matching release operation.
 - Avoid using pointers after the object or backing allocation has been released.
 - Treat runtime objects as main-thread-owned unless a specific API documents thread safety.
-- Use `defer` where supported to keep cleanup close to resource acquisition.
+- Use `defer` for calls returning `void`; the LLVM backend executes deferred calls in LIFO order on normal scope exit, `return`, `break`, and `continue`. Its current built-in x86-64 backend rejects `defer`, and process aborts do not run language cleanup.
 
 ## Current limitations
 
