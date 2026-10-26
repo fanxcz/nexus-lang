@@ -23,6 +23,8 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.1.1.exe.sha256.txt){ download="NEXUS-Setup-2.1.1.exe.sha256.txt" }
 
+    For a fresh source checkout, you can also launch [`Install-NEXUS.bat`](https://github.com/fanxcz/nexus-lang/blob/main/Install-NEXUS.bat). It downloads the official installer and verifies SHA-256 before opening the setup wizard.
+
 -   :material-archive: **NEXUS Portable · Windows x64**
 
     Contains the compiler launcher, compiler, bundled Zig-based toolchain, SDL runtime DLLs, standard library, templates, examples and helper scripts. Extract the entire ZIP to a writable folder; do not move component folders separately.

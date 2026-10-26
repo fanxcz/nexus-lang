@@ -8,7 +8,7 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
-**Windows installer:** download `NEXUS-Setup-2.1.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**Windows installer:** download `NEXUS-Setup-2.1.1.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
@@ -21,7 +21,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 ## Install on Windows 11
 
 1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-2. Download `NEXUS-Setup-2.1.0.exe` only from an official project artifact.
+2. Download `NEXUS-Setup-2.1.1.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
 5. Open a **new** PowerShell window and verify:

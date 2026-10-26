@@ -10,7 +10,7 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
-**Windows installer:** download `NEXUS-Setup-2.1.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**Windows installer:** download `NEXUS-Setup-2.1.1.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 **One-click bootstrap:** run [`install_nexus.bat`](install_nexus.bat) from a checkout of this repository. It downloads the official installer and checksum, verifies SHA-256, then launches setup.
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
@@ -20,6 +20,14 @@
 NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
 
 Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Games remain a supported area for graphics and runtime experimentation.
+
+## What's new in 2.1.1
+
+- Adds single-line UTF-8 text input to the native UI runtime, including stable widget IDs, focus cycling with Tab, Enter confirmation and Escape cancellation.
+- Adds safe checked extraction and explicit fallback helpers for concrete `Option` and `Result` enums.
+- Fixes a semantic-analysis bug where matching a single enum payload variant could be mistaken for covering every return path.
+- Tightens CLI argument validation so invalid benchmark counts and unsupported `lint` options fail with explicit diagnostics.
+- Rebuilds the Windows installer from the current source tree; the website workflow validates the executable, its checksum, and a clean install/launch before deployment.
 
 ## What's new in 2.1.0
 
@@ -53,7 +61,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 ## Install on Windows 11
 
 1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-2. Download `NEXUS-Setup-2.1.0.exe` only from an official project artifact.
+2. Download `NEXUS-Setup-2.1.1.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
 5. Open a **new** PowerShell window and verify:
@@ -69,6 +77,8 @@ If `nexus` is not recognized, reopen the terminal first. If it still is not reco
 ```powershell
 & "$env:LOCALAPPDATA\Programs\NEXUS\nexus.cmd" --version
 ```
+
+From a fresh source checkout, double-click the root-level `Install-NEXUS.bat`. It downloads the official installer, verifies its SHA-256 checksum, and launches the setup wizard. An internet connection and Windows PowerShell are required.
 
 The Windows installer is unsigned, so Windows SmartScreen may show a warning. Verify that the file came from this repository's official GitHub Actions/Pages output before deciding whether to run it. Never download installers from third-party mirrors.
 
