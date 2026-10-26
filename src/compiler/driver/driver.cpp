@@ -4590,7 +4590,7 @@ namespace nexus {
                                         } else {
                                             description << "\n\nVariants:";
                                             for (const auto& variant : declaration.variants) {
-                                                description << "\n- `" << variant << "`";
+                                                description << "\n- `" << variant.name << "`";
                                             }
                                         }
                                         markdown = description.str();
@@ -4705,7 +4705,7 @@ namespace nexus {
                                                 description << "\n\nVariants:";
                                                 for (const auto& variant : declaration.variants)
                                                     description << "\n- " << static_cast<char>(96)
-                                                                << variant << static_cast<char>(96);
+                                                                << variant.name << static_cast<char>(96);
                                             }
                                             markdown = description.str();
                                             break;
@@ -4834,7 +4834,7 @@ namespace nexus {
                                     if (declaration.name != enumName)
                                         continue;
                                     for (const auto& variant : declaration.variants) {
-                                        const std::string label = declaration.name + "::" + variant;
+                                        const std::string label = declaration.name + "::" + variant.name;
                                         if (prefix.empty() ||
                                             label.rfind(enumName + "::" + prefix, 0) == 0)
                                             choices.emplace_back(label, "Variant of " + enumName);
@@ -7291,3 +7291,5 @@ namespace nexus {
     }
 
 } // namespace nexus
+
+

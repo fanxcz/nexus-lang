@@ -143,11 +143,11 @@ namespace nexus {
             }
             std::unordered_map<std::string, bool> variantNames;
             for (const auto& variant : e.variants) {
-                if (variantNames.contains(variant))
-                    report("duplicate enum variant '" + variant + "' in enum '" + e.name + "'",
+                if (variantNames.contains(variant.name))
+                    report("duplicate enum variant '" + variant.name + "' in enum '" + e.name + "'",
                            e.span);
                 else
-                    variantNames[variant] = true;
+                    variantNames[variant.name] = true;
             }
         }
         for (auto& f : p.functions) {
@@ -266,7 +266,7 @@ namespace nexus {
             auto& en = getEnum(ev->enumName);
             bool ok = false;
             for (auto& v : en.variants)
-                if (v == ev->variant) {
+                if (v.name == ev->variant) {
                     ok = true;
                     break;
                 }

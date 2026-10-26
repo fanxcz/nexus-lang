@@ -120,7 +120,7 @@ namespace nexus {
         long long enumTag(const EnumVariantExpr& e) const {
             const auto& en = getEnum(e.enumName);
             for (std::size_t i = 0; i < en.variants.size(); ++i)
-                if (en.variants[i] == e.variant)
+                if (en.variants[i].name == e.variant)
                     return static_cast<long long>(i);
             throw std::runtime_error("unknown enum variant in codegen");
         }

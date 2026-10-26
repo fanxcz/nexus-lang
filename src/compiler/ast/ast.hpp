@@ -272,9 +272,15 @@ namespace nexus {
         SourceSpan span{};
     };
 
+    struct EnumVariant {
+        std::string name;
+        std::optional<Type> payload;
+        SourceSpan span{};
+    };
+
     struct EnumDecl {
         std::string name;
-        std::vector<std::string> variants;
+        std::vector<EnumVariant> variants;
         SourceSpan span{};
     };
 

@@ -40,6 +40,26 @@ For a single checked operation, use `file_read_checked(path, &content) -> bool` 
 | `db_open(path)` | Handle 0 on failure |
 | `db_exec(handle, sql)` | SQLite result code; 0 means success |
 
+## Formal semantics for typed errors (planned)
+
+The compiler does not yet implement `Option<T>`, `Result<T, E>`, payload-bearing
+enums used as error types, or `?`.  The intended rules are:
+
+- `Option<T>` has two variants: `Some(T)` and `None`.
+- `Result<T, E>` has two variants: `Ok(T)` and `Err(E)`.
+- Enum variants may carry a single payload type: `Variant(Type)`.
+- A function returning `Result<T, E>` may use `expr?` only when `expr` has type
+  `Result<U, E>` or `Option<U>` with a compatible error type.  The operator
+  evaluates `expr`; on `Ok`/`Some` it unwraps the value, on `Err`/`None` it
+  returns immediately from the enclosing function.
+- Every `match` on `Option` or `Result` must be exhaustive unless a wildcard arm
+  is present.
+- Payload data is owned by the enum value; copying or moving follows the same
+  runtime contract as structs.
+
+These rules are not yet enforced by the compiler.  Enum declarations with payload
+syntax now parse, but code generation and runtime support are still pending.
+
 ## Cleanup with `defer`
 
 `defer` is useful for cleanup that should happen regardless of how a normal

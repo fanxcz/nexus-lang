@@ -231,7 +231,13 @@ namespace nexus {
         e.name = expectIdentifier();
         expect(TokenKind::LBrace);
         while (cur().kind != TokenKind::RBrace && cur().kind != TokenKind::End) {
-            e.variants.push_back(expectIdentifier());
+            EnumVariant variant;
+            variant.name = expectIdentifier();
+            if (accept(TokenKind::LParen)) {
+                variant.payload = parseType();
+                expect(TokenKind::RParen);
+            }
+            e.variants.push_back(std::move(variant));
             accept(TokenKind::Comma);
             accept(TokenKind::Semicolon);
         }
