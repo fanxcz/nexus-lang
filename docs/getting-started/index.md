@@ -38,7 +38,7 @@ The compiler's built-in native backend supports a defined language subset withou
 
 ```bash
 nexus --version
-# nexus 1.1.0
+# NEXUS version reported by the installed compiler
 ```
 
 ## Next Steps

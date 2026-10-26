@@ -1,6 +1,6 @@
 # Tooling Commands
 
-The CLI reference below matches the commands implemented by NEXUS 1.1.0. Options that are not listed here should not be assumed to exist; unsupported options produce an error.
+This reference documents the CLI workflow in the current NEXUS 2.1.0 source tree. Command options can vary by installed build; use `nexus --help` and `nexus doctor` to verify the local compiler and toolchain. Unsupported options produce an error.
 
 ## Interactive terminal
 

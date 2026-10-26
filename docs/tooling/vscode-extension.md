@@ -1,6 +1,6 @@
 # VS Code extension for NEXUS
 
-The repository contains the VS Code extension at `.github/project-tools/vscode-extension/`. It provides `.nx` syntax highlighting, snippets, and a client for the NEXUS Language Server, which supplies diagnostics, basic completion and basic go-to-definition.
+The repository contains the VS Code extension at `.github/project-tools/vscode-extension/`. It provides `.nx` syntax highlighting, snippets, and a client for the NEXUS Language Server.
 
 ## 1. Install NEXUS
 
@@ -15,7 +15,7 @@ On Windows, install the NEXUS portable bundle, add it to PATH and reopen VS Code
 
 ## 2. Build the installable VSIX
 
-Open a terminal at the root of your cloned `fanxcz/nexus` repository and run:
+Open a terminal at the root of your cloned `fanxcz/nexus-lang` repository and run:
 
 ```sh
 cd .github/project-tools/vscode-extension
@@ -23,21 +23,21 @@ npm install
 npx --yes @vscode/vsce package
 ```
 
-This creates `nexus-language-1.1.0.vsix` in the extension directory. You need Node.js/npm and network access for this one-time dependency download. The resulting VSIX includes its runtime dependency; it does not bundle the NEXUS compiler.
+This creates a VSIX whose name includes the extension package version (currently `nexus-language-2.1.0.vsix`) in the extension directory. You need Node.js/npm and network access for this one-time dependency download. The resulting VSIX includes its runtime dependency; it does not bundle the NEXUS compiler.
 
 ## 3. Install in VS Code
 
 1. Open VS Code.
 2. Press **Ctrl+Shift+P** (on macOS, **Cmd+Shift+P**).
 3. Run **Extensions: Install from VSIX...**.
-4. Select `.github/project-tools/vscode-extension/fanxcz.nexus-language-1.1.0.vsix`.
+4. Select `.github/project-tools/vscode-extension/nexus-language-2.1.0.vsix`.
 5. Reload VS Code when prompted.
 6. Open any `.nx` source file. The language selector should display **NEXUS**.
 
 You can also install it from the repository root with:
 
 ```sh
-code --install-extension .github/project-tools/vscode-extension/fanxcz.nexus-language-1.1.0.vsix
+code --install-extension .github/project-tools/vscode-extension/nexus-language-2.1.0.vsix
 ```
 
 The extension is not yet published on the VS Code Marketplace, so installing from VSIX is the available route.
@@ -52,7 +52,7 @@ The extension automatically starts `nexus lsp` for `.nx` files. If your NEXUS la
 }
 ```
 
-Use the **NEXUS Language Server** output channel to diagnose startup issues. The current LSP supports compiler diagnostics, basic completion and declaration navigation among open documents; it does not yet provide full workspace indexing, rename/references, hover/type details, a debugger or format-on-save.
+Use the **NEXUS Language Server** output channel to diagnose startup issues. The source tree currently implements diagnostics, completion, signature help, hover, definition/references/rename for indexed declarations, workspace symbols, formatting, and quick fixes. Resolution still has known type-inference and import-alias limits; a source-level debugger/debug adapter is not included.
 
 ## Troubleshooting
 

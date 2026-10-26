@@ -1,6 +1,6 @@
 # Type System
 
-The current compiler has a small static type system with inference for initialized bindings. Supported built-in types are `i64`, `f64`, `bool`, `string` and `void`; `int` / `isize` / `usize` are currently aliases of the compiler's integer type, and `float` aliases its floating-point type. User-defined structs and unit enums, pointers and fixed-size arrays are also supported.
+The current compiler has a small static type system with inference for initialized bindings. Supported built-in types are `i64`, `f64`, `bool`, `string` and `void`; `int` / `isize` / `usize` are currently aliases of the compiler's integer type, and `float` aliases its floating-point type. User-defined structs, enums with a single scalar payload per variant, pointers and fixed-size arrays are also supported.
 
 ## Built-in types
 
@@ -64,7 +64,7 @@ Array types require a compile-time length, and the array literal must contain at
 
 Slices and dynamically sized generic vectors are not currently supported by this type system. The `std.collections` module does provide separately typed growable lists for `i64` values and strings, but these are opaque runtime handles rather than generic value types.
 
-## Structs and unit enums
+## Structs and enums
 
 ```nx
 struct Player {
@@ -85,7 +85,7 @@ fn main() {
 }
 ```
 
-Struct fields and enum variants are statically checked. Enums currently contain named unit variants only; payload variants and tagged-union pattern matching are not supported by the parser.
+Struct fields and enum variants are statically checked. Enum variants may be unit variants or carry one payload of type `i64`, `f64`, `bool`, `string`, or pointer. Payload matching uses a binding pattern such as `Payload::Value(value)`. Generic enum payload types, multiple payload fields, structs/arrays/nested enums as payloads, and general exhaustiveness checking are not implemented. The LLVM backend currently represents enum values as a tag plus one 64-bit payload slot; the built-in native backend has a smaller supported subset.
 
 ## Pointers
 

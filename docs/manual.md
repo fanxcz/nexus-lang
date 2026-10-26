@@ -289,9 +289,7 @@ fn color_name(color: Color) -> string {
 }
 ```
 
-Variants do not carry payload data in the current language. Enum values have an
-integer representation, but the compiler does not expose it; use `match` rather
-than relying on numeric values.
+Enum variants may carry a single supported payload, for example `Result::Ok(42)` or `Result::Err("bad input")`. Use `match` to inspect the variant and bind its payload; do not rely on the internal tag representation. See the [current type reference](language/types.md) for supported payload types and limitations.
 
 ### 6.4 Array types
 
@@ -1452,8 +1450,8 @@ that documentation and examples do not imply support that does not exist.
 | Async/await and concurrency | not implemented |
 | Lambdas and closures | not implemented |
 | Function overloading | not implemented; function names must be unique |
-| `Option<T>` / `Result<T, E>` | not implemented; enums have no payloads |
-| Enum payloads and destructuring | not implemented |
+| Generic `Option<T>` / `Result<T, E>` | not implemented; use concrete payload enums |
+| Enum payloads | implemented for one scalar payload (`i64`, `f64`, `bool`, `string`, pointer) on the LLVM path; generic/nested payloads are unsupported |
 | `match` exhaustiveness checking | not implemented; unmatched values fall through |
 | Iterators and lazy sequences | not implemented |
 | Macros, attributes, `#[...]` | not implemented |
