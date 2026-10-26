@@ -15,28 +15,30 @@ fn collision2d_circle(ax: f64, ay: f64, ar: f64,
 // Point-vs-AABB and circle-vs-AABB helpers for UI, pickups and projectiles.
 fn collision2d_point_aabb(px: f64, py: f64, x: f64, y: f64,
                           width: f64, height: f64) -> bool {
-    if width <= 0.0 || height <= 0.0 { return false }
+    // Validate finite coordinates, positive size and finite right/bottom edges.
+    if !physics_aabb(x, y, width, height, x, y, width, height) { return false }
     return px >= x && py >= y && px <= x + width && py <= y + height
 }
 
 fn collision2d_circle_aabb(cx: f64, cy: f64, radius: f64,
                            x: f64, y: f64, width: f64, height: f64) -> bool {
-    if radius < 0.0 || width <= 0.0 || height <= 0.0 { return false }
+    if !physics_aabb(x, y, width, height, x, y, width, height) { return false }
+    // This self-circle query validates the circle center and radius as well.
+    if !physics_circle(cx, cy, radius, cx, cy, 0.0) { return false }
     let mut closest_x = cx
     let mut closest_y = cy
     if closest_x < x { closest_x = x }
     if closest_x > x + width { closest_x = x + width }
     if closest_y < y { closest_y = y }
     if closest_y > y + height { closest_y = y + height }
-    let dx = cx - closest_x
-    let dy = cy - closest_y
-    return dx * dx + dy * dy <= radius * radius
+    return physics_circle(cx, cy, radius, closest_x, closest_y, 0.0)
 }
 
 // Returns overlapping rectangle area; zero means separated or just touching.
 fn collision2d_aabb_overlap_area(ax: f64, ay: f64, aw: f64, ah: f64,
                                  bx: f64, by: f64, bw: f64, bh: f64) -> f64 {
-    if aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0 { return 0.0 }
+    // Invalid geometry, separated boxes and edge-only contact all have zero area.
+    if !collision2d_aabb(ax, ay, aw, ah, bx, by, bw, bh) { return 0.0 }
     let left = math_max(ax, bx)
     let top = math_max(ay, by)
     let right = math_min(ax + aw, bx + bw)
@@ -49,7 +51,13 @@ fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
                             tile_size: f64, x: f64, y: f64,
                             box_width: f64, box_height: f64) -> bool {
     if !tilemap_valid(map, map_width, map_height) { return false }
-    if tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 { return false }
+    if tile_size < 1.0 ||
+       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) {
+        return false
+    }
+    if !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
+        return false
+    }
 
     let mut left = math_floor(x / tile_size)
     let mut top = math_floor(y / tile_size)
@@ -104,11 +112,17 @@ fn collision2d_row_solid(map: i64, map_width: i64, map_height: i64,
 fn collision2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
                       x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
     if !tilemap_valid(map, map_width, map_height) { return x }
-    if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
+    if delta == 0.0 { return x }
+    if tile_size < 1.0 ||
+       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) ||
+       !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
         return x
     }
 
     let target = x + delta
+    if !physics_aabb(target, y, box_width, box_height, target, y, box_width, box_height) {
+        return x
+    }
     let mut top = math_floor(y / tile_size)
     let mut bottom = math_floor((y + box_height - 0.0001) / tile_size)
     if top < 0 { top = 0 }
@@ -148,11 +162,17 @@ fn collision2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
 fn collision2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
                       x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
     if !tilemap_valid(map, map_width, map_height) { return y }
-    if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
+    if delta == 0.0 { return y }
+    if tile_size < 1.0 ||
+       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) ||
+       !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
         return y
     }
 
     let target = y + delta
+    if !physics_aabb(x, target, box_width, box_height, x, target, box_width, box_height) {
+        return y
+    }
     let mut left = math_floor(x / tile_size)
     let mut right = math_floor((x + box_width - 0.0001) / tile_size)
     if left < 0 { left = 0 }

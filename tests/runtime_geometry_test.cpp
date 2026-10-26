@@ -1,9 +1,12 @@
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <limits>
 
 extern "C" char* nexus_ui_text_field(double x, double y, double w, double h,
                                       const char* current, const char* placeholder, int64_t maxBytes);
+extern "C" double nexus_ui_slider(double x, double y, double w, double h, double value);
 extern "C" bool nexus_physics_aabb(double ax, double ay, double aw, double ah,
                                    double bx, double by, double bw, double bh);
 extern "C" bool nexus_physics_circle(double ax, double ay, double ar,
@@ -45,5 +48,33 @@ int main() {
     ok &= expect(nexus_physics_circle(0, 0, 5, 7.1, 0, 2), false, "circles separated");
     ok &= expect(nexus_physics_circle(0, 0, -1, 0, 0, 2), false, "negative first radius");
     ok &= expect(nexus_physics_circle(0, 0, 1, 0, 0, -2), false, "negative second radius");
+
+    const double infinity = std::numeric_limits<double>::infinity();
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double largest = std::numeric_limits<double>::max();
+    ok &= expect(nexus_physics_aabb(0, 0, infinity, 10, 1, 1, 2, 2),
+                 false, "AABB rejects infinite dimensions");
+    ok &= expect(nexus_physics_aabb(nan, 0, 10, 10, 1, 1, 2, 2),
+                 false, "AABB rejects NaN coordinates");
+    ok &= expect(nexus_physics_aabb(largest, 0, largest, 10, 0, 0, 1, 1),
+                 false, "AABB rejects overflowed edges");
+    ok &= expect(nexus_physics_circle(0, 0, infinity, 1, 0, 1),
+                 false, "circle rejects infinite radius");
+    ok &= expect(nexus_physics_circle(nan, 0, 1, 0, 0, 1),
+                 false, "circle rejects NaN coordinates");
+    ok &= expect(nexus_physics_circle(largest, 0, 1, -largest, 0, 1),
+                 false, "circle rejects overflowed center distance");
+    ok &= expect(nexus_physics_circle(0, 0, largest, 1, 0, largest),
+                 false, "circle rejects overflowed radius sum");
+
+    // A NaN slider value must normalize deterministically, rather than reach graphics math.
+    ok &= expect(nexus_ui_slider(0, 0, 0, 10, nan) == 0.0, true,
+                 "slider maps NaN value to zero");
+    ok &= expect(nexus_ui_slider(0, 0, 0, 10, infinity) == 1.0, true,
+                 "slider clamps positive infinity");
+    ok &= expect(nexus_ui_slider(0, 0, 0, 10, -infinity) == 0.0, true,
+                 "slider clamps negative infinity");
+    ok &= expect(nexus_ui_slider(nan, 0, 10, 10, 0.5) == 0.5, true,
+                 "slider returns normalized value for invalid geometry");
     return ok ? 0 : 1;
 }

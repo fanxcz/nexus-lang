@@ -14,6 +14,6 @@ rotation, joints, or a physics world.
 - physics2d_move_x(...) and physics2d_move_y(...): resolve movement on one axis against positive solid tile IDs.
 - physics2d_on_ground(...): checks for a solid tile directly below the entity's AABB.
 
-Pass frame delta time in seconds. Clamp unusually large delta times after pauses/window stalls. Move horizontally and vertically separately; set vertical velocity to zero when a resolved move differs from the desired position. Coordinates grow downwards, so gravity/fall velocity is positive and jump velocity is negative.
+Pass frame delta time in seconds. Clamp unusually large delta times after pauses/window stalls. Move horizontally and vertically separately; set vertical velocity to zero when a resolved move differs from the desired position. `physics2d_on_ground` returns false for invalid/non-finite tile sizes or entity bounds. Coordinates grow downwards, so gravity/fall velocity is positive and jump velocity is negative.
 
 A complete, asset-free starting example is examples/game2d_starter.nx. It uses tilemap storage/rendering, collision, platformer physics, Vec2 camera helpers, animation curves and the core engine2d wrapper.

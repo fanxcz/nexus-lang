@@ -23,4 +23,10 @@ fn main() {
 }
 ```
 
+The runtime-backed AABB and circle predicates reject non-finite arguments and
+invalid dimensions or radii. Point/rectangle tests and tilemap movement also
+validate the rectangle and candidate position before performing grid arithmetic.
+AABB overlap is strict, so boxes touching only at an edge do not overlap; circle
+overlap includes tangency.
+
 Move X then Y and compare the returned position to the desired position to detect an impact. The mover sweeps the crossed tile columns/rows and returns the exact touching position, avoiding fixed-step tunnelling for large deltas. Overlap queries clamp the scan to the map, so a large bounding box does not iterate through out-of-map rows or columns. A starting box must not already overlap a solid tile. Out-of-map cells are treated as empty. This is not a rigid-body physics simulation.
