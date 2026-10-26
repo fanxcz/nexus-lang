@@ -549,6 +549,11 @@ jobs:
             config=".github/project-tools/repository-files/mkdocs.yml"
           fi
           mkdocs build --strict -f "$config"
+          if grep -Eq ':material-[[:alnum:]-]+:' site/index.html; then
+            echo "ERROR: Material icon shortcodes were emitted as literal text on the homepage." >&2
+            exit 1
+          fi
+          echo "PASS Material icon shortcodes were rendered on the homepage."
           python3 scripts/build_manual_pdf.py docs/manual.md site/pdf/NEXUS-Documentation.pdf
           test -s site/pdf/NEXUS-Documentation.pdf
           echo "PASS generated PDF documentation: site/pdf/NEXUS-Documentation.pdf"
