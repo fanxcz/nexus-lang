@@ -5,7 +5,7 @@ $fileName = "NEXUS-Setup-$version.exe"
 $baseUrl = 'https://fanxcz.github.io/nexus-lang/assets/downloads'
 $installerUrl = "$baseUrl/$fileName"
 $checksumUrl = "$installerUrl.sha256.txt"
-$workDir = Join-Path $env:TEMP 'NEXUS-Official-Installer'
+$workDir = Join-Path $env:TEMP ("NEXUS-Official-Installer-" + [guid]::NewGuid().ToString('N'))
 $installerPath = Join-Path $workDir $fileName
 $checksumPath = Join-Path $workDir "$fileName.sha256.txt"
 
@@ -58,5 +58,5 @@ catch {
     exit 1
 }
 finally {
-    Remove-Item -LiteralPath $checksumPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction SilentlyContinue
 }

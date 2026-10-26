@@ -6,7 +6,7 @@ Choose an installer for the simplest setup, or a portable ZIP if you do not want
 
 ## One-click Windows installation
 
-The repository root includes [`install_nexus.bat`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/install_nexus.bat). Download it and run it, or run it from a checkout of the repository. It downloads the official NEXUS Setup installer and its SHA-256 checksum, verifies the binary before execution, and then opens the normal per-user installer. It does not require administrator rights. The script only runs the installer if the checksum matches.
+The repository root includes [`Install-NEXUS.bat`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/Install-NEXUS.bat) and its companion [`Install-NEXUS.ps1`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/Install-NEXUS.ps1). Download both files into the same folder and run the BAT file, or run it from a checkout of the repository. It downloads the official NEXUS 2.1.1 Setup installer and its SHA-256 checksum, verifies the digest and recorded filename before execution, then opens the normal per-user installer. Administrator rights are not required.
 
 <div class="admonition info">
 <p class="admonition-title">Recommended Windows download</p>

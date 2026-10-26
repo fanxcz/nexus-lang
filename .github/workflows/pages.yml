@@ -21,7 +21,6 @@ on:
       - '.github/project-tools/installer/**'
       - '.github/project-tools/vscode-extension/**'
       - 'scripts/**'
-      - 'install_nexus.bat'
   pull_request:
   workflow_dispatch:
 
