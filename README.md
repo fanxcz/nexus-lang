@@ -20,6 +20,7 @@
 - Poker now renders distinct illustrated opponents, a stable spade cursor, smoothly orbiting turn markers and a compact hand-strength meter.
 - The poker example has a persistent cosmetic table-skin shop; its purchases use earned chips and do not change game rules or bot strength.
 - The LLVM compilation path adds floating-point `sin`, `cos`, `tan`, `atan2`, `floor`, `ceil` and `pow` built-ins for games and simulation.
+- The game standard library includes `Vec2` and `Vec3` values, camera follow and world/screen transforms, additional collision predicates, and easing/ping-pong animation curves. Try the playable [Vector Lab example](examples/vector_lab.nx).
 - Graphics runtime cursor visibility is idempotent: repeated requests for the same visibility state are skipped, avoiding redundant SDL cursor-state changes.
 - Release metadata, installer names and the VS Code language extension are aligned on version 2.1.0.
 
