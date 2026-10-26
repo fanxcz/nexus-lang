@@ -7109,14 +7109,23 @@ namespace nexus {
                 return initProject(root, root.filename().string(), templ, false);
             }
 
-            if (cmd == "info")
+            if (cmd == "info") {
+                if (argc != 2)
+                    throw std::runtime_error("info does not accept arguments");
                 return commandInfo();
+            }
 
-            if (cmd == "assets")
+            if (cmd == "assets") {
+                if (argc != 2)
+                    throw std::runtime_error("assets does not accept arguments");
                 return commandAssets();
+            }
 
-            if (cmd == "clean")
+            if (cmd == "clean") {
+                if (argc != 2)
+                    throw std::runtime_error("clean does not accept arguments");
                 return commandClean();
+            }
 
             if (cmd == "doctor") {
                 bool json = false;
@@ -7176,30 +7185,62 @@ namespace nexus {
                 return commandFmt(resolveInput(input), checkOnly);
             }
             if (cmd == "lint") {
-
-                const auto in = resolveInput(argc >= 3 && argv[2][0] != '-' ? argv[2] : "");
-
-                return commandLint(in);
+                std::string input;
+                for (int i = 2; i < argc; ++i) {
+                    const std::string option = argv[i];
+                    if (!option.empty() && option.front() == '-')
+                        throw std::runtime_error("unknown lint option: " + option);
+                    if (!input.empty())
+                        throw std::runtime_error("lint accepts only one source file");
+                    input = option;
+                }
+                return commandLint(resolveInput(input));
             }
-            if (cmd == "doc")
+            if (cmd == "doc") {
+                if (argc != 2)
+                    throw std::runtime_error("doc does not accept arguments");
                 return commandDoc();
+            }
 
             if (cmd == "bench") {
-
-                const auto in = resolveInput(argc >= 3 && argv[2][0] != '-' ? argv[2] : "");
-
+                std::string input;
                 int runs = 5;
+                const auto parsePositiveRuns = [](const std::string& value) {
+                    int parsed = 0;
+                    std::size_t consumed = 0;
+                    try {
+                        parsed = std::stoi(value, &consumed);
+                    } catch (const std::exception&) {
+                        throw std::runtime_error("bench --runs expects a positive integer");
+                    }
+                    if (consumed != value.size() || parsed <= 0)
+                        throw std::runtime_error("bench --runs expects a positive integer");
+                    return parsed;
+                };
+
                 for (int i = 2; i < argc; ++i) {
-                    std::string a = argv[i];
-                    if (a == "--runs" && i + 1 < argc)
-                        runs = std::stoi(argv[++i]);
-                    else if (a.rfind("--runs=", 0) == 0)
-                        runs = std::stoi(a.substr(7));
+                    const std::string option = argv[i];
+                    if (option == "--runs") {
+                        if (i + 1 >= argc)
+                            throw std::runtime_error("bench --runs requires a value");
+                        runs = parsePositiveRuns(argv[++i]);
+                    } else if (option.rfind("--runs=", 0) == 0) {
+                        runs = parsePositiveRuns(option.substr(7));
+                    } else if (!option.empty() && option.front() == '-') {
+                        throw std::runtime_error("unknown bench option: " + option);
+                    } else if (input.empty()) {
+                        input = option;
+                    } else {
+                        throw std::runtime_error("bench accepts only one source file");
+                    }
                 }
-                return commandBench(in, runs);
+                return commandBench(resolveInput(input), runs);
             }
-            if (cmd == "test")
+            if (cmd == "test") {
+                if (argc != 2)
+                    throw std::runtime_error("test does not accept arguments");
                 return commandTest();
+            }
 
             if (cmd == "export") {
                 std::vector<std::string> args;
