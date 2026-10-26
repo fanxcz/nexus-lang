@@ -1657,6 +1657,13 @@ The cursor-visibility API is idempotent: repeated requests for the current visib
 | Function |
 |----------|
 | `nexus_sqrt` |
+| `nexus_sin` |
+| `nexus_cos` |
+| `nexus_tan` |
+| `nexus_atan2` |
+| `nexus_floor` |
+| `nexus_ceil` |
+| `nexus_pow` |
 | `nexus_to_f64` |
 | `nexus_to_i64` |
 
