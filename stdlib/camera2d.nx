@@ -1,4 +1,57 @@
 // Camera helpers separated from the core renderer wrapper.
+import std.math
+import std.vec2
+
+// Smoothly moves a camera position towards the target using frame delta time.
+// speed <= 0 or dt <= 0 leaves the camera in place.
+fn camera2d_follow(current: Vec2, target: Vec2, speed: f64, dt: f64) -> Vec2 {
+    if speed <= 0.0 || dt <= 0.0 { return current }
+    let alpha = math_clamp(speed * dt, 0.0, 1.0)
+    return vec2_lerp(current, target, alpha)
+}
+
+// Convert world coordinates into screen coordinates for a centered viewport.
+// zoom must be positive; invalid zoom falls back to 1 to avoid division by zero.
+fn camera2d_world_to_screen(world: Vec2, position: Vec2, zoom: f64,
+                            viewport_width: f64, viewport_height: f64) -> Vec2 {
+    let mut z = zoom
+    if z <= 0.0 { z = 1.0 }
+    return vec2((world.x - position.x) * z + viewport_width * 0.5,
+                (world.y - position.y) * z + viewport_height * 0.5)
+}
+
+fn camera2d_screen_to_world(screen: Vec2, position: Vec2, zoom: f64,
+                            viewport_width: f64, viewport_height: f64) -> Vec2 {
+    let mut z = zoom
+    if z <= 0.0 { z = 1.0 }
+    return vec2((screen.x - viewport_width * 0.5) / z + position.x,
+                (screen.y - viewport_height * 0.5) / z + position.y)
+}
+
+// Clamp the camera center so that the viewport remains inside the world.
+// If the world is smaller than the viewport on an axis, center it on that axis.
+fn camera2d_clamp(position: Vec2, world_width: f64, world_height: f64,
+                  viewport_width: f64, viewport_height: f64, zoom: f64) -> Vec2 {
+    let mut z = zoom
+    if z <= 0.0 { z = 1.0 }
+    let half_w = viewport_width / (2.0 * z)
+    let half_h = viewport_height / (2.0 * z)
+    let mut x = position.x
+    let mut y = position.y
+    if world_width <= half_w * 2.0 {
+        x = world_width * 0.5
+    } else {
+        if x < half_w { x = half_w }
+        if x > world_width - half_w { x = world_width - half_w }
+    }
+    if world_height <= half_h * 2.0 {
+        y = world_height * 0.5
+    } else {
+        if y < half_h { y = half_h }
+        if y > world_height - half_h { y = world_height - half_h }
+    }
+    return vec2(x, y)
+}
 fn camera2d_set(x: f64, y: f64, zoom: f64) {
     gfx_camera_set(x, y, zoom)
 }
