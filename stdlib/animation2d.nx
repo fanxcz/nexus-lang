@@ -19,3 +19,38 @@ fn animation2d_next_frame(current: i64, frame_count: i64, looped: bool) -> i64 {
     if looped { return 0 }
     return frame_count - 1
 }
+
+// Smooth interpolation curves. All amount inputs are clamped to [0, 1].
+fn animation2d_ease_in(amount: f64) -> f64 {
+    let t = math_clamp(amount, 0.0, 1.0)
+    return t * t
+}
+
+fn animation2d_ease_out(amount: f64) -> f64 {
+    let t = math_clamp(amount, 0.0, 1.0)
+    return 1.0 - (1.0 - t) * (1.0 - t)
+}
+
+fn animation2d_ease_in_out(amount: f64) -> f64 {
+    let t = math_clamp(amount, 0.0, 1.0)
+    if t < 0.5 { return 2.0 * t * t }
+    let u = 1.0 - t
+    return 1.0 - 2.0 * u * u
+}
+
+fn animation2d_smoothstep(amount: f64) -> f64 {
+    let t = math_clamp(amount, 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+}
+
+// Repeating triangle wave from 0 to 1 to 0; non-positive duration returns 0.
+fn animation2d_ping_pong(elapsed_seconds: f64, duration: f64) -> f64 {
+    if duration <= 0.0 { return 0.0 }
+    let mut t = elapsed_seconds
+    if t < 0.0 { t = 0.0 }
+    let whole = math_floor(t / duration)
+    let phase = whole % 2
+    let local = (t / duration) - to_f64(whole)
+    if phase == 0 { return local }
+    return 1.0 - local
+}
