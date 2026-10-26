@@ -2555,6 +2555,27 @@ static char* nx_strdup(const char* src) {
 double nexus_sqrt(double x) {
     return std::sqrt(std::max(0.0, x));
 }
+double nexus_sin(double x) {
+    return std::sin(x);
+}
+double nexus_cos(double x) {
+    return std::cos(x);
+}
+double nexus_tan(double x) {
+    return std::tan(x);
+}
+double nexus_atan2(double y, double x) {
+    return std::atan2(y, x);
+}
+double nexus_floor(double x) {
+    return std::floor(x);
+}
+double nexus_ceil(double x) {
+    return std::ceil(x);
+}
+double nexus_pow(double base, double exponent) {
+    return std::pow(base, exponent);
+}
 double nexus_to_f64(int64_t x) {
     return double(x);
 }
