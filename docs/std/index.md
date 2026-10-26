@@ -8,7 +8,7 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 |---|---|
 | [Overview](overview.md) | Module map and limitations |
 | [std.io](io.md) | `read_line`, `read_i64`, `read_f64` |
-| [std.fs](fs.md) | `fs_read`, `fs_write`, `fs_exists` |
+| [std.fs](fs.md) | `fs_read`, `fs_read_checked`, `fs_write`, `fs_exists` |
 | [std.net](net.md) | `http_get_text` |
 | [std.json](json.md) | `json_field` |
 | [std.db](db.md) | `db_open`, `db_exec`, `db_close` |
