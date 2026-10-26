@@ -39,6 +39,6 @@ The source tree is copied under `vendor/<package-name>/`. To remove it later, us
 
 ## Current limitations
 
-The following capabilities are **not implemented**: a hosted registry, `nexus pkg login`, remote/Git dependencies, SemVer range solving, transitive dependency builds, signed packages, publisher authentication, reproducible archive verification, and registry operations such as unpublishing. Older examples that use those features will not work in the current NEXUS 2.1.0 project.
+The following capabilities are **not implemented**: a hosted registry, `nexus pkg login`, remote/Git dependencies, SemVer range solving, transitive dependency builds, signed packages, publisher authentication, reproducible archive verification, and registry operations such as unpublishing. Older examples that use those features will not work in the current NEXUS 2.1.1 project.
 
 See [Creating Packages](creating.md), [Using Packages](using.md), and [Publishing Packages](publishing.md) for the current workflow.

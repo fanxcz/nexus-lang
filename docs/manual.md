@@ -1,6 +1,6 @@
 # NEXUS Language Manual
 
-Version 2.1.0  
+Version 2.1.1  
 Author: fanxcz  
 Repository: https://github.com/fanxcz/nexus-lang
 

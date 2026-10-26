@@ -3,9 +3,9 @@ setlocal
 set "NEXUS_ROOT=%~dp0"
 set "PATH=%NEXUS_ROOT%;%NEXUS_ROOT%bin;%NEXUS_ROOT%runtime;%NEXUS_ROOT%toolchain;%PATH%"
 cd /d "%NEXUS_ROOT%"
-title NEXUS 2.1.0 Console
+title NEXUS 2.1.1 Console
 echo ============================================================
-echo   NEXUS 2.1.0 - native programming language
+echo   NEXUS 2.1.1 - native programming language
 echo ============================================================
 echo.
 echo Quick start:
