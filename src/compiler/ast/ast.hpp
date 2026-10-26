@@ -202,6 +202,11 @@ namespace nexus {
         Expr::Ptr expr;
     };
 
+    // Evaluate call arguments now and invoke the void-returning call when the scope exits.
+    struct DeferStmt : Stmt {
+        Expr::Ptr call;
+    };
+
     struct ReturnStmt : Stmt {
         Expr::Ptr expr;
     };
