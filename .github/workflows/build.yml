@@ -42,6 +42,15 @@ jobs:
         shell: pwsh
         run: .\build\nexus.exe check examples/poker_gui.nx
 
+      - name: Check Vector Lab example (POSIX)
+        if: runner.os != 'Windows'
+        run: ./build/nexus check examples/vector_lab.nx
+
+      - name: Check Vector Lab example (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\build\nexus.exe check examples/vector_lab.nx
+
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
