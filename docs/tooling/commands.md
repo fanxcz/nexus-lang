@@ -65,6 +65,10 @@ When you run `nexus run file.nx` from an already-open terminal, the output remai
 
 Double-clicking a console `.exe` directly is normal Windows behavior: the console window can close as soon as the process exits. Open the accompanying `Run-NAME.bat` instead when you need the final output to stay visible. The compiled `.exe` itself is not forced to pause, so command-line tools remain usable from scripts and other terminals.
 
+## Windows graphics runtime DLLs
+
+Windows builds that use the graphics/audio runtime load SDL2 dynamically. When the installed NEXUS runtime contains `SDL2.dll`, `SDL2_image.dll`, `SDL2_mixer.dll` and `SDL2_ttf.dll`, `nexus build` copies them next to the output executable after a successful build. That makes the `.exe` launchable by double-click and keeps it independent of the shell `PATH`. Copies are skipped when no installed SDL runtime is found, which is the normal case on Linux/macOS builds and on machines that only use the console subset.
+
 Supported build flags:
 
 - `nexus build [file.nx] [-o OUTPUT] [--target TRIPLE] [--backend auto|native|llvm] [--emit-ir] [--release]`

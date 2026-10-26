@@ -47,7 +47,7 @@ cd examples
 ./run_poker.bat
 ```
 
-`run_poker.bat` switches to the `examples/` directory, puts the installed SDL runtime on `PATH`, rebuilds the example with the LLVM backend and launches it, so it can be started from any directory. Running `poker_gui.exe` by hand still needs `NEXUS\runtime` on `PATH` (or the SDL DLLs next to the executable) and a working directory where `assets/` or `examples/assets/` resolves.
+`run_poker.bat` switches to the `examples/` directory, puts the installed SDL runtime on `PATH`, rebuilds the example with the LLVM backend and launches it, so it can be started from any directory. `nexus build` also copies the SDL DLLs next to the produced executable, so once `examples/poker_gui.exe` has been built it can be double-clicked directly; keep `assets/` (or the repository root) as the working directory so the textures and sounds resolve.
 
 ## Other application demos
 

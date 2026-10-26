@@ -800,6 +800,58 @@ namespace nexus {
                 "Nexus runtime not found; set NEXUS_RUNTIME_DIR or install the runtime files");
         }
 
+        // Directory that holds the optional SDL runtime DLLs. Unlike runtime.cpp,
+        // the DLLs are only present in packaged/installed layouts.
+        fs::path runtimeLibraryDir() {
+            std::vector<fs::path> candidates;
+            if (const char* env = std::getenv("NEXUS_RUNTIME_DIR"))
+                candidates.push_back(fs::path(env));
+#ifdef NEXUS_INSTALL_RUNTIME_DIR
+            // Installed layouts keep the SDL DLLs in <prefix>/runtime while the
+            // compiler sources live in <prefix>/share/nexus/runtime.
+            candidates.push_back(fs::path(NEXUS_INSTALL_RUNTIME_DIR)
+                                     .parent_path()
+                                     .parent_path()
+                                     .parent_path() /
+                                 "runtime");
+#endif
+            if (!gExecutable.empty()) {
+                const fs::path bin = fs::weakly_canonical(gExecutable).parent_path();
+                candidates.push_back(bin / "../runtime");
+                candidates.push_back(bin / "../share/nexus/runtime");
+            }
+            try {
+                candidates.push_back(runtimeSource().parent_path());
+            } catch (const std::exception&) {
+                // The compiler already fails earlier when the runtime is missing.
+            }
+            for (const auto& candidate : candidates) {
+                std::error_code ec;
+                if (fs::is_regular_file(candidate / "SDL2.dll", ec))
+                    return fs::weakly_canonical(candidate, ec);
+            }
+            return {};
+        }
+
+        // Copy the SDL DLLs next to a freshly built executable so double-clicking
+        // it works without editing PATH. No-op when no SDL runtime is installed.
+        void deployRuntimeLibraries(const fs::path& output) {
+            const fs::path source = runtimeLibraryDir();
+            if (source.empty())
+                return;
+            const fs::path destination = output.parent_path().empty() ? fs::path(".")
+                                                                      : output.parent_path();
+            for (const char* name :
+                 {"SDL2.dll", "SDL2_image.dll", "SDL2_mixer.dll", "SDL2_ttf.dll"}) {
+                std::error_code ec;
+                const fs::path from = source / name;
+                if (!fs::is_regular_file(from, ec))
+                    continue;
+                const fs::path to = destination / name;
+                fs::copy_file(from, to, fs::copy_options::overwrite_existing, ec);
+            }
+        }
+
         fs::path defaultOutput(const fs::path& input,
                                const std::string& explicitOutput,
                                bool release,
@@ -7269,6 +7321,9 @@ namespace nexus {
                 const auto out = defaultOutput(in, explicitOutput, release, windowsTarget);
 
                 const int rc = compileFile(in, out, target, emitIR, release ? 3 : 2, backend);
+
+                if (rc == 0 && windowsTarget)
+                    deployRuntimeLibraries(out);
 
                 if (cmd == "run" && rc == 0) {
                     const fs::path root =
