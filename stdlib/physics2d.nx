@@ -72,7 +72,13 @@ fn physics2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
 fn physics2d_on_ground(map: i64, map_width: i64, map_height: i64, tile_size: f64,
                        x: f64, y: f64, box_width: f64, box_height: f64) -> bool {
     if !tilemap_valid(map, map_width, map_height) { return false }
-    if tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 { return false }
+    if tile_size < 1.0 ||
+       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) {
+        return false
+    }
+    if !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
+        return false
+    }
     let below = y + box_height
     let left = math_floor(x / tile_size)
     let right = math_floor((x + box_width - 0.0001) / tile_size)
