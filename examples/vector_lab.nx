@@ -1,0 +1,127 @@
+// NEXUS Vector Lab: a tiny playable sample for vector, collision and animation APIs.
+// Move with WASD or arrows. Avoid the amber blocks and collect the cyan beacon.
+import std.engine2d
+import std.math
+import std.vec2
+import std.collision2d
+import std.animation2d
+
+fn blocked(x: f64, y: f64) -> bool {
+    if collision2d_circle_aabb(x, y, 18.0, 330.0, 95.0, 90.0, 220.0) { return true }
+    if collision2d_circle_aabb(x, y, 18.0, 500.0, 370.0, 95.0, 185.0) { return true }
+    if collision2d_circle_aabb(x, y, 18.0, 690.0, 145.0, 82.0, 115.0) { return true }
+    return false
+}
+
+fn main() {
+    if !engine2d_init(960, 640, "NEXUS Vector Lab") {
+        print("Graphics initialization failed: " + gfx_error())
+        return
+    }
+
+    let mut player = vec2(90.0, 310.0)
+    let move_speed = 245.0
+    let mut elapsed = 0.0
+    let mut score = 0
+    let mut beacon = 0
+
+    while !engine2d_should_close() {
+        engine2d_begin_frame(0.018, 0.027, 0.045, 1.0)
+        let dt = math_clamp(engine2d_delta_time(), 0.0, 0.05)
+        elapsed = elapsed + dt
+
+        let mut velocity = vec2_zero()
+        if engine2d_key_down("A") || engine2d_key_down("LEFT") {
+            velocity.x = velocity.x - move_speed
+        }
+        if engine2d_key_down("D") || engine2d_key_down("RIGHT") {
+            velocity.x = velocity.x + move_speed
+        }
+        if engine2d_key_down("W") || engine2d_key_down("UP") {
+            velocity.y = velocity.y - move_speed
+        }
+        if engine2d_key_down("S") || engine2d_key_down("DOWN") {
+            velocity.y = velocity.y + move_speed
+        }
+        if vec2_length_squared(velocity) > 0.0 {
+            velocity = vec2_scale(vec2_normalize(velocity), move_speed)
+        }
+
+        // Resolve X and Y independently so the player slides along obstacles.
+        let delta = vec2_scale(velocity, dt)
+        let next_x = player.x + delta.x
+        if !blocked(next_x, player.y) { player.x = next_x }
+        let next_y = player.y + delta.y
+        if !blocked(player.x, next_y) { player.y = next_y }
+
+        if player.x < 18.0 { player.x = 18.0 }
+        if player.x > 942.0 { player.x = 942.0 }
+        if player.y < 88.0 { player.y = 88.0 }
+        if player.y > 622.0 { player.y = 622.0 }
+
+        let mut beacon_x = 820.0
+        let mut beacon_y = 115.0
+        if beacon == 1 { beacon_x = 790.0; beacon_y = 555.0 }
+        if beacon == 2 { beacon_x = 190.0; beacon_y = 120.0 }
+        if collision2d_circle(player.x, player.y, 18.0, beacon_x, beacon_y, 18.0) {
+            score = score + 1
+            beacon = (beacon + 1) % 3
+        }
+
+        // Quiet background grid.
+        let mut gx = 0
+        while gx <= 24 {
+            engine2d_draw_rect(to_f64(gx) * 40.0, 80.0, 1.0, 560.0,
+                               0.18, 0.23, 0.29, 0.28)
+            gx = gx + 1
+        }
+        let mut gy = 2
+        while gy <= 16 {
+            engine2d_draw_rect(0.0, to_f64(gy) * 40.0, 960.0, 1.0,
+                               0.18, 0.23, 0.29, 0.28)
+            gy = gy + 1
+        }
+
+        engine2d_draw_rect(0.0, 0.0, 960.0, 72.0, 0.035, 0.049, 0.073, 1.0)
+        engine2d_draw_rect(0.0, 70.0, 960.0, 2.0, 0.20, 0.78, 0.92, 0.8)
+        engine2d_draw_text(24.0, 18.0, 2.0, "NEXUS VECTOR LAB",
+                           0.86, 0.94, 1.0, 1.0)
+        engine2d_draw_text(26.0, 48.0, 1.0, "MOVE: WASD / ARROWS    AVOID AMBER BLOCKS    COLLECT BEACONS",
+                           0.57, 0.68, 0.78, 1.0)
+
+        // Obstacles have an outer rim and a darker inset for depth.
+        engine2d_draw_rect(326.0, 91.0, 98.0, 228.0, 0.78, 0.48, 0.16, 1.0)
+        engine2d_draw_rect(332.0, 97.0, 86.0, 216.0, 0.12, 0.13, 0.16, 1.0)
+        engine2d_draw_rect(496.0, 366.0, 103.0, 193.0, 0.78, 0.48, 0.16, 1.0)
+        engine2d_draw_rect(502.0, 372.0, 91.0, 181.0, 0.12, 0.13, 0.16, 1.0)
+        engine2d_draw_rect(686.0, 141.0, 90.0, 125.0, 0.78, 0.48, 0.16, 1.0)
+        engine2d_draw_rect(692.0, 147.0, 78.0, 113.0, 0.12, 0.13, 0.16, 1.0)
+
+        let pulse = animation2d_ping_pong(elapsed, 0.65)
+        let pulse_radius = 16.0 + 9.0 * pulse
+        engine2d_draw_circle(beacon_x, beacon_y, pulse_radius + 8.0,
+                             0.10, 0.76, 0.92, 0.18)
+        engine2d_draw_circle(beacon_x, beacon_y, pulse_radius,
+                             0.10, 0.76, 0.92, 0.95)
+        engine2d_draw_circle(beacon_x, beacon_y, 5.0,
+                             0.92, 0.98, 1.0, 1.0)
+
+        // Vector-based player rendering makes the current position explicit.
+        engine2d_draw_circle(player.x, player.y, 24.0, 0.13, 0.55, 0.84, 0.35)
+        engine2d_draw_circle(player.x, player.y, 18.0, 0.22, 0.78, 1.0, 1.0)
+        engine2d_draw_circle(player.x - 5.0, player.y - 5.0, 5.0,
+                             0.92, 0.98, 1.0, 1.0)
+
+        engine2d_draw_rect(760.0, 82.0, 180.0, 54.0, 0.035, 0.049, 0.073, 0.96)
+        engine2d_draw_text(777.0, 91.0, 1.0, "BEACONS", 0.57, 0.68, 0.78, 1.0)
+        engine2d_draw_text(777.0, 108.0, 1.25, str_i64(score),
+                           0.25, 0.86, 0.96, 1.0)
+        engine2d_draw_text(24.0, 596.0, 1.0,
+                           "Vec2 length: " + str_i64(to_i64(vec2_length(player))),
+                           0.65, 0.73, 0.80, 1.0)
+
+        engine2d_end_frame()
+    }
+
+    engine2d_shutdown()
+}
