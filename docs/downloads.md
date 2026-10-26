@@ -15,31 +15,31 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     Installs the NEXUS compiler for the current user, including the bundled fallback toolchain, runtime files and standard library. It can add NEXUS to your user PATH and create shortcuts; administrator rights are not required.
 
-    [Download NEXUS Setup (.exe)](assets/downloads/NEXUS-Setup-2.0.0.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.0.0.exe" }
+    [Download NEXUS Setup (.exe)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.0.0.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.0.0.exe" }
 
-    [Download SHA-256 checksum](assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt){ download="NEXUS-Setup-2.0.0.exe.sha256.txt" }
+    [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt){ download="NEXUS-Setup-2.0.0.exe.sha256.txt" }
 
 -   :material-archive: **NEXUS Portable · Windows x64**
 
     Contains the compiler launcher, compiler, bundled Zig-based toolchain, SDL runtime DLLs, standard library, templates, examples and helper scripts. Extract the entire ZIP to a writable folder; do not move component folders separately.
 
-    [Download portable ZIP](assets/downloads/NEXUS_Windows_Portable.zip){ .md-button .md-button--primary download="NEXUS_Windows_Portable.zip" }
+    [Download portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip){ .md-button .md-button--primary download="NEXUS_Windows_Portable.zip" }
 
-    [Download SHA-256 checksum](assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt){ download="NEXUS_Windows_Portable.zip.sha256.txt" }
+    [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt){ download="NEXUS_Windows_Portable.zip.sha256.txt" }
 
 -   :material-palette: **NEXUS Paint · Windows x64**
 
     Desktop raster drawing application with brush, eraser, line/rectangle tools, fill, colour palette, undo/redo and BMP save/load. The **EXE is an installer**, not the standalone app. It installs Paint with its runtime DLLs and creates a Start menu shortcut. To launch Paint without installation, download the portable ZIP below.
 
-    [Download NEXUS Paint installer (.exe)](assets/downloads/NEXUS-Paint-Windows-x64.exe){ .md-button .md-button--primary download="NEXUS-Paint-Windows-x64.exe" }
+    [Download NEXUS Paint installer (.exe)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe){ .md-button .md-button--primary download="NEXUS-Paint-Windows-x64.exe" }
 
-    [Installer SHA-256 checksum](assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt){ download="NEXUS-Paint-Windows-x64.exe.sha256.txt" }
+    [Installer SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt){ download="NEXUS-Paint-Windows-x64.exe.sha256.txt" }
 
     Prefer no installation? The portable ZIP includes `NEXUS-Paint.exe`, its runtime DLLs and editable `.nx` source.
 
-    [Download Paint portable ZIP](assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button download="NEXUS-Paint-Windows-x64.zip" }
+    [Download Paint portable ZIP](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip){ .md-button download="NEXUS-Paint-Windows-x64.zip" }
 
-    [ZIP SHA-256 checksum](assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt){ download="NEXUS-Paint-Windows-x64.zip.sha256.txt" }
+    [ZIP SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt){ download="NEXUS-Paint-Windows-x64.zip.sha256.txt" }
 
     [View Paint source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 
@@ -47,9 +47,9 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     Syntax highlighting and snippets for `.nx` files, with project LSP integration guidance.
 
-    [Download VSIX](assets/downloads/NEXUS-Language-2.0.2.vsix){ .md-button download="NEXUS-Language-2.0.2.vsix" }
+    [Download VSIX](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.0.2.vsix){ .md-button download="NEXUS-Language-2.0.2.vsix" }
 
-    [VSIX SHA-256 checksum](assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt){ download="NEXUS-Language-2.0.2.vsix.sha256.txt" }
+    [VSIX SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt){ download="NEXUS-Language-2.0.2.vsix.sha256.txt" }
 
 -   :material-monitor: **NEXUS Studio**
 
