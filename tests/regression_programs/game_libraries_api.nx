@@ -70,6 +70,14 @@ fn main() {
         print("NEXUS game libraries: FAIL tile collision")
         return
     }
+    if physics2d_on_ground(map, 4, 4, 0.0, 32.0, 64.0, 24.0, 24.0) {
+        print("NEXUS game libraries: FAIL ground check invalid tile size")
+        return
+    }
+    if physics2d_on_ground(map, 4, 4, 32.0, 32.0, 64.0, 0.0, 24.0) {
+        print("NEXUS game libraries: FAIL ground check zero-width box")
+        return
+    }
 
     if physics2d_jump_velocity(800.0, 64.0) != -320.0 {
         print("NEXUS game libraries: FAIL jump velocity")
