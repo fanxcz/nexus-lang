@@ -577,7 +577,7 @@ Strings can also be iterated by Unicode code point. The loop variable has type
 `string.from_char` to encode the current code point back to UTF-8:
 
 ```nx
-let text = "A\\u{00E9}\\u{1F642}"
+let text = "A\u{00E9}\u{1F642}"
 for codepoint in text {
     print(string.from_char(codepoint))
 }
