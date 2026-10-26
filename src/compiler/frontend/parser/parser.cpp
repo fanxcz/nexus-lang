@@ -284,6 +284,7 @@ namespace nexus {
             case TokenKind::KwFor:
             case TokenKind::KwBreak:
             case TokenKind::KwContinue:
+            case TokenKind::KwDefer:
             case TokenKind::KwMatch:
             case TokenKind::KwUnsafe:
                 return true;
@@ -359,6 +360,13 @@ namespace nexus {
             accept(TokenKind::Semicolon);
             auto s = std::make_unique<ReturnStmt>();
             s->expr = std::move(e);
+            return s;
+        }
+        if (accept(TokenKind::KwDefer)) {
+            auto call = parseExpr();
+            accept(TokenKind::Semicolon);
+            auto s = std::make_unique<DeferStmt>();
+            s->call = std::move(call);
             return s;
         }
         if (accept(TokenKind::KwIf)) {
