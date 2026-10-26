@@ -22,6 +22,6 @@ From the repository root:
 python examples/assets/generate_assets.py
 ```
 
-The generator requires Pillow for image generation and uses Python's standard `wave` module for audio. Its current entry point regenerates card textures, the table texture, and Poker sound effects. It does not rewrite `ui/cursor.png`.
+The generator requires Pillow for image generation and uses Python's standard `wave` module for audio. It regenerates the card textures, table texture, custom spade cursor, and Poker sound effects.
 
 Asset paths in examples are sometimes repository-relative, so run programs from the repository root unless their launcher explicitly changes the working directory. The Poker launcher is `examples/run_poker.bat`.
