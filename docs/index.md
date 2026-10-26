@@ -7,7 +7,7 @@ hide:
 
 # NEXUS — native programming, clear and practical
 
-A compiled, statically checked language for command-line tools, native applications and 2D games. Start with a tiny program, use the standard library, and build native applications when you're ready.
+A compiled, statically checked language for native desktop applications, command-line utilities, and developer tools. Start with a tiny program, use the standard library and UI helpers, then package a native application. Graphics and games remain supported use cases.
 
 [Start learning](getting-started/index.md){ .md-button .md-button--primary }
 [Download NEXUS](downloads.md){ .md-button }
@@ -56,15 +56,21 @@ The compiler checks source code before building. Run `nexus doctor` if the compi
 
 -   :material-package-variant-closed: **Standard library**
 
-    Explore I/O, files, strings, JSON, networking, math and modular 2D-game helpers.
+    Explore files, strings, JSON, networking, math, collections, UI layout and runtime helpers.
 
     [Library modules](std/index.md)
 
--   :material-gamepad-variant-outline: **Build 2D games**
+-   :material-desktop-classic: **Build native apps**
 
-    See the runtime graphics API, tilemap storage, collision helpers, sprites, frame animation, camera and audio wrappers.
+    Create a windowed app or CLI utility, use immediate-mode widgets, and explore the current runtime and development workflow.
 
-    [2D game libraries](runtime/game2d.md)
+    [Application development](applications.md)
+
+-   :material-gamepad-variant-outline: **2D graphics and games**
+
+    Explore tilemaps, collision helpers, sprites, animation, camera and audio wrappers.
+
+    [2D runtime libraries](runtime/game2d.md)
 
 -   :material-download-box-outline: **Downloads**
 
@@ -83,11 +89,11 @@ The compiler checks source code before building. Run `nexus doctor` if the compi
 ## What is implemented today
 
 - **Compiler:** C++20 front end, semantic checks, LLVM/Clang compilation path, and a built-in x86-64 backend for a documented subset.
-- **Runtime:** console/file helpers, UTF-8 strings, SDL-backed 2D drawing, optional 3D and audio, and small game-oriented helpers.
+- **Runtime:** console/file helpers, UTF-8 strings, SDL-backed 2D drawing, optional 3D/audio, and immediate-mode UI widgets.
 - **Developer tools:** project templates, formatter/linter, diagnostics, language server, REPL, test suite and portable Windows packaging.
-- **Gaming libraries:** separate modules for math, 2D window/input/drawing, tilemaps, collisions, sprites, animation, camera and audio.
+- **Application and graphics libraries:** typed math helpers, UI layout/controls, file/network/database utilities, and modular tilemap/sprite/camera/audio helpers.
 
-NEXUS is actively developed. The built-in native backend does not support every language feature, and the game helpers are not a complete rigid-body engine. The [language overview](language/overview.md) and [platform support matrix](development/platform-support.md) describe current limits.
+NEXUS is actively developed. The built-in native backend supports a documented subset of the language; broader programs may need LLVM/Clang. The UI module is immediate-mode rather than a full widget framework, and the 2D physics helpers are not a rigid-body engine. The [language overview](language/overview.md) and [platform support matrix](development/platform-support.md) describe current limits.
 
 ## Documentation and community
 

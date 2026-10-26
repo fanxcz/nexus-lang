@@ -10,7 +10,7 @@ The runtime exposes built-in functions to NEXUS programs. This reference describ
 | [2D Game Helpers and Tilemaps](game2d.md) | Tilemap cells, rendering, AABB collision and axis-separated movement |
 | [Graphics 2D](graphics-2d.md) | Drawing primitives, textures, fonts and CPU raster canvas |
 | [Graphics 3D](graphics-3d.md) | Cubes, grid and experimental model loading |
-| [Input](input.md) | Keyboard/mouse state and window events |
+| [Input](input.md) | Held and edge-triggered keyboard/mouse state and window events |
 | [Audio](audio.md) | Sound/music helpers and audio availability |
 | [UI](ui.md) | Immediate drawing widgets |
 | [ECS](ecs.md) | Simple built-in entity helpers |
