@@ -18,10 +18,15 @@ fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
     if !tilemap_valid(map, map_width, map_height) { return false }
     if tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 { return false }
 
-    let left = math_floor(x / tile_size)
-    let top = math_floor(y / tile_size)
-    let right = math_floor((x + box_width - 0.0001) / tile_size)
-    let bottom = math_floor((y + box_height - 0.0001) / tile_size)
+    let mut left = math_floor(x / tile_size)
+    let mut top = math_floor(y / tile_size)
+    let mut right = math_floor((x + box_width - 0.0001) / tile_size)
+    let mut bottom = math_floor((y + box_height - 0.0001) / tile_size)
+    if left < 0 { left = 0 }
+    if top < 0 { top = 0 }
+    if right >= map_width { right = map_width - 1 }
+    if bottom >= map_height { bottom = map_height - 1 }
+    if left > right || top > bottom || left >= map_width || top >= map_height { return false }
 
     let mut ty = top
     while ty <= bottom {

@@ -48,6 +48,10 @@ fn main() {
         print("NEXUS game libraries: FAIL AABB")
         return
     }
+    if !collision2d_circle(0.0, 0.0, 10.0, 15.0, 0.0, 6.0) {
+        print("NEXUS game libraries: FAIL circle")
+        return
+    }
     if !collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
         print("NEXUS game libraries: FAIL tile collision")
         return

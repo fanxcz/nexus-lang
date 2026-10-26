@@ -26,6 +26,10 @@ fn main() {
         print("NEXUS tilemap: FAIL empty-cell overlap")
         return
     }
+    if collision2d_map_overlaps(map, 4, 4, 32.0, -100000.0, 0.0, 1.0, 100000000.0) {
+        print("NEXUS tilemap: FAIL out-of-map overlap")
+        return
+    }
 
     let hit_x = collision2d_move_x(map, 4, 4, 32.0, 0.0, 64.0, 24.0, 24.0, 64.0)
     if hit_x < 7.8 || hit_x > 8.1 {
