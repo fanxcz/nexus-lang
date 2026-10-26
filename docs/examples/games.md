@@ -31,6 +31,24 @@ nexus run examples/nexus_arena.nx
 
 [`examples/game2d_platformer.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx) is a no-external-assets platformer demo using `std.tilemap`: grid-based platforms, horizontal/vertical collision resolution, gravity, jumping and a simple colored tile renderer. The tilemap API is documented under [2D Game Helpers and Tilemaps](../runtime/game2d.md).
 
+## NEXUS Poker
+
+[`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed Texas Hold'em game against an AI dealer built on `std.engine2d`, `std.sprite2d` and `std.audio2d`.
+
+- 52 generated card textures plus a card back under `examples/assets/cards/`.
+- Staggered deal animation: each card slides from the deck to its seat.
+- Bet-size buttons on keys `1`-`5` (50 / 100 / 200 / 500 / all-in, plus a 25 ante).
+- Dealer AI evaluates its made seven-card hand and folds, calls or raises; a raise the player cannot match forces a fold.
+- Distinct WAV effects for deal, chips, win, lose and fold under `examples/assets/sounds/`.
+- Chip stack persists between sessions in `poker_save.txt`; `R` resets it to 1000.
+
+```bash
+cd examples
+./run_poker.bat
+```
+
+`run_poker.bat` puts the installed SDL runtime on `PATH`, rebuilds the example with the LLVM backend and launches it. Keep the working directory at `examples/` (or the repository root) so the relative asset paths resolve.
+
 ## Other application demos
 
 - `examples/nexus_focus.nx`: graphical focus/break timer with mouse buttons, sound tone and a small session-count file.

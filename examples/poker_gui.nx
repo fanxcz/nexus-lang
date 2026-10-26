@@ -1,9 +1,11 @@
-// Graphical Texas Hold'em poker for NEXUS (SDL window)
-// Controls: SPACE = deal, 1-5 = bet, F = fold, R = reset, ESC = quit
-// Features: animations, colored suits, betting, sound
+// NEXUS Poker - Texas Hold'em against an AI dealer (SDL window)
+// Controls: SPACE = deal / continue, 1-5 = bet size, R = reset chips, ESC = quit
+// Features: card textures, deal animation, dealer AI, distinct sounds, chip persistence
 import std.engine2d
 import std.math
 import std.audio2d
+import std.sprite2d
+import std.string
 
 fn rank_name(r: i64) -> string {
     if r == 0 { return "2" } if r == 1 { return "3" } if r == 2 { return "4" }
@@ -16,7 +18,6 @@ fn suit_char(s: i64) -> string {
     if s == 0 { return "s" } if s == 1 { return "h" } if s == 2 { return "d" }
     return "c"
 }
-fn suit_red(s: i64) -> bool { return s == 1 || s == 2 }
 fn card_str(c: i64) -> string { return rank_name(c / 4) + suit_char(c % 4) }
 
 fn sort5(a: i64, b: i64, c: i64, d: i64, e: i64) -> [i64; 5] {
@@ -25,7 +26,7 @@ fn sort5(a: i64, b: i64, c: i64, d: i64, e: i64) -> [i64; 5] {
     while i < 4 {
         let mut j = 0
         while j < 4 - i {
-            if v[j] < v[j+1] { let tmp = v[j]; v[j] = v[j+1]; v[j+1] = tmp }
+            if v[j] < v[j + 1] { let tmp = v[j]; v[j] = v[j + 1]; v[j + 1] = tmp }
             j = j + 1
         }
         i = i + 1
@@ -39,134 +40,253 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
     let r2 = c2 / 4; let s2 = c2 % 4
     let r3 = c3 / 4; let s3 = c3 % 4
     let r4 = c4 / 4; let s4 = c4 % 4
-    let mut rc0=0;let mut rc1=0;let mut rc2=0;let mut rc3=0;let mut rc4=0;let mut rc5=0;let mut rc6=0;let mut rc7=0;let mut rc8=0;let mut rc9=0;let mut rc10=0;let mut rc11=0;let mut rc12=0
-    let ranks = [r0,r1,r2,r3,r4]
+    let mut rc0 = 0; let mut rc1 = 0; let mut rc2 = 0; let mut rc3 = 0
+    let mut rc4 = 0; let mut rc5 = 0; let mut rc6 = 0; let mut rc7 = 0
+    let mut rc8 = 0; let mut rc9 = 0; let mut rc10 = 0; let mut rc11 = 0
+    let mut rc12 = 0
+    let ranks = [r0, r1, r2, r3, r4]
     let mut i = 0
     while i < 5 {
         let rv = ranks[i]
-        if rv==0{rc0=rc0+1} if rv==1{rc1=rc1+1} if rv==2{rc2=rc2+1} if rv==3{rc3=rc3+1} if rv==4{rc4=rc4+1}
-        if rv==5{rc5=rc5+1} if rv==6{rc6=rc6+1} if rv==7{rc7=rc7+1} if rv==8{rc8=rc8+1} if rv==9{rc9=rc9+1}
-        if rv==10{rc10=rc10+1} if rv==11{rc11=rc11+1} if rv==12{rc12=rc12+1}
+        if rv == 0 { rc0 = rc0 + 1 } if rv == 1 { rc1 = rc1 + 1 }
+        if rv == 2 { rc2 = rc2 + 1 } if rv == 3 { rc3 = rc3 + 1 }
+        if rv == 4 { rc4 = rc4 + 1 } if rv == 5 { rc5 = rc5 + 1 }
+        if rv == 6 { rc6 = rc6 + 1 } if rv == 7 { rc7 = rc7 + 1 }
+        if rv == 8 { rc8 = rc8 + 1 } if rv == 9 { rc9 = rc9 + 1 }
+        if rv == 10 { rc10 = rc10 + 1 } if rv == 11 { rc11 = rc11 + 1 }
+        if rv == 12 { rc12 = rc12 + 1 }
         i = i + 1
     }
-    let rcs = [rc0,rc1,rc2,rc3,rc4,rc5,rc6,rc7,rc8,rc9,rc10,rc11,rc12]
-    let mut sc0=0;let mut sc1=0;let mut sc2=0;let mut sc3=0
-    if s0==0{sc0=sc0+1} if s0==1{sc1=sc1+1} if s0==2{sc2=sc2+1} if s0==3{sc3=sc3+1}
-    if s1==0{sc0=sc0+1} if s1==1{sc1=sc1+1} if s1==2{sc2=sc2+1} if s1==3{sc3=sc3+1}
-    if s2==0{sc0=sc0+1} if s2==1{sc1=sc1+1} if s2==2{sc2=sc2+1} if s2==3{sc3=sc3+1}
-    if s3==0{sc0=sc0+1} if s3==1{sc1=sc1+1} if s3==2{sc2=sc2+1} if s3==3{sc3=sc3+1}
-    if s4==0{sc0=sc0+1} if s4==1{sc1=sc1+1} if s4==2{sc2=sc2+1} if s4==3{sc3=sc3+1}
-    let mut flush=0
-    if sc0>=5{flush=1} if sc1>=5{flush=1} if sc2>=5{flush=1} if sc3>=5{flush=1}
-    let mut straight=0; i=0
-    while i<=8 { if rcs[i]>0 && rcs[i+1]>0 && rcs[i+2]>0 && rcs[i+3]>0 && rcs[i+4]>0 { straight=1 } i=i+1 }
-    if rcs[12]>0 && rcs[0]>0 && rcs[1]>0 && rcs[2]>0 && rcs[3]>0 { straight=1 }
-    let mut pairs=0;let mut trips=0;let mut quads=0; i=0
-    while i<13 { if rcs[i]==2{pairs=pairs+1} if rcs[i]==3{trips=trips+1} if rcs[i]==4{quads=quads+1} i=i+1 }
-    let mut cat=0
-    if pairs>0{cat=1} if pairs>=2{cat=2} if trips>0{cat=3} if straight==1{cat=4}
-    if flush==1{cat=5} if trips>0 && pairs>0{cat=6} if quads>0{cat=7} if straight==1 && flush==1{cat=8}
-    if straight==1 && flush==1 && rcs[12]>0 && rcs[8]>0 && rcs[9]>0 && rcs[10]>0 && rcs[11]>0 { cat=9 }
-    let sorted = sort5(r0,r1,r2,r3,r4)
-    let kick = sorted[0]*100000 + sorted[1]*1000 + sorted[2]*10 + sorted[3]
-    return cat*10000000 + kick
+    let rcs = [rc0, rc1, rc2, rc3, rc4, rc5, rc6, rc7, rc8, rc9, rc10, rc11, rc12]
+    let mut sc0 = 0; let mut sc1 = 0; let mut sc2 = 0; let mut sc3 = 0
+    if s0 == 0 { sc0 = sc0 + 1 } if s0 == 1 { sc1 = sc1 + 1 }
+    if s0 == 2 { sc2 = sc2 + 1 } if s0 == 3 { sc3 = sc3 + 1 }
+    if s1 == 0 { sc0 = sc0 + 1 } if s1 == 1 { sc1 = sc1 + 1 }
+    if s1 == 2 { sc2 = sc2 + 1 } if s1 == 3 { sc3 = sc3 + 1 }
+    if s2 == 0 { sc0 = sc0 + 1 } if s2 == 1 { sc1 = sc1 + 1 }
+    if s2 == 2 { sc2 = sc2 + 1 } if s2 == 3 { sc3 = sc3 + 1 }
+    if s3 == 0 { sc0 = sc0 + 1 } if s3 == 1 { sc1 = sc1 + 1 }
+    if s3 == 2 { sc2 = sc2 + 1 } if s3 == 3 { sc3 = sc3 + 1 }
+    if s4 == 0 { sc0 = sc0 + 1 } if s4 == 1 { sc1 = sc1 + 1 }
+    if s4 == 2 { sc2 = sc2 + 1 } if s4 == 3 { sc3 = sc3 + 1 }
+    let mut flush = 0
+    if sc0 >= 5 { flush = 1 } if sc1 >= 5 { flush = 1 }
+    if sc2 >= 5 { flush = 1 } if sc3 >= 5 { flush = 1 }
+    let mut straight = 0
+    i = 0
+    while i <= 8 {
+        if rcs[i] > 0 && rcs[i + 1] > 0 && rcs[i + 2] > 0 && rcs[i + 3] > 0 && rcs[i + 4] > 0 { straight = 1 }
+        i = i + 1
+    }
+    if rcs[12] > 0 && rcs[0] > 0 && rcs[1] > 0 && rcs[2] > 0 && rcs[3] > 0 { straight = 1 }
+    let mut pairs = 0; let mut trips = 0; let mut quads = 0
+    i = 0
+    while i < 13 {
+        if rcs[i] == 2 { pairs = pairs + 1 }
+        if rcs[i] == 3 { trips = trips + 1 }
+        if rcs[i] == 4 { quads = quads + 1 }
+        i = i + 1
+    }
+    let mut cat = 0
+    if pairs > 0 { cat = 1 } if pairs >= 2 { cat = 2 }
+    if trips > 0 { cat = 3 } if straight == 1 { cat = 4 }
+    if flush == 1 { cat = 5 } if trips > 0 && pairs > 0 { cat = 6 }
+    if quads > 0 { cat = 7 } if straight == 1 && flush == 1 { cat = 8 }
+    if straight == 1 && flush == 1 && rcs[12] > 0 && rcs[8] > 0 && rcs[9] > 0 && rcs[10] > 0 && rcs[11] > 0 { cat = 9 }
+    let sorted = sort5(r0, r1, r2, r3, r4)
+    let kick = sorted[0] * 100000 + sorted[1] * 1000 + sorted[2] * 10 + sorted[3]
+    return cat * 10000000 + kick
 }
 
-fn best_of_seven(c0:i64,c1:i64,c2:i64,c3:i64,c4:i64,c5:i64,c6:i64) -> i64 {
-    let cards = [c0,c1,c2,c3,c4,c5,c6]
+fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64, c5: i64, c6: i64) -> i64 {
+    let cards = [c0, c1, c2, c3, c4, c5, c6]
     let mut best = 0
     let mut i = 0
     while i < 7 {
-        let mut j = i+1
+        let mut j = i + 1
         while j < 7 {
-            let mut k = j+1
+            let mut k = j + 1
             while k < 7 {
-                let mut l = k+1
+                let mut l = k + 1
                 while l < 7 {
-                    let mut m = l+1
+                    let mut m = l + 1
                     while m < 7 {
-                        let s = score_hand(cards[i],cards[j],cards[k],cards[l],cards[m])
+                        let s = score_hand(cards[i], cards[j], cards[k], cards[l], cards[m])
                         if s > best { best = s }
-                        m = m+1
+                        m = m + 1
                     }
-                    l = l+1
+                    l = l + 1
                 }
-                k = k+1
+                k = k + 1
             }
-            j = j+1
+            j = j + 1
         }
-        i = i+1
+        i = i + 1
     }
     return best
 }
 
-fn draw_card(x: f64, y: f64, c: i64, hidden: bool, alpha: f64, scale: f64) {
-    let w = 72.0 * scale
-    let h = 104.0 * scale
-    if hidden {
-        engine2d_draw_rect(x, y, w, h, 0.15, 0.15, 0.55, alpha)
-        engine2d_draw_rect(x+4.0*scale, y+4.0*scale, w-8.0*scale, h-8.0*scale, 0.25, 0.25, 0.65, alpha)
-        engine2d_draw_text(x+w*0.4, y+h*0.4, 3.0*scale, "?", 1.0, 1.0, 1.0, alpha)
-    } else {
-        let s = c % 4
-        if s == 1 || s == 2 {
-            engine2d_draw_rect(x, y, w, h, 1.0, 0.92, 0.92, alpha)
-            engine2d_draw_text(x+8.0*scale, y+8.0*scale, 2.0*scale, card_str(c), 0.85, 0.05, 0.05, alpha)
-        } else {
-            engine2d_draw_rect(x, y, w, h, 0.92, 0.92, 1.0, alpha)
-            engine2d_draw_text(x+8.0*scale, y+8.0*scale, 2.0*scale, card_str(c), 0.05, 0.05, 0.05, alpha)
+fn cat_name(cat: i64) -> string {
+    if cat == 0 { return "High card" }
+    if cat == 1 { return "Pair" }
+    if cat == 2 { return "Two pair" }
+    if cat == 3 { return "Three of a kind" }
+    if cat == 4 { return "Straight" }
+    if cat == 5 { return "Flush" }
+    if cat == 6 { return "Full house" }
+    if cat == 7 { return "Four of a kind" }
+    if cat == 8 { return "Straight flush" }
+    return "Royal flush"
+}
+
+fn category_of(score: i64) -> i64 { return score / 10000000 }
+
+// The dealer looks at its own made hand and decides: fold, call or raise.
+// Returns the chips the dealer adds to the pot on top of its ante (0 = fold).
+fn dealer_action(player_bet: i64, d0: i64, d1: i64, c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
+    if player_bet <= 0 { return player_bet }
+    let strength = best_of_seven(d0, d1, c0, c1, c2, c3, c4)
+    let cat = category_of(strength)
+    let roll = random_i64(0, 99)
+    if cat == 0 {
+        if roll < 55 { return 0 }
+        return player_bet
+    }
+    if cat == 1 {
+        if roll < 30 { return 0 }
+        if roll < 80 { return player_bet }
+        return player_bet * 2
+    }
+    if cat == 2 {
+        if roll < 12 { return 0 }
+        if roll < 60 { return player_bet }
+        return player_bet * 2
+    }
+    if cat == 3 {
+        if roll < 30 { return player_bet }
+        return player_bet * 2
+    }
+    if roll < 40 { return player_bet }
+    return player_bet * 2
+}
+
+fn asset_path(rel: string) -> string {
+    if file_exists(rel) { return rel }
+    return "examples/" + rel
+}
+
+fn load_chips() -> i64 {
+    if !file_exists("poker_save.txt") { return 1000 }
+    let text = file_read("poker_save.txt")
+    let n = len(text)
+    let mut value = 0
+    let mut seen = false
+    let mut i = 0
+    while i < n {
+        let b = byte_at(text, i)
+        if b >= 48 && b <= 57 {
+            value = value * 10 + (b - 48)
+            seen = true
         }
-        // suit symbol
-        let sym = suit_char(s)
-        if s == 1 || s == 2 {
-            engine2d_draw_text(x+8.0*scale, y+35.0*scale, 2.5*scale, sym, 0.85, 0.05, 0.05, alpha)
+        i = i + 1
+    }
+    if !seen { return 1000 }
+    if value < 50 { return 1000 }
+    if value > 1000000000 { return 1000 }
+    return value
+}
+
+fn save_chips(chips: i64) {
+    file_write("poker_save.txt", "chips=" + str_i64(chips))
+}
+
+fn anim_t(anim: f64, start: f64) -> f64 {
+    let p = (anim - start) / 0.34
+    if p <= 0.0 { return 0.0 }
+    if p >= 1.0 { return 1.0 }
+    return 1.0 - (1.0 - p) * (1.0 - p)
+}
+
+fn lerp(a: f64, b: f64, t: f64) -> f64 { return a + (b - a) * t }
+
+fn draw_card(x: f64, y: f64, tex: i64, back_tex: i64, hidden: bool) {
+    engine2d_draw_rect(x + 3.0, y + 4.0, 72.0, 104.0, 0.0, 0.0, 0.0, 0.35)
+    if hidden {
+        if back_tex > 0 {
+            sprite2d_draw_texture(back_tex, x, y, 72.0, 104.0)
         } else {
-            engine2d_draw_text(x+8.0*scale, y+35.0*scale, 2.5*scale, sym, 0.05, 0.05, 0.05, alpha)
+            engine2d_draw_rect(x, y, 72.0, 104.0, 0.12, 0.12, 0.45, 1.0)
+            engine2d_draw_text(x + 22.0, y + 40.0, 2.0, "?", 1.0, 1.0, 1.0, 1.0)
+        }
+    } else {
+        if tex > 0 {
+            sprite2d_draw_texture(tex, x, y, 72.0, 104.0)
+        } else {
+            engine2d_draw_rect(x, y, 72.0, 104.0, 0.96, 0.96, 0.96, 1.0)
+            engine2d_draw_rect(x, y, 72.0, 104.0, 0.0, 0.0, 0.0, 0.0)
         }
     }
 }
 
-fn lerp(a: f64, b: f64, t: f64) -> f64 {
-    return a + (b - a) * t
-}
-
-fn ease_out(t: f64) -> f64 {
-    return 1.0 - (1.0 - t) * (1.0 - t)
+fn bet_button(label: string, x: f64, value: i64, affordable: bool, selected: bool) {
+    if selected && affordable {
+        engine2d_draw_rect(x, 596.0, 108.0, 44.0, 0.95, 0.75, 0.10, 1.0)
+    } else if affordable {
+        engine2d_draw_rect(x, 596.0, 108.0, 44.0, 0.12, 0.45, 0.22, 1.0)
+    } else {
+        engine2d_draw_rect(x, 596.0, 108.0, 44.0, 0.25, 0.25, 0.25, 1.0)
+    }
+    engine2d_draw_rect(x, 596.0, 108.0, 44.0, 0.0, 0.0, 0.0, 0.0)
+    engine2d_draw_text(x + 12.0, 610.0, 1.5, label, 1.0, 1.0, 1.0, 1.0)
 }
 
 fn main() {
     engine2d_init(960, 700, "NEXUS Poker")
-    let snd_deal = audio2d_load("examples/assets/beep.wav")
-    let snd_win = audio2d_load("examples/assets/beep.wav")
-    let snd_lose = audio2d_load("examples/assets/beep.wav")
-    let mut chips = 1000
+
+    let snd_deal = audio2d_load(asset_path("assets/sounds/deal.wav"))
+    let snd_chip = audio2d_load(asset_path("assets/sounds/chip.wav"))
+    let snd_win = audio2d_load(asset_path("assets/sounds/win.wav"))
+    let snd_lose = audio2d_load(asset_path("assets/sounds/lose.wav"))
+    let snd_fold = audio2d_load(asset_path("assets/sounds/fold.wav"))
+
+    let back_tex = sprite2d_load_texture(asset_path("assets/cards/card_back.png"))
+    let mut card_tex: [i64; 52] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    let mut li = 0
+    while li < 52 {
+        card_tex[li] = sprite2d_load_texture(asset_path("assets/cards/card_" + str_i64(li) + ".png"))
+        li = li + 1
+    }
+
+    let mut chips = load_chips()
     let mut pot = 0
     let mut state = 0
     let mut p0 = 0; let mut p1 = 0; let mut d0 = 0; let mut d1 = 0
     let mut c0 = 0; let mut c1 = 0; let mut c2 = 0; let mut c3 = 0; let mut c4 = 0
+    let mut player_bet = 0
+    let mut dealer_bet = 0
     let mut result_text = ""
-    let mut result_color_r = 1.0
+    let mut result_r = 1.0
+    let mut result_g = 1.0
+    let mut dealer_text = ""
+    let mut player_rank_text = ""
+    let mut dealer_rank_text = ""
+    let mut anim = 0.0
+    let mut animating = false
+
     let mut last_space = false
-    let mut last_b = false
-    let mut last_f = false
     let mut last_r = false
     let mut last_1 = false; let mut last_2 = false; let mut last_3 = false
     let mut last_4 = false; let mut last_5 = false
-    let mut anim = 0.0
-    let mut animating = false
-    let mut anim_card = 0  // which card is being animated
 
     while !engine2d_should_close() {
         let dt = engine2d_delta_time()
         if animating {
-            anim = anim + dt * 4.0
+            anim = anim + dt * 1.4
             if anim >= 1.0 { anim = 1.0; animating = false }
         }
-        engine2d_begin_frame(0.06, 0.28, 0.06, 1.0)
+        engine2d_begin_frame(0.045, 0.24, 0.06, 1.0)
 
         let space = engine2d_key_down("space")
-        let bkey = engine2d_key_down("b")
-        let fkey = engine2d_key_down("f")
         let rkey = engine2d_key_down("r")
         let k1 = engine2d_key_down("1")
         let k2 = engine2d_key_down("2")
@@ -174,12 +294,33 @@ fn main() {
         let k4 = engine2d_key_down("4")
         let k5 = engine2d_key_down("5")
 
-        if space && !last_space {
+        if rkey && !last_r {
+            chips = 1000
+            pot = 0
+            state = 0
+            player_bet = 0
+            dealer_bet = 0
+            result_text = "Chips reset to 1000."
+            result_r = 0.9; result_g = 0.9
+            dealer_text = ""
+            player_rank_text = ""
+            dealer_rank_text = ""
+            save_chips(chips)
+        }
+
+        if space && !last_space && (state == 0 || state == 2) {
+            if chips < 50 { chips = 1000 }
             let mut deck: [i64; 52] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             let mut i = 0
             while i < 52 { deck[i] = i; i = i + 1 }
             i = 51
-            while i > 0 { let j = random_i64(0, i); let tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp; i = i - 1 }
+            while i > 0 {
+                let j = random_i64(0, i)
+                let tmp = deck[i]
+                deck[i] = deck[j]
+                deck[j] = tmp
+                i = i - 1
+            }
             let mut idx = 0
             p0 = deck[idx]; idx = idx + 1
             p1 = deck[idx]; idx = idx + 1
@@ -190,119 +331,202 @@ fn main() {
             c2 = deck[idx]; idx = idx + 1
             c3 = deck[idx]; idx = idx + 1
             c4 = deck[idx]; idx = idx + 1
+            chips = chips - 25
+            pot = 50
+            player_bet = 0
+            dealer_bet = 25
             state = 1
-            pot = 0
             result_text = ""
+            dealer_text = "Dealer posts ante 25."
+            player_rank_text = ""
+            dealer_rank_text = ""
             anim = 0.0
             animating = true
             audio2d_play(snd_deal, false)
         }
-        if k1 && !last_1 && state == 1 && chips >= 50 { chips = chips - 50; pot = pot + 50 }
-        if k2 && !last_2 && state == 1 && chips >= 100 { chips = chips - 100; pot = pot + 100 }
-        if k3 && !last_3 && state == 1 && chips >= 200 { chips = chips - 200; pot = pot + 200 }
-        if k4 && !last_4 && state == 1 && chips >= 500 { chips = chips - 500; pot = pot + 500 }
-        if k5 && !last_5 && state == 1 && chips > 0 { pot = pot + chips; chips = 0 }
-        if fkey && !last_f && state == 1 {
-            state = 2
-            result_text = "Folded. Dealer wins."
-            result_color_r = 1.0
-            chips = chips - 100
-            pot = 0
-            audio2d_play(snd_lose, false)
+
+        let mut bet = 0
+        if state == 1 && !animating {
+            if k1 && !last_1 && chips >= 50 { bet = 50 }
+            if k2 && !last_2 && chips >= 100 { bet = 100 }
+            if k3 && !last_3 && chips >= 200 { bet = 200 }
+            if k4 && !last_4 && chips >= 500 { bet = 500 }
+            if k5 && !last_5 && chips > 0 { bet = chips }
         }
-        if rkey && !last_r {
-            chips = 1000
-            pot = 0
-            state = 0
-            result_text = "Chips reset."
-            result_color_r = 1.0
-        }
-        if state == 1 && pot > 0 {
-            state = 2
-            let pb = best_of_seven(p0, p1, c0, c1, c2, c3, c4)
-            let db = best_of_seven(d0, d1, c0, c1, c2, c3, c4)
-            if pb > db {
-                chips = chips + pot * 2
-                result_text = "YOU WIN! +" + (pot * 2)
-                result_color_r = 0.0
-                audio2d_play(snd_win, false)
-            } else if pb < db {
-                result_text = "Dealer wins."
-                result_color_r = 1.0
-                audio2d_play(snd_lose, false)
-            } else {
+
+        if bet > 0 {
+            chips = chips - bet
+            pot = pot + bet
+            player_bet = bet
+            audio2d_play(snd_chip, false)
+
+            let dact = dealer_action(bet, d0, d1, c0, c1, c2, c3, c4)
+            if dact == 0 {
+                state = 2
                 chips = chips + pot
-                result_text = "Push (tie)."
-                result_color_r = 1.0
+                dealer_text = "Dealer folds."
+                result_text = "You win " + str_i64(pot) + " chips!"
+                result_r = 0.3; result_g = 1.0
+                audio2d_play(snd_fold, false)
+            } else {
+                pot = pot + dact
+                dealer_bet = dealer_bet + dact
+                let need = dact - bet
+                let mut can_call = true
+                if need > 0 && chips < need { can_call = false }
+                if need > 0 && can_call {
+                    chips = chips - need
+                    pot = pot + need
+                    player_bet = player_bet + need
+                }
+                if dact > bet {
+                    dealer_text = "Dealer raises " + str_i64(dact) + "."
+                } else {
+                    dealer_text = "Dealer calls " + str_i64(dact) + "."
+                }
+                if !can_call {
+                    state = 2
+                    dealer_text = "Dealer raises " + str_i64(dact) + " - you cannot call."
+                    result_text = "You fold. Dealer takes the pot."
+                    result_r = 1.0; result_g = 0.35
+                    audio2d_play(snd_lose, false)
+                } else {
+                    let pb = best_of_seven(p0, p1, c0, c1, c2, c3, c4)
+                    let db = best_of_seven(d0, d1, c0, c1, c2, c3, c4)
+                    player_rank_text = cat_name(category_of(pb))
+                    dealer_rank_text = cat_name(category_of(db))
+                    state = 2
+                    if pb > db {
+                        chips = chips + pot
+                        result_text = "You win " + str_i64(pot) + " chips!"
+                        result_r = 0.3; result_g = 1.0
+                        audio2d_play(snd_win, false)
+                    } else if pb < db {
+                        result_text = "Dealer wins the pot."
+                        result_r = 1.0; result_g = 0.35
+                        audio2d_play(snd_lose, false)
+                    } else {
+                        chips = chips + pot / 2
+                        result_text = "Tie - half the pot returned."
+                        result_r = 0.9; result_g = 0.9
+                        audio2d_play(snd_fold, false)
+                    }
+                }
             }
-            pot = 0
+            save_chips(chips)
         }
 
         last_space = space
-        last_b = bkey
-        last_f = fkey
         last_r = rkey
-        last_1 = k1
-        last_2 = k2
-        last_3 = k3
-        last_4 = k4
-        last_5 = k5
+        last_1 = k1; last_2 = k2; last_3 = k3; last_4 = k4; last_5 = k5
+
+        let t_p0 = anim_t(anim, 0.00)
+        let t_d0 = anim_t(anim, 0.08)
+        let t_p1 = anim_t(anim, 0.16)
+        let t_d1 = anim_t(anim, 0.24)
+        let t_c0 = anim_t(anim, 0.32)
+        let t_c1 = anim_t(anim, 0.40)
+        let t_c2 = anim_t(anim, 0.48)
+        let t_c3 = anim_t(anim, 0.56)
+        let t_c4 = anim_t(anim, 0.64)
+
+        let deck_x = 790.0
+        let deck_y = 430.0
+
+        // table background details
+        engine2d_draw_rect(140.0, 260.0, 500.0, 190.0, 0.03, 0.18, 0.05, 1.0)
+        engine2d_draw_rect(150.0, 268.0, 480.0, 174.0, 0.05, 0.30, 0.10, 1.0)
 
         // title
-        engine2d_draw_text(340.0, 15.0, 3.0, "NEXUS POKER", 1.0, 0.85, 0.1, 1.0)
-        // chips/pot
-        engine2d_draw_rect(40.0, 55.0, 200.0, 35.0, 0.0, 0.0, 0.0, 0.5)
-        engine2d_draw_text(50.0, 60.0, 2.0, "Chips: " + chips, 1.0, 1.0, 1.0, 1.0)
-        engine2d_draw_rect(280.0, 55.0, 150.0, 35.0, 0.0, 0.0, 0.0, 0.5)
-        engine2d_draw_text(290.0, 60.0, 2.0, "Pot: " + pot, 1.0, 0.85, 0.2, 1.0)
+        engine2d_draw_text(40.0, 14.0, 2.5, "NEXUS POKER", 1.0, 0.85, 0.1, 1.0)
+        engine2d_draw_text(40.0, 46.0, 1.2, "Texas Hold'em vs the dealer", 0.75, 0.85, 0.75, 1.0)
+
+        // chip / pot panels
+        engine2d_draw_rect(690.0, 14.0, 250.0, 34.0, 0.0, 0.0, 0.0, 0.55)
+        engine2d_draw_text(700.0, 21.0, 1.6, "Chips: " + str_i64(chips), 1.0, 1.0, 1.0, 1.0)
+        engine2d_draw_rect(690.0, 54.0, 250.0, 34.0, 0.0, 0.0, 0.0, 0.55)
+        engine2d_draw_text(700.0, 61.0, 1.6, "Pot: " + str_i64(pot), 1.0, 0.85, 0.2, 1.0)
+        engine2d_draw_rect(690.0, 94.0, 250.0, 34.0, 0.0, 0.0, 0.0, 0.55)
+        engine2d_draw_text(700.0, 101.0, 1.4, "Your bet " + str_i64(player_bet) + " / dealer " + str_i64(dealer_bet), 0.85, 0.9, 0.85, 1.0)
 
         // dealer
-        engine2d_draw_text(60.0, 110.0, 2.0, "DEALER", 0.9, 0.9, 0.9, 1.0)
-        let t = ease_out(anim)
-        if state == 2 {
-            draw_card(lerp(480.0, 60.0, t), lerp(290.0, 140.0, t), d0, false, 1.0, 1.0)
-            draw_card(lerp(480.0, 145.0, t), lerp(290.0, 140.0, t), d1, false, 1.0, 1.0)
-            let db = best_of_seven(d0, d1, c0, c1, c2, c3, c4)
-            engine2d_draw_text(230.0, 180.0, 1.5, "Score: " + db, 0.7, 0.7, 0.7, 1.0)
-        } else {
-            draw_card(60.0, 140.0, d0, true, 1.0, 1.0)
-            draw_card(145.0, 140.0, d1, true, 1.0, 1.0)
+        engine2d_draw_text(400.0, 74.0, 1.4, "DEALER", 0.85, 0.9, 0.85, 1.0)
+        if state >= 1 {
+            let reveal = state == 2
+            draw_card(lerp(deck_x, 400.0, t_d0), lerp(deck_y, 100.0, t_d0), card_tex[d0], back_tex, !reveal)
+            draw_card(lerp(deck_x, 492.0, t_d1), lerp(deck_y, 100.0, t_d1), card_tex[d1], back_tex, !reveal)
+            if reveal && dealer_rank_text != "" {
+                engine2d_draw_text(400.0, 212.0, 1.2, dealer_rank_text, 0.9, 0.95, 0.9, 1.0)
+            }
         }
 
         // community
-        engine2d_draw_text(250.0, 270.0, 2.0, "COMMUNITY", 0.9, 0.9, 0.9, 1.0)
+        engine2d_draw_text(180.0, 268.0, 1.2, "COMMUNITY", 0.85, 0.9, 0.85, 1.0)
         if state >= 1 {
-            draw_card(lerp(480.0, 180.0, t), lerp(290.0, 300.0, t), c0, false, 1.0, 1.0)
-            draw_card(lerp(480.0, 265.0, t), lerp(290.0, 300.0, t), c1, false, 1.0, 1.0)
-            draw_card(lerp(480.0, 350.0, t), lerp(290.0, 300.0, t), c2, false, 1.0, 1.0)
-            draw_card(lerp(480.0, 435.0, t), lerp(290.0, 300.0, t), c3, false, 1.0, 1.0)
-            draw_card(lerp(480.0, 520.0, t), lerp(290.0, 300.0, t), c4, false, 1.0, 1.0)
+            draw_card(lerp(deck_x, 180.0, t_c0), lerp(deck_y, 295.0, t_c0), card_tex[c0], back_tex, false)
+            draw_card(lerp(deck_x, 270.0, t_c1), lerp(deck_y, 295.0, t_c1), card_tex[c1], back_tex, false)
+            draw_card(lerp(deck_x, 360.0, t_c2), lerp(deck_y, 295.0, t_c2), card_tex[c2], back_tex, false)
+            draw_card(lerp(deck_x, 450.0, t_c3), lerp(deck_y, 295.0, t_c3), card_tex[c3], back_tex, false)
+            draw_card(lerp(deck_x, 540.0, t_c4), lerp(deck_y, 295.0, t_c4), card_tex[c4], back_tex, false)
         }
 
         // player
-        engine2d_draw_text(60.0, 430.0, 2.0, "YOU", 0.9, 0.9, 0.9, 1.0)
+        engine2d_draw_text(400.0, 452.0, 1.4, "YOU", 0.85, 0.9, 0.85, 1.0)
         if state >= 1 {
-            draw_card(lerp(480.0, 60.0, t), lerp(290.0, 460.0, t), p0, false, 1.0, 1.0)
-            draw_card(lerp(480.0, 145.0, t), lerp(290.0, 460.0, t), p1, false, 1.0, 1.0)
-            let pb = best_of_seven(p0, p1, c0, c1, c2, c3, c4)
-            engine2d_draw_text(230.0, 500.0, 1.5, "Score: " + pb, 0.7, 0.7, 0.7, 1.0)
+            draw_card(lerp(deck_x, 400.0, t_p0), lerp(deck_y, 478.0, t_p0), card_tex[p0], back_tex, false)
+            draw_card(lerp(deck_x, 492.0, t_p1), lerp(deck_y, 478.0, t_p1), card_tex[p1], back_tex, false)
+            if player_rank_text != "" {
+                engine2d_draw_text(400.0, 590.0, 1.2, player_rank_text, 0.9, 0.95, 0.9, 1.0)
+            }
+        }
+
+        // deck stack
+        engine2d_draw_rect(deck_x + 4.0, deck_y + 6.0, 72.0, 104.0, 0.05, 0.05, 0.2, 1.0)
+        draw_card(deck_x, deck_y, 0, back_tex, true)
+
+        // dealer action
+        if dealer_text != "" {
+            engine2d_draw_rect(690.0, 150.0, 250.0, 60.0, 0.0, 0.0, 0.0, 0.55)
+            engine2d_draw_text(700.0, 168.0, 1.2, dealer_text, 1.0, 0.9, 0.6, 1.0)
         }
 
         // result
         if result_text != "" {
-            engine2d_draw_rect(540.0, 180.0, 380.0, 60.0, 0.0, 0.0, 0.0, 0.6)
-            engine2d_draw_text(560.0, 200.0, 2.5, result_text, result_color_r, 1.0, 0.3, 1.0)
+            engine2d_draw_rect(690.0, 420.0, 250.0, 76.0, 0.0, 0.0, 0.0, 0.6)
+            engine2d_draw_text(700.0, 440.0, 1.4, result_text, result_r, result_g, 0.5, 1.0)
+            if state == 2 {
+                engine2d_draw_text(700.0, 466.0, 1.0, "SPACE = next hand", 0.8, 0.9, 0.8, 1.0)
+            }
         }
 
-        // deck indicator
-        engine2d_draw_rect(480.0, 290.0, 72.0, 104.0, 0.15, 0.15, 0.5, 1.0)
-        engine2d_draw_text(495.0, 330.0, 2.0, "DECK", 0.8, 0.8, 0.8, 1.0)
+        // bet buttons
+        if state == 1 {
+            bet_button("1: 50", 40.0, 50, chips >= 50, false)
+            bet_button("2: 100", 158.0, 100, chips >= 100, false)
+            bet_button("3: 200", 276.0, 200, chips >= 200, false)
+            bet_button("4: 500", 394.0, 500, chips >= 500, false)
+            bet_button("5: ALL-IN", 512.0, chips, chips > 0, false)
+            if animating {
+                engine2d_draw_text(40.0, 646.0, 1.2, "Dealing...", 0.9, 0.9, 0.6, 1.0)
+            } else {
+                engine2d_draw_text(40.0, 646.0, 1.2, "Pick a bet size (1-5), the dealer will answer.", 0.9, 0.9, 0.6, 1.0)
+            }
+        } else if state == 0 {
+            engine2d_draw_text(40.0, 646.0, 1.4, "Press SPACE to deal.", 0.9, 0.9, 0.6, 1.0)
+        }
 
-        // controls
-        engine2d_draw_rect(0.0, 660.0, 960.0, 40.0, 0.0, 0.0, 0.0, 0.7)
-        engine2d_draw_text(20.0, 665.0, 1.5, "SPACE=Deal  1=50  2=100  3=200  4=500  5=AllIn  F=Fold  R=Reset  ESC=Quit", 0.9, 0.9, 0.9, 1.0)
+        // controls bar
+        engine2d_draw_rect(0.0, 668.0, 960.0, 32.0, 0.0, 0.0, 0.0, 0.7)
+        engine2d_draw_text(20.0, 675.0, 1.1, "SPACE deal/next  1-5 bet  R reset chips  ESC quit", 0.85, 0.85, 0.85, 1.0)
 
         engine2d_end_frame()
     }
+
+    let mut ci = 0
+    while ci < 52 {
+        sprite2d_unload_texture(card_tex[ci])
+        ci = ci + 1
+    }
+    sprite2d_unload_texture(back_tex)
     engine2d_shutdown()
 }
