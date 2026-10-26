@@ -1031,6 +1031,24 @@ namespace nexus {
             emitModule("declare void @nexus_slist_push(i64, ptr)");
             emitModule("declare i64 @nexus_slist_len(i64)");
             emitModule("declare ptr @nexus_slist_get(i64, i64)");
+            emitModule("declare i1 @nexus_ilist_push_checked(i64, i64)");
+            emitModule("declare i1 @nexus_ilist_reserve(i64, i64)");
+            emitModule("declare i1 @nexus_ilist_clear(i64)");
+            emitModule("declare i1 @nexus_ilist_free(i64)");
+            emitModule("declare i1 @nexus_ilist_insert(i64, i64, i64)");
+            emitModule("declare i1 @nexus_ilist_try_get(i64, i64, ptr)");
+            emitModule("declare i1 @nexus_ilist_set_checked(i64, i64, i64)");
+            emitModule("declare i1 @nexus_ilist_remove(i64, i64, ptr)");
+            emitModule("declare i1 @nexus_ilist_try_pop(i64, ptr)");
+            emitModule("declare i1 @nexus_slist_push_checked(i64, ptr)");
+            emitModule("declare i1 @nexus_slist_reserve(i64, i64)");
+            emitModule("declare i1 @nexus_slist_clear(i64)");
+            emitModule("declare i1 @nexus_slist_free(i64)");
+            emitModule("declare i1 @nexus_slist_insert(i64, i64, ptr)");
+            emitModule("declare i1 @nexus_slist_try_get(i64, i64, ptr)");
+            emitModule("declare i1 @nexus_slist_set_checked(i64, i64, ptr)");
+            emitModule("declare i1 @nexus_slist_remove(i64, i64, ptr)");
+            emitModule("declare i1 @nexus_slist_try_pop(i64, ptr)");
 
             emitModule("declare i1 @nexus_gfx_init(i64, i64, ptr)");
 
