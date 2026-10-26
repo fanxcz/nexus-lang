@@ -16,6 +16,8 @@ The current checked-in standard library consists of small wrapper modules. Impor
 | [`std.crypto`](crypto.md) | `hash_sha256` | SHA-256 hex digest for a string |
 | [`std.os`](os.md) | `args_count`, `args_get` | Command-line arguments |
 | [`std.string`](string.md) | `len`, `byte_at`, `byte_len` | UTF-8 byte length and byte access |
+| [`std.vec2`](vec2.md) | `Vec2`, arithmetic, dot, length, normalize, lerp, move-towards | 2D vector values |
+| [`std.vec3`](vec3.md) | `Vec3`, arithmetic, dot/cross, length, normalize, lerp | 3D vector values |
 
 ## Import and call a function
 
