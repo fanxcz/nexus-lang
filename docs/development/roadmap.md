@@ -16,7 +16,7 @@ This roadmap distinguishes shipped behavior from goals. A directory, example, or
 
 1. Build on the existing SDL-backed renderer, texture loading, animation, input, camera, audio and AABB primitives instead of presenting them as a complete engine.
 2. Keep a small consistent 2D convenience module in `stdlib/engine2d.nx`; add regression examples that can be built from a clean checkout and use only shipped APIs.
-3. `stdlib/tilemap.nx` now provides bounded grid storage, cell access, viewport drawing and axis-separated AABB collision resolution; keep expanding with Tiled import, per-tile flags and texture-atlas lifecycle tests. The runtime `physics_aabb` helper remains overlap-only and is not a rigid-body solver.
+3. Gameplay helpers now have separate `std.tilemap`, `std.tilemap_render`, `std.collision2d`, `std.animation2d`, `std.sprite2d`, `std.camera2d` and `std.audio2d` modules. Continue with Tiled import, per-tile flags, texture-atlas lifecycle and stronger physics tests. The runtime `physics_aabb` helper remains overlap-only and is not a rigid-body solver.
 4. Test frame timing under stalls, keyboard input, missing assets and unavailable audio/graphics libraries on supported platforms.
 
 **Completion criterion:** a documented platformer example builds with the shipped compiler, runs without external assets, handles movement/jumping and collisions, and shuts down cleanly.

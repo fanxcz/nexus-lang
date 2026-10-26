@@ -1,10 +1,14 @@
-// NEXUS 2D platformer starter with tilemap rendering and axis-separated collision.
+// NEXUS 2D platformer built from separate std modules.
 // Controls: A/D or LEFT/RIGHT to move, SPACE to jump, ESC to exit.
 
+import std.engine2d
+import std.math
 import std.tilemap
+import std.collision2d
+import std.tilemap_render
 
 fn main() {
-    if !gfx_init(960, 540, "NEXUS 2D Platformer") {
+    if !engine2d_init(960, 540, "NEXUS 2D Platformer") {
         print("Could not initialize graphics: " + gfx_error())
         return
     }
@@ -15,7 +19,7 @@ fn main() {
     let map = tilemap_create(map_width, map_height)
     if map <= 0 {
         print("Could not allocate tilemap")
-        gfx_shutdown()
+        engine2d_shutdown()
         return
     }
 
@@ -51,32 +55,33 @@ fn main() {
     let gravity = 1100.0
     let jump_speed = -430.0
 
-    while !gfx_should_close() {
-        gfx_poll()
-        let dt = gfx_dt()
-        let mut frame_dt = dt
-        if frame_dt > 0.05 { frame_dt = 0.05 }
-        if frame_dt < 0.0 { frame_dt = 0.0 }
-        if gfx_key_down("ESC") { break }
+    while !engine2d_should_close() {
+        // begin_frame polls input, starts drawing and clears the screen.
+        engine2d_begin_frame(0.035, 0.055, 0.12, 1.0)
+        let frame_dt = math_clamp(engine2d_delta_time(), 0.0, 0.05)
+        if engine2d_key_down("ESC") {
+            engine2d_end_frame()
+            break
+        }
 
         velocity_x = 0.0
-        if gfx_key_down("A") || gfx_key_down("LEFT") {
+        if engine2d_key_down("A") || engine2d_key_down("LEFT") {
             velocity_x = 0.0 - world_speed
         }
-        if gfx_key_down("D") || gfx_key_down("RIGHT") {
+        if engine2d_key_down("D") || engine2d_key_down("RIGHT") {
             velocity_x = world_speed
         }
 
         let desired_x = player_x + velocity_x * frame_dt
-        let resolved_x = tilemap_move_x(map, map_width, map_height, tile_size,
-                                        player_x, player_y, player_w, player_h,
-                                        velocity_x * frame_dt)
+        let resolved_x = collision2d_move_x(map, map_width, map_height, tile_size,
+                                            player_x, player_y, player_w, player_h,
+                                            velocity_x * frame_dt)
         if resolved_x != desired_x { velocity_x = 0.0 }
         player_x = resolved_x
         if player_x < 0.0 { player_x = 0.0 }
         if player_x > 936.0 { player_x = 936.0 }
 
-        if grounded && gfx_key_down("SPACE") {
+        if grounded && engine2d_key_down("SPACE") {
             velocity_y = jump_speed
             grounded = false
         }
@@ -84,9 +89,9 @@ fn main() {
         grounded = false
         velocity_y = velocity_y + gravity * frame_dt
         let desired_y = player_y + velocity_y * frame_dt
-        let resolved_y = tilemap_move_y(map, map_width, map_height, tile_size,
-                                        player_x, player_y, player_w, player_h,
-                                        velocity_y * frame_dt)
+        let resolved_y = collision2d_move_y(map, map_width, map_height, tile_size,
+                                            player_x, player_y, player_w, player_h,
+                                            velocity_y * frame_dt)
         if resolved_y != desired_y {
             if velocity_y > 0.0 { grounded = true }
             velocity_y = 0.0
@@ -100,25 +105,20 @@ fn main() {
             grounded = false
         }
 
-        gfx_begin()
-        gfx_clear(0.035, 0.055, 0.12, 1.0)
+        engine2d_draw_circle(130.0, 480.0, 170.0, 0.08, 0.22, 0.28, 1.0)
+        engine2d_draw_circle(460.0, 500.0, 210.0, 0.06, 0.18, 0.25, 1.0)
+        engine2d_draw_circle(850.0, 480.0, 190.0, 0.08, 0.22, 0.28, 1.0)
 
-        // Distant hills.
-        gfx_circle(130.0, 480.0, 170.0, 0.08, 0.22, 0.28, 1.0)
-        gfx_circle(460.0, 500.0, 210.0, 0.06, 0.18, 0.25, 1.0)
-        gfx_circle(850.0, 480.0, 190.0, 0.08, 0.22, 0.28, 1.0)
+        tilemap_render_draw(map, map_width, map_height, tile_size, 0.0, 0.0, 960.0, 540.0)
 
-        tilemap_draw(map, map_width, map_height, tile_size, 0.0, 0.0, 960.0, 540.0)
+        engine2d_draw_rect(player_x, player_y, player_w, player_h, 0.95, 0.25, 0.18, 1.0)
+        engine2d_draw_rect(player_x + 4.0, player_y + 6.0, 5.0, 5.0, 1.0, 0.94, 0.78, 1.0)
+        engine2d_draw_rect(player_x + 15.0, player_y + 6.0, 5.0, 5.0, 1.0, 0.94, 0.78, 1.0)
 
-        // Player and face.
-        gfx_rect(player_x, player_y, player_w, player_h, 0.95, 0.25, 0.18, 1.0)
-        gfx_rect(player_x + 4.0, player_y + 6.0, 5.0, 5.0, 1.0, 0.94, 0.78, 1.0)
-        gfx_rect(player_x + 15.0, player_y + 6.0, 5.0, 5.0, 1.0, 0.94, 0.78, 1.0)
-
-        gfx_text(24.0, 24.0, 1.4, "NEXUS TILEMAP PLATFORMER", 0.85, 0.92, 1.0, 1.0)
-        gfx_text(24.0, 48.0, 1.0, "Move: A/D or arrows   Jump: SPACE   Exit: ESC", 0.72, 0.80, 0.90, 1.0)
-        gfx_end()
+        engine2d_draw_text(24.0, 24.0, 1.4, "NEXUS MODULAR TILEMAP PLATFORMER", 0.85, 0.92, 1.0, 1.0)
+        engine2d_draw_text(24.0, 48.0, 1.0, "Move: A/D or arrows   Jump: SPACE   Exit: ESC", 0.72, 0.80, 0.90, 1.0)
+        engine2d_end_frame()
     }
 
-    gfx_shutdown()
+    engine2d_shutdown()
 }

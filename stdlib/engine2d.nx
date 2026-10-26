@@ -1,6 +1,5 @@
-// NEXUS 2D game helpers. These wrappers use the runtime APIs that ship with NEXUS.
-// Keep game state in the calling program so games can choose their own architecture.
-
+// Core 2D window, frame, input and primitive-drawing helpers.
+// Textures, cameras, collision, tilemaps and audio live in separate std modules.
 fn engine2d_init(width: i64, height: i64, title: string) -> bool {
     return gfx_init(width, height, title)
 }
@@ -43,46 +42,6 @@ fn engine2d_draw_circle(x: f64, y: f64, radius: f64,
 fn engine2d_draw_text(x: f64, y: f64, scale: f64, value: string,
                       red: f64, green: f64, blue: f64, alpha: f64) {
     gfx_text(x, y, scale, value, red, green, blue, alpha)
-}
-
-fn engine2d_load_texture(path: string) -> i64 {
-    return gfx_texture_load(path)
-}
-
-fn engine2d_draw_texture(texture: i64, x: f64, y: f64, width: f64, height: f64) {
-    gfx_texture_draw(texture, x, y, width, height, 1.0, 1.0, 1.0, 1.0)
-}
-
-fn engine2d_unload_texture(texture: i64) {
-    gfx_texture_unload(texture)
-}
-
-fn engine2d_draw_animation_frame(texture: i64, x: f64, y: f64, width: f64, height: f64,
-                                 frame: i64, frame_width: i64, frame_height: i64,
-                                 columns: i64) {
-    gfx_texture_draw_frame(texture, x, y, width, height, frame,
-                           frame_width, frame_height, columns, 1.0, 1.0, 1.0, 1.0)
-}
-
-fn engine2d_camera(x: f64, y: f64, zoom: f64) {
-    gfx_camera_set(x, y, zoom)
-}
-
-fn engine2d_camera_reset() {
-    gfx_camera_reset()
-}
-
-fn engine2d_aabb(ax: f64, ay: f64, aw: f64, ah: f64,
-                 bx: f64, by: f64, bw: f64, bh: f64) -> bool {
-    return physics_aabb(ax, ay, aw, ah, bx, by, bw, bh)
-}
-
-fn engine2d_sound_load(path: string) -> i64 {
-    return gfx_sound_load(path)
-}
-
-fn engine2d_sound_play(sound: i64, looped: bool) {
-    gfx_sound_play(sound, looped)
 }
 
 fn engine2d_should_close() -> bool {

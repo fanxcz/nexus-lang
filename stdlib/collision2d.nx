@@ -1,0 +1,129 @@
+// 2D collision helpers. Tilemap movement is axis-separated and not a rigid-body solver.
+import std.tilemap
+import std.math
+
+fn collision2d_aabb(ax: f64, ay: f64, aw: f64, ah: f64,
+                    bx: f64, by: f64, bw: f64, bh: f64) -> bool {
+    return physics_aabb(ax, ay, aw, ah, bx, by, bw, bh)
+}
+
+fn collision2d_circle(ax: f64, ay: f64, ar: f64,
+                      bx: f64, by: f64, br: f64) -> bool {
+    return physics_circle(ax, ay, ar, bx, by, br)
+}
+
+fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
+                            tile_size: f64, x: f64, y: f64,
+                            box_width: f64, box_height: f64) -> bool {
+    if !tilemap_valid(map, map_width, map_height) { return false }
+    if tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 { return false }
+
+    let left = math_floor(x / tile_size)
+    let top = math_floor(y / tile_size)
+    let right = math_floor((x + box_width - 0.0001) / tile_size)
+    let bottom = math_floor((y + box_height - 0.0001) / tile_size)
+
+    let mut ty = top
+    while ty <= bottom {
+        let mut tx = left
+        while tx <= right {
+            if tilemap_get(map, map_width, map_height, tx, ty) > 0 {
+                return true
+            }
+            tx = tx + 1
+        }
+        ty = ty + 1
+    }
+    return false
+}
+
+// Caller should move X and Y separately. Start positions must not already overlap solids.
+fn collision2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                      x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
+        return x
+    }
+
+    let mut step_limit = tile_size * 0.25
+    if box_width * 0.25 < step_limit { step_limit = box_width * 0.25 }
+    if box_height * 0.25 < step_limit { step_limit = box_height * 0.25 }
+    if step_limit < 0.01 { step_limit = 0.01 }
+
+    let mut distance = delta
+    if distance < 0.0 { distance = 0.0 - distance }
+    let mut steps = to_i64(distance / step_limit) + 1
+    if steps > 10000 { steps = 10000 }
+    if steps < 1 { steps = 1 }
+    let step = delta / to_f64(steps)
+
+    let mut current = x
+    let mut i = 0
+    while i < steps {
+        let candidate = current + step
+        if collision2d_map_overlaps(map, map_width, map_height, tile_size,
+                                    candidate, y, box_width, box_height) {
+            let mut safe = current
+            let mut blocked = candidate
+            let mut refine = 0
+            while refine < 14 {
+                let middle = (safe + blocked) * 0.5
+                if collision2d_map_overlaps(map, map_width, map_height, tile_size,
+                                            middle, y, box_width, box_height) {
+                    blocked = middle
+                } else {
+                    safe = middle
+                }
+                refine = refine + 1
+            }
+            return safe
+        }
+        current = candidate
+        i = i + 1
+    }
+    return current
+}
+
+fn collision2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                      x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if delta == 0.0 || tile_size < 1.0 || box_width <= 0.0 || box_height <= 0.0 {
+        return y
+    }
+
+    let mut step_limit = tile_size * 0.25
+    if box_width * 0.25 < step_limit { step_limit = box_width * 0.25 }
+    if box_height * 0.25 < step_limit { step_limit = box_height * 0.25 }
+    if step_limit < 0.01 { step_limit = 0.01 }
+
+    let mut distance = delta
+    if distance < 0.0 { distance = 0.0 - distance }
+    let mut steps = to_i64(distance / step_limit) + 1
+    if steps > 10000 { steps = 10000 }
+    if steps < 1 { steps = 1 }
+    let step = delta / to_f64(steps)
+
+    let mut current = y
+    let mut i = 0
+    while i < steps {
+        let candidate = current + step
+        if collision2d_map_overlaps(map, map_width, map_height, tile_size,
+                                    x, candidate, box_width, box_height) {
+            let mut safe = current
+            let mut blocked = candidate
+            let mut refine = 0
+            while refine < 14 {
+                let middle = (safe + blocked) * 0.5
+                if collision2d_map_overlaps(map, map_width, map_height, tile_size,
+                                            x, middle, box_width, box_height) {
+                    blocked = middle
+                } else {
+                    safe = middle
+                }
+                refine = refine + 1
+            }
+            return safe
+        }
+        current = candidate
+        i = i + 1
+    }
+    return current
+}

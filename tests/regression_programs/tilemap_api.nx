@@ -1,4 +1,6 @@
 import std.tilemap
+import std.collision2d
+import std.math
 
 fn main() {
     let map = tilemap_create(4, 4)
@@ -16,30 +18,34 @@ fn main() {
         print("NEXUS tilemap: FAIL out-of-bounds read")
         return
     }
-    if !tilemap_collides_box(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
+    if !collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
         print("NEXUS tilemap: FAIL overlap")
         return
     }
-    if tilemap_collides_box(map, 4, 4, 32.0, 0.0, 0.0, 20.0, 20.0) {
+    if collision2d_map_overlaps(map, 4, 4, 32.0, 0.0, 0.0, 20.0, 20.0) {
         print("NEXUS tilemap: FAIL empty-cell overlap")
         return
     }
 
-    let hit_x = tilemap_move_x(map, 4, 4, 32.0, 0.0, 64.0, 24.0, 24.0, 64.0)
+    let hit_x = collision2d_move_x(map, 4, 4, 32.0, 0.0, 64.0, 24.0, 24.0, 64.0)
     if hit_x < 7.8 || hit_x > 8.1 {
         print("NEXUS tilemap: FAIL horizontal resolution " + hit_x)
         return
     }
 
-    let hit_y = tilemap_move_y(map, 4, 4, 32.0, 32.0, 0.0, 24.0, 24.0, 64.0)
+    let hit_y = collision2d_move_y(map, 4, 4, 32.0, 32.0, 0.0, 24.0, 24.0, 64.0)
     if hit_y < 39.8 || hit_y > 40.1 {
         print("NEXUS tilemap: FAIL vertical resolution " + hit_y)
         return
     }
 
-    let outside = tilemap_move_x(map, 4, 4, 32.0, 64.0, 64.0, 24.0, 24.0, 16.0)
+    let outside = collision2d_move_x(map, 4, 4, 32.0, 64.0, 64.0, 24.0, 24.0, 16.0)
     if outside < 79.9 || outside > 80.1 {
         print("NEXUS tilemap: FAIL empty-space movement " + outside)
+        return
+    }
+    if math_floor(-0.2) != -1 || math_floor(1.9) != 1 {
+        print("NEXUS tilemap: FAIL floor helper")
         return
     }
 

@@ -1,0 +1,8 @@
+// Camera helpers separated from the core renderer wrapper.
+fn camera2d_set(x: f64, y: f64, zoom: f64) {
+    gfx_camera_set(x, y, zoom)
+}
+
+fn camera2d_reset() {
+    gfx_camera_reset()
+}

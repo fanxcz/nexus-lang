@@ -1,0 +1,57 @@
+import std.engine2d
+import std.math
+import std.tilemap
+import std.collision2d
+import std.tilemap_render
+import std.animation2d
+import std.sprite2d
+import std.camera2d
+import std.audio2d
+
+fn main() {
+    if math_floor(-0.2) != -1 || math_floor(1.9) != 1 {
+        print("NEXUS game libraries: FAIL floor")
+        return
+    }
+    if math_clamp(9.0, 1.0, 4.0) != 4.0 {
+        print("NEXUS game libraries: FAIL clamp")
+        return
+    }
+    if math_clamp(2.0, 4.0, 1.0) != 2.0 {
+        print("NEXUS game libraries: FAIL reversed clamp")
+        return
+    }
+    if animation2d_frame_at(0.0, 4, 10.0, true) != 0 {
+        print("NEXUS game libraries: FAIL animation start")
+        return
+    }
+    if animation2d_frame_at(0.29, 4, 10.0, true) != 2 {
+        print("NEXUS game libraries: FAIL animation time")
+        return
+    }
+    if animation2d_frame_at(100.0, 4, 10.0, false) != 3 {
+        print("NEXUS game libraries: FAIL animation clamp")
+        return
+    }
+    if animation2d_next_frame(3, 4, true) != 0 || animation2d_next_frame(3, 4, false) != 3 {
+        print("NEXUS game libraries: FAIL animation advance")
+        return
+    }
+
+    let map = tilemap_create(4, 4)
+    if map <= 0 {
+        print("NEXUS game libraries: FAIL tilemap create")
+        return
+    }
+    tilemap_set(map, 4, 4, 1, 2, 1)
+    if !collision2d_aabb(0.0, 0.0, 10.0, 10.0, 5.0, 5.0, 10.0, 10.0) {
+        print("NEXUS game libraries: FAIL AABB")
+        return
+    }
+    if !collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
+        print("NEXUS game libraries: FAIL tile collision")
+        return
+    }
+
+    print("NEXUS game libraries: PASS")
+}

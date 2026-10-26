@@ -16,6 +16,15 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.crypto](crypto.md) | `hash_sha256` |
 | [std.os](os.md) | `args_count`, `args_get` |
 | [std.string](string.md) | `len`, `byte_at`, `byte_len` |
+| [std.math](math.md) | Scalar math helpers |
+| [std.engine2d](engine2d.md) | Core 2D window/frame/input/drawing helpers |
+| [std.tilemap](tilemap.md) | Tilemap data storage and safe access |
+| [std.collision2d](collision2d.md) | AABB, circle and tilemap collision movement |
+| [std.tilemap_render](tilemap_render.md) | Viewport tilemap rendering |
+| [std.animation2d](animation2d.md) | Time-based sprite frame selection |
+| [std.sprite2d](sprite2d.md) | Texture and sprite-sheet drawing |
+| [std.camera2d](camera2d.md) | Camera wrappers |
+| [std.audio2d](audio2d.md) | Optional audio wrappers |
 | [std.tilemap](../runtime/game2d.md) | Tilemap creation, tile access, viewport drawing and collision helpers |
 
 ## Combined example

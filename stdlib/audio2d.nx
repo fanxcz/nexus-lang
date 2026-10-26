@@ -1,0 +1,9 @@
+// Optional runtime audio helpers. A zero handle means loading failed.
+fn audio2d_load(path: string) -> i64 {
+    return gfx_sound_load(path)
+}
+
+fn audio2d_play(sound: i64, looped: bool) {
+    if sound <= 0 { return }
+    gfx_sound_play(sound, looped)
+}

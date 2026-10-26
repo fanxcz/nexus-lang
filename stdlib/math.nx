@@ -1,8 +1,33 @@
-// Small, predictable scalar helpers for gameplay and simulation.
+// Scalar math helpers shared by gameplay, animation and simulation modules.
 fn math_clamp(value: f64, minimum: f64, maximum: f64) -> f64 {
-    if value < minimum { return minimum }
-    if value > maximum { return maximum }
+    // Accept reversed bounds by normalizing them first.
+    if minimum <= maximum {
+        if value < minimum { return minimum }
+        if value > maximum { return maximum }
+        return value
+    }
+    if value < maximum { return maximum }
+    if value > minimum { return minimum }
     return value
+}
+
+fn math_min(a: f64, b: f64) -> f64 {
+    if a < b { return a }
+    return b
+}
+
+fn math_max(a: f64, b: f64) -> f64 {
+    if a > b { return a }
+    return b
+}
+
+fn math_floor(value: f64) -> i64 {
+    // NEXUS to_i64 rounds, so correct values whose rounded integer is too high.
+    let mut whole = to_i64(value)
+    if to_f64(whole) > value {
+        whole = whole - 1
+    }
+    return whole
 }
 
 fn math_lerp(start: f64, finish: f64, amount: f64) -> f64 {

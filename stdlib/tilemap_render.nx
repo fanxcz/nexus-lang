@@ -1,0 +1,45 @@
+// Debug renderer for regular tilemaps. It draws screen coordinates relative to the viewport origin.
+import std.tilemap
+import std.math
+
+fn tilemap_render_draw(map: i64, map_width: i64, map_height: i64, tile_size: f64,
+                       view_x: f64, view_y: f64, view_width: f64, view_height: f64) {
+    if !tilemap_valid(map, map_width, map_height) { return }
+    if tile_size < 1.0 || view_width <= 0.0 || view_height <= 0.0 { return }
+
+    let mut start_x = math_floor(view_x / tile_size)
+    let mut start_y = math_floor(view_y / tile_size)
+    let mut end_x = math_floor((view_x + view_width) / tile_size)
+    let mut end_y = math_floor((view_y + view_height) / tile_size)
+
+    if start_x < 0 { start_x = 0 }
+    if start_y < 0 { start_y = 0 }
+    if end_x >= map_width { end_x = map_width - 1 }
+    if end_y >= map_height { end_y = map_height - 1 }
+    if start_x >= map_width || start_y >= map_height { return }
+    if end_x < start_x || end_y < start_y { return }
+
+    let mut ty = start_y
+    while ty <= end_y {
+        let mut tx = start_x
+        while tx <= end_x {
+            let tile = tilemap_get(map, map_width, map_height, tx, ty)
+            let screen_x = to_f64(tx) * tile_size - view_x
+            let screen_y = to_f64(ty) * tile_size - view_y
+            if tile == 1 {
+                gfx_rect(screen_x, screen_y, tile_size, tile_size, 0.20, 0.48, 0.22, 1.0)
+                gfx_rect(screen_x, screen_y, tile_size, 4.0, 0.46, 0.72, 0.28, 1.0)
+            } else if tile == 2 {
+                gfx_rect(screen_x, screen_y, tile_size, tile_size, 0.48, 0.30, 0.17, 1.0)
+            } else if tile == 3 {
+                gfx_rect(screen_x, screen_y, tile_size, tile_size, 0.36, 0.40, 0.48, 1.0)
+            } else if tile == 4 {
+                gfx_rect(screen_x, screen_y, tile_size, tile_size, 0.86, 0.16, 0.10, 1.0)
+            } else if tile > 0 {
+                gfx_rect(screen_x, screen_y, tile_size, tile_size, 0.20, 0.42, 0.70, 1.0)
+            }
+            tx = tx + 1
+        }
+        ty = ty + 1
+    }
+}

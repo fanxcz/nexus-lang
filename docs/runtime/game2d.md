@@ -1,37 +1,30 @@
-# NEXUS 2D game helpers and tilemaps
+# NEXUS modular 2D game libraries
 
-The small convenience layer in `stdlib/engine2d.nx` wraps existing runtime calls for frame setup, timing, keyboard input, shapes/text, textures, sprite-sheet frames, camera, AABB overlap and basic sound playback. It is not a separate rendering backend.
+Game functionality is split into small modules under `stdlib/`. Each can be imported independently, and modules with dependencies state them explicitly.
 
-## Tilemap module
+| Module | Responsibility |
+|---|---|
+| [`std.engine2d`](../std/engine2d.md) | Window, frame timing, keyboard and primitive drawing |
+| [`std.math`](../std/math.md) | Clamping, interpolation, floor, approach, min/max and sign |
+| [`std.tilemap`](../std/tilemap.md) | Grid storage and checked cell access |
+| [`std.tilemap_render`](../std/tilemap_render.md) | Viewport-aware colored tile drawing |
+| [`std.collision2d`](../std/collision2d.md) | AABB/circle tests and axis-separated movement against tilemaps |
+| [`std.animation2d`](../std/animation2d.md) | Time-based sprite-sheet frame selection |
+| [`std.sprite2d`](../std/sprite2d.md) | Texture and sprite-sheet drawing |
+| [`std.camera2d`](../std/camera2d.md) | Active runtime camera wrappers |
+| [`std.audio2d`](../std/audio2d.md) | Optional audio loading/playback |
 
-Import `std.tilemap` to use a grid backed by the runtime's integer-list handle:
+## Platformer example
 
-- `tilemap_create(width, height) -> i64` creates a zero-filled map, or returns `0` for invalid/oversized dimensions. The current maximum is 262,144 cells.
-- `tilemap_get(map, width, height, x, y) -> i64` and `tilemap_set(..., tile)` read/write a tile. Out-of-range reads return `0`; out-of-range writes are ignored.
-- Tile ID `0` means empty. Any positive tile ID is solid for collision. `tilemap_draw` uses colored rectangles for IDs 1–4 and a default blue for other positive IDs; it draws only the portion intersecting the supplied world-space viewport.
-- `tilemap_collides_box` tests an AABB against solid cells.
-- `tilemap_move_x` and `tilemap_move_y` move one axis at a time, using bounded substeps and refinement to prevent ordinary per-frame movement from tunnelling through tiles.
+The [`examples/game2d_platformer.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx) imports the core frame, math, tilemap, rendering and collision modules. It runs without external image/audio assets.
 
-Example:
-
-```nx
-import std.tilemap
-
-fn main() {
-    let map = tilemap_create(20, 12)
-    tilemap_set(map, 20, 12, 3, 8, 1)
-    let next_x = tilemap_move_x(map, 20, 12, 32.0,
-                                32.0, 256.0, 24.0, 28.0, 80.0)
-    print(next_x)
-}
+```bash
+nexus check examples/game2d_platformer.nx
+nexus run examples/game2d_platformer.nx
 ```
 
-A game should update X and Y separately. Compare the resolved position with the intended position to detect an impact; when vertical movement is stopped while velocity is downward, mark the character as grounded and reset vertical velocity.
+Controls: A/D or arrow keys to move, SPACE to jump, ESC to exit.
 
-The helper layer uses a fixed grid and treats all nonzero tiles as solid; it does not yet parse Tiled maps, support per-tile collision flags, or provide animated tiles / texture atlases. The integer-list runtime uses process-lifetime handles, so maps do not currently have a dedicated destroy operation.
+## Limits
 
-## Engine/runtime limitations
-
-AABB overlap in `physics_aabb` remains a predicate, not a rigid-body solver. The tilemap movement helpers are axis-separated 2D collision utilities, not a general physics world. Camera behavior depends on the active graphics path, and audio/image formats depend on optional runtime libraries.
-
-The self-contained starter at [`examples/game2d_platformer.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx) demonstrates tilemaps, gravity, jumping, collision resolution, frame-time clamping and drawing without external assets.
+This is a modular set of helpers on top of the shipped runtime, not yet a full game engine. Tilemaps are in-memory fixed grids; there is no Tiled import/editor, per-tile collision metadata, texture-atlas management, dedicated tilemap destruction or rigid-body world. Collision movement uses axis-separated substeps and assumes an entity starts outside solid tiles. Graphics and sound still depend on optional runtime libraries.
