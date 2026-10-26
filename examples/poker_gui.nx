@@ -3,6 +3,7 @@
 // Improved: proper kickers, colored suits, card textures via rects
 import std.engine2d
 import std.math
+import std.audio2d
 
 fn rank_name(r: i64) -> string {
     if r == 0 { return "2" } if r == 1 { return "3" } if r == 2 { return "4" }
@@ -175,6 +176,9 @@ fn draw_card(x: f64, y: f64, c: i64, hidden: bool) {
 
 fn main() {
     engine2d_init(960, 700, "NEXUS Poker")
+    let snd_deal = audio2d_load("examples/assets/beep.wav")
+    let snd_win = audio2d_load("examples/assets/beep.wav")
+    let snd_lose = audio2d_load("examples/assets/beep.wav")
     let mut chips = 1000
     let mut pot = 0
     let mut state = 0
@@ -212,15 +216,21 @@ fn main() {
             c3 = deck[idx]; idx = idx + 1
             c4 = deck[idx]; idx = idx + 1
             state = 1
+            audio2d_play(snd_deal, false)
             pot = 0
             result_text = ""
         }
-        if bkey && !last_b && state == 1 {
-            if chips >= 100 {
-                chips = chips - 100
-                pot = pot + 100
-            }
-        }
+        // betting keys 1-5
+        let k1 = engine2d_key_down("1")
+        let k2 = engine2d_key_down("2")
+        let k3 = engine2d_key_down("3")
+        let k4 = engine2d_key_down("4")
+        let k5 = engine2d_key_down("5")
+        if k1 && state == 1 && chips >= 50 { chips = chips - 50; pot = pot + 50 }
+        if k2 && state == 1 && chips >= 100 { chips = chips - 100; pot = pot + 100 }
+        if k3 && state == 1 && chips >= 200 { chips = chips - 200; pot = pot + 200 }
+        if k4 && state == 1 && chips >= 500 { chips = chips - 500; pot = pot + 500 }
+        if k5 && state == 1 && chips > 0 { pot = pot + chips; chips = 0 }
         if fkey && !last_f && state == 1 {
             state = 2
             result_text = "Folded. Dealer wins."
@@ -243,9 +253,11 @@ fn main() {
                 chips = chips + pot * 2
                 result_text = "YOU WIN! +" + (pot * 2)
                 result_color_r = 0.0
+                audio2d_play(snd_win, false)
             } else if pb < db {
                 result_text = "Dealer wins."
                 result_color_r = 1.0
+                audio2d_play(snd_lose, false)
             } else {
                 chips = chips + pot
                 result_text = "Push (tie)."
@@ -306,7 +318,7 @@ fn main() {
 
         // controls
         engine2d_draw_rect(0.0, 660.0, 960.0, 40.0, 0.0, 0.0, 0.0, 0.7)
-        engine2d_draw_text(20.0, 665.0, 1.5, "SPACE=Deal  B=Bet100  F=Fold  R=Reset  ESC=Quit", 0.9, 0.9, 0.9, 1.0)
+        engine2d_draw_text(20.0, 665.0, 1.5, "SPACE=Deal  1=50  2=100  3=200  4=500  5=AllIn  F=Fold  R=Reset  ESC=Quit", 0.9, 0.9, 0.9, 1.0)
 
         engine2d_end_frame()
     }
