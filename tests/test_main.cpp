@@ -33,6 +33,12 @@ int main() {
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
+            auto p = parse(
+                "fn set_value(out: *i64, value: i64) { *out = value } "
+                "fn main(){ let mut value: i64 = 0; set_value(&value, 42); print(value) }");
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
 
             auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }");
 

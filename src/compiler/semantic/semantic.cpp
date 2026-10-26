@@ -588,6 +588,15 @@ namespace nexus {
                         throw std::runtime_error("cannot assign to '" + a->name + "': expected '" +
                                                  describeType(it->second.type) + "' but got '" +
                                                  describeType(actual) + "'");
+                } else if (auto* da = dynamic_cast<DerefAssignStmt*>(s.get())) {
+                    const auto pointerType = expr(da->target.get(), env);
+                    if (pointerType.kind != TypeKind::Pointer || !pointerType.pointee)
+                        throw std::runtime_error("dereference assignment requires a typed pointer");
+                    const auto actual = expr(da->value.get(), env);
+                    if (!sameType(actual, *pointerType.pointee))
+                        throw std::runtime_error("pointer assignment expects '" +
+                                                 describeType(*pointerType.pointee) + "' but got '" +
+                                                 describeType(actual) + "'");
                 } else if (auto* ma = dynamic_cast<MemberAssignStmt*>(s.get())) {
                     auto t = expr(ma->object.get(), env);
                     if (t.kind != TypeKind::Struct)

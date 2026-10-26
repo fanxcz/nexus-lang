@@ -20,7 +20,9 @@ fn transform(value: i64) -> Outcome {
     defer emit("outer:first")
     defer emit("outer:second")
 
-    {
+    // NEXUS uses control-flow blocks to define lexical defer scopes;
+    // bare standalone block statements are not part of its syntax.
+    if value >= -1 {
         defer emit("inner")
         let number = source(value)?
         if number == 99 {

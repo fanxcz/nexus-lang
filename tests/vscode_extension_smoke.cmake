@@ -36,7 +36,12 @@ if(defer_keyword_index LESS 0)
   message(FATAL_ERROR "NEXUS syntax grammar does not highlight the defer keyword")
 endif()
 string(JSON operator_pattern GET "${grammar_json}" patterns 10 match)
-if(NOT operator_pattern MATCHES "\\?" OR NOT operator_pattern MATCHES "::" OR NOT operator_pattern MATCHES "\\.\\.")
+# TextMate patterns are stored with escaped regex metacharacters. Use literal
+# searches here so CMake's own regex escaping does not double-interpret them.
+string(FIND "${operator_pattern}" "::" enum_operator_index)
+string(FIND "${operator_pattern}" "\\\\?" try_operator_index)
+string(FIND "${operator_pattern}" "\\\\.\\\\." range_operator_index)
+if(enum_operator_index LESS 0 OR try_operator_index LESS 0 OR range_operator_index LESS 0)
   message(FATAL_ERROR "NEXUS syntax grammar is missing a postfix, enum or range operator")
 endif()
 

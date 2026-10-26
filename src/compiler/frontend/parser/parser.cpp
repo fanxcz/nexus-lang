@@ -564,6 +564,15 @@ namespace nexus {
                 s->value = std::move(rhs);
                 return s;
             }
+            if (assignOp == TokenKind::Equal) {
+                if (auto* deref = dynamic_cast<UnaryExpr*>(lhs.get());
+                    deref && deref->op == TokenKind::Star) {
+                    auto s = std::make_unique<DerefAssignStmt>();
+                    s->target = std::move(deref->rhs);
+                    s->value = std::move(rhs);
+                    return s;
+                }
+            }
             throw std::runtime_error("left side of assignment is not assignable");
         }
         accept(TokenKind::Semicolon);

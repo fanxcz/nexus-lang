@@ -729,6 +729,16 @@ namespace nexus {
                 emit("store " + llvmType(*ot.element) + " " + v + ", ptr " + addr);
                 return false;
             }
+            if (auto* a = dynamic_cast<const DerefAssignStmt*>(s)) {
+                const Type pointerType = typeOf(a->target.get());
+                if (pointerType.kind != TypeKind::Pointer || !pointerType.pointee)
+                    throw std::runtime_error("dereference assignment requires a typed pointer");
+                auto address = expr(a->target.get());
+                auto value = expr(a->value.get());
+                emit("store " + llvmType(*pointerType.pointee) + " " + value +
+                     ", ptr " + address);
+                return false;
+            }
             if (dynamic_cast<const ExprStmt*>(s)) {
                 expr(static_cast<const ExprStmt*>(s)->expr.get());
                 return false;

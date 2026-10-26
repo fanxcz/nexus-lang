@@ -204,6 +204,11 @@ namespace nexus {
         Expr::Ptr object, index, value;
     };
 
+    // Assignment through a typed pointer, e.g. *output = value.
+    struct DerefAssignStmt : Stmt {
+        Expr::Ptr target, value;
+    };
+
     struct ExprStmt : Stmt {
         Expr::Ptr expr;
     };

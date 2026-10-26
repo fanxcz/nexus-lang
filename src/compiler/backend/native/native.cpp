@@ -291,6 +291,10 @@ namespace nexus::native {
                 checkExpr(a->value.get(), env, fns, reason);
                 return;
             }
+            if (dynamic_cast<const DerefAssignStmt*>(s)) {
+                reason = "pointer assignment is outside the builtin native v0 subset; use --backend llvm";
+                return;
+            }
             if (dynamic_cast<const MemberAssignStmt*>(s) ||
                 dynamic_cast<const IndexAssignStmt*>(s)) {
                 reason = "struct/array assignment is outside the builtin native v0 subset";
