@@ -13,7 +13,7 @@ fn main() {
         gfx_text(110.0, 225.0, 2.0, "CLICK ME", 1.0, 1.0, 1.0, 1.0)
         gfx_text(70.0, 360.0, 1.5, "CLICKS:", 0.6, 0.7, 0.85, 1.0)
         gfx_text(170.0, 360.0, 1.5, str_i64(clicks), 1.0, 1.0, 1.0, 1.0)
-        if gfx_mouse_down(1) { clicks = clicks + 1 }
+        if gfx_mouse_clicked(1) { clicks = clicks + 1 }
         gfx_end()
     }
     gfx_shutdown()

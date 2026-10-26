@@ -30,7 +30,7 @@ fn main() {
         if gfx_key_down("ESC") {
             break
         }
-        if gfx_mouse_down(1) {
+        if gfx_mouse_clicked(1) {
             clicks = clicks + 1
         }
 

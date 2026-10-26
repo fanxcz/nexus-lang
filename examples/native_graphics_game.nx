@@ -24,7 +24,7 @@ fn main() {
 
         let mx = gfx_mouse_x()
         let my = gfx_mouse_y()
-        if gfx_mouse_down(1) { enemyX = mx; enemyY = my; score = score + 1 }
+        if gfx_mouse_clicked(1) { enemyX = mx; enemyY = my; score = score + 1 }
 
         if playerX < 20.0 { playerX = 20.0 }
         if playerY < 20.0 { playerY = 20.0 }
