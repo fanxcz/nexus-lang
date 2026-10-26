@@ -1622,6 +1622,7 @@ The cursor-visibility API is idempotent: repeated requests for the current visib
 | `nexus_gfx_event_x` |
 | `nexus_gfx_event_y` |
 | `nexus_gfx_key_down` |
+| `nexus_gfx_key_pressed` |
 | `nexus_gfx_mouse_down` |
 | `nexus_gfx_mouse_x` |
 | `nexus_gfx_mouse_y` |
