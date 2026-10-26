@@ -104,6 +104,7 @@ namespace nexus {
     void SemanticAnalyzer::analyze(Program& p) {
 
         diagnostics_.clear();
+        currentFunctionReturnType_ = Type::void_();
         funcs_.clear();
         structs_.clear();
         enums_.clear();
@@ -186,6 +187,23 @@ namespace nexus {
             }
         };
 
+        for (auto& e : p.enums) {
+            for (auto& variant : e.variants) {
+                if (!variant.payload)
+                    continue;
+                normalize(*variant.payload);
+                validateTypeAt(*variant.payload, variant.span.valid ? variant.span : e.span);
+                const auto kind = variant.payload->kind;
+                if (kind != TypeKind::I64 && kind != TypeKind::F64 &&
+                    kind != TypeKind::Bool && kind != TypeKind::String &&
+                    kind != TypeKind::Pointer) {
+                    report("enum payloads currently support i64, f64, bool, string, or pointer types; got '" +
+                               describeType(*variant.payload) + "'",
+                           variant.span.valid ? variant.span : e.span);
+                }
+            }
+        }
+
         for (auto& s : p.structs)
             for (auto& field : s.fields) {
                 normalize(field.type);
@@ -210,6 +228,7 @@ namespace nexus {
                 env[a.name] = {a.type, true};
             }
             if (f.body) {
+                currentFunctionReturnType_ = f.ret;
                 block(*f.body, env, f.ret, false);
                 if (f.ret.kind != TypeKind::Void && !blockAlwaysReturns(*f.body)) {
                     std::string message = "function may exit without returning a value: " + f.name;
@@ -263,34 +282,66 @@ namespace nexus {
             return it->second.type;
         }
         if (auto* ev = dynamic_cast<EnumVariantExpr*>(e)) {
-            auto& en = getEnum(ev->enumName);
-            bool ok = false;
-            for (auto& v : en.variants)
-                if (v.name == ev->variant) {
-                    ok = true;
-                    if (v.payload && ev->payload) {
-                        const auto pt = expr(ev->payload.get(), env);
-                        (void)pt;
-                    }
+            const auto& en = getEnum(ev->enumName);
+            const EnumVariant* selected = nullptr;
+            for (const auto& variant : en.variants) {
+                if (variant.name == ev->variant) {
+                    selected = &variant;
                     break;
                 }
-            if (!ok)
+            }
+            if (!selected)
                 throw std::runtime_error("unknown enum variant: " + ev->enumName +
                                          "::" + ev->variant);
+
+            const std::string qualifiedName = ev->enumName + "::" + ev->variant;
+            if (selected->payload) {
+                if (!ev->payload)
+                    throw std::runtime_error("enum variant '" + qualifiedName +
+                                             "' requires a payload of type '" +
+                                             describeType(*selected->payload) + "'");
+                const auto actual = expr(ev->payload.get(), env);
+                if (!sameType(actual, *selected->payload))
+                    throw std::runtime_error("enum variant '" + qualifiedName +
+                                             "' expects payload '" +
+                                             describeType(*selected->payload) + "' but got '" +
+                                             describeType(actual) + "'");
+            } else if (ev->payload) {
+                throw std::runtime_error("enum variant '" + qualifiedName +
+                                         "' does not accept a payload");
+            }
             return Type::enumerated(ev->enumName);
         }
         if (auto* t = dynamic_cast<TryExpr*>(e)) {
-            auto inner = expr(t->expr.get(), env);
-            // Unwrap: if Option/Result, return payload type; otherwise inner type.
-            if (inner.kind == TypeKind::Enum) {
-                const auto& en = getEnum(inner.name);
-                // Option: Some(T) -> T
-                for (const auto& v : en.variants) {
-                    if (v.name == "Some" && v.payload) return *v.payload;
-                    if (v.name == "Ok" && v.payload) return *v.payload;
+            const auto inner = expr(t->expr.get(), env);
+            if (inner.kind != TypeKind::Enum)
+                throw std::runtime_error("operator '?' requires an enum with Some/None or Ok/Err variants");
+
+            const auto& en = getEnum(inner.name);
+            const EnumVariant* success = nullptr;
+            const EnumVariant* failure = nullptr;
+            for (const auto& variant : en.variants) {
+                if (variant.name == "Some" || variant.name == "Ok") {
+                    if (success)
+                        throw std::runtime_error("operator '?' is ambiguous for enum '" + en.name + "'");
+                    success = &variant;
+                }
+                if (variant.name == "None" || variant.name == "Err") {
+                    if (failure)
+                        throw std::runtime_error("operator '?' is ambiguous for enum '" + en.name + "'");
+                    failure = &variant;
                 }
             }
-            return inner;
+            if (!success || !success->payload || !failure)
+                throw std::runtime_error("operator '?' requires an enum with Some(T)/None or Ok(T)/Err variants");
+            if ((success->name == "Some" && failure->name != "None") ||
+                (success->name == "Ok" && failure->name != "Err"))
+                throw std::runtime_error("operator '?' requires matching Some/None or Ok/Err variants");
+            if (currentFunctionReturnType_.kind != TypeKind::Enum ||
+                currentFunctionReturnType_.name != inner.name)
+                throw std::runtime_error("operator '?' requires the enclosing function to return '" +
+                                         describeType(inner) + "'");
+            return *success->payload;
         }
         if (auto* a = dynamic_cast<ArrayExpr*>(e)) {
             if (a->elements.empty())
@@ -657,6 +708,32 @@ namespace nexus {
                             sawCatchAll = true;
 
                         auto local = env;
+                        if (const auto* ev = dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
+                            if (vt.kind != TypeKind::Enum || vt.name != ev->enumName)
+                                throw std::runtime_error("enum match pattern '" + ev->enumName +
+                                                         "::" + ev->variant + "' does not match value type '" +
+                                                         describeType(vt) + "'");
+                            const auto& patternEnum = getEnum(ev->enumName);
+                            const EnumVariant* patternVariant = nullptr;
+                            for (const auto& variant : patternEnum.variants) {
+                                if (variant.name == ev->variant) {
+                                    patternVariant = &variant;
+                                    break;
+                                }
+                            }
+                            if (!patternVariant)
+                                throw std::runtime_error("unknown enum variant: " + ev->enumName +
+                                                         "::" + ev->variant);
+                            if (ev->payload)
+                                throw std::runtime_error("enum match payloads must use a binding name, e.g. " +
+                                                         ev->enumName + "::" + ev->variant + "(value)");
+                            if (!arm.binding.empty() && !patternVariant->payload)
+                                throw std::runtime_error("enum variant '" + ev->enumName + "::" +
+                                                         ev->variant + "' has no payload to bind");
+                            if (arm.binding.empty() && patternVariant->payload)
+                                throw std::runtime_error("enum variant '" + ev->enumName + "::" +
+                                                         ev->variant + "' requires a payload binding");
+                        }
                         if (!arm.binding.empty()) {
                             if (local.contains(arm.binding))
                                 throw std::runtime_error("duplicate variable: " + arm.binding);
@@ -667,9 +744,6 @@ namespace nexus {
                                     for (const auto& v : en.variants) {
                                         if (v.name == ev->variant && v.payload) {
                                             bindType = *v.payload;
-                                            if (ev->payload) {
-                                                (void)expr(ev->payload.get(), env);
-                                            }
                                             break;
                                         }
                                     }

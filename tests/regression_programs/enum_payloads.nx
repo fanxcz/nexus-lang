@@ -1,0 +1,57 @@
+// Regression test for typed enum payloads and ? propagation.
+enum Payload {
+    Number(i64),
+    Real(f64),
+    Flag(bool),
+    Text(string)
+}
+
+enum ReorderedResult {
+    Err(string),
+    Ok(i64)
+}
+
+fn add_ten(value: ReorderedResult) -> ReorderedResult {
+    let number = value?
+    return ReorderedResult::Ok(number + 10)
+}
+
+fn main() {
+    let number = Payload::Number(12)
+    match number {
+        Payload::Number(value) => { print(value) }
+        _ => { print("bad number payload") }
+    }
+
+    let real = Payload::Real(1.5)
+    match real {
+        Payload::Real(value) => {
+            if value > 1.4 { print("float payload ok") } else { print("float payload failed") }
+        }
+        _ => { print("bad float payload") }
+    }
+
+    let flag = Payload::Flag(true)
+    match flag {
+        Payload::Flag(value) => { print(value) }
+        _ => { print(false) }
+    }
+
+    let text = Payload::Text("payload string")
+    match text {
+        Payload::Text(value) => { print(value) }
+        _ => { print("bad string payload") }
+    }
+
+    let success = add_ten(ReorderedResult::Ok(32))
+    match success {
+        ReorderedResult::Err(message) => { print(message) }
+        ReorderedResult::Ok(value) => { print(value) }
+    }
+
+    let failure = add_ten(ReorderedResult::Err("propagated error"))
+    match failure {
+        ReorderedResult::Err(message) => { print(message) }
+        ReorderedResult::Ok(value) => { print(value) }
+    }
+}

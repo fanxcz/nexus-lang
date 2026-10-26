@@ -142,6 +142,17 @@ namespace nexus {
             if (auto* ev = dynamic_cast<const EnumVariantExpr*>(e))
                 return Type::enumerated(ev->enumName);
 
+            if (auto* tr = dynamic_cast<const TryExpr*>(e)) {
+                const auto inner = typeOf(tr->expr.get());
+                if (inner.kind != TypeKind::Enum)
+                    throw std::runtime_error("try expression on non-enum in codegen");
+                const auto& en = getEnum(inner.name);
+                for (const auto& variant : en.variants)
+                    if ((variant.name == "Some" || variant.name == "Ok") && variant.payload)
+                        return *variant.payload;
+                throw std::runtime_error("try enum has no success payload in codegen");
+            }
+
             if (auto* a = dynamic_cast<const ArrayExpr*>(e)) {
                 if (a->elements.empty())
                     throw std::runtime_error("empty array");
@@ -265,25 +276,58 @@ namespace nexus {
                 return stringValue(x->value);
 
             if (auto* t = dynamic_cast<const TryExpr*>(e)) {
+                const auto innerType = typeOf(t->expr.get());
+                if (innerType.kind != TypeKind::Enum)
+                    throw std::runtime_error("try expression on non-enum in codegen");
+                const auto& en = getEnum(innerType.name);
+                const EnumVariant* success = nullptr;
+                long long successTag = -1;
+                for (std::size_t i = 0; i < en.variants.size(); ++i) {
+                    const auto& variant = en.variants[i];
+                    if ((variant.name == "Some" || variant.name == "Ok") && variant.payload) {
+                        success = &variant;
+                        successTag = static_cast<long long>(i);
+                        break;
+                    }
+                }
+                if (!success || successTag < 0)
+                    throw std::runtime_error("try enum has no success variant in codegen");
+
                 const auto inner = expr(t->expr.get());
                 const auto tag = next();
                 emit(tag + " = extractvalue { i64, i64 } " + inner + ", 0");
                 const auto cmp = next();
-                emit(cmp + " = icmp ne i64 " + tag + ", 0");
+                emit(cmp + " = icmp eq i64 " + tag + ", " + std::to_string(successTag));
                 const auto errLabel = lab("try.err");
                 const auto okLabel = lab("try.ok");
-                emit("br i1 " + cmp + ", label %" + errLabel + ", label %" + okLabel);
+                emit("br i1 " + cmp + ", label %" + okLabel + ", label %" + errLabel);
                 emit(errLabel + ":");
-                if (currentReturnType.kind == TypeKind::Void)
-                    emit("ret void");
-                else
-                    emit("ret " + llvmType(currentReturnType) + " " + inner);
+                emit("ret " + llvmType(currentReturnType) + " " + inner);
                 terminated = true;
                 emit(okLabel + ":");
                 terminated = false;
+
                 const auto payload = next();
                 emit(payload + " = extractvalue { i64, i64 } " + inner + ", 1");
-                return payload;
+                const auto payloadType = *success->payload;
+                if (payloadType.kind == TypeKind::I64)
+                    return payload;
+                if (payloadType.kind == TypeKind::Bool) {
+                    const auto value = next();
+                    emit(value + " = trunc i64 " + payload + " to i1");
+                    return value;
+                }
+                if (payloadType.kind == TypeKind::F64) {
+                    const auto value = next();
+                    emit(value + " = bitcast i64 " + payload + " to double");
+                    return value;
+                }
+                if (payloadType.kind == TypeKind::String || payloadType.kind == TypeKind::Pointer) {
+                    const auto value = next();
+                    emit(value + " = inttoptr i64 " + payload + " to ptr");
+                    return value;
+                }
+                throw std::runtime_error("unsupported try payload type in codegen");
             }
 
             if (auto* x = dynamic_cast<const EnumVariantExpr*>(e)) {
@@ -298,9 +342,11 @@ namespace nexus {
                     const auto val = expr(x->payload.get());
                     if (payloadType.kind == TypeKind::I64)
                         payloadI64 = val;
-                    else if (payloadType.kind == TypeKind::Bool)
-                        payloadI64 = val; // i1, need zext
-                    else if (payloadType.kind == TypeKind::String || payloadType.kind == TypeKind::Pointer) {
+                    else if (payloadType.kind == TypeKind::Bool) {
+                        auto c = next();
+                        emit(c + " = zext i1 " + val + " to i64");
+                        payloadI64 = c;
+                    } else if (payloadType.kind == TypeKind::String || payloadType.kind == TypeKind::Pointer) {
                         auto c = next();
                         emit(c + " = ptrtoint ptr " + val + " to i64");
                         payloadI64 = c;
@@ -955,12 +1001,14 @@ namespace nexus {
                     if (arm.wildcard || (!arm.binding.empty() && !arm.pattern)) {
                         emit("br label %" + matched);
                     } else {
-                        auto patVal = expr(arm.pattern.get());
-                        std::string pat = patVal;
-                        if (vt.kind == TypeKind::Enum && dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
-                            auto t = next();
-                            emit(t + " = extractvalue { i64, i64 } " + patVal + ", 0");
-                            pat = t;
+                        std::string pat;
+                        if (vt.kind == TypeKind::Enum) {
+                            if (const auto* enumPattern = dynamic_cast<const EnumVariantExpr*>(arm.pattern.get()))
+                                pat = std::to_string(enumTag(*enumPattern));
+                            else
+                                pat = expr(arm.pattern.get());
+                        } else {
+                            pat = expr(arm.pattern.get());
                         }
                         if (arm.rangeEnd) {
                             auto upper = expr(arm.rangeEnd.get());

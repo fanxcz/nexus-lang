@@ -297,6 +297,63 @@ int main() {
                 return 7;
         }
         {
+            auto p = parse(
+                "enum Payload { Number(i64), Real(f64), Flag(bool), Text(string), Empty } "
+                "fn main(){ let value = Payload::Flag(true); "
+                "match value { Payload::Flag(flag) => { print(flag) } _ => { print(false) } } }");
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("enum Payload { Number(i64), Empty } "
+                               "fn main(){ let value = Payload::Number(\"bad\") }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& e) {
+                failed = std::string(e.what()).find(
+                    "expects payload 'i64' but got 'string'") != std::string::npos;
+            }
+            if (!failed)
+                return 41;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("enum Payload { Number(i64), Empty } "
+                               "fn main(){ let value = Payload::Number }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& e) {
+                failed = std::string(e.what()).find("requires a payload") != std::string::npos;
+            }
+            if (!failed)
+                return 42;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("enum Payload { Empty } fn main(){ let value = Payload::Empty(3) }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& e) {
+                failed = std::string(e.what()).find("does not accept a payload") != std::string::npos;
+            }
+            if (!failed)
+                return 43;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("enum Result { Err(string), Ok(i64) } "
+                               "fn wrong()->i64 { let number = Result::Ok(4)?; return number } "
+                               "fn main() {}");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& e) {
+                failed = std::string(e.what()).find("enclosing function to return 'enum Result'") !=
+                         std::string::npos;
+            }
+            if (!failed)
+                return 44;
+        }
+        {
             // Builtin native backend: target selection.
             nexus::native::NativeTarget t = nexus::native::NativeTarget::LinuxX64;
             if (!nexus::native::resolveTarget("x86_64-windows", t) ||

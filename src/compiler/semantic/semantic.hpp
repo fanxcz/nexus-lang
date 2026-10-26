@@ -22,6 +22,7 @@ namespace nexus {
         std::vector<std::string> diagnostics_;
 
         long long discardCounter_ = 0;
+        Type currentFunctionReturnType_ = Type::void_();
 
     public:
         void analyze(Program& p);
