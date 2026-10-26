@@ -398,6 +398,13 @@ if (NEXUS_BUILD_TESTS)
             -P ${CMAKE_SOURCE_DIR}/tests/math_helpers_smoke.cmake)
     set_tests_properties(nexus_math_helpers_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    add_test(NAME nexus_math_trig_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/math_trig_smoke.cmake)
+    set_tests_properties(nexus_math_trig_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
     add_test(NAME nexus_unicode_escape_smoke
         COMMAND ${CMAKE_COMMAND}
             -DNEXUS_BIN=$<TARGET_FILE:nexus>
