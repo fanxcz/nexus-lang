@@ -1,0 +1,61 @@
+// Three-dimensional vector value and common spatial operations.
+struct Vec3 {
+    x: f64
+    y: f64
+    z: f64
+}
+
+fn vec3(x: f64, y: f64, z: f64) -> Vec3 {
+    return Vec3 { x: x, y: y, z: z }
+}
+
+fn vec3_zero() -> Vec3 {
+    return vec3(0.0, 0.0, 0.0)
+}
+
+fn vec3_add(a: Vec3, b: Vec3) -> Vec3 {
+    return vec3(a.x + b.x, a.y + b.y, a.z + b.z)
+}
+
+fn vec3_sub(a: Vec3, b: Vec3) -> Vec3 {
+    return vec3(a.x - b.x, a.y - b.y, a.z - b.z)
+}
+
+fn vec3_scale(value: Vec3, scalar: f64) -> Vec3 {
+    return vec3(value.x * scalar, value.y * scalar, value.z * scalar)
+}
+
+fn vec3_dot(a: Vec3, b: Vec3) -> f64 {
+    return a.x * b.x + a.y * b.y + a.z * b.z
+}
+
+fn vec3_cross(a: Vec3, b: Vec3) -> Vec3 {
+    return vec3(a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x)
+}
+
+fn vec3_length_squared(value: Vec3) -> f64 {
+    return vec3_dot(value, value)
+}
+
+fn vec3_length(value: Vec3) -> f64 {
+    return sqrt(vec3_length_squared(value))
+}
+
+fn vec3_distance(a: Vec3, b: Vec3) -> f64 {
+    return vec3_length(vec3_sub(a, b))
+}
+
+fn vec3_normalize(value: Vec3) -> Vec3 {
+    let length = vec3_length(value)
+    if length <= 0.0000001 { return vec3_zero() }
+    return vec3_scale(value, 1.0 / length)
+}
+
+fn vec3_lerp(a: Vec3, b: Vec3, amount: f64) -> Vec3 {
+    let t = math_clamp(amount, 0.0, 1.0)
+    return vec3(a.x + (b.x - a.x) * t,
+                a.y + (b.y - a.y) * t,
+                a.z + (b.z - a.z) * t)
+}
