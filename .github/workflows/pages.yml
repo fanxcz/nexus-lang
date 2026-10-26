@@ -543,6 +543,7 @@ jobs:
             config=".github/project-tools/repository-files/mkdocs.yml"
           fi
           mkdocs build --strict -f "$config"
+          python3 scripts/build_manual_pdf.py docs/manual.md site/pdf/NEXUS-Documentation.pdf
           test -s site/pdf/NEXUS-Documentation.pdf
           echo "PASS generated PDF documentation: site/pdf/NEXUS-Documentation.pdf"
 
