@@ -12,7 +12,7 @@
 - `std.vec3`: Vec3 arithmetic, dot/cross product, length and normalization
 - `std.engine2d`: core 2D window, frame, input and primitive drawing
 - `std.tilemap`: bounded grid data and cell access
-- `std.collision2d`: AABB/circle tests and tilemap movement resolution
+- `std.collision2d`: AABB, circle, point, circle-box and tilemap movement collision helpers
 - `std.tilemap_render`: viewport-aware colored tile drawing
 - `std.animation2d`: time-based sprite animation frame calculation
 - `std.sprite2d`: texture and sprite-sheet rendering
