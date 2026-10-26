@@ -191,7 +191,7 @@ fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64, c5: i64, c6: i64) 
 }
 
 fn main() {
-    print("=== NEXUS Poker (Texas Hold'em) ===")
+    print("=== NEXUS Poker 2.1.0 (Texas Hold'em) ===")
     let mut chips = 1000
     let mut round = 0
     while chips > 0 {

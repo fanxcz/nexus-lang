@@ -1,6 +1,6 @@
 # Example Assets
 
-This directory contains tracked runtime assets shared by multiple NEXUS examples. Keep files here unless all source and documentation references have been checked before removal.
+This directory contains tracked runtime assets shared by multiple NEXUS examples, including NEXUS Poker 2.1.0. Keep files here unless all source and documentation references have been checked before removal.
 
 ## Contents
 
