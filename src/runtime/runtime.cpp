@@ -5204,6 +5204,16 @@ int64_t nexus_gfx_canvas_height(int64_t id) {
 char* nexus_ui_text_field(double x, double y, double w, double h,
                           const char* current, const char* placeholder, int64_t maxBytes) {
     std::string value = current ? current : "";
+    bool valueChanged = false;
+
+    // The input string is usually the previous frame's result. Borrow it when
+    // the text stays the same; allocate only when truncation or user input
+    // produces a genuinely new value. This avoids a per-frame allocation/leak.
+    const auto resultValue = [&]() -> char* {
+        if (!valueChanged && current)
+            return const_cast<char*>(current);
+        return nx_strdup(value.c_str());
+    };
     auto safePrefix = [](const std::string& text, size_t limit) -> size_t {
         size_t end = std::min(limit, text.size());
         // If the cutoff is inside a UTF-8 code point, discard that whole code point.
@@ -5226,11 +5236,13 @@ char* nexus_ui_text_field(double x, double y, double w, double h,
     const size_t limit = editable
         ? static_cast<size_t>(std::clamp<int64_t>(maxBytes, 1, 8192))
         : std::max<size_t>(value.size(), 1);
-    if (value.size() > limit)
+    if (value.size() > limit) {
         value.resize(safePrefix(value, limit));
+        valueChanged = true;
+    }
 
     if (w <= 0.0 || h <= 0.0 || !gGraphics)
-        return nx_strdup(value.c_str());
+        return resultValue();
 
     const double mx = nexus_gfx_mouse_x();
     const double my = nexus_gfx_mouse_y();
@@ -5262,13 +5274,19 @@ char* nexus_ui_text_field(double x, double y, double w, double h,
 
     if (focused && editable) {
         // SDL_SCANCODE_BACKSPACE == 42.
-        if (gKeyPressed.size() > 42 && gKeyPressed[42])
+        if (gKeyPressed.size() > 42 && gKeyPressed[42]) {
+            const size_t previousSize = value.size();
             popCodePoint(value);
+            valueChanged = valueChanged || value.size() != previousSize;
+        }
 
         if (!gTextInputThisFrame.empty() && value.size() < limit) {
             const size_t allowed = limit - value.size();
             const size_t addBytes = safePrefix(gTextInputThisFrame, allowed);
-            value.append(gTextInputThisFrame.data(), addBytes);
+            if (addBytes > 0) {
+                value.append(gTextInputThisFrame.data(), addBytes);
+                valueChanged = true;
+            }
         }
         gTextInputThisFrame.clear();
 
@@ -5322,7 +5340,7 @@ char* nexus_ui_text_field(double x, double y, double w, double h,
                        std::max(2.0, h - 16.0), 0.35, 0.84, 1.0, 1.0);
     }
 
-    return nx_strdup(value.c_str());
+    return resultValue();
 }
 
 bool nexus_ui_button(double x, double y, double w, double h, const char* label) {
