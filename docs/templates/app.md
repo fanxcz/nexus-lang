@@ -30,7 +30,11 @@ fn main() {
         if gfx_key_down("ESC") {
             break
         }
-        if gfx_mouse_clicked(1) {
+        let mx = gfx_mouse_x()
+        let my = gfx_mouse_y()
+        if gfx_mouse_clicked(1) &&
+           mx >= 80.0 && mx <= 400.0 &&
+           my >= 230.0 && my <= 350.0 {
             clicks = clicks + 1
         }
 
