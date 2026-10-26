@@ -1,0 +1,100 @@
+import std.math
+import std.vec2
+import std.vec3
+import std.camera2d
+import std.collision2d
+import std.animation2d
+
+fn near(actual: f64, expected: f64, epsilon: f64) -> bool {
+    return actual >= expected - epsilon && actual <= expected + epsilon
+}
+
+fn main() {
+    let a = vec2(3.0, 4.0)
+    let b = vec2(1.0, 2.0)
+    let sum = vec2_add(a, b)
+    if sum.x != 4.0 || sum.y != 6.0 {
+        print("game primitives: Vec2 add failed")
+        return
+    }
+    if vec2_length(a) != 5.0 || vec2_dot(a, b) != 11.0 {
+        print("game primitives: Vec2 magnitude/dot failed")
+        return
+    }
+    let direction = vec2_normalize(a)
+    if !near(direction.x, 0.6, 0.00001) || !near(direction.y, 0.8, 0.00001) {
+        print("game primitives: Vec2 normalize failed")
+        return
+    }
+    let stepped = vec2_move_towards(vec2_zero(), a, 1.0)
+    if !near(stepped.x, 0.6, 0.00001) || !near(stepped.y, 0.8, 0.00001) {
+        print("game primitives: Vec2 move_towards failed")
+        return
+    }
+    let axis_x = vec3(1.0, 0.0, 0.0)
+    let axis_y = vec3(0.0, 1.0, 0.0)
+    let normal = vec3_cross(axis_x, axis_y)
+    if normal.x != 0.0 || normal.y != 0.0 || normal.z != 1.0 {
+        print("game primitives: Vec3 cross failed")
+        return
+    }
+    if vec3_length(vec3(2.0, 3.0, 6.0)) != 7.0 {
+        print("game primitives: Vec3 length failed")
+        return
+    }
+
+    let camera = vec2(10.0, 10.0)
+    let world = vec2(20.0, 30.0)
+    let screen = camera2d_world_to_screen(world, camera, 2.0, 800.0, 600.0)
+    if screen.x != 420.0 || screen.y != 340.0 {
+        print("game primitives: world_to_screen failed")
+        return
+    }
+    let recovered = camera2d_screen_to_world(screen, camera, 2.0, 800.0, 600.0)
+    if recovered.x != world.x || recovered.y != world.y {
+        print("game primitives: screen_to_world failed")
+        return
+    }
+    let following = camera2d_follow(vec2_zero(), vec2(100.0, 50.0), 2.0, 0.25)
+    if following.x != 50.0 || following.y != 25.0 {
+        print("game primitives: camera follow failed")
+        return
+    }
+    let clamped_camera = camera2d_clamp(vec2_zero(), 1000.0, 500.0, 800.0, 600.0, 1.0)
+    if clamped_camera.x != 400.0 || clamped_camera.y != 250.0 {
+        print("game primitives: camera clamp failed")
+        return
+    }
+
+    if !collision2d_point_aabb(5.0, 5.0, 0.0, 0.0, 10.0, 10.0) {
+        print("game primitives: point AABB failed")
+        return
+    }
+    if !collision2d_circle_aabb(12.0, 5.0, 2.0, 0.0, 0.0, 10.0, 10.0) {
+        print("game primitives: circle AABB edge failed")
+        return
+    }
+    if collision2d_circle_aabb(13.0, 5.0, 2.0, 0.0, 0.0, 10.0, 10.0) {
+        print("game primitives: circle AABB separation failed")
+        return
+    }
+    if collision2d_aabb_overlap_area(0.0, 0.0, 10.0, 10.0, 5.0, 5.0, 10.0, 10.0) != 25.0 {
+        print("game primitives: overlap area failed")
+        return
+    }
+
+    if animation2d_ease_in(0.5) != 0.25 || animation2d_ease_out(0.5) != 0.75 {
+        print("game primitives: easing in/out failed")
+        return
+    }
+    if animation2d_ease_in_out(0.5) != 0.5 || animation2d_smoothstep(0.5) != 0.5 {
+        print("game primitives: easing midpoint failed")
+        return
+    }
+    if animation2d_ping_pong(1.25, 1.0) != 0.75 {
+        print("game primitives: ping-pong failed")
+        return
+    }
+
+    print("NEXUS game primitives: PASS")
+}
