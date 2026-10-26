@@ -1,6 +1,6 @@
 # Error Handling (Current Scope)
 
-The current compiler does not implement `Result<T, E>`, `Option<T>`, the `?` propagation operator, `panic!`, `unwrap` helpers or payload-bearing error enums. `defer` is available for lexical cleanup of calls returning `void` when using the LLVM backend. Older examples that rely on the missing result types or propagation syntax will not pass `nexus check`.
+The compiler now supports payload-bearing enums, concrete `Option`/`Result` enums, and the `?` propagation operator on the LLVM backend. `defer` is available for lexical cleanup of calls returning `void`. Generic `Option<T>`/`Result<T, E>` are not yet implemented; use the concrete enums in `stdlib/option.nx` and `stdlib/result.nx` or define your own. Older examples that assume generics will not pass `nexus check`.
 
 ## Check sentinel return values
 

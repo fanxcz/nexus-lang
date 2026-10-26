@@ -1,0 +1,21 @@
+// Concrete Result helper built on payload enums.
+// NEXUS does not yet have generics, so this operates on i64 values and string errors.
+
+enum Result { Ok(i64), Err(string) }
+
+fn result_ok(value: i64) -> Result { return Result::Ok(value) }
+fn result_err(message: string) -> Result { return Result::Err(message) }
+fn result_is_ok(value: Result) -> bool {
+    match value {
+        Result::Ok(_) => { return true }
+        Result::Err(_) => { return false }
+    }
+    return false
+}
+fn result_unwrap(value: Result) -> i64 {
+    match value {
+        Result::Ok(v) => { return v }
+        Result::Err(_) => { return 0 }
+    }
+    return 0
+}

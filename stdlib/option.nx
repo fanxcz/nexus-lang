@@ -1,0 +1,22 @@
+// Concrete Option and Result helpers built on payload enums.
+// NEXUS does not yet have generics, so these operate on i64 payloads.
+// Users can define their own enums with any payload types.
+
+enum Option { Some(i64), None }
+
+fn option_some(value: i64) -> Option { return Option::Some(value) }
+fn option_none() -> Option { return Option::None }
+fn option_is_some(value: Option) -> bool {
+    match value {
+        Option::Some(_) => { return true }
+        Option::None => { return false }
+    }
+    return false
+}
+fn option_unwrap(value: Option) -> i64 {
+    match value {
+        Option::Some(v) => { return v }
+        Option::None => { return 0 }
+    }
+    return 0
+}
