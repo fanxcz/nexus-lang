@@ -12,6 +12,11 @@ fn main() {
         print("sin pi/2 failed")
         return
     }
+    let wrapper_sine = math_sin(pi / 2.0)
+    if wrapper_sine < 0.99999 || wrapper_sine > 1.00001 {
+        print("std.math math_sin wrapper failed")
+        return
+    }
     let zero_cosine = cos(pi / 2.0)
     if zero_cosine < -0.00001 || zero_cosine > 0.00001 {
         print("cos pi/2 failed")
