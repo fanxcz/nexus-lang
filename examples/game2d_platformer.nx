@@ -22,6 +22,7 @@ fn main() {
         engine2d_shutdown()
         return
     }
+    defer tilemap_dispose(map)
 
     // Ground: tile 1 is grass; tile 2 is dirt. Positive tile IDs are solid.
     let mut tx = 0
