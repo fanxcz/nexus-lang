@@ -14,7 +14,7 @@
 - `std.tilemap`: bounded grid data and cell access
 - `std.collision2d`: AABB, circle, point, circle-box and tilemap movement collision helpers
 - `std.tilemap_render`: viewport-aware colored tile drawing
-- `std.animation2d`: time-based sprite animation frame calculation
+- `std.animation2d`: time-based sprite animation frames, easing curves and ping-pong animation
 - `std.sprite2d`: texture and sprite-sheet rendering
 - `std.camera2d`: runtime camera wrappers
 - `std.audio2d`: optional runtime sound loading/playback
