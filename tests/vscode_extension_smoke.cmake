@@ -24,6 +24,13 @@ string(JSON grammar_scope ERROR_VARIABLE json_error GET "${grammar_json}" scopeN
 if(json_error OR NOT grammar_scope STREQUAL "source.nexus")
   message(FATAL_ERROR "Invalid NEXUS TextMate grammar: ${json_error}")
 endif()
+if(NOT grammar_json MATCHES "constant.numeric.nexus" OR
+   NOT grammar_json MATCHES "constant.character.escape.unicode.nexus")
+  message(FATAL_ERROR "NEXUS grammar is missing numeric or Unicode escape highlighting")
+endif()
+if(NOT grammar_json MATCHES "defer" OR NOT grammar_json MATCHES "keyword.operator.nexus")
+  message(FATAL_ERROR "NEXUS grammar is missing current language keywords/operators")
+endif()
 string(JSON bracket_count ERROR_VARIABLE json_error LENGTH "${language_json}" brackets)
 if(json_error OR bracket_count LESS 3)
   message(FATAL_ERROR "NEXUS language configuration has no bracket pairs: ${json_error}")

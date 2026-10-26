@@ -4,15 +4,18 @@
   "patterns": [
     { "name": "comment.line.double-slash.nexus", "match": "//.*" },
     { "name": "comment.block.nexus", "begin": "/\\*", "end": "\\*/" },
-    { "name": "string.quoted.double.nexus", "begin": "\"", "end": "\"",
-      "patterns": [ { "name": "constant.character.escape.nexus", "match": "\\\\." } ] },
-    { "name": "constant.numeric.nexus", "match": "\\b[0-9]+(\\.[0-9]+)?\\b" },
+    { "name": "string.quoted.double.nexus", "begin": "\\\"", "end": "\\\"",
+      "patterns": [
+        { "name": "constant.character.escape.unicode.nexus", "match": "\\\\u\\\\{[0-9a-fA-F]{1,6}\\\\}" },
+        { "name": "constant.character.escape.nexus", "match": "\\\\\\." }
+      ] },
+    { "name": "constant.numeric.nexus", "match": "\\\\b[0-9](?:_?[0-9])*(?:\\\\.[0-9](?:_?[0-9])*)?(?:[eE][+-]?[0-9](?:_?[0-9])*)?" },
     { "name": "keyword.declaration.function.nexus", "match": "\\bfn\\b" },
-    { "name": "keyword.control.nexus", "match": "\\b(let|mut|const|return|if|else|while|for|in|match|break|continue|struct|enum|import|extern|unsafe|as)\\b" },
+    { "name": "keyword.control.nexus", "match": "\\b(let|mut|const|return|if|else|while|for|in|match|break|continue|defer|struct|enum|import|extern|unsafe|as)\\b" },
     { "name": "constant.language.boolean.nexus", "match": "\\b(true|false)\\b" },
     { "name": "support.type.nexus", "match": "\\b(i64|f64|bool|string|void|usize|isize|int|float)\\b" },
     { "name": "support.function.builtin.nexus", "match": "\\b(print|input|input_i64|input_f64|file_read|file_write|file_exists|capture_output|system|str_i64|str_f64|str_bool|to_i64|to_f64|mem_alloc|mem_free|mem_set|mem_read|sleep|time_ms|random_i64|env|exit|clear|json_valid|json_get|json_type|json_array_len|json_array_get|json_is_valid|json_field|json_value_type|json_array_length|json_array_item|http_get|http_get_text)\\b" },
     { "name": "entity.name.function.nexus", "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()" },
-    { "name": "keyword.operator.nexus", "match": "==|!=|<=|>=|=>|->|&&|\\|\\||[+\\-*/%=<>!&|]" }
+    { "name": "keyword.operator.nexus", "match": "::|\\\\.\\\\.|\\\\?|==|!=|<=|>=|=>|->|&&|\\\\|\\\\||[+\\\\-*/%=<>!&|:;]" }
   ]
 }
