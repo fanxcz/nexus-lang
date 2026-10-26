@@ -27,6 +27,15 @@ nexus run examples/nexus_arena.nx
 
 `examples/native_graphics_game.nx` demonstrates 2D movement, a mouse-controlled target, score display and basic primitive drawing. See [Graphics Examples](graphics.md).
 
+## Vector Lab
+
+[`examples/vector_lab.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/vector_lab.nx) is a small playable arena sample using the `std.vec2`, `std.collision2d` and `std.animation2d` modules. Move with WASD or arrow keys, slide along obstacles, and collect the pulsing beacon. It demonstrates delta-time movement, vector normalization, circle-vs-rectangle collision and a ping-pong animation curve.
+
+```bash
+nexus check examples/vector_lab.nx
+nexus run examples/vector_lab.nx
+```
+
 ## Tilemap platformer
 
 [`examples/game2d_platformer.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx) is a no-external-assets platformer demo using `std.tilemap`: grid-based platforms, horizontal/vertical collision resolution, gravity, jumping and a simple colored tile renderer. The tilemap API is documented under [2D Game Helpers and Tilemaps](../runtime/game2d.md).
