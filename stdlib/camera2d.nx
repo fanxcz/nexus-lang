@@ -59,3 +59,11 @@ fn camera2d_set(x: f64, y: f64, zoom: f64) {
 fn camera2d_reset() {
     gfx_camera_reset()
 }
+
+// Apply a world-space camera center calculated by the helpers below.
+// The runtime camera API takes an offset from the viewport's default center.
+fn camera2d_apply(position: Vec2, zoom: f64,
+                  viewport_width: f64, viewport_height: f64) {
+    gfx_camera_set(position.x - viewport_width * 0.5,
+                   position.y - viewport_height * 0.5, zoom)
+}
