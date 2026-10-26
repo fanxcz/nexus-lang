@@ -1,0 +1,98 @@
+// Immediate-mode UI conveniences and layout helpers for native applications.
+// Widgets draw during the current frame; the application owns its state.
+import std.math
+
+struct UIRect {
+    x: f64
+    y: f64
+    width: f64
+    height: f64
+}
+
+fn ui2d_rect(x: f64, y: f64, width: f64, height: f64) -> UIRect {
+    return UIRect { x: x, y: y, width: width, height: height }
+}
+fn ui2d_right(rect: UIRect) -> f64 { return rect.x + rect.width }
+fn ui2d_bottom(rect: UIRect) -> f64 { return rect.y + rect.height }
+fn ui2d_center_x(rect: UIRect) -> f64 { return rect.x + rect.width * 0.5 }
+fn ui2d_center_y(rect: UIRect) -> f64 { return rect.y + rect.height * 0.5 }
+
+fn ui2d_contains(rect: UIRect, px: f64, py: f64) -> bool {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return false }
+    return px >= rect.x && py >= rect.y && px <= rect.x + rect.width && py <= rect.y + rect.height
+}
+
+fn ui2d_inset(rect: UIRect, padding: f64) -> UIRect {
+    let width = math_max(0.0, rect.width)
+    let height = math_max(0.0, rect.height)
+    let mut pad = padding
+    if pad < 0.0 { pad = 0.0 }
+    let px = math_min(pad, width * 0.5)
+    let py = math_min(pad, height * 0.5)
+    return ui2d_rect(rect.x + px, rect.y + py,
+                     math_max(0.0, width - px * 2.0),
+                     math_max(0.0, height - py * 2.0))
+}
+
+fn ui2d_row_cell(parent: UIRect, index: i64, count: i64, gap: f64) -> UIRect {
+    if count <= 0 || index < 0 || index >= count { return ui2d_rect(parent.x, parent.y, 0.0, 0.0) }
+    let mut spacing = gap
+    if spacing < 0.0 { spacing = 0.0 }
+    let width = math_max(0.0, (parent.width - spacing * to_f64(count - 1)) / to_f64(count))
+    return ui2d_rect(parent.x + to_f64(index) * (width + spacing), parent.y, width, math_max(0.0, parent.height))
+}
+
+fn ui2d_column_cell(parent: UIRect, index: i64, count: i64, gap: f64) -> UIRect {
+    if count <= 0 || index < 0 || index >= count { return ui2d_rect(parent.x, parent.y, 0.0, 0.0) }
+    let mut spacing = gap
+    if spacing < 0.0 { spacing = 0.0 }
+    let height = math_max(0.0, (parent.height - spacing * to_f64(count - 1)) / to_f64(count))
+    return ui2d_rect(parent.x, parent.y + to_f64(index) * (height + spacing), math_max(0.0, parent.width), height)
+}
+
+fn ui2d_grid_cell(parent: UIRect, column: i64, row: i64,
+                  columns: i64, rows: i64, gap: f64) -> UIRect {
+    if columns <= 0 || rows <= 0 || column < 0 || row < 0 || column >= columns || row >= rows {
+        return ui2d_rect(parent.x, parent.y, 0.0, 0.0)
+    }
+    let mut spacing = gap
+    if spacing < 0.0 { spacing = 0.0 }
+    let cell_width = math_max(0.0, (parent.width - spacing * to_f64(columns - 1)) / to_f64(columns))
+    let cell_height = math_max(0.0, (parent.height - spacing * to_f64(rows - 1)) / to_f64(rows))
+    return ui2d_rect(parent.x + to_f64(column) * (cell_width + spacing),
+                     parent.y + to_f64(row) * (cell_height + spacing), cell_width, cell_height)
+}
+
+fn ui2d_panel(rect: UIRect, red: f64, green: f64, blue: f64, alpha: f64) {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return }
+    ui_panel(rect.x, rect.y, rect.width, rect.height, red, green, blue, alpha)
+}
+fn ui2d_outline(rect: UIRect, thickness: f64, red: f64, green: f64, blue: f64, alpha: f64) {
+    if rect.width <= 0.0 || rect.height <= 0.0 || thickness <= 0.0 { return }
+    let t = math_min(thickness, math_min(rect.width * 0.5, rect.height * 0.5))
+    gfx_rect(rect.x, rect.y, rect.width, t, red, green, blue, alpha)
+    gfx_rect(rect.x, rect.y + rect.height - t, rect.width, t, red, green, blue, alpha)
+    gfx_rect(rect.x, rect.y + t, t, math_max(0.0, rect.height - 2.0 * t), red, green, blue, alpha)
+    gfx_rect(rect.x + rect.width - t, rect.y + t, t, math_max(0.0, rect.height - 2.0 * t), red, green, blue, alpha)
+}
+fn ui2d_label(x: f64, y: f64, text: string, scale: f64) { ui_label(x, y, text, scale) }
+fn ui2d_button(rect: UIRect, label: string) -> bool {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return false }
+    return ui_button(rect.x, rect.y, rect.width, rect.height, label)
+}
+fn ui2d_checkbox(x: f64, y: f64, label: string, checked: bool) -> bool {
+    return ui_checkbox(x, y, label, checked)
+}
+fn ui2d_slider(rect: UIRect, value: f64) -> f64 {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return math_clamp(value, 0.0, 1.0) }
+    return math_clamp(ui_slider(rect.x, rect.y, rect.width, rect.height, math_clamp(value, 0.0, 1.0)), 0.0, 1.0)
+}
+fn ui2d_progress(rect: UIRect, value: f64, red: f64, green: f64, blue: f64, alpha: f64) {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return }
+    ui_progress(rect.x, rect.y, rect.width, rect.height, math_clamp(value, 0.0, 1.0), red, green, blue, alpha)
+}
+fn ui2d_separator(x1: f64, y1: f64, x2: f64, y2: f64, thickness: f64,
+                  red: f64, green: f64, blue: f64, alpha: f64) {
+    if thickness <= 0.0 { return }
+    gfx_line(x1, y1, x2, y2, thickness, red, green, blue, alpha)
+}
