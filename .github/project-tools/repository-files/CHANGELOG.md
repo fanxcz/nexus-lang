@@ -6,6 +6,10 @@
 - Switched the NEXUS installer away from the ultra/64 MB compression preset to a faster LZMA2 preset to reduce delays during publishing.
 - Added pre-publish validation for every Windows/VS Code download: checksum matching, PE signature checks, ZIP/VSIX CRC checks, and required-content validation. The post-deploy workflow verifies every published download URL.
 - Refreshed the landing page, downloads cards, responsive styles, navigation and light/dark colour modes.
+- Fixed post-deploy PDF verification to check `/pdf/NEXUS-Documentation.pdf` instead of looking for the manual in `/assets/downloads/pdf/`.
+- Published conventional SHA-256 files that include the matching asset filename, and made pre-publish validation compare the downloads-page links with the generated artifact inventory.
+- Increased documentation text size and spacing, improved keyboard focus visibility, and made checksum links easier to identify.
+- Added Unicode code-point iteration for `for codepoint in string` in the C++ semantic checker and LLVM backend, with executable UTF-8 round-trip, supplementary-plane, count and empty-string regression coverage.
 
 
 ## Unicode string escapes and language ergonomics (2026-10-26)

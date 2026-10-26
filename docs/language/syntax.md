@@ -87,6 +87,17 @@ for item in 1..4 {
 
 Loop control supports `break` and `continue`.
 
+You can also iterate over a string. The loop variable is an `i64` Unicode code point, not a UTF-8 byte. Convert a code point back to a one-character UTF-8 string with `string.from_char`:
+
+```nx
+let text = "A\\u{00E9}\\u{1F642}"
+for codepoint in text {
+    print(string.from_char(codepoint))
+}
+```
+
+The string expression is evaluated once before iteration. Empty strings run zero iterations; a multibyte UTF-8 character still produces one loop iteration.
+
 ## Arrays, structs, enums and match
 
 ```nx

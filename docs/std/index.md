@@ -25,7 +25,6 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.sprite2d](sprite2d.md) | Texture and sprite-sheet drawing |
 | [std.camera2d](camera2d.md) | Camera wrappers |
 | [std.audio2d](audio2d.md) | Optional audio wrappers |
-| [std.tilemap](../runtime/game2d.md) | Tilemap creation, tile access, viewport drawing and collision helpers |
 
 ## Combined example
 

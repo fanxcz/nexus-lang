@@ -599,11 +599,18 @@ namespace nexus {
                         varType = Type::i64();
                     } else {
                         auto collectionType = expr(f->collection.get(), env);
-                        if (collectionType.kind != TypeKind::Array || !collectionType.element)
+                        if (collectionType.kind == TypeKind::String) {
+                            // String iteration yields UTF-8 Unicode code points as i64,
+                            // matching string.char_at rather than iterating raw bytes.
+                            varType = Type::i64();
+                        } else if (collectionType.kind == TypeKind::Array &&
+                                   collectionType.element) {
+                            varType = *collectionType.element;
+                        } else {
                             throw std::runtime_error(
-                                "for iteration requires an array; use 'for i in start..end' "
-                                "for numeric ranges");
-                        varType = *collectionType.element;
+                                "for iteration requires an array or string; use "
+                                "'for i in start..end' for numeric ranges");
+                        }
                     }
                     auto local = env;
                     local[f->name] = {varType, false};

@@ -217,7 +217,7 @@ namespace nexus {
         std::unique_ptr<Block> body;
     };
 
-    // `for name in start..end` or `for name in array`.
+    // `for name in start..end`, `for name in array`, or Unicode code points in a string.
     // Exactly one of (rangeEnd, collection) is set.
     struct ForStmt : Stmt {
         std::string name;

@@ -32,10 +32,10 @@
 .md-header { box-shadow: 0 2px 14px rgb(7 22 40 / 16%); }
 .md-header__title { font-weight: 750; letter-spacing: .01em; }
 .md-tabs { border-bottom: 1px solid rgb(255 255 255 / 13%); }
-.md-tabs__link { font-size: .74rem; font-weight: 600; opacity: .88; }
+.md-tabs__link { font-size: .82rem; font-weight: 650; opacity: .92; }
 .md-tabs__link--active, .md-tabs__link:hover { opacity: 1; }
 .md-content__inner { margin-inline: auto; max-width: 78rem; padding-bottom: 2rem; }
-.md-typeset { font-size: .88rem; line-height: 1.72; }
+.md-typeset { font-size: .96rem; line-height: 1.78; }
 .md-typeset h1 { font-weight: 800; letter-spacing: -.025em; line-height: 1.18; margin-bottom: 1.1rem; }
 .md-typeset h2 { border-bottom: 1px solid var(--nexus-border); font-weight: 750; letter-spacing: -.012em; padding-bottom: .35rem; margin-top: 2.5rem; }
 .md-typeset h3 { font-weight: 700; }
@@ -66,9 +66,49 @@
 .nexus-muted { color: var(--nexus-muted); }
 .md-search__input { border-radius: .55rem; }
 .md-footer { border-top: 1px solid var(--nexus-border); }
+
+/* Keyboard users should always be able to see which control has focus. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--md-accent-fg-color);
+  outline-offset: 3px;
+  border-radius: .2rem;
+}
+
+/* Give checksum links a readable secondary-link treatment without disguising the target. */
+.md-typeset a[href$=".sha256.txt"] {
+  display: inline-block;
+  margin: .2rem .35rem .2rem 0;
+  padding: .3rem .55rem;
+  border: 1px solid var(--nexus-border);
+  border-radius: .45rem;
+  background: var(--nexus-soft);
+  font-size: .86em;
+  font-weight: 650;
+  text-decoration: none;
+}
+.md-typeset a[href$=".sha256.txt"]:hover {
+  border-color: var(--md-accent-fg-color);
+  text-decoration: underline;
+}
+.md-typeset .grid.cards > ul > li {
+  padding: 1rem;
+}
+.md-typeset .grid.cards > ul > li > p:first-child {
+  margin-top: 0;
+}
+.md-typeset .grid.cards > ul > li > p:last-child {
+  margin-bottom: 0;
+}
+.md-typeset .md-button {
+  white-space: normal;
+  line-height: 1.35;
+}
+.md-typeset .md-button[download] {
+  overflow-wrap: anywhere;
+}
 @media (max-width: 44rem) {
   .md-content__inner { padding-inline: .75rem; }
-  .md-typeset { font-size: .83rem; }
+  .md-typeset { font-size: .91rem; line-height: 1.72; }
   .nexus-hero { border-radius: .8rem; padding: 1.4rem; }
   .md-typeset .grid.cards > ul { grid-template-columns: 1fr; }
 }

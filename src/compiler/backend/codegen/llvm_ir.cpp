@@ -655,12 +655,26 @@ namespace nexus {
                     emit("br i1 " + inRange + ", label %" + lb + ", label %" + le);
                 } else {
                     auto collectionType = typeOf(f->collection.get());
-                    varType = *collectionType.element;
+                    const bool stringCollection = collectionType.kind == TypeKind::String;
+                    varType = stringCollection ? Type::i64() : *collectionType.element;
                     auto collectionPtr = next();
                     emit(collectionPtr + " = alloca " + llvmType(collectionType));
                     auto collectionValue = expr(f->collection.get());
                     emit("store " + llvmType(collectionType) + " " + collectionValue + ", ptr " +
                          collectionPtr);
+
+                    // Arrays use their compile-time length; strings use Unicode code-point count.
+                    auto lengthPtr = next();
+                    emit(lengthPtr + " = alloca i64");
+                    if (stringCollection) {
+                        auto length = next();
+                        emit(length + " = call i64 @nexus_string_char_count(ptr " + collectionValue + ")");
+                        emit("store i64 " + length + ", ptr " + lengthPtr);
+                    } else {
+                        emit("store i64 " + std::to_string(collectionType.arraySize) + ", ptr " +
+                             lengthPtr);
+                    }
+
                     auto indexPtr = next();
                     emit(indexPtr + " = alloca i64");
                     emit("store i64 0, ptr " + indexPtr);
@@ -673,17 +687,25 @@ namespace nexus {
                     emit(lc + ":");
                     auto current = next();
                     emit(current + " = load i64, ptr " + indexPtr);
+                    auto length = next();
+                    emit(length + " = load i64, ptr " + lengthPtr);
                     auto inRange = next();
-                    emit(inRange + " = icmp slt i64 " + current + ", " +
-                         std::to_string(collectionType.arraySize));
+                    emit(inRange + " = icmp slt i64 " + current + ", " + length);
                     emit("br i1 " + inRange + ", label %" + lb + ", label %" + le);
                     emit(lb + ":");
-                    auto elementPtr = next();
-                    emit(elementPtr + " = getelementptr inbounds " + llvmType(collectionType) +
-                         ", ptr " + collectionPtr + ", i64 0, i64 " + current);
-                    auto element = next();
-                    emit(element + " = load " + llvmType(varType) + ", ptr " + elementPtr);
-                    emit("store " + llvmType(varType) + " " + element + ", ptr " + varPtr);
+                    if (stringCollection) {
+                        auto element = next();
+                        emit(element + " = call i64 @nexus_string_char_at(ptr " + collectionValue +
+                             ", i64 " + current + ")");
+                        emit("store i64 " + element + ", ptr " + varPtr);
+                    } else {
+                        auto elementPtr = next();
+                        emit(elementPtr + " = getelementptr inbounds " + llvmType(collectionType) +
+                             ", ptr " + collectionPtr + ", i64 0, i64 " + current);
+                        auto element = next();
+                        emit(element + " = load " + llvmType(varType) + ", ptr " + elementPtr);
+                        emit("store " + llvmType(varType) + " " + element + ", ptr " + varPtr);
+                    }
                     terminated = false;
                     breakLabels.push_back(le);
                     continueLabels.push_back(li);

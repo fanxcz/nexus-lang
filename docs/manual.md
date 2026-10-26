@@ -572,8 +572,20 @@ for i in 0..10 {
 }
 ```
 
-Iteration over strings is not supported; use `string.len`, `string.byte_at`, or
-`string.slice` with a numeric range instead.
+Strings can also be iterated by Unicode code point. The loop variable has type
+`i64` and contains a code point rather than a UTF-8 byte. Use
+`string.from_char` to encode the current code point back to UTF-8:
+
+```nx
+let text = "A\\u{00E9}\\u{1F642}"
+for codepoint in text {
+    print(string.from_char(codepoint))
+}
+```
+
+The string expression is evaluated once before the loop. Empty strings execute
+zero iterations; multibyte characters such as `é` and `🙂` each execute one
+iteration. Use `string.byte_at` only when you specifically need raw UTF-8 bytes.
 
 ### 9.4 Break and continue
 

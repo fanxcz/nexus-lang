@@ -1,8 +1,8 @@
 # Downloads
 
-[Download complete documentation as PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
+[Download the NEXUS language manual (PDF)](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
 
-Choose the package for your system. Windows executables, ZIP files and checksums are produced by GitHub Actions. A new set is published only after packaging tests, checksum validation, link validation and the site build pass.
+Choose an installer for the simplest setup, or a portable ZIP if you do not want to install. Each binary/archive is built and smoke-tested in CI, and its matching plain-text SHA-256 file is published beside it. The site is deployed only after artifact validation and link checks pass.
 
 <div class="admonition info">
 <p class="admonition-title">Recommended Windows download</p>
@@ -29,7 +29,7 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
 -   :material-palette: **NEXUS Paint · Windows x64**
 
-    Desktop raster drawing application with brush, eraser, line/rectangle tools, fill, colour palette, undo/redo and BMP save/load. The **EXE is a setup installer**: it installs the app with all required runtime DLLs and creates a Start menu shortcut.
+    Desktop raster drawing application with brush, eraser, line/rectangle tools, fill, colour palette, undo/redo and BMP save/load. The **EXE is an installer**, not the standalone app. It installs Paint with its runtime DLLs and creates a Start menu shortcut. To launch Paint without installation, download the portable ZIP below.
 
     [Download NEXUS Paint installer (.exe)](assets/downloads/NEXUS-Paint-Windows-x64.exe){ .md-button .md-button--primary download="NEXUS-Paint-Windows-x64.exe" }
 
@@ -84,6 +84,10 @@ If the command is not found, reopen the terminal. You can test the launcher dire
 ```
 
 The installers are currently unsigned. Download them only from this official website or the project's GitHub Actions output; Windows may show an unsigned-app warning.
+
+## Verify a download before running it
+
+Every `.sha256.txt` link is a small plain-text file containing the SHA-256 digest and matching filename. It is not an executable. Compare the digest against the downloaded file before launching an installer or extracting an archive.
 
 ## Verify the portable ZIP checksum
 

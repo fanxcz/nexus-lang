@@ -76,15 +76,21 @@ int main() {
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
+            auto p = parse(
+                "fn main(){ let text = \"A\\u{00E9}\\u{1F642}\"; "
+                "for codepoint in text { print(string.from_char(codepoint)) } }");
+            nexus::SemanticAnalyzer().analyze(p);
+        }
+        {
             bool failed = false;
             try {
-                auto p = parse("fn main(){ for ch in \"abc\" { print(ch) } }");
+                auto p = parse("fn main(){ for item in 42 { print(item) } }");
                 nexus::SemanticAnalyzer().analyze(p);
             } catch (const std::exception&) {
                 failed = true;
             }
             if (!failed)
-                return 6;
+                return 31;
         }
         {
             bool failed = false;

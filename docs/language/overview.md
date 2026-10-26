@@ -19,7 +19,7 @@ nexus run hello.nx
 
 ## Supported language basics
 
-The current compiler implements functions, typed parameters and returns, inferred bindings, mutable bindings, primitive types, fixed arrays, structs, unit enums, file imports, conditionals, loops, `match` statements, pointers and external function declarations in a limited form.
+The current compiler implements functions, typed parameters and returns, inferred bindings, mutable bindings, primitive types, fixed arrays, structs, unit enums, file imports, conditionals, numeric/array/Unicode-string loops, `match` statements, pointers and external function declarations in a limited form.
 
 ```nx
 fn add(a: i64, b: i64) -> i64 {

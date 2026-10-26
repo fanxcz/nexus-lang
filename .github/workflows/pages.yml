@@ -485,12 +485,18 @@ jobs:
           test -s ../../../docs/assets/downloads/NEXUS-Language-2.0.2.vsix
 
       - name: Create SHA-256 checksums
+        shell: bash
         run: |
-          sha256sum docs/assets/downloads/NEXUS_Windows_Portable.zip | awk '{print $1}' > docs/assets/downloads/NEXUS_Windows_Portable.zip.sha256.txt
-          sha256sum docs/assets/downloads/NEXUS-Setup-2.0.0.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Setup-2.0.0.exe.sha256.txt
-          sha256sum docs/assets/downloads/NEXUS-Language-2.0.2.vsix | awk '{print $1}' > docs/assets/downloads/NEXUS-Language-2.0.2.vsix.sha256.txt
-          sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.exe | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.exe.sha256.txt
-          sha256sum docs/assets/downloads/NEXUS-Paint-Windows-x64.zip | awk '{print $1}' > docs/assets/downloads/NEXUS-Paint-Windows-x64.zip.sha256.txt
+          set -euo pipefail
+          cd docs/assets/downloads
+          for asset in \
+            NEXUS_Windows_Portable.zip \
+            NEXUS-Setup-2.0.0.exe \
+            NEXUS-Language-2.0.2.vsix \
+            NEXUS-Paint-Windows-x64.exe \
+            NEXUS-Paint-Windows-x64.zip; do
+            sha256sum "$asset" > "$asset.sha256.txt"
+          done
       
       - name: Validate every binary, archive and checksum before publishing
         run: python3 scripts/validate_downloads.py docs/assets/downloads
@@ -624,11 +630,13 @@ jobs:
             'NEXUS-Paint-Windows-x64.exe.sha256.txt'
             'NEXUS-Paint-Windows-x64.zip'
             'NEXUS-Paint-Windows-x64.zip.sha256.txt'
-            'pdf/NEXUS-Documentation.pdf'
           )
           for asset in "${assets[@]}"; do
             check_url "assets/downloads/$asset"
           done
+
+          # The manual PDF is published at /pdf/, not in the download artifacts folder.
+          check_url "pdf/NEXUS-Documentation.pdf"
 
           echo 'PASS: every published documentation route and packaged download URL responds successfully.'
 

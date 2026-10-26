@@ -1,0 +1,37 @@
+fn main() {
+    let text = "A\\u{00E9}\\u{1F642}"
+    let mut rebuilt = ""
+    let mut codepoint_sum: i64 = 0
+    let mut count: i64 = 0
+
+    for codepoint in text {
+        rebuilt = rebuilt + string.from_char(codepoint)
+        codepoint_sum = codepoint_sum + codepoint
+        count = count + 1
+    }
+
+    if rebuilt != text {
+        print("NEXUS string iteration: FAIL UTF-8 round trip")
+        return
+    }
+    if count != 3 || string.chars(text) != 3 {
+        print("NEXUS string iteration: FAIL code-point count")
+        return
+    }
+    if codepoint_sum != 128876 {
+        print("NEXUS string iteration: FAIL code-point values")
+        return
+    }
+
+    let empty = ""
+    let mut empty_count: i64 = 0
+    for codepoint in empty {
+        empty_count = empty_count + codepoint
+    }
+    if empty_count != 0 {
+        print("NEXUS string iteration: FAIL empty string")
+        return
+    }
+
+    print("NEXUS string iteration: PASS")
+}

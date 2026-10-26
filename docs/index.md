@@ -12,7 +12,7 @@ A compiled, statically checked language for command-line tools, native applicati
 [Start learning](getting-started/index.md){ .md-button .md-button--primary }
 [Download NEXUS](downloads.md){ .md-button }
 [View source on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
-[Download PDF manual](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
+[Download language manual PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
 
 </div>
 
