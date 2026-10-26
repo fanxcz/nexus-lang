@@ -469,6 +469,14 @@ if (NEXUS_BUILD_TESTS)
     set_tests_properties(nexus_ui_library_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
         TIMEOUT 45)
+    add_test(NAME nexus_app_game_llvm_examples_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/llvm_examples_smoke.cmake)
+    set_tests_properties(nexus_app_game_llvm_examples_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 120)
     add_test(NAME nexus_string_iteration_smoke
         COMMAND ${CMAKE_COMMAND}
             -DNEXUS_BIN=$<TARGET_FILE:nexus>
