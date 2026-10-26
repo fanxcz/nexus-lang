@@ -38,12 +38,12 @@ print("ok=" + true)      // ok=true
 
 ### String escapes and Unicode
 
-String literals support the common escapes `\\n`, `\\t`, `\\r`, `\\\\`, and `\\"`. Use `\\u{HEX}` to include a Unicode scalar as UTF-8:
+String literals support the common escapes `\n`, `\t`, `\r`, `\\`, and `\\"`. Use `\u{HEX}` to include a Unicode scalar as UTF-8:
 
 ```nx
 fn main() {
-    print("Copyright \\u{00A9}")
-    print("Hello \\u{1F642}")
+    print("Copyright \u{00A9}")
+    print("Hello \u{1F642}")
 }
 ```
 

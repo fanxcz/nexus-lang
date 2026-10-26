@@ -149,12 +149,12 @@ Floating point literals contain a decimal point:
 0.5
 ```
 
-String literals are enclosed in double quotes. Common escapes include `\\n`, `\\t`, `\\r`, `\\\\` and `\\"`. Unicode scalar escapes use `\\u{HEX}`:
+String literals are enclosed in double quotes. Common escapes include `\n`, `\t`, `\r`, `\\` and `\\"`. Unicode scalar escapes use `\u{HEX}`:
 
 ```nx
 "hello"
-"Copyright \\u{00A9}"
-"Smile \\u{1F642}"
+"Copyright \u{00A9}"
+"Smile \u{1F642}"
 ```
 
 Unicode escapes require 1–6 hexadecimal digits inside braces. Invalid scalars, surrogate values, and `U+0000` are rejected; embedded NUL is not supported by the current null-terminated string ABI.
@@ -910,7 +910,7 @@ and `string.char_at` count as one character and are returned as their byte
 value; use `string.valid_utf8` to detect malformed input. Character indexes
 count code points, so they are not the same as byte offsets.
 
-Unicode scalar escapes are written as `\\u{HEX}`, such as `"\\u{041F}"` or `"\\u{1F642}"`. They decode to UTF-8 bytes. The string ABI is null-terminated, so `U+0000` is rejected; use direct UTF-8 source or `string.from_char` for text that does not need an escape.
+Unicode scalar escapes are written as `\u{HEX}`, such as `"\u{041F}"` or `"\u{1F642}"`. They decode to UTF-8 bytes. The string ABI is null-terminated, so `U+0000` is rejected; use direct UTF-8 source or `string.from_char` for text that does not need an escape.
 
 ------------------------------------------------------------------------
 
@@ -1430,7 +1430,7 @@ that documentation and examples do not imply support that does not exist.
 | Full native backend parity | partial; the native backend supports a small subset |
 | Full self-hosting parity | partial; the self-hosted compiler covers a subset |
 | Grapheme-cluster and locale-aware text operations | not implemented; character helpers operate on code points, not grapheme clusters |
-| `\\u{HEX}` Unicode scalar escapes | implemented for non-NUL Unicode scalars; embedded U+0000 is rejected |
+| `\u{HEX}` Unicode scalar escapes | implemented for non-NUL Unicode scalars; embedded U+0000 is rejected |
 | Doc comments and generated API docs | not implemented |
 
 ### 25.3 Compatibility promise
