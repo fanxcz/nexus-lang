@@ -16,7 +16,9 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.crypto](crypto.md) | `hash_sha256` |
 | [std.os](os.md) | `args_count`, `args_get` |
 | [std.string](string.md) | `len`, `byte_at`, `byte_len` |
-| [std.math](math.md) | Scalar math helpers |
+| [std.math](math.md) | Scalar math and trigonometry helpers |
+| [std.vec2](vec2.md) | Vec2 construction and 2D vector math |
+| [std.vec3](vec3.md) | Vec3 construction and 3D vector math |
 | [std.collections](collections.md) | Checked integer and string growable lists |
 | [std.engine2d](engine2d.md) | Core 2D window/frame/input/drawing helpers |
 | [std.tilemap](tilemap.md) | Tilemap data storage and safe access |
