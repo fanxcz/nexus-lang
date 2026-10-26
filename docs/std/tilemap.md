@@ -9,6 +9,9 @@ This module owns the grid data model only. Rendering and collision are separate 
 - `tilemap_get(map, width, height, x, y) -> i64`: out-of-range reads return 0.
 - `tilemap_set(map, width, height, x, y, tile)`: out-of-range writes are ignored.
 - `tilemap_try_set(map, width, height, x, y, tile) -> bool`: returns false for invalid maps or coordinates instead of silently ignoring the write.
+- `tilemap_fill(map, width, height, tile) -> bool`: sets every cell to the supplied tile ID.
+- `tilemap_fill_rect(map, width, height, x, y, rect_width, rect_height, tile) -> bool`: fills a rectangular region only when the full requested area fits inside the map; invalid/out-of-bounds rectangles return false.
+- `tilemap_count(map, width, height, tile) -> i64`: counts cells with the specified tile ID.
 
 Tile ID 0 is empty. The core module does not dictate what nonzero IDs mean; the collision helper treats positive IDs as solid, while the debug renderer chooses colors for IDs 1–4 and a default for other positive IDs.
 
@@ -17,8 +20,10 @@ import std.tilemap
 
 fn main() {
     let map = tilemap_create(20, 12)
-    tilemap_set(map, 20, 12, 3, 8, 1)
+    let _ = tilemap_fill_rect(map, 20, 12, 0, 10, 20, 2, 1)
+    tilemap_set(map, 20, 12, 3, 8, 2)
     print(tilemap_get(map, 20, 12, 3, 8))
+    print(tilemap_count(map, 20, 12, 1))
 }
 ```
 
