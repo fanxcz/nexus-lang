@@ -226,6 +226,31 @@ namespace nexus::native {
             return Kind::I64;
         }
 
+        bool blockBindsName(const Block* block, const std::string& name) {
+            if (!block)
+                return false;
+            for (const auto& statement : block->statements) {
+                if (const auto* let = dynamic_cast<const LetStmt*>(statement.get())) {
+                    if (let->name == name)
+                        return true;
+                } else if (const auto* nested = dynamic_cast<const Block*>(statement.get())) {
+                    if (blockBindsName(nested, name))
+                        return true;
+                } else if (const auto* branch = dynamic_cast<const IfStmt*>(statement.get())) {
+                    if (blockBindsName(branch->thenBlock.get(), name) ||
+                        blockBindsName(branch->elseBlock.get(), name))
+                        return true;
+                } else if (const auto* loop = dynamic_cast<const WhileStmt*>(statement.get())) {
+                    if (blockBindsName(loop->body.get(), name))
+                        return true;
+                } else if (const auto* loop = dynamic_cast<const ForStmt*>(statement.get())) {
+                    if (loop->name == name || blockBindsName(loop->body.get(), name))
+                        return true;
+                }
+            }
+            return false;
+        }
+
         void checkBlock(const Block* b,
                         std::map<std::string, Kind>& env,
                         const std::map<std::string, FnSig>& fns,
@@ -299,6 +324,37 @@ namespace nexus::native {
                     checkBlock(i->elseBlock.get(), env, fns, inLoop, reason);
                     env = saved;
                 }
+                return;
+            }
+            if (const auto* loop = dynamic_cast<const ForStmt*>(s)) {
+                if (!loop->rangeEnd || !loop->start) {
+                    reason = "array/string iteration is outside the builtin native v0 subset; use --backend llvm";
+                    return;
+                }
+                if (env.contains(loop->name)) {
+                    reason = "shadowed for-loop variable '" + loop->name +
+                             "' is outside the builtin native v0 subset";
+                    return;
+                }
+                if (blockBindsName(loop->body.get(), loop->name)) {
+                    reason = "shadowing the for-loop variable '" + loop->name +
+                             "' inside its body is outside the builtin native v0 subset";
+                    return;
+                }
+                const Kind start = checkExpr(loop->start.get(), env, fns, reason);
+                if (!reason.empty())
+                    return;
+                const Kind limit = checkExpr(loop->rangeEnd.get(), env, fns, reason);
+                if (!reason.empty())
+                    return;
+                if (start != Kind::I64 || limit != Kind::I64) {
+                    reason = "numeric for-loop bounds must be i64 in the builtin native v0 subset";
+                    return;
+                }
+                auto saved = env;
+                env[loop->name] = Kind::I64;
+                checkBlock(loop->body.get(), env, fns, true, reason);
+                env = std::move(saved);
                 return;
             }
             if (const auto* w = dynamic_cast<const WhileStmt*>(s)) {
@@ -1224,6 +1280,8 @@ namespace nexus::native {
             NativeTarget target_;
             std::map<std::string, FnSig> sigs_;
             std::map<std::string, std::size_t> slots_;
+            std::map<const ForStmt*, std::string> forLimitNames_;
+            std::size_t forLimitCounter_ = 0;
             std::size_t slotCount_ = 0;
             std::string endLabel_;
             std::vector<std::string> breakStack_;
@@ -1245,6 +1303,8 @@ namespace nexus::native {
             void genFunction(const Function& f) {
                 currentFn_ = &f;
                 slots_.clear();
+                forLimitNames_.clear();
+                forLimitCounter_ = 0;
                 slotCount_ = 0;
                 for (const auto& p : f.params)
                     slots_[p.name] = slotCount_++;
@@ -1291,6 +1351,17 @@ namespace nexus::native {
                             collectLocals(i->elseBlock.get());
                     } else if (const auto* w = dynamic_cast<const WhileStmt*>(s.get())) {
                         collectLocals(w->body.get());
+                    } else if (const auto* f = dynamic_cast<const ForStmt*>(s.get())) {
+                        if (f->rangeEnd) {
+                            if (!slots_.contains(f->name))
+                                slots_[f->name] = slotCount_++;
+                            const std::string limitName =
+                                std::string("\x01native_for_limit_") +
+                                std::to_string(forLimitCounter_++);
+                            forLimitNames_[f] = limitName;
+                            slots_[limitName] = slotCount_++;
+                        }
+                        collectLocals(f->body.get());
                     }
                 }
             }
@@ -1337,6 +1408,46 @@ namespace nexus::native {
                         out_.def(els);
                         genBlock(i->elseBlock.get());
                     }
+                    out_.def(end);
+                    return;
+                }
+                if (const auto* f = dynamic_cast<const ForStmt*>(s)) {
+                    if (!f->rangeEnd)
+                        throw std::runtime_error("builtin native v0: unsupported collection iteration");
+                    const std::string limitName = forLimitNames_.at(f);
+                    const std::string cond = out_.label("for.cond");
+                    const std::string body = out_.label("for.body");
+                    const std::string increment = out_.label("for.increment");
+                    const std::string end = out_.label("for.end");
+
+                    // Evaluate both bounds exactly once, before entering the loop.
+                    genExpr(f->start.get());
+                    out_.movRbpFromRax(slotOff(slots_.at(f->name)));
+                    genExpr(f->rangeEnd.get());
+                    out_.movRbpFromRax(slotOff(slots_.at(limitName)));
+
+                    out_.jmp(cond);
+                    out_.def(cond);
+                    BinaryExpr test(TokenKind::Less,
+                                    std::make_unique<VarExpr>(f->name),
+                                    std::make_unique<VarExpr>(limitName));
+                    genExpr(&test);
+                    out_.testRaxRax();
+                    out_.jcc(J_E, end);
+                    out_.def(body);
+                    breakStack_.push_back(end);
+                    continueStack_.push_back(increment);
+                    genBlock(f->body.get());
+                    breakStack_.pop_back();
+                    continueStack_.pop_back();
+
+                    out_.def(increment);
+                    BinaryExpr nextValue(TokenKind::Plus,
+                                         std::make_unique<VarExpr>(f->name),
+                                         std::make_unique<IntExpr>(1));
+                    genExpr(&nextValue);
+                    out_.movRbpFromRax(slotOff(slots_.at(f->name)));
+                    out_.jmp(cond);
                     out_.def(end);
                     return;
                 }
