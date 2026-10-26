@@ -1,3 +1,4 @@
 fn fs_read(path: string) -> string { return file_read(path) }
+fn fs_read_checked(path: string, out: *string) -> bool { return file_read_checked(path, out) }
 fn fs_write(path: string, data: string) -> i64 { return file_write(path, data) }
 fn fs_exists(path: string) -> bool { return file_exists(path) }
