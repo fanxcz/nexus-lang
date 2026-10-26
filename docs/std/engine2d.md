@@ -13,6 +13,7 @@ Core convenience wrappers for the existing runtime window, frame loop, input and
 - `engine2d_mouse_clicked(button) -> bool`: one-frame press.
 - `engine2d_mouse_over(x, y, width, height) -> bool`
 - `engine2d_mouse_clicked_in(x, y, width, height) -> bool`: hover plus one-frame press, the usual button/card check.
-- `engine2d_draw_rect(...)`, `engine2d_draw_circle(...)`, `engine2d_draw_text(...)`
+- `engine2d_draw_rect(...)`, `engine2d_draw_circle(...)`, `engine2d_draw_text(...)`, `engine2d_draw_line(...)`
+- `engine2d_vsync(enabled)`
 
 Textures/sprites, camera, sound, tilemap storage/rendering and collision are in their own modules. These wrappers are a convenience API, not a separate graphics backend.

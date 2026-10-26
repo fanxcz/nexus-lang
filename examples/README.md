@@ -7,6 +7,8 @@ For the broader feature guides, start at [the examples documentation](../docs/ex
 ## Start here
 
 - [`hello.nx`](hello.nx) — smallest runnable program.
+- [`ui_playground.nx`](ui_playground.nx) — interactive native-app UI widgets and layout helpers.
+- [`game2d_starter.nx`](game2d_starter.nx) — self-contained 2D starter using the standard game helper modules.
 - [`new_features_demo.nx`](new_features_demo.nx) — compact feature showcase.
 - [`native_graphics_game.nx`](native_graphics_game.nx) — simple native 2D game loop.
 - [`game2d_platformer.nx`](game2d_platformer.nx) — tilemap-based platformer.
@@ -18,6 +20,8 @@ Small, focused source files cover arrays, loops, branching, functions, structs, 
 
 ## Games and graphical runtime
 
+- [`game2d_starter.nx`](game2d_starter.nx) — an asset-free platformer sandbox demonstrating tilemap, collision, physics, camera and animation helpers.
+
 - [`poker_gui.nx`](poker_gui.nx) — graphical No-Limit Texas Hold'em.
 - [`poker.nx`](poker.nx) — terminal poker example.
 - [`neon_survivor.nx`](neon_survivor.nx) — arena survival game.
@@ -27,6 +31,8 @@ Small, focused source files cover arrays, loops, branching, functions, structs, 
 - `v080_game_framework.nx` and `v080_runtime_showcase.nx` — explicitly version-labelled legacy examples.
 
 ## Interactive applications
+
+- [`ui_playground.nx`](ui_playground.nx) — settings panel with buttons, checkboxes, slider, progress bar and layout cells.
 
 `nexus_paint.nx`, `nexus_editor.nx`, `nexus_focus.nx`, `nexus_studio.nx`, `task_manager.nx`, and `interactive_cli.nx` demonstrate larger interactive applications and workflows.
 

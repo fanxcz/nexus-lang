@@ -20,9 +20,11 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.vec2](vec2.md) | Vec2 construction and 2D vector math |
 | [std.vec3](vec3.md) | Vec3 construction and 3D vector math |
 | [std.collections](collections.md) | Checked integer and string growable lists |
+| [std.ui](ui.md) | Immediate-mode widgets and rectangle layout helpers |
 | [std.engine2d](engine2d.md) | Core 2D window/frame/input/drawing helpers |
 | [std.tilemap](tilemap.md) | Tilemap data storage and safe access |
 | [std.collision2d](collision2d.md) | AABB, circle and tilemap collision movement |
+| [std.physics2d](physics2d.md) | Gravity, jump velocity, friction and tilemap movement |
 | [std.tilemap_render](tilemap_render.md) | Viewport tilemap rendering |
 | [std.animation2d](animation2d.md) | Time-based sprite frame selection |
 | [std.sprite2d](sprite2d.md) | Texture and sprite-sheet drawing |

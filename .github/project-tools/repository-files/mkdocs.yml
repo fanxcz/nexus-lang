@@ -118,9 +118,11 @@ nav:
       - std.string: std/string.md
       - std.math: std/math.md
       - std.collections: std/collections.md
+      - std.ui: std/ui.md
       - std.engine2d: std/engine2d.md
       - std.tilemap: std/tilemap.md
       - std.collision2d: std/collision2d.md
+      - std.physics2d: std/physics2d.md
       - std.tilemap_render: std/tilemap_render.md
       - std.animation2d: std/animation2d.md
       - std.sprite2d: std/sprite2d.md

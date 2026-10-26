@@ -10,11 +10,13 @@
 - `std.math`: scalar math helpers and floor rounding
 - `std.vec2`: Vec2 construction, arithmetic, length, normalization and movement
 - `std.vec3`: Vec3 arithmetic, dot/cross product, length and normalization
+- `std.ui`: immediate-mode widgets, UIRect geometry, row/column/grid layout
 - `std.engine2d`: core 2D window, frame, input and primitive drawing
 - `std.tilemap`: bounded grid data and cell access
 - `std.collision2d`: AABB, circle, point, circle-box and tilemap movement collision helpers
+- `std.physics2d`: gravity, jump velocity, friction, fall-speed clamping and tilemap movement
 - `std.tilemap_render`: viewport-aware colored tile drawing
-- `std.animation2d`: time-based sprite animation frames, easing curves and ping-pong animation
-- `std.sprite2d`: texture and sprite-sheet rendering
+- `std.animation2d`: time-based sprite animation frames, duration/progress, easing curves and ping-pong animation
+- `std.sprite2d`: texture and sprite-sheet rendering with tint and resource readiness checks
 - `std.camera2d`: runtime camera plus follow, world/screen conversion and bounds clamping
-- `std.audio2d`: optional runtime sound loading/playback
+- `std.audio2d`: optional sound loading/playback, unload, volume, tone and diagnostics

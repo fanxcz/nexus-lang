@@ -1,5 +1,7 @@
 # UI Helpers
 
+For rectangle geometry and row/column/grid layout helpers, see [std.ui](../std/ui.md). It wraps these immediate-mode built-ins under the `ui2d_*` names to avoid name collisions.
+
 The runtime offers immediate drawing widgets. They render into the current frame; they are not a separate retained GUI system, and do not include text fields, layout containers, menu systems or a widget tree.
 
 ## Available widgets

@@ -18,7 +18,7 @@
 
 NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
 
-Start with the [application-development guide](https://fanxcz.github.io/nexus-lang/applications/) or create a project with `nexus new MyApp --template app`. Games remain a supported area for graphics and runtime experimentation.
+Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Games remain a supported area for graphics and runtime experimentation.
 
 ## What's new in 2.1.0
 

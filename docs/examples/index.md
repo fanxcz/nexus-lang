@@ -12,6 +12,8 @@ The repository's `examples/` directory contains standalone `.nx` programs and as
 | [Games](games.md) | Terminal and graphical game prototypes |
 | [Graphics](graphics.md) | Valid 2D, 3D and drawing examples |
 | [Audio](audio.md) | The current sound-runtime demo |
+| [Application UI Playground](../../examples/ui_playground.nx) | Immediate-mode UI widgets and layout |
+| [2D Starter](../../examples/game2d_starter.nx) | Asset-free tilemap/physics/camera/animation demonstration |
 
 ## Run an example
 

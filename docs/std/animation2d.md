@@ -6,6 +6,8 @@ Frame-index calculations are kept separate from textures and rendering.
 - `animation2d_next_frame(current, frame_count, looped) -> i64`: advances by one frame, looping to zero or clamping to the final frame.
 - `animation2d_ease_in(amount)`, `animation2d_ease_out(amount)`, `animation2d_ease_in_out(amount)`, `animation2d_smoothstep(amount)`: easing functions with amounts clamped to 0–1.
 - `animation2d_ping_pong(elapsed_seconds, duration) -> f64`: repeating 0-to-1-to-0 triangle wave.
+- `animation2d_duration(frame_count, frames_per_second) -> f64`: playback duration for a fixed-rate clip.
+- `animation2d_progress(elapsed_seconds, duration, looped) -> f64`: normalized progress for looping and one-shot clips.
 
 Invalid frame counts and non-positive frame rates return frame 0. Negative elapsed time is treated as zero. Non-looping animations hold the final frame.
 

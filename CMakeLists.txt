@@ -345,6 +345,14 @@ if (NEXUS_BUILD_TESTS)
       COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/examples/game2d_platformer.nx)
   set_tests_properties(nexus_game2d_platformer_check PROPERTIES
       PASS_REGULAR_EXPRESSION "check: OK")
+  add_test(NAME nexus_game2d_starter_check
+      COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/examples/game2d_starter.nx)
+  set_tests_properties(nexus_game2d_starter_check PROPERTIES
+      PASS_REGULAR_EXPRESSION "check: OK")
+  add_test(NAME nexus_ui_playground_check
+      COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/examples/ui_playground.nx)
+  set_tests_properties(nexus_ui_playground_check PROPERTIES
+      PASS_REGULAR_EXPRESSION "check: OK")
   # The built-in executable image emitter is only runnable on x86-64
   # Linux and Windows. Keep its end-to-end executable tests off macOS.
   if (WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -435,6 +443,14 @@ if (NEXUS_BUILD_TESTS)
             -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
             -P ${CMAKE_SOURCE_DIR}/tests/game_primitives_smoke.cmake)
     set_tests_properties(nexus_game_primitives_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 45)
+    add_test(NAME nexus_ui_library_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/ui_library_smoke.cmake)
+    set_tests_properties(nexus_ui_library_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
         TIMEOUT 45)
     add_test(NAME nexus_string_iteration_smoke
