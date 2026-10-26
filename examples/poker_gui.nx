@@ -2179,10 +2179,6 @@ fn main() {
             }
 
             // ---- seats ----------------------------------------------------
-            let ox = [0.0, 0.5, 0.87, 1.0, 0.87, 0.5, 0.0,
-                      -0.5, -0.87, -1.0, -0.87, -0.5]
-            let oy = [-1.0, -0.87, -0.5, 0.0, 0.5, 0.87, 1.0,
-                      0.87, 0.5, 0.0, -0.5, -0.87]
             let reveal_all = (phase == 2 || showdown_pending) &&
                              nonfolded_count(players) > 1
             let mut s = 0
@@ -2245,14 +2241,15 @@ fn main() {
                     engine2d_draw_circle(ax, ay, 48.0, 0.10, 0.12, 0.16, 1.0)
                     draw_avatar(s, ax, ay, players[s].folded)
 
-                    // Three small lights orbiting the active player.
+                    // Three gold markers orbit smoothly instead of stepping
+                    // across a fixed 12-position lookup table.
                     if is_turn {
-                        let phase_i = to_i64(clock * 7.0) % 12
                         let mut d = 0
                         while d < 3 {
-                            let idx = (phase_i + d * 4) % 12
-                            engine2d_draw_circle(ax + ox[idx] * 56.0,
-                                                 ay + oy[idx] * 56.0,
+                            let angle = clock * 2.0 + to_f64(d) * 2.0943951023931953
+                            let orbit_x = cos(angle) * 56.0
+                            let orbit_y = sin(angle) * 56.0
+                            engine2d_draw_circle(ax + orbit_x, ay + orbit_y,
                                                  3.2, 1.0, 0.88, 0.42, 1.0)
                             d = d + 1
                         }
@@ -2508,6 +2505,50 @@ fn main() {
                                      13.0, 1.0, 0.84, 0.34, 1.0)
                 engine2d_draw_circle(track_x + track_w * frac, track_y,
                                      7.0, 0.05, 0.05, 0.07, 1.0)
+                // Compact 0-100 hand-strength heuristic, separate from pot odds.
+                let mut meter_value = 0
+                let meter_available = players[0].active && !players[0].folded
+                if meter_available {
+                    if board_count >= 3 {
+                        let meter_score = best_of_board(players[0].card0,
+                            players[0].card1, board[0], board[1], board[2],
+                            board[3], board[4], board_count)
+                        meter_value = postflop_strength(meter_score)
+                    } else {
+                        meter_value = preflop_strength(players[0].card0,
+                                                       players[0].card1)
+                    }
+                }
+
+                text_at(f_tiny, 1665.0, 980.0, "HAND POWER",
+                        0.66, 0.72, 0.66, 1.0)
+                if meter_available {
+                    text_r(f_num, 1885.0, 978.0, str_i64(meter_value) + "%",
+                           1.0, 0.87, 0.46, 1.0)
+                } else {
+                    text_r(f_tiny, 1885.0, 980.0, "FOLDED",
+                           0.55, 0.58, 0.58, 1.0)
+                }
+                engine2d_draw_rect(1665.0, 1013.0, 220.0, 10.0,
+                                   0.09, 0.11, 0.14, 1.0)
+                let meter_width = 220.0 * to_f64(meter_value) / 100.0
+                let mut meter_r = 0.80
+                let mut meter_g = 0.24
+                let mut meter_b = 0.18
+                if meter_value >= 40 {
+                    meter_r = 0.92; meter_g = 0.65; meter_b = 0.18
+                }
+                if meter_value >= 70 {
+                    meter_r = 0.20; meter_g = 0.72; meter_b = 0.43
+                }
+                if meter_available {
+                    engine2d_draw_rect(1665.0, 1013.0, meter_width, 10.0,
+                                       meter_r, meter_g, meter_b, 1.0)
+                }
+                text_at(f_tiny, 1665.0, 1032.0, "LOW",
+                        0.45, 0.52, 0.48, 1.0)
+                text_r(f_tiny, 1885.0, 1032.0, "HIGH",
+                       0.45, 0.52, 0.48, 1.0)
             } else {
                 text_c(f_ui, 960.0, 944.0, msg1, 1.0, 0.90, 0.56, 1.0)
                 if msg2 != "" {
