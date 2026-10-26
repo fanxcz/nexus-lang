@@ -696,6 +696,11 @@ namespace {
     static bool gMixerReady = false;
 
     static bool gMouseClicked = false;
+    static bool gUiSliderDragging = false;
+    static double gUiSliderX = 0.0;
+    static double gUiSliderY = 0.0;
+    static double gUiSliderWidth = 0.0;
+    static double gUiSliderHeight = 0.0;
 
     struct EcsEntity {
 
@@ -1427,6 +1432,8 @@ namespace {
                 if (e.button.button < gMouseClickedButtons.size())
                     gMouseClickedButtons[e.button.button] = 1;
             } else if (e.type == SDL_MOUSEBUTTONUP) {
+                if (e.button.button == 1)
+                    gUiSliderDragging = false;
                 gLastMouseButton = int(e.button.button);
                 gLastX = e.button.x;
                 gLastY = e.button.y;
@@ -5103,6 +5110,8 @@ int64_t nexus_gfx_canvas_height(int64_t id) {
 }
 
 bool nexus_ui_button(double x, double y, double w, double h, const char* label) {
+    if (w <= 0.0 || h <= 0.0)
+        return false;
     bool hover = false;
     if (gGraphics) {
         const double mx = nexus_gfx_mouse_x();
@@ -5110,8 +5119,10 @@ bool nexus_ui_button(double x, double y, double w, double h, const char* label) 
         hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
     }
     nexus_gfx_rect(x, y, w, h, hover ? 0.12 : 0.08, hover ? 0.48 : 0.32, 0.82, 1.0);
-    nexus_gfx_text(x + 12, y + 12, 1.5, label, 1, 1, 1, 1);
-    return hover && gMouseClicked;
+    nexus_gfx_text(x + 12, y + 12, 1.5, label ? label : "", 1, 1, 1, 1);
+    // Buttons activate only on a left-button press edge, not right/middle clicks
+    // and not on every frame while the mouse button remains held.
+    return hover && nexus_gfx_mouse_clicked(1);
 }
 void nexus_ui_panel(
     double x, double y, double w, double h, double r, double g, double b, double a) {
@@ -5127,15 +5138,17 @@ void nexus_ui_progress(
     nexus_gfx_rect(x, y, w * v, h, r, g, b, a);
 }
 bool nexus_ui_checkbox(double x, double y, const char* label, bool checked) {
-
     bool hover = false;
     if (gGraphics) {
         const double mx = nexus_gfx_mouse_x();
         const double my = nexus_gfx_mouse_y();
-        hover = mx >= x && mx <= x + 28 && my >= y && my <= y + 28;
+        // The caption is part of the hit target, so users do not need to hit
+        // the small square precisely.
+        const double labelWidth = label ? static_cast<double>(std::strlen(label)) * 10.0 : 0.0;
+        hover = mx >= x && mx <= x + 40.0 + labelWidth && my >= y && my <= y + 28.0;
     }
     bool on = checked;
-    if (hover && gMouseClicked)
+    if (hover && nexus_gfx_mouse_clicked(1))
         on = !checked;
     nexus_gfx_rect(x, y, 28, 28, 0.10, 0.12, 0.18, 1.0);
     if (on)
@@ -5145,8 +5158,10 @@ bool nexus_ui_checkbox(double x, double y, const char* label, bool checked) {
     return on;
 }
 double nexus_ui_slider(double x, double y, double w, double h, double value) {
-
     double v = std::clamp(value, 0.0, 1.0);
+    if (w <= 0.0 || h <= 0.0)
+        return v;
+
     double mx = 0.0;
     double my = 0.0;
     bool down = false;
@@ -5156,20 +5171,38 @@ double nexus_ui_slider(double x, double y, double w, double h, double value) {
         down = nexus_gfx_mouse_down(1);
     }
     const bool hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
-    if (down && hover)
-        v = std::clamp((mx - x) / std::max(w, 1.0), 0.0, 1.0);
+    if (!down)
+        gUiSliderDragging = false;
+    if (nexus_gfx_mouse_clicked(1) && hover) {
+        gUiSliderDragging = true;
+        gUiSliderX = x;
+        gUiSliderY = y;
+        gUiSliderWidth = w;
+        gUiSliderHeight = h;
+    }
+
+    // Capture the slider from mouse-down until mouse-up. Once dragging starts,
+    // keep updating it even if the cursor leaves the original track.
+    const bool isActiveSlider = gUiSliderDragging &&
+        gUiSliderX == x && gUiSliderY == y &&
+        gUiSliderWidth == w && gUiSliderHeight == h;
+    if (down && isActiveSlider)
+        v = std::clamp((mx - x) / w, 0.0, 1.0);
 
     nexus_gfx_rect(x, y + h * 0.35, w, h * 0.3, 0.12, 0.14, 0.18, 1.0);
     nexus_gfx_rect(x, y + h * 0.35, w * v, h * 0.3, 0.2, 0.65, 1.0, 1.0);
     nexus_gfx_circle(x + w * v, y + h * 0.5, h * 0.7, 0.9, 0.95, 1.0, 1.0);
-
     return v;
 }
 bool nexus_physics_aabb(
     double ax, double ay, double aw, double ah, double bx, double by, double bw, double bh) {
+    if (aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0)
+        return false;
     return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 bool nexus_physics_circle(double ax, double ay, double ar, double bx, double by, double br) {
+    if (ar < 0.0 || br < 0.0)
+        return false;
     double dx = ax - bx, dy = ay - by, r = ar + br;
     return dx * dx + dy * dy <= r * r;
 }

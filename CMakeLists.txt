@@ -232,6 +232,14 @@ if (NEXUS_BUILD_TESTS)
   target_compile_definitions(nexus_runtime_memory_test PRIVATE NEXUS_RUNTIME_TESTING)
   target_link_libraries(nexus_runtime_memory_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
   add_test(NAME nexus_runtime_memory_test COMMAND nexus_runtime_memory_test)
+  
+  add_executable(nexus_runtime_geometry_test
+      tests/runtime_geometry_test.cpp
+      src/runtime/runtime.cpp
+  )
+  target_compile_features(nexus_runtime_geometry_test PRIVATE cxx_std_20)
+  target_link_libraries(nexus_runtime_geometry_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
+  add_test(NAME nexus_runtime_geometry_test COMMAND nexus_runtime_geometry_test)
 
   add_executable(nexus_runtime_args_test
       tests/runtime_args_test.cpp
