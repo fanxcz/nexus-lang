@@ -1,0 +1,50 @@
+// Checked, typed convenience wrappers over the runtime's opaque growable-list handles.
+// Use int_list_* for i64 values and string_list_* for strings; these are not generic Vec<T>.
+
+fn int_list_new() -> i64 { return ilist_new() }
+fn int_list_push(handle: i64, value: i64) -> bool { return ilist_push_checked(handle, value) }
+fn int_list_len(handle: i64) -> i64 { return ilist_len(handle) }
+fn int_list_reserve(handle: i64, capacity: i64) -> bool { return ilist_reserve(handle, capacity) }
+fn int_list_try_get(handle: i64, index: i64, out: *i64) -> bool {
+    return ilist_try_get(handle, index, out)
+}
+fn int_list_set(handle: i64, index: i64, value: i64) -> bool {
+    return ilist_set_checked(handle, index, value)
+}
+fn int_list_insert(handle: i64, index: i64, value: i64) -> bool {
+    return ilist_insert(handle, index, value)
+}
+fn int_list_remove(handle: i64, index: i64, out: *i64) -> bool {
+    return ilist_remove(handle, index, out)
+}
+fn int_list_try_pop(handle: i64, out: *i64) -> bool { return ilist_try_pop(handle, out) }
+fn int_list_clear(handle: i64) -> bool { return ilist_clear(handle) }
+fn int_list_free(handle: i64) -> bool { return ilist_free(handle) }
+fn int_list_dispose(handle: i64) { int_list_free(handle) }
+
+fn string_list_new() -> i64 { return slist_new() }
+fn string_list_push(handle: i64, value: string) -> bool {
+    return slist_push_checked(handle, value)
+}
+fn string_list_len(handle: i64) -> i64 { return slist_len(handle) }
+fn string_list_reserve(handle: i64, capacity: i64) -> bool {
+    return slist_reserve(handle, capacity)
+}
+fn string_list_try_get(handle: i64, index: i64, out: *string) -> bool {
+    return slist_try_get(handle, index, out)
+}
+fn string_list_set(handle: i64, index: i64, value: string) -> bool {
+    return slist_set_checked(handle, index, value)
+}
+fn string_list_insert(handle: i64, index: i64, value: string) -> bool {
+    return slist_insert(handle, index, value)
+}
+fn string_list_remove(handle: i64, index: i64, out: *string) -> bool {
+    return slist_remove(handle, index, out)
+}
+fn string_list_try_pop(handle: i64, out: *string) -> bool {
+    return slist_try_pop(handle, out)
+}
+fn string_list_clear(handle: i64) -> bool { return slist_clear(handle) }
+fn string_list_free(handle: i64) -> bool { return slist_free(handle) }
+fn string_list_dispose(handle: i64) { string_list_free(handle) }
