@@ -1,4 +1,5 @@
 // Two-dimensional vector value and pure operations for gameplay/math code.
+import std.math
 struct Vec2 {
     x: f64
     y: f64
