@@ -623,6 +623,7 @@ jobs:
             'NEXUS-Paint-Windows-x64.exe.sha256.txt'
             'NEXUS-Paint-Windows-x64.zip'
             'NEXUS-Paint-Windows-x64.zip.sha256.txt'
+            'pdf/NEXUS-Documentation.pdf'
           )
           for asset in "${assets[@]}"; do
             check_url "assets/downloads/$asset"
