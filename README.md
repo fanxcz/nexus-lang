@@ -23,7 +23,7 @@ Start with the [application-development guide](docs/applications.md) or create a
 
 ## What's new in 2.1.1
 
-- Adds single-line UTF-8 text input to the native UI runtime, including stable widget IDs, focus cycling with Tab, Enter confirmation and Escape cancellation.
+- Adds single-line UTF-8 text input to the native UI runtime, with click-to-focus, Backspace by Unicode code point, Enter/Tab to finish editing, and a byte limit. Selection/caret movement, IME editing commands, caller-supplied widget IDs, automatic focus cycling, and Escape-to-cancel are not implemented.
 - Adds safe checked extraction and explicit fallback helpers for concrete `Option` and `Result` enums.
 - Fixes a semantic-analysis bug where matching a single enum payload variant could be mistaken for covering every return path.
 - Tightens CLI argument validation so invalid benchmark counts and unsupported `lint` options fail with explicit diagnostics.

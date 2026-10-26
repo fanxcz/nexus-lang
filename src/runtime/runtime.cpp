@@ -5430,15 +5430,39 @@ double nexus_ui_slider(double x, double y, double w, double h, double value) {
 }
 bool nexus_physics_aabb(
     double ax, double ay, double aw, double ah, double bx, double by, double bw, double bh) {
-    if (aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0)
+    // Invalid geometry must not turn into a collision through NaN/Inf comparisons
+    // or overflow in the derived right/bottom edges.
+    if (!std::isfinite(ax) || !std::isfinite(ay) || !std::isfinite(aw) ||
+        !std::isfinite(ah) || !std::isfinite(bx) || !std::isfinite(by) ||
+        !std::isfinite(bw) || !std::isfinite(bh) ||
+        aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0)
         return false;
-    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+
+    const double ar = ax + aw;
+    const double ab = ay + ah;
+    const double br = bx + bw;
+    const double bb = by + bh;
+    if (!std::isfinite(ar) || !std::isfinite(ab) ||
+        !std::isfinite(br) || !std::isfinite(bb))
+        return false;
+
+    return ax < br && ar > bx && ay < bb && ab > by;
 }
 bool nexus_physics_circle(double ax, double ay, double ar, double bx, double by, double br) {
-    if (ar < 0.0 || br < 0.0)
+    if (!std::isfinite(ax) || !std::isfinite(ay) || !std::isfinite(ar) ||
+        !std::isfinite(bx) || !std::isfinite(by) || !std::isfinite(br) ||
+        ar < 0.0 || br < 0.0)
         return false;
-    double dx = ax - bx, dy = ay - by, r = ar + br;
-    return dx * dx + dy * dy <= r * r;
+
+    const double dx = ax - bx;
+    const double dy = ay - by;
+    const double radius = ar + br;
+    // Reject arithmetic overflow, and use hypot rather than squaring the
+    // distance so large finite deltas cannot become Inf <= Inf.
+    if (!std::isfinite(dx) || !std::isfinite(dy) || !std::isfinite(radius))
+        return false;
+
+    return std::hypot(dx, dy) <= radius;
 }
 int64_t nexus_scene_create() {
     int64_t id = gNextScene++;

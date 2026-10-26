@@ -32,8 +32,13 @@ Negative gaps/padding are treated as zero. Invalid indexes/counts return a zero-
 Call widgets after polling events and between the runtime's begin/end drawing calls.
 Keep the returned checkbox and slider values in your own mutable variables. The
 API is immediate-mode: widgets draw every frame and process the current input
-state. Text-entry fields, retained widget trees, accessibility semantics,
-automatic focus/navigation, and native file dialogs are not implemented yet.
+state. The text field supports single-line UTF-8 input while the graphics runtime
+is active: click to focus, Backspace to remove one code point, and Enter or Tab
+to finish editing. `max_bytes` is a byte limit (the runtime caps it at 8192
+bytes), not a character count. Selection, caret movement, IME editing commands,
+caller-supplied widget IDs, automatic focus cycling, and Escape-to-cancel are
+not implemented. Retained widget trees, accessibility semantics, and native
+file dialogs are also outside the current API.
 
 ## Example
 
