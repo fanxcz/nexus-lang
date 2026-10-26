@@ -1374,6 +1374,9 @@ namespace {
                 gLastKey = int(e.key.keysym.scancode);
                 if (gLastKey >= 0 && gLastKey < int(gKeys.size()))
                     gKeys[size_t(gLastKey)] = 1;
+                // Escape closes the window by default (SDL_SCANCODE_ESCAPE == 41).
+                if (gLastKey == 41)
+                    gClose = true;
             } else if (e.type == SDL_KEYUP) {
                 gLastKey = int(e.key.keysym.scancode);
                 if (gLastKey >= 0 && gLastKey < int(gKeys.size()))
@@ -1575,6 +1578,12 @@ namespace {
             int16_t v = int16_t(uint16_t(p[0]) | (uint16_t(p[1]) << 8));
             return float(v) / 32768.0f;
         }
+
+        if (format == 0x8120u) {
+            float v = 0.0f;
+            std::memcpy(&v, p, sizeof(v));
+            return std::clamp(v, -1.0f, 1.0f);
+        }
         return 0.0f;
     }
 
@@ -1582,9 +1591,15 @@ namespace {
                                             const SDL_AudioSpec& in,
                                             const SDL_AudioSpec& out) {
 
-        const int inBytes = (in.format == 0x0008u) ? 1 : (in.format == 0x8010u ? 2 : 0);
+        const int inBytes = (in.format == 0x0008u) ? 1
+                            : (in.format == 0x8010u) ? 2
+                            : (in.format == 0x8120u) ? 4
+                                                     : 0;
 
-        const int outBytes = (out.format == 0x0008u) ? 1 : (out.format == 0x8010u ? 2 : 0);
+        const int outBytes = (out.format == 0x0008u) ? 1
+                             : (out.format == 0x8010u) ? 2
+                             : (out.format == 0x8120u) ? 4
+                                                       : 0;
 
         if (inBytes == 0 || outBytes == 0 || in.channels == 0 || out.channels == 0 ||
             in.freq <= 0 || out.freq <= 0)
@@ -1647,7 +1662,12 @@ namespace {
 
         for (size_t i = 0; i < outF.size(); ++i) {
 
-            if (out.format == 0x8010u) {
+            if (out.format == 0x8120u) {
+
+                float v = outF[i];
+                std::memcpy(converted.data() + i * 4, &v, sizeof(v));
+
+            } else if (out.format == 0x8010u) {
 
                 int v = int(std::lrint(std::clamp(outF[i], -1.0f, 1.0f) * 32767.0f));
 

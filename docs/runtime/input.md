@@ -21,6 +21,8 @@ while !gfx_should_close() {
 
 `gfx_key_down(name)` checks held key state. Examples use names such as `"W"`, `"A"`, `"S"`, `"D"`, `"ENTER"`, `"ESC"` and `"F11"`. `gfx_mouse_down(1)` checks left, `2` middle, and `3` right mouse button. These functions report held state, not just a one-frame press.
 
+Escape also sets the window-closed flag, so `gfx_should_close()` returns `true` after the user presses it. Loops that already test `gfx_should_close()` therefore quit on Escape without an explicit `gfx_key_down("ESC")` check; keep the explicit check if you want to run cleanup before leaving the loop.
+
 ## Events
 
 Call `gfx_poll()` once per frame. Helpers describe the most recently processed event: `gfx_event_is(name)`, `gfx_event_type()`, `gfx_event_key()`, `gfx_event_mouse_button()`, `gfx_event_x()` and `gfx_event_y()`.
