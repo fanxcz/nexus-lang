@@ -18,6 +18,7 @@
 
 - Growable lists (`ilist_*` / `slist_*`), `capture_output`, string builtins (`contains`, `find`, `trim`, `upper`, `lower`, `slice`, `split_*`)
 - Smart concatenation: `"code=" + 42` works without `str_i64`
+- Unicode string escapes: `"Hello \\u{1F642}"` decode to UTF-8 during lexing
 - Python-style REPL bindings (`x = 4` creates the variable)
 - Default system fonts, text measurement and font styles in the graphics API
 - FFI confirmed against the Windows API — see `examples/cheat_engine.nx`, a working

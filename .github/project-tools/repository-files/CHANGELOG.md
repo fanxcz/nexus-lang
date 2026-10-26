@@ -8,6 +8,11 @@
 - Refreshed the landing page, downloads cards, responsive styles, navigation and light/dark colour modes.
 
 
+## Unicode string escapes and language ergonomics (2026-10-26)
+
+- Added `\\u{HEX}` Unicode scalar escapes to the C++ and NEXUS self-hosted lexers; scalar values are validated and decoded to UTF-8.
+- Added coverage for supplementary-plane characters, source-span accuracy, and invalid/forbidden Unicode scalar values.
+
 ## 2D game runtime and language ergonomics (2026-10-26)
 
 - Added `stdlib/engine2d.nx`, a consistent convenience API over the existing graphics, texture, animation, input, camera, audio and AABB runtime functions.

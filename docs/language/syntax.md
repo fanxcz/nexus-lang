@@ -36,6 +36,19 @@ print("ok=" + true)      // ok=true
 ```
 
 
+### String escapes and Unicode
+
+String literals support the common escapes `\\n`, `\\t`, `\\r`, `\\\\`, and `\\"`. Use `\\u{HEX}` to include a Unicode scalar as UTF-8:
+
+```nx
+fn main() {
+    print("Copyright \\u{00A9}")
+    print("Hello \\u{1F642}")
+}
+```
+
+The Unicode escape requires 1–6 hexadecimal digits inside braces. Values above `U+10FFFF`, UTF-16 surrogate values, and `U+0000` are rejected with a diagnostic. The string ABI uses null-terminated strings, so embedded NUL is not currently supported.
+
 ## Functions
 
 ```nx
