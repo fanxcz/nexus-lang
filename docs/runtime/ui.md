@@ -2,7 +2,7 @@
 
 For rectangle geometry and row/column/grid layout helpers, see [std.ui](../std/ui.md). It wraps these immediate-mode built-ins under the `ui2d_*` names to avoid name collisions.
 
-The runtime offers immediate drawing widgets. They render into the current frame; they are not a separate retained GUI system, and do not include text fields, layout containers, menu systems or a widget tree.
+The runtime offers immediate drawing widgets. They render into the current frame; they are not a separate retained GUI system. Alongside buttons and sliders, the runtime includes a basic single-line UTF-8 text field; retained layout containers, menus and a widget tree are not provided.
 
 ## Available widgets
 
@@ -12,6 +12,7 @@ The runtime offers immediate drawing widgets. They render into the current frame
 - `ui_checkbox(x, y, label, checked)` returns the resulting boolean.
 - `ui_slider(x, y, width, height, value)` returns a normalized value from 0.0 to 1.0.
 - `ui_progress(x, y, width, height, value, r, g, b, a)` draws a progress bar.
+- `ui_text_field(x, y, width, height, current, placeholder, max_bytes)` returns the current or edited UTF-8 string.
 
 Call widgets after event polling and between `gfx_begin()` and `gfx_end()`. Keep values in your own variables:
 
@@ -38,5 +39,7 @@ fn main() {
     gfx_shutdown()
 }
 ```
+
+For `ui_text_field`, click to focus, type UTF-8 text, Backspace removes one code point, and Enter or Tab ends editing. `max_bytes` is limited to 1–8192; a non-positive value makes the field read-only. The control is identified by its rectangle; it has no caret/selection editing, Escape cancellation, explicit widget IDs or full multi-field Tab traversal yet.
 
 For complex user interfaces, draw using the 2D primitives and implement layout/application state explicitly.

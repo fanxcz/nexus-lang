@@ -1839,6 +1839,7 @@ The cursor-visibility API is idempotent: repeated requests for the current visib
 | `nexus_ui_panel` |
 | `nexus_ui_progress` |
 | `nexus_ui_slider` |
+| `nexus_ui_text_field` |
 
 
 ------------------------------------------------------------------------

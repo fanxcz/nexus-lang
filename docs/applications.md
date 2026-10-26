@@ -8,6 +8,7 @@ NEXUS is focused first on native desktop applications, command-line utilities, a
 - **CLI template:** a simple starting point for command-line utilities.
 - **Application examples:** [NEXUS Paint](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx), [the native app sample](https://github.com/fanxcz/nexus-lang/blob/main/examples/native_app.nx), and [NEXUS Studio's source](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio).
 - **Core libraries:** file operations, filesystem helpers, string operations, networking helpers, JSON access, SQLite, hashing, and memory utilities. Each module has limits documented in the [standard-library reference](std/index.md).
+- **Immediate-mode UI:** panels, labels, buttons, checkboxes, sliders, progress bars, layout helpers and a basic UTF-8 text field. The field supports click focus, Backspace, and Enter/Tab to finish editing; caret/selection, full keyboard traversal and native dialogs are not available yet.
 - **Developer workflow:** project templates, checks, builds, run commands, formatting, linting, diagnostics, and editor/LSP support.
 
 These are useful foundations, but they are not yet equivalent to a mature desktop framework such as Qt, .NET desktop UI, or a complete cross-platform widget toolkit.
@@ -48,7 +49,7 @@ For programs inside the documented built-in native-backend subset, you can also 
 
 The roadmap prioritizes the practical pieces needed for real applications:
 
-1. A consistent UI toolkit with layout, buttons, text inputs, menus, focus handling, and keyboard navigation.
+1. Extend the current UI helpers with stable widget IDs, caret/selection editing, Escape-to-cancel, full multi-field keyboard navigation and menus.
 2. OS integration such as file dialogs, clipboard access, configuration paths, process management, and clear error handling.
 3. Reproducible packaging of runtime libraries and application resources.
 4. Complete sample utilities with tests that build and run from a clean checkout.

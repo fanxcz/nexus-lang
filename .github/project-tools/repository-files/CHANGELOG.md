@@ -2,7 +2,7 @@
 
 - Added root-level `Install-NEXUS.bat` and `Install-NEXUS.ps1` bootstrap scripts. They download the official Windows installer, validate its SHA-256 digest and launch setup only after verification.
 - Bumped the compiler/setup package to 2.1.1; the Pages workflow builds and publishes `NEXUS-Setup-2.1.1.exe` with a matching checksum.
-- Added single-line UTF-8 UI text input with stable IDs, Escape cancellation, Enter confirmation and Tab focus cycling, with regression coverage.
+- Added a basic single-line UTF-8 UI text field with click focus, code-point-aware Backspace, bounded UTF-8 input, and Enter/Tab to finish editing. The field currently uses stable layout bounds rather than explicit widget IDs; Escape cancellation, caret/selection editing, and multi-field keyboard traversal remain future work.
 - Improved checked `Option`/`Result` helpers, enum-match return-path analysis and CLI argument diagnostics.
 
 # Changelog

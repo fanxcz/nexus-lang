@@ -107,7 +107,7 @@ Exact options can vary by command and current implementation. Use `nexus <comman
 
 ## Application development focus
 
-NEXUS is being developed first for desktop apps, CLI utilities, and developer tools. The current native app template, NEXUS Paint, and source-buildable NEXUS Studio provide starting points. The UI helper module is immediate-mode; text inputs, focus management and native dialogs are still roadmap work.
+NEXUS is being developed first for desktop apps, CLI utilities, and developer tools. The current native app template, NEXUS Paint, and source-buildable NEXUS Studio provide starting points. The immediate-mode UI layer includes panels, buttons, checkboxes, sliders, progress bars and a basic UTF-8 text field; full caret/selection editing, multi-field keyboard navigation and native dialogs remain roadmap work.
 
 ## Standard library and runtime
 

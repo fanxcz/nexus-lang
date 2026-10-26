@@ -109,7 +109,7 @@ when you need to control which toolchain builds the executable.
 
     Explore panels, checkboxes, buttons, sliders and responsive layout helpers.
 
-    [Open UI Playground source](../examples/ui_playground.nx)
+    [Open UI Playground source](https://github.com/fanxcz/nexus-lang/blob/main/examples/ui_playground.nx)
 
 </div>
 

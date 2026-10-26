@@ -30,10 +30,19 @@ Negative gaps/padding are treated as zero. Invalid indexes/counts return a zero-
 - ui2d_text_field(rect, value, placeholder, max_bytes) -> string
 
 Call widgets after polling events and between the runtime's begin/end drawing calls.
-Keep the returned checkbox and slider values in your own mutable variables. The
-API is immediate-mode: widgets draw every frame and process the current input
-state. Text-entry fields, retained widget trees, accessibility semantics,
-automatic focus/navigation, and native file dialogs are not implemented yet.
+Keep checkbox, slider and text-field results in your own mutable variables. The
+API is immediate-mode: widgets draw every frame and process current input.
+
+`ui2d_text_field` is a basic single-line editor: click it to focus, type UTF-8
+text, and use Backspace to remove the preceding code point. `max_bytes` is a
+UTF-8 byte limit clamped to 1–8192; a non-positive limit makes the field
+read-only. Enter or Tab ends editing, and clicking elsewhere drops focus.
+Focus is currently identified by the field's rectangle, so keep its bounds
+stable while it is displayed.
+
+Caret placement, selection, Delete/arrow-key editing, Escape cancellation,
+explicit widget IDs, full Tab traversal across multiple fields, retained widget
+trees, accessibility semantics, and native file dialogs are not implemented yet.
 
 ## Example
 

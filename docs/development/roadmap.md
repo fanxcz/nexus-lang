@@ -68,8 +68,8 @@ that the files it publishes are present and usable.
 
 **Goal:** NEXUS can comfortably build small desktop tools rather than only drawing demos.
 
-1. Continue the immediate-mode `std.ui` layer with text entry, focus tracking,
-   keyboard navigation, consistent control states and UI scaling.
+1. Extend the basic `std.ui` text field with stable widget IDs, caret/selection editing,
+   Escape-to-cancel, full multi-field focus traversal, consistent control states and UI scaling.
 2. Add OS integration through tested APIs: file dialogs, clipboard, application
    configuration directories, process launching and clear error results.
 3. Establish consistent conventions for return codes, handles, missing values and
