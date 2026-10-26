@@ -149,7 +149,7 @@ Floating point literals contain a decimal point:
 0.5
 ```
 
-String literals are enclosed in double quotes. Common escapes include `\n`, `\t`, `\r`, `\\` and `\\"`. Unicode scalar escapes use `\u{HEX}`:
+String literals are enclosed in double quotes. Common escapes include `\n`, `\t`, `\r`, `\\` and `\"`. Unicode scalar escapes use `\u{HEX}`:
 
 ```nx
 "hello"

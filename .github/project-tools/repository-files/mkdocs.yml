@@ -55,6 +55,13 @@ plugins:
       enable_creation_date: true
       enable_git_follow: false
   - git-authors
+  - with-pdf:
+      author: fanxcz
+      copyright: Copyright © 2026 fanxcz
+      cover_title: NEXUS Documentation
+      toc_title: Table of Contents
+      toc_level: 3
+      output_path: pdf/NEXUS-Documentation.pdf
   - minify:
       minify_html: true
 

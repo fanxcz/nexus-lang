@@ -1,5 +1,7 @@
 # Downloads
 
+[Download complete documentation as PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
+
 Choose the package for your system. Windows executables, ZIP files and checksums are produced by GitHub Actions. A new set is published only after packaging tests, checksum validation, link validation and the site build pass.
 
 <div class="admonition info">

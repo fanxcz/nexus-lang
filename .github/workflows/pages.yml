@@ -543,6 +543,8 @@ jobs:
             config=".github/project-tools/repository-files/mkdocs.yml"
           fi
           mkdocs build --strict -f "$config"
+          test -s site/pdf/NEXUS-Documentation.pdf
+          echo "PASS generated PDF documentation: site/pdf/NEXUS-Documentation.pdf"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
