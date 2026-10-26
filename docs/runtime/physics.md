@@ -25,4 +25,10 @@ let hit = physics_circle(100.0, 100.0, 18.0, 125.0, 100.0, 12.0)
 print(str_bool(hit))
 ```
 
+Both predicates return `false` for non-finite arguments. AABB checks also
+reject non-positive dimensions and derived edges that overflow; circle checks
+reject negative radii and a radius sum or center delta that overflows. AABB
+overlap is strict, so touching edges are not a collision; circle overlap
+includes tangency.
+
 Store position and velocity in your program and call these helpers when checking overlap; they do not move or resolve objects.

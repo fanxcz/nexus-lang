@@ -66,6 +66,30 @@ fn main() {
         print("NEXUS game libraries: FAIL circle")
         return
     }
+    if !collision2d_point_aabb(5.0, 5.0, 0.0, 0.0, 10.0, 10.0) ||
+       collision2d_point_aabb(11.0, 5.0, 0.0, 0.0, 10.0, 10.0) {
+        print("NEXUS game libraries: FAIL point AABB")
+        return
+    }
+    if !collision2d_circle_aabb(5.0, 5.0, 2.0, 0.0, 0.0, 10.0, 10.0) ||
+       collision2d_circle_aabb(13.0, 5.0, 2.0, 0.0, 0.0, 10.0, 10.0) {
+        print("NEXUS game libraries: FAIL circle AABB")
+        return
+    }
+    if collision2d_aabb_overlap_area(0.0, 0.0, 10.0, 10.0, 10.0, 0.0, 5.0, 5.0) != 0.0 ||
+       collision2d_aabb_overlap_area(0.0, 0.0, 10.0, 10.0, 5.0, 5.0, 10.0, 10.0) != 25.0 {
+        print("NEXUS game libraries: FAIL overlap area")
+        return
+    }
+    if collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 0.0, 24.0) {
+        print("NEXUS game libraries: FAIL zero-width map overlap")
+        return
+    }
+    if collision2d_move_x(map, 4, 4, 0.0, 32.0, 64.0, 24.0, 24.0, 12.0) != 32.0 ||
+       collision2d_move_y(map, 4, 4, 0.0, 32.0, 64.0, 24.0, 24.0, 12.0) != 64.0 {
+        print("NEXUS game libraries: FAIL invalid movement input")
+        return
+    }
     if !collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
         print("NEXUS game libraries: FAIL tile collision")
         return

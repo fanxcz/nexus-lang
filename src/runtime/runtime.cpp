@@ -5392,8 +5392,11 @@ bool nexus_ui_checkbox(double x, double y, const char* label, bool checked) {
     return on;
 }
 double nexus_ui_slider(double x, double y, double w, double h, double value) {
-    double v = std::clamp(value, 0.0, 1.0);
-    if (w <= 0.0 || h <= 0.0)
+    // std::clamp leaves NaN unchanged, which would propagate into drawing math.
+    double v = std::clamp(std::isnan(value) ? 0.0 : value, 0.0, 1.0);
+    if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(w) ||
+        !std::isfinite(h) || !std::isfinite(x + w) || !std::isfinite(y + h) ||
+        w <= 0.0 || h <= 0.0)
         return v;
 
     double mx = 0.0;
@@ -5430,15 +5433,37 @@ double nexus_ui_slider(double x, double y, double w, double h, double value) {
 }
 bool nexus_physics_aabb(
     double ax, double ay, double aw, double ah, double bx, double by, double bw, double bh) {
-    if (aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0)
+    // Reject invalid geometry and overflowing derived edges before comparing bounds.
+    if (!std::isfinite(ax) || !std::isfinite(ay) || !std::isfinite(aw) ||
+        !std::isfinite(ah) || !std::isfinite(bx) || !std::isfinite(by) ||
+        !std::isfinite(bw) || !std::isfinite(bh) ||
+        aw <= 0.0 || ah <= 0.0 || bw <= 0.0 || bh <= 0.0)
         return false;
-    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+
+    const double ar = ax + aw;
+    const double ab = ay + ah;
+    const double br = bx + bw;
+    const double bb = by + bh;
+    if (!std::isfinite(ar) || !std::isfinite(ab) ||
+        !std::isfinite(br) || !std::isfinite(bb))
+        return false;
+
+    return ax < br && ar > bx && ay < bb && ab > by;
 }
 bool nexus_physics_circle(double ax, double ay, double ar, double bx, double by, double br) {
-    if (ar < 0.0 || br < 0.0)
+    if (!std::isfinite(ax) || !std::isfinite(ay) || !std::isfinite(ar) ||
+        !std::isfinite(bx) || !std::isfinite(by) || !std::isfinite(br) ||
+        ar < 0.0 || br < 0.0)
         return false;
-    double dx = ax - bx, dy = ay - by, r = ar + br;
-    return dx * dx + dy * dy <= r * r;
+
+    const double dx = ax - bx;
+    const double dy = ay - by;
+    const double radius = ar + br;
+    if (!std::isfinite(dx) || !std::isfinite(dy) || !std::isfinite(radius))
+        return false;
+
+    // hypot avoids an Inf <= Inf result when squaring large finite distances.
+    return std::hypot(dx, dy) <= radius;
 }
 int64_t nexus_scene_create() {
     int64_t id = gNextScene++;
