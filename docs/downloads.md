@@ -4,6 +4,10 @@
 
 Choose an installer for the simplest setup, or a portable ZIP if you do not want to install. Each binary/archive is built and smoke-tested in CI, and its matching plain-text SHA-256 file is published beside it. The site is deployed only after artifact validation and link checks pass.
 
+## One-click Windows installation
+
+The repository root includes [`install_nexus.bat`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/install_nexus.bat). Download it and run it, or run it from a checkout of the repository. It downloads the official NEXUS Setup installer and its SHA-256 checksum, verifies the binary before execution, and then opens the normal per-user installer. It does not require administrator rights. The script only runs the installer if the checksum matches.
+
 <div class="admonition info">
 <p class="admonition-title">Recommended Windows download</p>
 For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Paint, use the Paint installer or the portable ZIP. The portable ZIP is the best choice when you do not want to install anything.

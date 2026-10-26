@@ -11,6 +11,7 @@
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
 **Windows installer:** download `NEXUS-Setup-2.1.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**One-click bootstrap:** run [`install_nexus.bat`](install_nexus.bat) from a checkout of this repository. It downloads the official installer and checksum, verifies SHA-256, then launches setup.
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
