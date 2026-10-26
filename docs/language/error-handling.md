@@ -26,6 +26,8 @@ fn main() {
 
 An empty string from `file_read` is ambiguous: it can mean an error or a legitimately empty file. `file_exists(path)` can help in simple cases, but it does not eliminate every possible I/O race or permission error.
 
+For a single checked operation, use `file_read_checked(path, &content) -> bool` (or `std.fs`'s `fs_read_checked`). It returns `true` for a successfully read empty file and `false` when opening, seeking, reading, closing, or allocating the output fails. This is a status-returning API, not a generic `Result<T, E>` value; the latter is still a future language feature.
+
 ## Check graphics, files, HTTP and SQLite
 
 | API | Typical failure signal |
