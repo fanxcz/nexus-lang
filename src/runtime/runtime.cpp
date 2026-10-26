@@ -572,6 +572,9 @@ namespace {
 
     static SDL_Window* gWindow = nullptr;
 
+    // Cache visibility to avoid redundant SDL cursor-state changes.
+    static int gCursorVisibleState = -1;
+
     static SDL_GLContext gGL = nullptr;
 
     static bool gGraphics = false;
@@ -1720,6 +1723,7 @@ namespace {
         if (gGraphics)
             return true;
         gGraphicsError.clear();
+        gCursorVisibleState = -1;
         gSoftware2D = false;
         gOpenGL3D = false;
         if (!load_sdl())
@@ -4620,8 +4624,11 @@ void nexus_gfx_music_volume(double v) {
     nexus_gfx_sound_volume(v);
 }
 void nexus_gfx_cursor_visible(bool visible) {
-    if (SDL_ShowCursor)
-        SDL_ShowCursor(visible ? 1 : 0);
+    const int requestedState = visible ? 1 : 0;
+    if (SDL_ShowCursor && gCursorVisibleState != requestedState) {
+        SDL_ShowCursor(requestedState);
+        gCursorVisibleState = requestedState;
+    }
 }
 
 static uint8_t canvas_u8(double v) {

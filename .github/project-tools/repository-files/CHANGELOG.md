@@ -1,5 +1,12 @@
 # Changelog
 
+## NEXUS Poker and graphics runtime polish (2026-10-26)
+
+- Removed hover-driven cursor scaling and pulsing from the poker GUI so the custom pointer remains visually stable near button hitbox edges.
+- Added a persistent cosmetic shop with Midnight Blue, Royal Purple and Crimson table themes. Skins are purchased with chips earned during play and do not affect poker rules or AI strength.
+- Made `gfx_cursor_visible` idempotent in the runtime by caching the requested SDL visibility state and resetting the cache when graphics initializes.
+- Updated poker example documentation and the 2.1.0 feature summary.
+
 ## NEXUS 2.1.0 release alignment and Poker scoring (2026-10-26)
 
 - Aligned the graphical poker demo, its window/menu branding, and example documentation on NEXUS Poker 2.1.0.

@@ -1558,6 +1558,8 @@ This appendix lists the runtime functions available to generated programs.
 | `nexus_gfx_circle` |
 | `nexus_gfx_clear` |
 | `nexus_gfx_cursor_visible` |
+
+The cursor-visibility API is idempotent: repeated requests for the current visibility state are ignored by the runtime. GUI programs that draw their own pointer should render it consistently each frame and avoid changing its size or glow on hover unless that animation is intentional.
 | `nexus_gfx_dt` |
 | `nexus_gfx_end` |
 | `nexus_gfx_error` |

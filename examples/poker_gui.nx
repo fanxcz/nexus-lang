@@ -600,9 +600,9 @@ fn asset_path(rel: string) -> string {
     return "examples/" + rel
 }
 
-fn load_chips() -> i64 {
-    if !file_exists("poker_save.txt") { return 1000 }
-    let text = file_read("poker_save.txt")
+fn load_saved_number(path: string, fallback: i64) -> i64 {
+    if !file_exists(path) { return fallback }
+    let text = file_read(path)
     let n = len(text)
     let mut value = 0
     let mut seen = false
@@ -615,10 +615,28 @@ fn load_chips() -> i64 {
         }
         i = i + 1
     }
-    if !seen { return 1000 }
-    if value < 100 { return 1000 }
-    if value > 1000000000 { return 1000 }
+    if !seen { return fallback }
     return value
+}
+fn load_chips() -> i64 {
+    let value = load_saved_number("poker_save.txt", 1000)
+    if value < 100 || value > 1000000000 { return 1000 }
+    return value
+}
+fn load_cosmetic_skin() -> i64 {
+    let skin = load_saved_number("poker_skin.txt", 0)
+    if skin < 0 || skin > 3 { return 0 }
+    return skin
+}
+fn save_cosmetic_skin(skin: i64) {
+    file_write("poker_skin.txt", str_i64(skin))
+}
+fn load_cosmetic_owned(skin: i64) -> bool {
+    if skin == 0 { return true }
+    return load_saved_number("poker_skin_" + str_i64(skin) + "_owned.txt", 0) == 1
+}
+fn save_cosmetic_owned(skin: i64) {
+    file_write("poker_skin_" + str_i64(skin) + "_owned.txt", "1")
 }
 
 fn save_chips(chips: i64) {
@@ -817,33 +835,37 @@ fn paint_button(x: f64, y: f64, w: f64, h: f64, label: string, font: i64,
 // Classic arrow pointer drawn at the mouse position. The PNG hotspot is the
 // tip of the arrow, so there is no offset between the click point and the art.
 fn draw_cursor(cursor_tex: i64, hot: bool) {
+    // Fixed-size cursor: hover-edge scaling/glow made the pointer look like it blinked.
     let mx = engine2d_mouse_x()
     let my = engine2d_mouse_y()
-    let mut s = 0.80
-    if hot { s = 0.90 }
+    let s = 0.80
     let w = 60.0 * s
     let h = 78.0 * s
-    if hot {
-        engine2d_draw_circle(mx + w * 0.30, my + h * 0.42, w * 0.62,
-                             1.0, 0.80, 0.26, 0.16)
-    }
     if cursor_tex > 0 {
         sprite2d_draw_texture(cursor_tex, mx - 1.0 * s, my - 1.0 * s, w, h)
         return
     }
-    // Fallback: compact ring cursor if the texture could not be loaded.
-    let mut r = 11.0
-    if hot { r = 15.0 }
-    engine2d_draw_circle(mx + 2.0, my + 3.0, r + 3.0, 0.0, 0.0, 0.0, 0.30)
-    engine2d_draw_circle(mx, my, r + 2.0, 1.0, 0.78, 0.24, 0.16)
-    engine2d_draw_circle(mx, my, r - 1.0, 0.03, 0.04, 0.06, 0.92)
+    // Static fallback when the cursor PNG cannot be loaded.
+    engine2d_draw_circle(mx + 2.0, my + 3.0, 14.0, 0.0, 0.0, 0.0, 0.30)
+    engine2d_draw_circle(mx, my, 12.0, 1.0, 0.78, 0.24, 1.0)
+    engine2d_draw_circle(mx, my, 10.0, 0.03, 0.04, 0.06, 0.92)
     engine2d_draw_circle(mx, my, 2.6, 1.0, 0.93, 0.62, 1.0)
+}
+
+fn draw_table_skin(skin: i64) {
+    if skin == 1 {
+        engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.035, 0.12, 0.34, 0.30)
+    } else if skin == 2 {
+        engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.24, 0.055, 0.32, 0.28)
+    } else if skin == 3 {
+        engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.38, 0.035, 0.055, 0.27)
+    }
 }
 
 // ---------------------------------------------------------------------------
 // Main menu.
 // ---------------------------------------------------------------------------
-fn draw_menu(bot_count: i64, bankroll: i64, table_tex: i64,
+fn draw_menu(bot_count: i64, bankroll: i64, selected_skin: i64, table_tex: i64,
              f_huge: i64, f_title: i64, f_h1: i64, f_ui: i64,
              f_small: i64, f_tiny: i64, f_num: i64) {
     if table_tex > 0 {
@@ -851,6 +873,7 @@ fn draw_menu(bot_count: i64, bankroll: i64, table_tex: i64,
     } else {
         engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.03, 0.20, 0.10, 1.0)
     }
+    draw_table_skin(selected_skin)
     engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.010, 0.016, 0.024, 0.72)
     engine2d_draw_rect(0.0, 0.0, 1920.0, 120.0, 0.0, 0.0, 0.0, 0.30)
     engine2d_draw_rect(0.0, 960.0, 1920.0, 120.0, 0.0, 0.0, 0.0, 0.30)
@@ -897,14 +920,69 @@ fn draw_menu(bot_count: i64, bankroll: i64, table_tex: i64,
 
     paint_button(760.0, 728.0, 400.0, 82.0, "START TABLE", f_h1,
                  0.66, 0.48, 0.10, true)
+    paint_button(760.0, 830.0, 400.0, 58.0, "COSMETIC SHOP", f_ui,
+                 0.18, 0.24, 0.31, true)
 
-    text_c(f_tiny, 960.0, 838.0,
+    text_c(f_tiny, 960.0, 920.0,
            "Mouse only  •  F11 fullscreen  •  Esc quits",
            0.62, 0.68, 0.62, 1.0)
     text_c(f_tiny, 960.0, 1000.0,
            "Click cards and buttons  •  Raise with the slider  •  Bots keep playing until one stack is left",
            0.58, 0.64, 0.58, 0.9)
 }
+
+fn draw_shop(selected_skin: i64, bankroll: i64, owned_blue: bool,
+             owned_purple: bool, owned_crimson: bool, table_tex: i64,
+             f_title: i64, f_h1: i64, f_ui: i64, f_small: i64,
+             f_tiny: i64, f_num: i64, shop_msg: string) {
+    if table_tex > 0 {
+        sprite2d_draw_texture(table_tex, 0.0, 0.0, 1920.0, 1080.0)
+    } else {
+        engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.03, 0.20, 0.10, 1.0)
+    }
+    draw_table_skin(selected_skin)
+    engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.010, 0.016, 0.024, 0.76)
+    text_c(f_tiny, 960.0, 58.0, "NEXUS POKER  •  COSMETIC COLLECTION",
+           0.70, 0.76, 0.72, 1.0)
+    text_c(f_title, 960.0, 112.0, "THE STYLE SHOP", 1.0, 0.84, 0.42, 1.0)
+    text_c(f_small, 960.0, 184.0,
+           "Visual table themes only. No gameplay advantages.",
+           0.76, 0.82, 0.76, 1.0)
+    text_c(f_ui, 960.0, 236.0, "YOUR CHIPS  " + money(bankroll),
+           1.0, 0.89, 0.52, 1.0)
+    panel(220.0, 300.0, 400.0, 430.0)
+    panel(760.0, 300.0, 400.0, 430.0)
+    panel(1300.0, 300.0, 400.0, 430.0)
+    engine2d_draw_rect(250.0, 340.0, 340.0, 170.0, 0.035, 0.12, 0.34, 1.0)
+    engine2d_draw_rect(790.0, 340.0, 340.0, 170.0, 0.24, 0.055, 0.32, 1.0)
+    engine2d_draw_rect(1330.0, 340.0, 340.0, 170.0, 0.38, 0.035, 0.055, 1.0)
+    text_c(f_h1, 420.0, 540.0, "MIDNIGHT BLUE", 0.78, 0.88, 1.0, 1.0)
+    text_c(f_h1, 960.0, 540.0, "ROYAL PURPLE", 0.94, 0.78, 1.0, 1.0)
+    text_c(f_h1, 1500.0, 540.0, "CRIMSON", 1.0, 0.76, 0.72, 1.0)
+    let mut blue_label = "BUY  •  600"
+    if owned_blue { blue_label = "EQUIP BLUE" }
+    if selected_skin == 1 { blue_label = "EQUIPPED" }
+    let mut purple_label = "BUY  •  1,200"
+    if owned_purple { purple_label = "EQUIP PURPLE" }
+    if selected_skin == 2 { purple_label = "EQUIPPED" }
+    let mut crimson_label = "BUY  •  1,800"
+    if owned_crimson { crimson_label = "EQUIP CRIMSON" }
+    if selected_skin == 3 { crimson_label = "EQUIPPED" }
+    paint_button(270.0, 610.0, 300.0, 68.0, blue_label, f_ui, 0.12, 0.30, 0.48, true)
+    paint_button(810.0, 610.0, 300.0, 68.0, purple_label, f_ui, 0.38, 0.18, 0.45, true)
+    paint_button(1350.0, 610.0, 300.0, 68.0, crimson_label, f_ui, 0.48, 0.12, 0.14, true)
+    text_c(f_tiny, 420.0, 695.0, "Blue velvet felt", 0.70, 0.78, 0.88, 1.0)
+    text_c(f_tiny, 960.0, 695.0, "Royal casino felt", 0.82, 0.72, 0.88, 1.0)
+    text_c(f_tiny, 1500.0, 695.0, "Crimson lounge felt", 0.90, 0.70, 0.68, 1.0)
+    if shop_msg != "" {
+        text_c(f_small, 960.0, 780.0, shop_msg, 1.0, 0.56, 0.42, 1.0)
+    }
+    paint_button(760.0, 850.0, 400.0, 66.0, "BACK TO MENU", f_ui, 0.18, 0.20, 0.24, true)
+    text_c(f_tiny, 960.0, 1000.0,
+           "Cosmetics are saved locally in your NEXUS Poker profile.",
+           0.58, 0.64, 0.60, 1.0)
+}
+
 fn anim_t(anim: f64, start: f64) -> f64 {
     let p = (anim - start) / 0.30
     if p <= 0.0 { return 0.0 }
@@ -960,6 +1038,11 @@ fn main() {
     let mut screen = 0
     let mut bot_count = 3
     let mut bankroll = load_chips()
+    let mut selected_skin = load_cosmetic_skin()
+    let mut owned_blue = load_cosmetic_owned(1)
+    let mut owned_purple = load_cosmetic_owned(2)
+    let mut owned_crimson = load_cosmetic_owned(3)
+    let mut shop_msg = ""
     let mut players = build_players(bot_count, bankroll)
     let mut hand_no = 0
     let mut dealer = 5
@@ -1090,6 +1173,13 @@ fn main() {
             let space = engine2d_key_down("SPACE")
             let start_clicked = engine2d_mouse_clicked_in(760.0, 728.0,
                                                           400.0, 82.0)
+            let shop_clicked = engine2d_mouse_clicked_in(760.0, 830.0,
+                                                         400.0, 58.0)
+            if menu_guard <= 0.0 && shop_clicked {
+                screen = 2
+                shop_msg = ""
+                audio2d_play(snd_chip, false)
+            }
             if menu_guard <= 0.0 && (start_clicked || (space && !last_space)) {
                 if bankroll < 100 { bankroll = 1000 }
                 players = build_players(bot_count, bankroll)
@@ -1119,8 +1209,74 @@ fn main() {
             }
             last_space = space
 
-            draw_menu(bot_count, bankroll, table_tex, f_huge, f_title, f_h1,
+            draw_menu(bot_count, bankroll, selected_skin, table_tex, f_huge, f_title, f_h1,
                       f_ui, f_small, f_tiny, f_num)
+            draw_cursor(cursor_tex, ui_hot)
+            engine2d_end_frame()
+        } else if screen == 2 {
+            if engine2d_mouse_over(760.0, 850.0, 400.0, 66.0) { ui_hot = true }
+            if engine2d_mouse_clicked_in(760.0, 850.0, 400.0, 66.0) {
+                screen = 0
+                menu_guard = 0.20
+                audio2d_play(snd_chip, false)
+            }
+            if engine2d_mouse_clicked_in(270.0, 610.0, 300.0, 68.0) {
+                if owned_blue {
+                    selected_skin = 1
+                    save_cosmetic_skin(selected_skin)
+                    shop_msg = "MIDNIGHT BLUE EQUIPPED"
+                } else if bankroll >= 600 {
+                    bankroll = bankroll - 600
+                    owned_blue = true
+                    selected_skin = 1
+                    save_chips(bankroll)
+                    save_cosmetic_owned(1)
+                    save_cosmetic_skin(selected_skin)
+                    shop_msg = "MIDNIGHT BLUE UNLOCKED"
+                } else {
+                    shop_msg = "NOT ENOUGH CHIPS - PLAY A FEW HANDS"
+                }
+                audio2d_play(snd_chip, false)
+            }
+            if engine2d_mouse_clicked_in(810.0, 610.0, 300.0, 68.0) {
+                if owned_purple {
+                    selected_skin = 2
+                    save_cosmetic_skin(selected_skin)
+                    shop_msg = "ROYAL PURPLE EQUIPPED"
+                } else if bankroll >= 1200 {
+                    bankroll = bankroll - 1200
+                    owned_purple = true
+                    selected_skin = 2
+                    save_chips(bankroll)
+                    save_cosmetic_owned(2)
+                    save_cosmetic_skin(selected_skin)
+                    shop_msg = "ROYAL PURPLE UNLOCKED"
+                } else {
+                    shop_msg = "NOT ENOUGH CHIPS - PLAY A FEW HANDS"
+                }
+                audio2d_play(snd_chip, false)
+            }
+            if engine2d_mouse_clicked_in(1350.0, 610.0, 300.0, 68.0) {
+                if owned_crimson {
+                    selected_skin = 3
+                    save_cosmetic_skin(selected_skin)
+                    shop_msg = "CRIMSON EQUIPPED"
+                } else if bankroll >= 1800 {
+                    bankroll = bankroll - 1800
+                    owned_crimson = true
+                    selected_skin = 3
+                    save_chips(bankroll)
+                    save_cosmetic_owned(3)
+                    save_cosmetic_skin(selected_skin)
+                    shop_msg = "CRIMSON UNLOCKED"
+                } else {
+                    shop_msg = "NOT ENOUGH CHIPS - PLAY A FEW HANDS"
+                }
+                audio2d_play(snd_chip, false)
+            }
+            draw_shop(selected_skin, bankroll, owned_blue, owned_purple,
+                      owned_crimson, table_tex, f_title, f_h1, f_ui,
+                      f_small, f_tiny, f_num, shop_msg)
             draw_cursor(cursor_tex, ui_hot)
             engine2d_end_frame()
         } else {
@@ -1892,6 +2048,7 @@ fn main() {
                 engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0,
                                    0.03, 0.20, 0.10, 1.0)
             }
+            draw_table_skin(selected_skin)
 
             // Deck on the right side of the felt.
             if phase == 1 {

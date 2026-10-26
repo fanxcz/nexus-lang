@@ -17,6 +17,8 @@
 ## What's new in 2.1.0
 
 - NEXUS Poker 2.1.0 improves five-card hand ranking and kicker tie-breaks, including suit-aware straight-flush detection.
+- The poker example has a persistent cosmetic table-skin shop; its purchases use earned chips and do not change game rules or bot strength.
+- Graphics runtime cursor visibility is idempotent: repeated requests for the same visibility state are skipped, avoiding redundant SDL cursor-state changes.
 - Release metadata, installer names and the VS Code language extension are aligned on version 2.1.0.
 
 ## Core language features introduced in 2.0
