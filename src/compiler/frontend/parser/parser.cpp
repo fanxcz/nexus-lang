@@ -485,6 +485,14 @@ namespace nexus {
                     arm.binding = expectIdentifier();
                 } else {
                     arm.pattern = parseExpr();
+                    if (auto* ev = dynamic_cast<EnumVariantExpr*>(arm.pattern.get())) {
+                        if (ev->payload) {
+                            if (auto* ve = dynamic_cast<VarExpr*>(ev->payload.get())) {
+                                arm.binding = ve->name;
+                                ev->payload.reset();
+                            }
+                        }
+                    }
                     if (accept(TokenKind::Range))
                         arm.rangeEnd = parseExpr();
                 }
@@ -632,7 +640,13 @@ namespace nexus {
             if (cur().kind == TokenKind::ColonColon) {
                 ++i_;
                 auto v = expectIdentifier();
-                return std::make_unique<EnumVariantExpr>(n, v);
+                auto e = std::make_unique<EnumVariantExpr>(n, v);
+                if (cur().kind == TokenKind::LParen) {
+                    ++i_;
+                    e->payload = parseExpr();
+                    expect(TokenKind::RParen);
+                }
+                return e;
             }
             if (cur().kind == TokenKind::LBrace && i_ + 2 < tokens_.size() &&
                 tokens_[i_ + 1].kind == TokenKind::Identifier &&

@@ -121,6 +121,7 @@ namespace nexus {
 
     struct EnumVariantExpr : Expr {
         std::string enumName, variant;
+        Expr::Ptr payload;
         EnumVariantExpr(std::string e, std::string v)
             : enumName(std::move(e)), variant(std::move(v)) {}
     };

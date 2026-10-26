@@ -268,6 +268,10 @@ namespace nexus {
             for (auto& v : en.variants)
                 if (v.name == ev->variant) {
                     ok = true;
+                    if (v.payload && ev->payload) {
+                        const auto pt = expr(ev->payload.get(), env);
+                        (void)pt;
+                    }
                     break;
                 }
             if (!ok)
@@ -630,7 +634,9 @@ namespace nexus {
                     std::unordered_map<std::string, bool> seenPatterns;
                     for (auto& arm : mm->arms) {
                         const bool catchAll =
-                            (arm.wildcard || !arm.binding.empty()) && !arm.guard;
+                            (arm.wildcard ||
+                             (!arm.binding.empty() && !arm.pattern)) &&
+                            !arm.guard;
                         if (sawCatchAll)
                             throw std::runtime_error(
                                 "unreachable match arm after a catch-all arm");
@@ -641,7 +647,22 @@ namespace nexus {
                         if (!arm.binding.empty()) {
                             if (local.contains(arm.binding))
                                 throw std::runtime_error("duplicate variable: " + arm.binding);
-                            local[arm.binding] = {vt, false};
+                            Type bindType = vt;
+                            if (vt.kind == TypeKind::Enum) {
+                                if (const auto* ev = dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
+                                    const auto& en = getEnum(ev->enumName);
+                                    for (const auto& v : en.variants) {
+                                        if (v.name == ev->variant && v.payload) {
+                                            bindType = *v.payload;
+                                            if (ev->payload) {
+                                                (void)expr(ev->payload.get(), env);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            local[arm.binding] = {bindType, false};
                         }
 
                         if (arm.rangeEnd) {

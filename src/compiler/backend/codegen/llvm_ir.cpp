@@ -62,7 +62,7 @@ namespace nexus {
             case TypeKind::Struct:
                 return "%struct." + t.name;
             case TypeKind::Enum:
-                return "i64";
+                return "{ i64, i64 }";
             case TypeKind::Array:
                 return "[" + std::to_string(t.arraySize) + " x " + llvmType(*t.element) + "]";
             default:
@@ -263,8 +263,36 @@ namespace nexus {
             if (auto* x = dynamic_cast<const StringExpr*>(e))
                 return stringValue(x->value);
 
-            if (auto* x = dynamic_cast<const EnumVariantExpr*>(e))
-                return std::to_string(enumTag(*x));
+            if (auto* x = dynamic_cast<const EnumVariantExpr*>(e)) {
+                const auto tag = enumTag(*x);
+                const auto& en = getEnum(x->enumName);
+                const EnumVariant* variant = nullptr;
+                for (const auto& v : en.variants)
+                    if (v.name == x->variant) { variant = &v; break; }
+                std::string payloadI64 = "0";
+                if (variant && variant->payload && x->payload) {
+                    const auto payloadType = *variant->payload;
+                    const auto val = expr(x->payload.get());
+                    if (payloadType.kind == TypeKind::I64)
+                        payloadI64 = val;
+                    else if (payloadType.kind == TypeKind::Bool)
+                        payloadI64 = val; // i1, need zext
+                    else if (payloadType.kind == TypeKind::String || payloadType.kind == TypeKind::Pointer) {
+                        auto c = next();
+                        emit(c + " = ptrtoint ptr " + val + " to i64");
+                        payloadI64 = c;
+                    } else if (payloadType.kind == TypeKind::F64) {
+                        auto c = next();
+                        emit(c + " = bitcast double " + val + " to i64");
+                        payloadI64 = c;
+                    }
+                }
+                auto r0 = next();
+                emit(r0 + " = insertvalue { i64, i64 } undef, i64 " + std::to_string(tag) + ", 0");
+                auto r1 = next();
+                emit(r1 + " = insertvalue { i64, i64 } " + r0 + ", i64 " + payloadI64 + ", 1");
+                return r1;
+            }
 
             if (auto* x = dynamic_cast<const VarExpr*>(e))
                 return loadVar(x->name);
@@ -838,6 +866,13 @@ namespace nexus {
             if (auto* mm = dynamic_cast<const MatchStmt*>(s)) {
 
                 auto value = expr(mm->value.get());
+                std::string valueTag = value;
+                Type vt = typeOf(mm->value.get());
+                if (vt.kind == TypeKind::Enum) {
+                    auto t = next();
+                    emit(t + " = extractvalue { i64, i64 } " + value + ", 0");
+                    valueTag = t;
+                }
                 auto end = lab("match.end");
                 std::vector<std::string> bodies, tests;
                 for (std::size_t k = 0; k < mm->arms.size(); ++k) {
@@ -854,26 +889,62 @@ namespace nexus {
                     auto& arm = mm->arms[k];
                     const auto savedVars = vars;
                     const auto savedTypes = types;
-                    Type vt = typeOf(mm->value.get());
                     if (!arm.binding.empty()) {
+                        Type bindType = vt;
+                        std::string bindValue = value;
+                        if (vt.kind == TypeKind::Enum) {
+                            const auto* evp = dynamic_cast<const EnumVariantExpr*>(arm.pattern.get());
+                            if (evp) {
+                                const auto& en = getEnum(evp->enumName);
+                                for (const auto& v : en.variants) {
+                                    if (v.name == evp->variant && v.payload) {
+                                        bindType = *v.payload;
+                                        auto p = next();
+                                        emit(p + " = extractvalue { i64, i64 } " + value + ", 1");
+                                        if (bindType.kind == TypeKind::String || bindType.kind == TypeKind::Pointer) {
+                                            auto c = next();
+                                            emit(c + " = inttoptr i64 " + p + " to ptr");
+                                            bindValue = c;
+                                        } else if (bindType.kind == TypeKind::Bool) {
+                                            auto c = next();
+                                            emit(c + " = trunc i64 " + p + " to i1");
+                                            bindValue = c;
+                                        } else if (bindType.kind == TypeKind::F64) {
+                                            auto c = next();
+                                            emit(c + " = bitcast i64 " + p + " to double");
+                                            bindValue = c;
+                                        } else {
+                                            bindValue = p;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         auto ptr = next();
                         vars[arm.binding] = ptr;
-                        types[arm.binding] = vt;
-                        emit(ptr + " = alloca " + llvmType(vt));
-                        emit("store " + llvmType(vt) + " " + value + ", ptr " + ptr);
+                        types[arm.binding] = bindType;
+                        emit(ptr + " = alloca " + llvmType(bindType));
+                        emit("store " + llvmType(bindType) + " " + bindValue + ", ptr " + ptr);
                     }
                     const std::string matched =
                         arm.guard ? lab("match.guard") : bodies[k];
-                    if (arm.wildcard || !arm.binding.empty()) {
+                    if (arm.wildcard || (!arm.binding.empty() && !arm.pattern)) {
                         emit("br label %" + matched);
                     } else {
-                        auto pat = expr(arm.pattern.get());
+                        auto patVal = expr(arm.pattern.get());
+                        std::string pat = patVal;
+                        if (vt.kind == TypeKind::Enum && dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
+                            auto t = next();
+                            emit(t + " = extractvalue { i64, i64 } " + patVal + ", 0");
+                            pat = t;
+                        }
                         if (arm.rangeEnd) {
                             auto upper = expr(arm.rangeEnd.get());
                             auto lowerOk = next();
                             auto upperOk = next();
-                            emit(lowerOk + " = icmp sge i64 " + value + ", " + pat);
-                            emit(upperOk + " = icmp sle i64 " + value + ", " + upper);
+                            emit(lowerOk + " = icmp sge i64 " + valueTag + ", " + pat);
+                            emit(upperOk + " = icmp sle i64 " + valueTag + ", " + upper);
                             auto cmp = next();
                             emit(cmp + " = and i1 " + lowerOk + ", " + upperOk);
                             emit("br i1 " + cmp + ", label %" + matched + ", label %" +
@@ -883,7 +954,7 @@ namespace nexus {
                             if (vt.kind == TypeKind::Bool)
                                 emit(cmp + " = icmp eq i1 " + value + ", " + pat);
                             else
-                                emit(cmp + " = icmp eq i64 " + value + ", " + pat);
+                                emit(cmp + " = icmp eq i64 " + valueTag + ", " + pat);
                             emit("br i1 " + cmp + ", label %" + matched + ", label %" +
                                  tests[k]);
                         }
@@ -901,7 +972,7 @@ namespace nexus {
                         allTerminated = false;
                         emit("br label %" + end);
                     }
-                    if ((arm.wildcard || !arm.binding.empty()) && !arm.guard)
+                    if ((arm.wildcard || (!arm.binding.empty() && !arm.pattern)) && !arm.guard)
                         hasCatchAll = true;
                     terminated = false;
                     vars = savedVars;
