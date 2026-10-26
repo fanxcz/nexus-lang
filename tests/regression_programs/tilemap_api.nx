@@ -8,8 +8,16 @@ fn main() {
         print("NEXUS tilemap: FAIL create")
         return
     }
+    defer tilemap_dispose(map)
 
-    tilemap_set(map, 4, 4, 1, 2, 1)
+    if !tilemap_try_set(map, 4, 4, 1, 2, 1) {
+        print("NEXUS tilemap: FAIL checked set")
+        return
+    }
+    if tilemap_try_set(map, 4, 4, -1, 2, 1) {
+        print("NEXUS tilemap: FAIL invalid checked set")
+        return
+    }
     if tilemap_get(map, 4, 4, 1, 2) != 1 {
         print("NEXUS tilemap: FAIL get/set")
         return
@@ -64,6 +72,16 @@ fn main() {
     }
     if math_floor(-0.2) != -1 || math_floor(1.9) != 1 {
         print("NEXUS tilemap: FAIL floor helper")
+        return
+    }
+
+    let disposable = tilemap_create(1, 1)
+    if disposable <= 0 || !tilemap_destroy(disposable) {
+        print("NEXUS tilemap: FAIL destroy")
+        return
+    }
+    if tilemap_destroy(disposable) {
+        print("NEXUS tilemap: FAIL repeated destroy")
         return
     }
 
