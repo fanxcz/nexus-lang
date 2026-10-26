@@ -1,0 +1,50 @@
+import std.ui
+
+fn near(actual: f64, expected: f64, epsilon: f64) -> bool {
+    return actual >= expected - epsilon && actual <= expected + epsilon
+}
+
+fn main() {
+    let panel = ui2d_rect(10.0, 20.0, 300.0, 200.0)
+    if ui2d_right(panel) != 310.0 || ui2d_bottom(panel) != 220.0 {
+        print("NEXUS UI library: FAIL rect edges")
+        return
+    }
+    if ui2d_center_x(panel) != 160.0 || ui2d_center_y(panel) != 120.0 {
+        print("NEXUS UI library: FAIL rect center")
+        return
+    }
+    if !ui2d_contains(panel, 10.0, 20.0) || !ui2d_contains(panel, 160.0, 120.0) ||
+       ui2d_contains(panel, 311.0, 20.0) {
+        print("NEXUS UI library: FAIL hit test")
+        return
+    }
+    let inset = ui2d_inset(panel, 12.0)
+    if inset.x != 22.0 || inset.y != 32.0 || inset.width != 276.0 || inset.height != 176.0 {
+        print("NEXUS UI library: FAIL inset")
+        return
+    }
+    let row = ui2d_row_cell(panel, 1, 3, 6.0)
+    if !near(row.x, 112.0, 0.00001) || !near(row.width, 96.0, 0.00001) || row.height != 200.0 {
+        print("NEXUS UI library: FAIL row layout")
+        return
+    }
+    let column = ui2d_column_cell(panel, 2, 4, 8.0)
+    if column.x != 10.0 || !near(column.y, 124.0, 0.00001) ||
+       column.width != 300.0 || column.height != 44.0 {
+        print("NEXUS UI library: FAIL column layout")
+        return
+    }
+    let cell = ui2d_grid_cell(panel, 2, 1, 3, 2, 10.0)
+    if !near(cell.x, 216.6666666667, 0.0001) || cell.y != 125.0 ||
+       !near(cell.width, 93.3333333333, 0.0001) || cell.height != 95.0 {
+        print("NEXUS UI library: FAIL grid layout")
+        return
+    }
+    let invalid = ui2d_row_cell(panel, 3, 3, 0.0)
+    if invalid.width != 0.0 || invalid.height != 0.0 {
+        print("NEXUS UI library: FAIL invalid layout input")
+        return
+    }
+    print("NEXUS UI library: PASS")
+}

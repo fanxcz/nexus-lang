@@ -1,0 +1,71 @@
+import std.engine2d
+import std.ui
+import std.math
+
+fn main() {
+    let ok = engine2d_init(1040, 720, "NEXUS UI Playground")
+    if !ok {
+        print("Graphics backend unavailable: " + gfx_error())
+        return
+    }
+
+    let panel = ui2d_rect(40.0, 36.0, 960.0, 648.0)
+    let content = ui2d_inset(panel, 32.0)
+    let mut notifications = true
+    let mut sound_enabled = true
+    let mut volume = 0.65
+    let mut about_open = false
+    engine2d_vsync(true)
+
+    while !engine2d_should_close() {
+        engine2d_begin_frame(0.025, 0.035, 0.065, 1.0)
+        ui2d_panel(panel, 0.055, 0.075, 0.13, 1.0)
+        ui2d_outline(panel, 1.0, 0.18, 0.28, 0.42, 1.0)
+        ui2d_label(content.x, content.y, "NEXUS UI", 2.6)
+        ui2d_label(content.x, content.y + 42.0, "Immediate-mode widgets + layout helpers", 1.25)
+        ui2d_separator(content.x, content.y + 76.0, content.x + content.width,
+                       content.y + 76.0, 1.0, 0.16, 0.22, 0.32, 1.0)
+
+        ui2d_label(content.x, content.y + 104.0, "APPLICATION SETTINGS", 1.5)
+        notifications = ui2d_checkbox(content.x, content.y + 148.0, "Desktop notifications", notifications)
+        sound_enabled = ui2d_checkbox(content.x, content.y + 190.0, "Enable sound effects", sound_enabled)
+
+        ui2d_label(content.x, content.y + 244.0, "Master volume", 1.15)
+        volume = ui2d_slider(ui2d_rect(content.x, content.y + 272.0, 600.0, 28.0), volume)
+        ui2d_progress(ui2d_rect(content.x, content.y + 316.0, 600.0, 14.0),
+                      volume, 0.18, 0.68, 0.96, 1.0)
+        ui2d_label(content.x + 620.0, content.y + 270.0,
+                   str_i64(math_floor(volume * 100.0)) + "%", 1.2)
+
+        let actions = ui2d_rect(content.x, content.y + 372.0, 600.0, 56.0)
+        let reset_button = ui2d_row_cell(actions, 0, 2, 16.0)
+        let about_button = ui2d_row_cell(actions, 1, 2, 16.0)
+        if ui2d_button(reset_button, "RESET SETTINGS") {
+            notifications = true
+            sound_enabled = true
+            volume = 0.65
+        }
+        if ui2d_button(about_button, "ABOUT NEXUS UI") {
+            about_open = !about_open
+        }
+
+        let status = ui2d_rect(content.x, content.y + 452.0, 600.0, 82.0)
+        ui2d_panel(status, 0.035, 0.05, 0.095, 1.0)
+        ui2d_label(status.x + 16.0, status.y + 14.0, "STATE", 1.0)
+        ui2d_label(status.x + 16.0, status.y + 42.0,
+                   "Notifications: " + str_bool(notifications) +
+                   "   Sound: " + str_bool(sound_enabled), 1.0)
+
+        if about_open {
+            let about = ui2d_rect(content.x + 636.0, content.y + 372.0, 260.0, 162.0)
+            ui2d_panel(about, 0.09, 0.13, 0.23, 1.0)
+            ui2d_outline(about, 1.0, 0.22, 0.46, 0.72, 1.0)
+            ui2d_label(about.x + 16.0, about.y + 16.0, "ABOUT", 1.3)
+            ui2d_label(about.x + 16.0, about.y + 52.0, "UIRect + layout", 0.9)
+            ui2d_label(about.x + 16.0, about.y + 78.0, "Buttons, toggles,", 0.9)
+            ui2d_label(about.x + 16.0, about.y + 102.0, "sliders, progress", 0.9)
+        }
+        engine2d_end_frame()
+    }
+    engine2d_shutdown()
+}
