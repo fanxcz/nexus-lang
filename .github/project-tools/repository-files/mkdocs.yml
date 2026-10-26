@@ -118,6 +118,8 @@ nav:
       - std.string: std/string.md
       - std.math: std/math.md
       - std.collections: std/collections.md
+      - std.option: std/option.md
+      - std.result: std/result.md
       - std.ui: std/ui.md
       - std.engine2d: std/engine2d.md
       - std.tilemap: std/tilemap.md

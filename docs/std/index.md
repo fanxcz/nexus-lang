@@ -21,7 +21,8 @@ The checked-in standard library is deliberately small. Each `import std.NAME` lo
 | [std.vec3](vec3.md) | Vec3 construction and 3D vector math |
 | [std.collections](collections.md) | Checked integer and string growable lists |
 | [std.ui](ui.md) | Immediate-mode widgets and rectangle layout helpers |
-| [std.option](../language/error-handling.md) / [std.result](../language/error-handling.md) | Concrete Option/Result enums and checked extraction helpers |
+| [std.option](option.md) | Concrete `Option` enum with checked extraction and fallback helpers |
+| [std.result](result.md) | Concrete `Result` enum with checked extraction and error-text retrieval |
 | [std.engine2d](engine2d.md) | Core 2D window/frame/input/drawing helpers |
 | [std.tilemap](tilemap.md) | Tilemap data storage and safe access |
 | [std.collision2d](collision2d.md) | AABB, circle and tilemap collision movement |
