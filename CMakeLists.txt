@@ -439,6 +439,15 @@ if (NEXUS_BUILD_TESTS)
     set_tests_properties(nexus_defer_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
         TIMEOUT 45)
+
+    add_test(NAME nexus_checked_file_read_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/checked_file_read_smoke.cmake)
+    set_tests_properties(nexus_checked_file_read_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 45)
     add_test(NAME nexus_engine2d_api_smoke
         COMMAND $<TARGET_FILE:nexus> check ${CMAKE_SOURCE_DIR}/tests/regression_programs/engine2d_api.nx)
     set_tests_properties(nexus_engine2d_api_smoke PROPERTIES
