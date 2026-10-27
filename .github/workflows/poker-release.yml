@@ -221,3 +221,5 @@ jobs:
           body_path: examples/POKER_README.md
           files: ${{ runner.temp }}/NEXUS-Poker-Windows-x64.zip
           fail_on_unmatched_files: true
+
+# App-local VC runtime and the diagnostic launcher are part of the portable ZIP.
