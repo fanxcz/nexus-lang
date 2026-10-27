@@ -1,0 +1,155 @@
+name: Package NEXUS Poker for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['poker-v*']
+    paths:
+      - 'examples/poker_gui.nx'
+      - 'examples/assets/**'
+      - 'examples/run_poker.bat'
+      - 'examples/POKER_README.md'
+      - 'examples/POKER_THIRD_PARTY_NOTICES.md'
+      - '.github/workflows/poker-release.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-poker-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package-windows:
+    name: Build distributable Windows ZIP
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download the official NEXUS installer and checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = 'https://fanxcz.github.io/nexus-lang/assets/downloads'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.1.1.exe'
+          $checksum = "$installer.sha256.txt"
+          Invoke-WebRequest "$base/NEXUS-Setup-2.1.1.exe" -OutFile $installer
+          Invoke-WebRequest "$base/NEXUS-Setup-2.1.1.exe.sha256.txt" -OutFile $checksum
+          $expected = ((Get-Content -LiteralPath $checksum -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($expected -notmatch '^[0-9a-f]{64}$' -or $actual -ne $expected) {
+            throw 'NEXUS Setup SHA-256 validation failed.'
+          }
+          Write-Host "Verified official NEXUS Setup SHA-256: $actual"
+
+      - name: Install NEXUS
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.1.1.exe'
+          $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/TASKS=addtopath') -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "NEXUS Setup failed with exit code $($process.ExitCode)." }
+          $nexus = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS\nexus.cmd'
+          if (-not (Test-Path -LiteralPath $nexus)) { throw 'Installed nexus.cmd was not found.' }
+          $version = & $nexus --version 2>&1
+          if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.1\.1')) {
+            throw "Unexpected installed compiler version: $($version -join "`n")"
+          }
+          Write-Host ($version -join "`n")
+
+      - name: Compile and assemble NEXUS Poker
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo = $env:GITHUB_WORKSPACE
+          $installRoot = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS'
+          $nexus = Join-Path $installRoot 'nexus.cmd'
+          $stage = Join-Path $env:RUNNER_TEMP 'NEXUS-Poker-Windows-x64'
+          $exe = Join-Path $stage 'NEXUS-Poker.exe'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          $source = Join-Path $repo 'examples\poker_gui.nx'
+          & $nexus build $source -o $exe --backend llvm
+          if ($LASTEXITCODE -ne 0) { throw 'NEXUS Poker compilation failed.' }
+          if (-not (Test-Path -LiteralPath $exe)) { throw 'The Poker executable was not created.' }
+
+          $assets = Join-Path $stage 'assets'
+          foreach ($directory in @('cards','table','ui','sounds')) {
+            $from = Join-Path (Join-Path $repo 'examples\assets') $directory
+            $to = Join-Path $assets $directory
+            New-Item -ItemType Directory -Path $to -Force | Out-Null
+            if ($directory -eq 'cards') {
+              Get-ChildItem -LiteralPath $from -Filter 'card_*.png' -File | Copy-Item -Destination $to -Force
+              Copy-Item -LiteralPath (Join-Path $from 'card_back.png') -Destination $to -Force
+            } elseif ($directory -eq 'table') {
+              Copy-Item -LiteralPath (Join-Path $from 'felt.png') -Destination $to -Force
+            } elseif ($directory -eq 'ui') {
+              Copy-Item -LiteralPath (Join-Path $from 'cursor.png') -Destination $to -Force
+            } else {
+              foreach ($sound in @('deal.wav','chip.wav','fold.wav','lose.wav','win.wav')) {
+                Copy-Item -LiteralPath (Join-Path $from $sound) -Destination $to -Force
+              }
+            }
+          }
+
+          # Copy runtime DLLs from the verified NEXUS distribution. Some builds
+          # already copy these beside the EXE; only fill missing files here.
+          foreach ($dll in @('SDL2.dll','SDL2_image.dll','SDL2_ttf.dll','SDL2_mixer.dll','sqlite3.dll')) {
+            $target = Join-Path $stage $dll
+            if (-not (Test-Path -LiteralPath $target)) {
+              $found = Get-ChildItem -LiteralPath $installRoot -Filter $dll -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+              if (-not $found) { throw "Required runtime DLL not found: $dll" }
+              Copy-Item -LiteralPath $found.FullName -Destination $target -Force
+            }
+          }
+
+          Copy-Item -LiteralPath (Join-Path $repo 'LICENSE') -Destination (Join-Path $stage 'LICENSE.txt') -Force
+          Copy-Item -LiteralPath (Join-Path $repo 'examples\POKER_README.md') -Destination (Join-Path $stage 'README.md') -Force
+          Copy-Item -LiteralPath (Join-Path $repo 'examples\POKER_THIRD_PARTY_NOTICES.md') -Destination (Join-Path $stage 'THIRD_PARTY_NOTICES.md') -Force
+          if (-not (Test-Path -LiteralPath (Join-Path $assets 'cards\card_51.png'))) { throw 'Card textures were not packaged.' }
+          if (-not (Test-Path -LiteralPath (Join-Path $assets 'table\felt.png'))) { throw 'Table texture was not packaged.' }
+          Write-Host "Packaged executable and runtime assets in $stage"
+
+      - name: Smoke-test game startup
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path $env:RUNNER_TEMP 'NEXUS-Poker-Windows-x64'
+          $exe = Join-Path $stage 'NEXUS-Poker.exe'
+          $process = Start-Process -FilePath $exe -WorkingDirectory $stage -PassThru
+          Start-Sleep -Seconds 4
+          $process.Refresh()
+          if ($process.HasExited) {
+            throw "NEXUS Poker exited during startup (exit code $($process.ExitCode))."
+          }
+          Stop-Process -Id $process.Id -Force
+          Write-Host 'PASS NEXUS Poker started with the packaged runtime and assets.'
+
+      - name: Create distributable ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path $env:RUNNER_TEMP 'NEXUS-Poker-Windows-x64'
+          $zip = Join-Path $env:RUNNER_TEMP 'NEXUS-Poker-Windows-x64.zip'
+          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -CompressionLevel Optimal -Force
+          if ((Get-Item -LiteralPath $zip).Length -lt 4096) { throw 'The Poker ZIP is unexpectedly small.' }
+          Write-Host "Created $zip"
+
+      - name: Upload Windows ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEXUS-Poker-Windows-x64
+          path: ${{ runner.temp }}/NEXUS-Poker-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub Release for poker tags
+        if: startsWith(github.ref, 'refs/tags/poker-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: NEXUS Poker ${{ github.ref_name }}
+          body_path: examples/POKER_README.md
+          files: ${{ runner.temp }}/NEXUS-Poker-Windows-x64.zip
+          fail_on_unmatched_files: true
