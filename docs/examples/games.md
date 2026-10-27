@@ -40,7 +40,9 @@ nexus run examples/vector_lab.nx
 
 [`examples/game2d_platformer.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/game2d_platformer.nx) is a no-external-assets platformer demo using `std.tilemap`: grid-based platforms, horizontal/vertical collision resolution, gravity, jumping and a simple colored tile renderer. The tilemap API is documented under [2D Game Helpers and Tilemaps](../runtime/game2d.md).
 
-## NEXUS Poker 2.1.0
+## NEXUS Poker
+
+The game uses a minimal graphite-and-yellow identity, flat seat monograms, and a dedicated Windows packaging workflow. See the [standalone instructions and release guide](../../examples/POKER_README.md).
 
 [`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed no-limit Texas Hold'em table for the mouse, built on `std.engine2d`, `std.sprite2d` and `std.audio2d`. The 2.1.0 update corrects five-card hand scoring, compares kickers in order, and requires all five cards to share a suit for a straight flush. The menu also includes a persistent cosmetic shop with blue, purple and crimson table themes bought with chips earned in play. The custom cursor keeps a fixed size to avoid hover-edge pulsing.
 
