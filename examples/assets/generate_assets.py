@@ -64,18 +64,53 @@ def make_card(rank, suit, color, rank_font, suit_font):
 
 
 def make_back():
-    img = Image.new("RGBA", (CARD_W, CARD_H), (20, 20, 70, 255))
+    """Restrained graphite-and-gold card back matching the NEXUS identity."""
+    img = Image.new("RGBA", (CARD_W, CARD_H), (8, 9, 10, 255))
     draw = ImageDraw.Draw(img)
     draw.rounded_rectangle(
-        [0, 0, CARD_W - 1, CARD_H - 1], radius=12, outline=(230, 230, 230, 255),
-        width=3, fill=(24, 30, 110, 255),
+        [1, 1, CARD_W - 2, CARD_H - 2],
+        radius=12,
+        fill=(9, 10, 11, 255),
+        outline=(245, 197, 24, 255),
+        width=3,
     )
-    for y in range(10, CARD_H - 10, 14):
-        for x in range(10, CARD_W - 10, 14):
-            draw.rectangle([x, y, x + 6, y + 6], fill=(50, 70, 180, 255))
     draw.rounded_rectangle(
-        [16, 16, CARD_W - 17, CARD_H - 17], radius=8, outline=(120, 140, 220, 255), width=2
+        [7, 7, CARD_W - 8, CARD_H - 8],
+        radius=8,
+        fill=(12, 13, 14, 255),
+        outline=(99, 82, 24, 255),
+        width=1,
     )
+    # Fine diagonal pinstripes are intentionally subtle behind the central mark.
+    for k in range(-CARD_H, CARD_W, 18):
+        x0 = max(12, k)
+        y0 = max(12, -k)
+        x1 = min(CARD_W - 13, k + CARD_H - 24)
+        y1 = min(CARD_H - 13, CARD_H - 24 - k)
+        if x0 < x1 and y0 < y1:
+            draw.line((x0, y0, x1, y1), fill=(42, 38, 21, 255), width=1)
+    draw.rounded_rectangle(
+        [23, 48, CARD_W - 24, CARD_H - 49],
+        radius=7,
+        fill=(9, 10, 11, 255),
+        outline=(181, 143, 24, 255),
+        width=2,
+    )
+    draw.rounded_rectangle(
+        [28, 53, CARD_W - 29, CARD_H - 54],
+        radius=5,
+        outline=(54, 48, 27, 255),
+        width=1,
+    )
+    # Angular N, using only polygons so the source font does not affect the mark.
+    draw.polygon(
+        [(43, 76), (51, 76), (91, 124), (91, 78), (101, 78),
+         (101, 137), (93, 137), (53, 91), (53, 135), (43, 135)],
+        fill=(245, 197, 24, 255),
+    )
+    for x, y in ((17, 17), (CARD_W - 18, 17),
+                 (17, CARD_H - 18), (CARD_W - 18, CARD_H - 18)):
+        draw.rectangle((x - 1, y - 1, x + 1, y + 1), fill=(245, 197, 24, 255))
     return img
 
 
