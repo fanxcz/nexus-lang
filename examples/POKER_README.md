@@ -13,7 +13,7 @@ A standalone, offline Texas Hold'em game written in NEXUS. This is a local singl
 
 ## Windows quick start
 
-Download the **NEXUS Poker Windows ZIP** from this repository's [Actions artifacts](https://github.com/fanxcz/nexus-lang/actions/workflows/poker-release.yml) or a tagged [GitHub Release](https://github.com/fanxcz/nexus-lang/releases). Extract the complete ZIP and launch `NEXUS-Poker.exe`. Keep the `assets` folder and runtime DLL files beside the executable.
+Download the **NEXUS Poker Windows ZIP** from this repository's [Actions artifacts](https://github.com/fanxcz/nexus-lang/actions/workflows/poker-release.yml) or a tagged [GitHub Release](https://github.com/fanxcz/nexus-lang/releases). Extract all ZIP contents into a normal folder (do not run the EXE inside the ZIP). Start with `Play NEXUS Poker.bat`; it sets the correct working directory and leaves the error visible if Windows cannot start the game. Keep the `assets` folder and all DLL files beside the executable. You can also double-click `NEXUS-Poker.exe` directly.
 
 ## Build from source
 
