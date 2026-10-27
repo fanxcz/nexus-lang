@@ -1,4 +1,4 @@
-"""Regenerate the NEXUS Poker 2.1.0 art and sound assets.
+"""Regenerate the NEXUS Poker card, table, pointer and sound assets.
 
 Run from the repository root:
 
