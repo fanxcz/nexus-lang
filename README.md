@@ -1,6 +1,6 @@
 # NEXUS
 
-![NEXUS](docs/assets/images/nexus-logo.svg)
+![NEXUS N mark](docs/assets/images/nexus-mark.svg)
 
 **NEXUS is an open-source programming language for native desktop applications, command-line utilities, and developer tools.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support. Graphics and games are supported use cases, not the project's only purpose.
 
