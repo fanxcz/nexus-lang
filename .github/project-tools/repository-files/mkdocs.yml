@@ -20,8 +20,8 @@ copyright: Copyright &copy; 2026 fanxcz
 theme:
   name: material
   language: en
-  logo: assets/images/nexus-mark.svg
-  favicon: assets/images/nexus-mark.svg
+  logo: assets/images/nexus-n-2026.svg
+  favicon: assets/images/nexus-n-2026.svg
   palette:
     - scheme: slate
       primary: black
