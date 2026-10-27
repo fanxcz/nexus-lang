@@ -52,6 +52,6 @@ nexus check examples/vector_lab.nx
 nexus run examples/vector_lab.nx
 ```
 
-On Windows, `run_poker.bat` builds and launches the Poker GUI using the installed NEXUS toolchain. To prepare a Windows ZIP for distribution, see [POKER_README.md](POKER_README.md). The script expects NEXUS under `%LOCALAPPDATA%\\Programs\\NEXUS`; edit the script if the installation is elsewhere.
+On Windows, `run_poker.bat` builds and launches the Poker GUI using the installed NEXUS toolchain. For the portable ZIP, extract everything and start `Play NEXUS Poker.bat`, which preserves startup diagnostics. See [POKER_README.md](POKER_README.md). The script expects NEXUS under `%LOCALAPPDATA%\\Programs\\NEXUS`; edit the script if the installation is elsewhere.
 
 Some examples load assets through repository-relative paths. Run them from the repository root unless their own launcher changes the working directory. See [`assets/README.md`](assets/README.md) before moving or removing files under `assets/`.
