@@ -85,3 +85,14 @@ ctest --test-dir build --output-on-failure
 ```
 
 Avoid describing a feature as implemented until it is covered by a test and passes on the platforms listed as supported. Consult the [development roadmap](roadmap.md) for current priorities and limitations.
+## Repository-wide source integrity audit
+
+Run the repository preflight before changing or packaging the project:
+
+```sh
+python scripts/audit_repository.py
+```
+
+The audit inventories every Git-tracked path, verifies that files are present, checks recognized text files for UTF-8 validity and unresolved merge-conflict markers, parses all tracked JSON and Python files, syntax-checks tracked JavaScript with Node.js, and checks stylesheet block structure. CI runs this before the compiler build on Ubuntu, Windows, and macOS.
+
+This preflight is intentionally lightweight. It complements rather than replaces the CMake/CTest suite, sanitizer runs, VS Code and Studio checks, Markdown link checks, strict MkDocs build, and download/package validation.

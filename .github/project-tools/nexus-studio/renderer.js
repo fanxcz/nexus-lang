@@ -32,7 +32,7 @@
       return;
     }
     editor = ace.edit('editor');
-    editor.setTheme('ace/theme/tomorrow_night');
+    editor.setTheme('ace/theme/nexus');
     editor.session.setMode('ace/mode/nexus');
     editor.setOptions({
       fontSize: '14px',
