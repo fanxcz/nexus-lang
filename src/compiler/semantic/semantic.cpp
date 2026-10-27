@@ -3,6 +3,8 @@
 #include "builtins.hpp"
 
 #include <functional>
+#include <limits>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -35,6 +37,30 @@ namespace nexus {
             if (f.name == n)
                 return &f;
         return nullptr;
+    }
+
+    // Constant negative indices are parsed as UnaryExpr nodes, not IntExpr.
+    // Evaluate only literal and unary-minus forms to reject obvious bad access
+    // at compile time without guessing about more complex expressions.
+    static std::optional<long long> constantIntegerValue(const Expr* expr) {
+        if (const auto* literal = dynamic_cast<const IntExpr*>(expr))
+            return literal->value;
+        if (const auto* unary = dynamic_cast<const UnaryExpr*>(expr)) {
+            if (unary->op != TokenKind::Minus)
+                return std::nullopt;
+            const auto value = constantIntegerValue(unary->rhs.get());
+            if (!value || *value == std::numeric_limits<long long>::min())
+                return std::nullopt;
+            return -*value;
+        }
+        return std::nullopt;
+    }
+
+    static bool constantIndexOutOfBounds(const Expr* index, size_t arraySize) {
+        const auto value = constantIntegerValue(index);
+        if (!value)
+            return false;
+        return *value < 0 || static_cast<size_t>(*value) >= arraySize;
     }
 
     static std::string describeType(const Type& type) {
@@ -364,10 +390,8 @@ namespace nexus {
                 throw std::runtime_error("indexing requires an array");
             if (expr(ix->index.get(), env).kind != TypeKind::I64)
                 throw std::runtime_error("array index must be i64");
-            if (auto* c = dynamic_cast<IntExpr*>(ix->index.get())) {
-                if (c->value < 0 || static_cast<size_t>(c->value) >= ot.arraySize)
-                    throw std::runtime_error("array index is out of bounds");
-            }
+            if (constantIndexOutOfBounds(ix->index.get(), ot.arraySize))
+                throw std::runtime_error("array index is out of bounds");
             return *ot.element;
         }
         if (auto* u = dynamic_cast<UnaryExpr*>(e)) {
@@ -628,9 +652,8 @@ namespace nexus {
                         throw std::runtime_error("index assignment requires an array");
                     if (expr(ia->index.get(), env).kind != TypeKind::I64)
                         throw std::runtime_error("array index must be i64");
-                    if (auto* c = dynamic_cast<IntExpr*>(ia->index.get()))
-                        if (c->value < 0 || static_cast<size_t>(c->value) >= ot.arraySize)
-                            throw std::runtime_error("array index is out of bounds");
+                    if (constantIndexOutOfBounds(ia->index.get(), ot.arraySize))
+                        throw std::runtime_error("array index is out of bounds");
                     auto actual = expr(ia->value.get(), env);
                     if (!sameType(actual, *ot.element))
                         throw std::runtime_error("array element assignment expects '" +

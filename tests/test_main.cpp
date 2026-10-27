@@ -191,6 +191,30 @@ int main() {
                 return 2;
         }
         {
+            bool failed = false;
+            try {
+                auto p = parse("fn main(){ let a = [1, 2, 3]; print(a[-1]) }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& error) {
+                failed = std::string(error.what()).find("array index is out of bounds") !=
+                         std::string::npos;
+            }
+            if (!failed)
+                return 53;
+        }
+        {
+            bool failed = false;
+            try {
+                auto p = parse("fn main(){ let mut a = [1, 2, 3]; a[-1] = 7 }");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& error) {
+                failed = std::string(error.what()).find("array index is out of bounds") !=
+                         std::string::npos;
+            }
+            if (!failed)
+                return 54;
+        }
+        {
 
             auto p =
                 parse("fn main(){ let mut running = true; while running { running = false } let "
