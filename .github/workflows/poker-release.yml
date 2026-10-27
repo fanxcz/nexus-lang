@@ -110,6 +110,61 @@ jobs:
             }
           }
 
+          # SDL2_image.dll is built against the Microsoft Visual C++ runtime.
+          # GitHub runners have it installed system-wide, which can mask a
+          # missing-DLL failure in a portable ZIP. Ship an app-local CRT copy.
+          $crtNames = @('VCRUNTIME140.dll','VCRUNTIME140_1.dll','MSVCP140.dll','MSVCP140_1.dll','MSVCP140_2.dll','concrt140.dll')
+          $vsRoots = @(
+            (Join-Path $env:ProgramFiles 'Microsoft Visual Studio'),
+            (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio')
+          ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+          foreach ($name in $crtNames) {
+            $target = Join-Path $stage $name
+            if (Test-Path -LiteralPath $target) { continue }
+            $systemCandidate = Join-Path (Join-Path $env:WINDIR 'System32') $name
+            if (Test-Path -LiteralPath $systemCandidate) {
+              Copy-Item -LiteralPath $systemCandidate -Destination $target -Force
+              continue
+            }
+            $found = $null
+            foreach ($root in $vsRoots) {
+              $found = Get-ChildItem -LiteralPath $root -Filter $name -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($found) { break }
+            }
+            if ($found) {
+              Copy-Item -LiteralPath $found.FullName -Destination $target -Force
+            } elseif ($name -eq 'VCRUNTIME140.dll') {
+              throw 'VCRUNTIME140.dll is required by SDL2_image.dll but was not found. Cannot create a portable package.'
+            }
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $stage 'VCRUNTIME140.dll'))) {
+            throw 'Portable package is missing VCRUNTIME140.dll.'
+          }
+
+          # Always provide a launcher that fixes the working directory and
+          # keeps runtime diagnostics visible if startup fails on a user's PC.
+          $launcher = Join-Path $stage 'Play NEXUS Poker.bat'
+          @'
+          @echo off
+          setlocal
+          cd /d "%~dp0"
+          set "PATH=%~dp0;%PATH%"
+          echo Starting NEXUS Poker...
+          echo If the game closes or fails, copy the error shown below.
+          echo.
+          if not exist "%~dp0NEXUS-Poker.exe" (
+            echo [ERROR] NEXUS-Poker.exe is missing from this folder.
+            pause
+            exit /b 1
+          )
+          "%~dp0NEXUS-Poker.exe"
+          set "GAME_EXIT_CODE=%ERRORLEVEL%"
+          echo.
+          if not "%GAME_EXIT_CODE%"=="0" echo NEXUS Poker exited with code %GAME_EXIT_CODE%.
+          pause
+          exit /b %GAME_EXIT_CODE%
+          '@ | Set-Content -LiteralPath $launcher -Encoding ASCII
+
           Copy-Item -LiteralPath (Join-Path $repo 'LICENSE') -Destination (Join-Path $stage 'LICENSE.txt') -Force
           Copy-Item -LiteralPath (Join-Path $repo 'examples\POKER_README.md') -Destination (Join-Path $stage 'README.md') -Force
           Copy-Item -LiteralPath (Join-Path $repo 'examples\POKER_THIRD_PARTY_NOTICES.md') -Destination (Join-Path $stage 'THIRD_PARTY_NOTICES.md') -Force
@@ -123,6 +178,14 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $stage = Join-Path $env:RUNNER_TEMP 'NEXUS-Poker-Windows-x64'
           $exe = Join-Path $stage 'NEXUS-Poker.exe'
+          foreach ($required in @('VCRUNTIME140.dll','SDL2.dll','SDL2_image.dll','SDL2_ttf.dll','SDL2_mixer.dll')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $stage $required))) {
+              throw "Portable launch dependency is missing: $required"
+            }
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $stage 'Play NEXUS Poker.bat'))) {
+            throw 'The user-facing Play NEXUS Poker.bat launcher is missing.'
+          }
           $process = Start-Process -FilePath $exe -WorkingDirectory $stage -PassThru
           Start-Sleep -Seconds 4
           $process.Refresh()
