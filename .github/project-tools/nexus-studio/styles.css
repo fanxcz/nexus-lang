@@ -41,7 +41,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   border: 1px solid #41413b;
   border-radius: 2px;
   background: #18191a;
-  color: #dddd d6;
+  color: #ddddd6;
   transition: background-color .12s ease, border-color .12s ease, color .12s ease;
 }
 .toolbar button:hover, .welcome-actions button:hover { background: #222320; border-color: #77704c; }
@@ -135,7 +135,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   border-right: 1px solid var(--line);
   background: var(--background);
   border-top: 2px solid var(--accent);
-  color: #eeee e8;
+  color: #eeeeee;
 }
 .file-glyph { color: var(--accent); }
 .tab-spacer { flex: 1; }
@@ -199,7 +199,7 @@ kbd {
   min-height: 0;
   overflow: auto;
   padding: 8px 12px;
-  color: #cccc c4;
+  color: #ccccc4;
   font: 12px/1.55 Consolas, "Cascadia Code", monospace;
   white-space: pre-wrap;
 }

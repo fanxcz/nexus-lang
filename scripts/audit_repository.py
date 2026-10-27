@@ -63,10 +63,9 @@ def check_conflict_markers(path: str, text: str) -> list[str]:
 
 
 def check_css(path: str, text: str) -> list[str]:
-    # Remove comments and quoted strings before checking block braces. Full CSS
-    # parsing remains the responsibility of the site/desktop build tooling.
+    # Strip comments and verify CSS block structure. Full CSS parsing remains
+    # the responsibility of the site and desktop build tooling.
     source = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
-    source = re.sub(r'"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'', '""', source)
     depth = 0
     for offset, char in enumerate(source):
         if char == "{":

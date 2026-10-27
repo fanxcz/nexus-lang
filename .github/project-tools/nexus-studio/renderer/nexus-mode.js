@@ -68,7 +68,7 @@ ace.define("ace/theme/nexus", [
     ".ace-nexus .ace_paren, .ace-nexus .ace_punctuation { color: #c2c2b8; }",
     ".ace-nexus .ace_indent-guide { background: linear-gradient(to bottom, transparent, transparent 50%, #252619 50%, #252619); background-size: 1px 4px; }",
     ".ace-nexus .ace_invisible { color: #3d3e38; }"
-  ].join("\\n");
+  ].join("\n");
   const dom = require("ace/lib/dom");
   dom.importCssString(exports.cssText, exports.cssClass);
 });
