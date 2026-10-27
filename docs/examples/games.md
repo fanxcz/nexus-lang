@@ -42,7 +42,7 @@ nexus run examples/vector_lab.nx
 
 ## NEXUS Poker
 
-The game uses a minimal graphite-and-yellow identity, flat seat monograms, and a dedicated Windows packaging workflow. See the [standalone instructions and release guide](../../examples/POKER_README.md).
+The game uses a minimal graphite-and-yellow identity, a single N mark in the upper-left, flat seat monograms, and a graphite-and-gold card back. A dedicated Windows packaging workflow creates a ZIP for distribution. See the [standalone instructions and release guide](../../examples/POKER_README.md).
 
 [`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed no-limit Texas Hold'em table for the mouse, built on `std.engine2d`, `std.sprite2d` and `std.audio2d`. The 2.1.0 update corrects five-card hand scoring, compares kickers in order, and requires all five cards to share a suit for a straight flush. The menu also includes a persistent cosmetic shop with blue, purple and crimson table themes bought with chips earned in play. The custom cursor keeps a fixed size to avoid hover-edge pulsing.
 
@@ -51,7 +51,7 @@ The game uses a minimal graphite-and-yellow identity, flat seat monograms, and a
 - Mouse-first controls: `START TABLE`, bot-count buttons, `FOLD`, `CHECK` / `CALL`, `ALL-IN`, `RAISE`, `NEXT HAND`, `MENU` and `F11` fullscreen. Keyboard shortcuts (`SPACE`, `F`, `C`, `R`, `A`, `N`, `M`, `ESC`) still work.
 - System TTF typography via `gfx_font_default` (Segoe UI / DejaVu Sans / Helvetica) instead of the bitmap font; the game falls back to `gfx_text` when the TTF backend is unavailable.
 - A pre-rendered 1920x1080 canvas: oval table texture with a wooden rail, gold rim, stitched felt and felt speckles under `examples/assets/table/felt.png`.
-- 52 generated card textures plus a card back under `examples/assets/cards/`, and a custom arrow pointer at `examples/assets/ui/cursor.png` (the OS cursor is hidden while the table is open).
+- 52 generated card textures plus a graphite-and-gold card back under `examples/assets/cards/`, and a custom pointer at `examples/assets/ui/cursor.png` (the OS cursor is hidden while the table is open).
 - Staggered deal animation: each card slides from the deck to its seat.
 - Chip-stack rendering by denomination (`1000` gold, `500` purple, `100` black, `25` green, `5` red) for the pot and for each seat's committed chips.
 - Each bot evaluates its made seven-card hand and folds, calls or raises with a little per-seat aggression; showdowns reveal the cards and print the winning hand category.
