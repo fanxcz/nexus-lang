@@ -1376,9 +1376,9 @@ fn main() {
             let k_a = engine2d_key_down("A")
             let k_n = engine2d_key_down("N")
             let k_m = engine2d_key_down("M")
-            let k1 = engine2d_key_down("1")
-            let k2 = engine2d_key_down("2")
-            let k3 = engine2d_key_down("3")
+            let preset_key_1 = engine2d_key_down("1")
+            let preset_key_2 = engine2d_key_down("2")
+            let preset_key_3 = engine2d_key_down("3")
 
             let menu_ok = phase != 1
             if paint_button(1600.0, 18.0, 140.0, 44.0, "MENU", f_small,
@@ -1412,15 +1412,15 @@ fn main() {
                 let preset_min = current_bet + min_raise
                 let preset_max = players[0].round_bet + players[0].chips
                 let preset_pot = total_committed(players)
-                if k1 && !last_1 { raise_to = preset_min }
-                if k2 && !last_2 { raise_to = current_bet + preset_pot / 2 }
-                if k3 && !last_3 { raise_to = current_bet + preset_pot }
+                if preset_key_1 && !last_1 { raise_to = preset_min }
+                if preset_key_2 && !last_2 { raise_to = current_bet + preset_pot / 2 }
+                if preset_key_3 && !last_3 { raise_to = current_bet + preset_pot }
                 if raise_to < preset_min { raise_to = preset_min }
                 if raise_to > preset_max { raise_to = preset_max }
             }
-            last_1 = k1
-            last_2 = k2
-            last_3 = k3
+            last_1 = preset_key_1
+            last_2 = preset_key_2
+            last_3 = preset_key_3
 
             if game_over {
                 if engine2d_mouse_over(660.0, 590.0, 280.0, 72.0) {
