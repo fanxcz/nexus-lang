@@ -8,7 +8,7 @@ A standalone, offline Texas Hold'em game written in NEXUS. This is a local singl
 - No-limit Hold'em rounds: pre-flop, flop, turn and river.
 - Fold, check/call, raise, all-in, side pots and split pots.
 - Seven-card hand evaluation with kicker comparison.
-- Animated dealing, sound effects, a custom cursor and alternate felt themes.
+- Animated dealing, sound effects, the native Windows cursor, true 1920×1080 Full HD rendering and alternate felt themes.
 - Bankroll and cosmetic choices saved locally.
 
 ## Windows quick start
@@ -27,6 +27,15 @@ cd examples
 
 The launcher builds the game with the LLVM backend and starts it from the `examples` directory so textures and sounds resolve. F11 toggles fullscreen; Esc closes the game.
 
+## Recent improvements
+
+- True 1920×1080 rendering and the native operating-system cursor.
+- H help overlay, S sound toggle, T auto-next toggle and V fast-AI toggle.
+- Minimum, half-pot and pot raise presets on keys 1, 2 and 3.
+- Session hand count, win count and net chip change.
+- Required-equity-to-call readout, keyboard-labelled action buttons and SB/BB tags.
+- The hand-strength display is a guide, not a guaranteed win percentage.
+
 ## Controls
 
 | Action | Mouse | Keyboard |
@@ -38,6 +47,11 @@ The launcher builds the game with the LLVM backend and starts it from the `examp
 | Deal / next hand | Deal / Next Hand button | Space / N |
 | Return to menu | Menu button | M |
 | Fullscreen | F11 button | F11 |
+| Help overlay | — | H |
+| Toggle sound | — | S |
+| Toggle auto-next hand | — | T |
+| Faster AI | — | V |
+| Raise presets: minimum / half-pot / pot | — | 1 / 2 / 3 |
 
 ## Publishing
 
