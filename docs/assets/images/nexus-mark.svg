@@ -1,13 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NEXUS">
-  <defs>
-    <linearGradient id="nexus-mark" x1="12" y1="12" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#79e5ff"/>
-      <stop offset=".52" stop-color="#36b8e8"/>
-      <stop offset="1" stop-color="#8c9bff"/>
-    </linearGradient>
-  </defs>
-  <rect x="1" y="1" width="62" height="62" rx="17" fill="#0c1b2d"/>
-  <path d="M15 46V18h6l22 25V18h6v28h-6L21 21v25z" fill="url(#nexus-mark)"/>
-  <circle cx="15" cy="18" r="3" fill="#79e5ff"/>
-  <circle cx="49" cy="46" r="3" fill="#8c9bff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NEXUS N mark">
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="#090a0b" stroke="#2a2b2d" stroke-width="1.5"/>
+  <path d="M15 47V17h7L42 38V17h7v30h-7L22 26v21z" fill="#f5c518"/>
 </svg>
