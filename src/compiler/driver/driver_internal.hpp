@@ -105,6 +105,13 @@ namespace nexus {
         inline std::string gDiagnosticText;
         inline constexpr std::size_t kReplHistoryLimit = 500;
 
+        // Read a whole file as bytes. Ownership: returns a copy, the caller owns
+        // it. Errors: throws std::runtime_error("cannot open <path>") when the
+        // file cannot be opened, "...: is a directory" when a directory is passed
+        // (POSIX opens directories successfully, so this is checked explicitly),
+        // and "cannot read <path>: ..." when a stream failure occurs mid-read.
+        // Platform limits: text is returned verbatim, without newline or encoding
+        // translation, on every platform.
         std::string readFile(const fs::path& p);
         std::string trim(std::string s);
         std::string formatDiagnostic(const std::exception& error,
