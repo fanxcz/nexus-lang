@@ -60,6 +60,19 @@ jobs:
         shell: pwsh
         run: .\build\nexus.exe check examples/vector_lab.nx
 
+      - name: Check and run Factorio-like simulation (POSIX)
+        if: runner.os != 'Windows'
+        run: |
+          ./build/nexus check examples/factorio_like/main.nx
+          ./build/nexus run examples/factorio_like/main.nx
+
+      - name: Check and run Factorio-like simulation (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\build\nexus.exe check examples\factorio_like\main.nx
+          .\build\nexus.exe run examples\factorio_like\main.nx
+
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
