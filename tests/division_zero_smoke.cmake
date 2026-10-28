@@ -13,7 +13,7 @@ else()
 endif()
 
 set(BACKENDS llvm)
-if(WIN32 OR CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+if(TEST_NATIVE_BACKEND)
   list(PREPEND BACKENDS native)
 endif()
 
