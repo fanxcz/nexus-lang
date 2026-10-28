@@ -36,13 +36,27 @@ def fail(message: str) -> None:
     raise SystemExit("DOWNLOAD VALIDATION FAILED: " + message)
 
 
-def check_pe(path: Path) -> None:
-    data = path.read_bytes()
+def pe_problem(data: bytes, name: str = "the download") -> str | None:
+    """Return why ``data`` is not a Windows PE image, or ``None`` when it is one.
+
+    The HTML hint matters in practice: GitHub Pages answers a request for a
+    file that has not been deployed yet with an HTTP 200 page, so a plain
+    download can quietly store an error page under an ``.exe`` name.
+    """
     if len(data) < 64 or data[:2] != b"MZ":
-        fail(f"{path.name} is not a Windows PE executable (missing MZ header)")
+        html = b"<html" in data[:2048].lower() or b"<!doctype html" in data[:2048].lower()
+        hint = " (the server returned an HTML page, not a binary)" if html else ""
+        return f"{name} is not a Windows PE executable (missing MZ header){hint}"
     offset = struct.unpack_from("<I", data, 0x3C)[0]
     if offset > len(data) - 4 or data[offset:offset + 4] != b"PE\0\0":
-        fail(f"{path.name} has an invalid PE signature")
+        return f"{name} has an invalid PE signature"
+    return None
+
+
+def check_pe(path: Path) -> None:
+    problem = pe_problem(path.read_bytes(), path.name)
+    if problem:
+        fail(problem)
 
 
 def check_zip(path: Path, required: set[str]) -> None:

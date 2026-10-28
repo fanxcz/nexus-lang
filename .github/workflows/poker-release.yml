@@ -29,33 +29,44 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Resolve the published installer version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $match = Select-String -LiteralPath 'CMakeLists.txt' `
+            -Pattern 'project\(nexus VERSION ([0-9]+\.[0-9]+\.[0-9]+)'
+          if (-not $match) { throw 'Could not read the NEXUS version from CMakeLists.txt.' }
+          $version = $match.Matches[0].Groups[1].Value
+          "NEXUS_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Installer version: $version"
+
       - name: Download the official NEXUS installer and checksum
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $base = 'https://fanxcz.github.io/nexus-lang/assets/downloads'
-          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.2.0.exe'
-          $checksum = "$installer.sha256.txt"
-          Invoke-WebRequest "$base/NEXUS-Setup-2.2.0.exe" -OutFile $installer
-          Invoke-WebRequest "$base/NEXUS-Setup-2.2.0.exe.sha256.txt" -OutFile $checksum
-          $expected = ((Get-Content -LiteralPath $checksum -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
-          $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($expected -notmatch '^[0-9a-f]{64}$' -or $actual -ne $expected) {
-            throw 'NEXUS Setup SHA-256 validation failed.'
+          $installer = Join-Path $env:RUNNER_TEMP "NEXUS-Setup-$env:NEXUS_VERSION.exe"
+          # The download helper retries while the Pages deployment propagates and
+          # refuses HTML 404 pages or payloads that do not match the published
+          # checksum, so this step fails with a precise reason instead of later.
+          python scripts/fetch_installer.py --version $env:NEXUS_VERSION --output $installer
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Could not obtain a verified official NEXUS Setup installer.'
           }
+          $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
           Write-Host "Verified official NEXUS Setup SHA-256: $actual"
 
       - name: Install NEXUS
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.2.0.exe'
+          $installer = Join-Path $env:RUNNER_TEMP "NEXUS-Setup-$env:NEXUS_VERSION.exe"
           $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/TASKS=addtopath') -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "NEXUS Setup failed with exit code $($process.ExitCode)." }
           $nexus = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS\nexus.cmd'
           if (-not (Test-Path -LiteralPath $nexus)) { throw 'Installed nexus.cmd was not found.' }
           $version = & $nexus --version 2>&1
-          if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.2\.0')) {
+          $expected = 'Nexus ' + [regex]::Escape($env:NEXUS_VERSION)
+          if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch $expected)) {
             throw "Unexpected installed compiler version: $($version -join "`n")"
           }
           Write-Host ($version -join "`n")

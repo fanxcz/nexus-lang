@@ -15,6 +15,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   file-and-line diagnostic instead of silently using defaults. Truncated table
   headers, lines without `key = value`, and duplicate tables or keys fail with
   a non-zero exit code.
+- The Poker packaging workflow no longer races the documentation deployment.
+  It reads the installer version from `CMakeLists.txt`, retries while GitHub
+  Pages publishes the file, and rejects an HTML error page served as
+  `NEXUS-Setup-*.exe` or a payload whose checksum does not match.
 - Added regression coverage for project paths and artifact names containing
   spaces, and for graphics/audio entry points used before initialization.
 

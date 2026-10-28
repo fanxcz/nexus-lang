@@ -424,6 +424,10 @@ if (NEXUS_BUILD_TESTS)
             ${CMAKE_SOURCE_DIR}/tests/lsp_watched_files_smoke.py
             --nexus $<TARGET_FILE:nexus>)
     set_tests_properties(nexus_lsp_watched_files_smoke PROPERTIES TIMEOUT 45)
+    add_test(NAME nexus_fetch_installer_smoke
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tests/fetch_installer_smoke.py)
+    set_tests_properties(nexus_fetch_installer_smoke PROPERTIES TIMEOUT 120)
     if(UNIX)
       add_test(NAME nexus_repl_tty_smoke
           COMMAND ${Python3_EXECUTABLE}

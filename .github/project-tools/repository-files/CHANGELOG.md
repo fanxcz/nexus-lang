@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Reject structurally malformed `nexus.toml` files (truncated table headers, lines without `key = value`, duplicate tables or keys) with a file-and-line diagnostic instead of silently falling back to defaults.
+- Make the Poker packaging workflow read the installer version from `CMakeLists.txt`, retry while GitHub Pages publishes it, and refuse an HTML error page or a payload with a mismatched checksum.
 - Added regression tests for project paths and artifact names containing spaces, and for calling graphics/audio APIs before initialization.
 
 ## NEXUS 2.2.0 — bitwise operators, exhaustive match and a focused source tree (2026-10-28)
