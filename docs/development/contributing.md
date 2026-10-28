@@ -56,7 +56,28 @@ Use prefixes such as `feat/`, `fix/`, `docs/`, `test/`, or `refactor/`. Keep a c
 - Update the relevant language, runtime, tooling, or template page when changing a public feature.
 - For release and installer changes, verify the actual artifacts, checksums and links rather than relying only on a successful build step.
 
-## 5. Test, commit and open a pull request
+## 5. Version numbers
+
+The repository has two independent versions and one tool that owns both:
+
+- the compiler and installer version is `project(nexus VERSION x.y.z)` in `CMakeLists.txt`;
+- the VS Code extension version is `version` in `.github/project-tools/vscode-extension/package.json`.
+
+```bash
+python scripts/nexus_version.py compiler          # 2.2.0
+python scripts/nexus_version.py extension         # 2.1.0
+python scripts/nexus_version.py setup             # NEXUS-Setup-2.2.0.exe
+python scripts/nexus_version.py check             # verify every pin
+```
+
+Workflows and packaging scripts read these values instead of copying them. When
+you change either source, run `check`; it fails on a stale artifact name in
+documentation, a bootstrap script that pins an older installer, an installer
+whose output name no longer derives from `{#MyAppVersion}`, or download lists
+that disagree with the sources. The same check runs as the
+`nexus_version_consistency` CTest.
+
+## 6. Test, commit and open a pull request
 
 ```bash
 cmake --build build

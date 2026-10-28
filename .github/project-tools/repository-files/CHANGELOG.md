@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Accept arrays (multi-line, nested, with comments and trailing commas) and repeated `[[array-of-tables]]` headers in `nexus.toml`. Project and package commands now share one manifest parser, so a file accepted by one is accepted by the other; arrays are validated structurally and scalar fields read only scalar values.
+- Centralize version numbers in `scripts/nexus_version.py`: Pages/release workflows, download validators, the installer output name and bootstrap pins now read or are verified against `CMakeLists.txt` and the VS Code extension `package.json`. `ctest -R nexus_version_consistency` fails when a pin, artifact name or installer description goes stale, and the installer no longer claims to be "NEXUS 2.1".
 - Reject structurally malformed `nexus.toml` files (truncated table headers, lines without `key = value`, duplicate tables or keys) with a file-and-line diagnostic instead of silently falling back to defaults.
 - Report a directory passed as a source file as `cannot open <path>: is a directory` on every platform instead of leaking libstdc++'s `basic_filebuf::underflow` message.
 - Make the Poker packaging workflow read the installer version from `CMakeLists.txt`, retry while GitHub Pages publishes it, and refuse an HTML error page or a payload with a mismatched checksum.

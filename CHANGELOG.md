@@ -17,6 +17,15 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   same files. Arrays are validated structurally; scalar fields still read only
   scalar values.
 
+### Changed
+
+- Version numbers now come from one place: `scripts/nexus_version.py` reads the
+  compiler version from `CMakeLists.txt` and the extension version from
+  `package.json`. The Pages and release workflows, download validators,
+  installer output name and bootstrap version pins use or are checked against
+  those values by the new `nexus_version_consistency` CTest. The installer no
+  longer describes itself as "NEXUS 2.1".
+
 ### Fixed
 
 - Passing a directory as a source file now reports `cannot open <path>: is a

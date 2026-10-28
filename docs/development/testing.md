@@ -26,6 +26,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_runtime_json_test` | JSON grammar, escape decoding, Unicode, bounded parsing, top-level lookup and array access |
 | `nexus_runtime_http_test` | Ensures URL input is passed to the HTTP client without shell interpretation |
 | `nexus_version_smoke` | CLI version output |
+| `nexus_version_consistency` | Compiler and extension version pins agree across workflows, installer, bootstrap scripts and download lists |
 | `nexus_self_test` | Compile a tiny program and verify its expected exit code |
 | `nexus_doctor_json_smoke` | Parse the doctor response and validate required JSON field types |
 | `nexus_vscode_extension_smoke` | Validate VS Code extension metadata, grammar, and snippets |
@@ -33,6 +34,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_project_smoke` | Project creation/build workflow, formatter check mode, and VS Code settings |
 | `nexus_project_paths_smoke` | Create, format, lint, build and run a project whose directory and artifact names contain spaces |
 | `nexus_corrupt_inputs_smoke` | Malformed `nexus.toml` manifests, control bytes in sources, missing entry files and directory arguments fail with actionable diagnostics |
+| `nexus_manifest_smoke` | Manifest TOML subset accepted by both project and package commands: arrays, `[[array-of-tables]]`, and rejected duplicates or unterminated arrays |
 | `nexus_templates_smoke` | Every shipped template either scaffolds a project that passes `nexus check` or is rejected as an unknown template |
 | `nexus_runtime_backend_state_test` | Graphics/audio entry points return documented sentinels instead of crashing when no backend was initialized |
 | `nexus_fetch_installer_smoke` | The installer downloader rejects HTML error pages and checksum mismatches and accepts a verified PE image |
