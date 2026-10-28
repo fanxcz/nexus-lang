@@ -67,12 +67,17 @@ if(rc EQUAL 0 OR NOT combined MATCHES "cannot open" OR NOT combined MATCHES "mis
   message(FATAL_ERROR "missing entry file was not reported clearly: rc=${rc}: ${combined}")
 endif()
 
-# Passing a directory where a source file is expected must fail, not hang.
+# Passing a directory where a source file is expected must fail, not hang, and
+# must not leak the C++ stream-layer message ("basic_filebuf::underflow"), which
+# differs between libstdc++ and libc++.
 execute_process(COMMAND "${NEXUS_BIN}" check "${SMOKE_DIR}"
   RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 set(combined "${out}\n${err}")
 if(rc EQUAL 0 OR NOT combined MATCHES "cannot open")
   message(FATAL_ERROR "directory source path was not rejected: rc=${rc}: ${combined}")
+endif()
+if(combined MATCHES "basic_filebuf|underflow")
+  message(FATAL_ERROR "directory source path leaked an internal stream error: ${combined}")
 endif()
 
 file(REMOVE_RECURSE "${SMOKE_DIR}")

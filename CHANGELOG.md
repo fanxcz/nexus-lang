@@ -11,6 +11,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Fixed
 
+- Passing a directory as a source file now reports `cannot open <path>: is a
+  directory` on every platform. POSIX hosts previously leaked libstdc++'s
+  internal `basic_filebuf::underflow` message because opening a directory
+  succeeds and only the read fails.
 - Project commands now reject a structurally malformed `nexus.toml` with a
   file-and-line diagnostic instead of silently using defaults. Truncated table
   headers, lines without `key = value`, and duplicate tables or keys fail with

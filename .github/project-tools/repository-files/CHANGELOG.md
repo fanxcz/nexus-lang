@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Reject structurally malformed `nexus.toml` files (truncated table headers, lines without `key = value`, duplicate tables or keys) with a file-and-line diagnostic instead of silently falling back to defaults.
+- Report a directory passed as a source file as `cannot open <path>: is a directory` on every platform instead of leaking libstdc++'s `basic_filebuf::underflow` message.
 - Make the Poker packaging workflow read the installer version from `CMakeLists.txt`, retry while GitHub Pages publishes it, and refuse an HTML error page or a payload with a mismatched checksum.
 - Added regression tests for project paths and artifact names containing spaces, and for calling graphics/audio APIs before initialization.
 

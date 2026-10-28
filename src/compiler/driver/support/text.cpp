@@ -3,17 +3,28 @@
 namespace nexus {
     namespace driver {
 
-
         std::string readFile(const fs::path& p) {
+
+            // Opening a directory succeeds on POSIX and only fails while reading,
+            // which used to surface libstdc++'s internal "basic_filebuf::underflow"
+            // text. Reject directories up front so every platform reports the same
+            // actionable message.
+            std::error_code statusError;
+
+            if (fs::is_directory(p, statusError))
+                throw std::runtime_error("cannot open " + p.string() + ": is a directory");
 
             std::ifstream f(p, std::ios::binary);
 
             if (!f)
                 throw std::runtime_error("cannot open " + p.string());
 
-            return {std::istreambuf_iterator<char>(f), {}};
+            try {
+                return {std::istreambuf_iterator<char>(f), {}};
+            } catch (const std::ios_base::failure& error) {
+                throw std::runtime_error("cannot read " + p.string() + ": " + error.what());
+            }
         }
-
 
         std::string trim(std::string s) {
 
@@ -27,7 +38,6 @@ namespace nexus {
             return s.substr(first, last - first + 1);
         }
 
-
         void writeText(const fs::path& p, const std::string& data) {
 
             fs::create_directories(p.parent_path().empty() ? fs::current_path() : p.parent_path());
@@ -39,7 +49,6 @@ namespace nexus {
 
             f << data;
         }
-
 
         // Write to a sibling temporary file and replace the destination only after
         // a successful flush. An interrupted write must not truncate package metadata.
@@ -87,7 +96,6 @@ namespace nexus {
             }
 #endif
         }
-
 
         std::string packageTreeSha256(const fs::path& root) {
             static const std::set<std::string> excluded = {
