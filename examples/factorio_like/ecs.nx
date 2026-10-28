@@ -55,7 +55,7 @@ fn ecs_kind(world: World, index: i64) -> i64 {
     return value
 }
 
-fn ecs_x(world: World, index: i64) -> i64 {
+fn factory_entity_x(world: World, index: i64) -> i64 {
     let mut value: i64 = -1
     if !int_list_try_get(world.xs, index, &value) {
         return -1
@@ -63,7 +63,7 @@ fn ecs_x(world: World, index: i64) -> i64 {
     return value
 }
 
-fn ecs_y(world: World, index: i64) -> i64 {
+fn factory_entity_y(world: World, index: i64) -> i64 {
     let mut value: i64 = -1
     if !int_list_try_get(world.ys, index, &value) {
         return -1
@@ -71,7 +71,7 @@ fn ecs_y(world: World, index: i64) -> i64 {
     return value
 }
 
-fn ecs_set_position(world: World, index: i64, x: i64, y: i64) -> bool {
+fn factory_set_position(world: World, index: i64, x: i64, y: i64) -> bool {
     if !int_list_set(world.xs, index, x) {
         return false
     }
