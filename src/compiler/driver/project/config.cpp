@@ -3,88 +3,8 @@
 namespace nexus {
     namespace driver {
 
-        namespace {
-
-            // Project manifests feed artifact names, entry paths and window
-            // settings. A truncated or hand-edited file must not silently fall
-            // back to defaults, so reject structural damage while keeping the
-            // accepted subset the same as the existing key/value parser.
-            void validateProjectManifest(const std::string& data, const std::string& context) {
-
-                std::set<std::string> tables;
-
-                std::map<std::string, std::set<std::string>> keys;
-
-                std::string current;
-
-                std::istringstream input(data);
-
-                std::string line;
-
-                std::size_t lineNumber = 0;
-
-                while (std::getline(input, line)) {
-
-                    ++lineNumber;
-
-                    const std::string text = trim(stripTomlInlineComment(line));
-
-                    if (text.empty())
-                        continue;
-
-                    if (text.front() == '[') {
-
-                        const bool regularTable = text.size() >= 3 && text.back() == ']' &&
-                                                  text.rfind("[[", 0) != 0 &&
-                                                  text.find(']') == text.size() - 1;
-
-                        if (!regularTable)
-                            throw std::runtime_error(context + ": invalid table header at line " +
-                                                     std::to_string(lineNumber));
-
-                        const std::string section = trim(text.substr(1, text.size() - 2));
-
-                        if (section.empty() || section.find('[') != std::string::npos ||
-                            section.find(']') != std::string::npos)
-                            throw std::runtime_error(context + ": invalid table header at line " +
-                                                     std::to_string(lineNumber));
-
-                        if (!tables.insert(section).second)
-                            throw std::runtime_error(context + ": duplicate table [" + section +
-                                                     "]");
-
-                        current = section;
-
-                        continue;
-                    }
-
-                    const std::size_t equal = findTomlAssignment(text);
-
-                    if (equal == std::string::npos || trim(text.substr(equal + 1)).empty())
-                        throw std::runtime_error(context + ": malformed entry at line " +
-                                                 std::to_string(lineNumber) +
-                                                 ": expected key = value");
-
-                    const std::string key = trim(text.substr(0, equal));
-
-                    const std::string value = trim(text.substr(equal + 1));
-
-                    if (key.empty() ||
-                        (value.front() == '"' && (value.size() < 2 || value.back() != '"')))
-                        throw std::runtime_error(context + ": malformed entry at line " +
-                                                 std::to_string(lineNumber) +
-                                                 ": expected key = value");
-
-                    if (!keys[current].insert(key).second) {
-                        const std::string where =
-                            current.empty() ? "the manifest root" : "[" + current + "]";
-                        throw std::runtime_error(context + ": duplicate key '" + key + "' in " +
-                                                 where);
-                    }
-                }
-            }
-
-        } // namespace
+        // Project commands and package commands share one manifest parser, so a
+        // file accepted by one is accepted by the other.
 
         fs::path findProjectRoot(fs::path start) {
 
@@ -123,7 +43,7 @@ namespace nexus {
 
             const std::string data = readFile(root / "nexus.toml");
 
-            validateProjectManifest(data, (root / "nexus.toml").string());
+            (void)parseManifestEntries(data, (root / "nexus.toml").string());
 
             ProjectConfig cfg;
 

@@ -143,6 +143,7 @@ set(NEXUS_DRIVER_SOURCES
     src/compiler/driver/repl/repl_classify.cpp
     src/compiler/driver/repl/repl_history.cpp
     src/compiler/driver/support/diagnostics.cpp
+    src/compiler/driver/support/manifest.cpp
     src/compiler/driver/support/process.cpp
     src/compiler/driver/support/text.cpp
     src/compiler/driver/support/toml.cpp
@@ -405,6 +406,10 @@ if (NEXUS_BUILD_TESTS)
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
           -P ${CMAKE_SOURCE_DIR}/tests/templates_smoke.cmake)
+  add_test(NAME nexus_manifest_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -P ${CMAKE_SOURCE_DIR}/tests/manifest_smoke.cmake)
   add_test(NAME nexus_examples_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>

@@ -105,6 +105,20 @@ namespace nexus {
         inline std::string gDiagnosticText;
         inline constexpr std::size_t kReplHistoryLimit = 500;
 
+        // One parsed `key = value` entry of a project or package manifest.
+        // `section` is empty for keys that appear before any table header.
+        struct ManifestEntry {
+            std::string section;
+            std::string key;
+            std::string value;
+            std::size_t line = 0;
+        };
+
+        // Parse and validate manifest structure. See support/manifest.cpp for the
+        // accepted subset and the error contract.
+        std::vector<ManifestEntry> parseManifestEntries(const std::string& data,
+                                                        const std::string& context);
+
         // Read a whole file as bytes. Ownership: returns a copy, the caller owns
         // it. Errors: throws std::runtime_error("cannot open <path>") when the
         // file cannot be opened, "...: is a directory" when a directory is passed

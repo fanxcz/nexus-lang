@@ -3,7 +3,6 @@
 namespace nexus {
     namespace driver {
 
-
         bool validPackageName(const std::string& name) {
             if (name.empty() || name == "." || name == "..")
                 return false;
@@ -13,7 +12,6 @@ namespace nexus {
             }
             return true;
         }
-
 
         std::string stripTomlInlineComment(const std::string& line) {
             bool inString = false;
@@ -36,7 +34,6 @@ namespace nexus {
             return line;
         }
 
-
         std::size_t findTomlAssignment(const std::string& line) {
             bool inString = false;
             bool escaped = false;
@@ -57,7 +54,6 @@ namespace nexus {
             }
             return std::string::npos;
         }
-
 
         std::string parsePackageMetadataString(const std::string& rawValue,
                                                const std::string& context) {
@@ -110,72 +106,20 @@ namespace nexus {
             return decoded;
         }
 
-
         std::map<std::string, std::string> readStrictTomlStringSection(
             const std::string& data, const std::string& wantedSection, const std::string& context) {
             std::map<std::string, std::string> values;
-            std::set<std::string> seenTables;
-            std::string activeSection;
-            bool sawWantedSection = false;
-            std::istringstream input(data);
-            std::string line;
-            std::size_t lineNumber = 0;
-            while (std::getline(input, line)) {
-                ++lineNumber;
-                const std::string original = trim(stripTomlInlineComment(line));
-                if (original.empty())
+            for (const auto& entry : parseManifestEntries(data, context)) {
+                if (entry.section != wantedSection)
                     continue;
-
-                if (original.front() == '[') {
-                    const bool arrayTable = original.size() >= 4 && original.rfind("[[", 0) == 0 &&
-                                            original.substr(original.size() - 2) == "]]";
-                    const bool regularTable = original.size() >= 3 && original.front() == '[' &&
-                                              original.back() == ']' && !arrayTable &&
-                                              original.find(']', 1) == original.size() - 1;
-                    if (!arrayTable && !regularTable)
-                        throw std::runtime_error(context + ": invalid table header at line " +
-                                                 std::to_string(lineNumber));
-
-                    const std::size_t start = arrayTable ? 2 : 1;
-                    const std::size_t length = original.size() - start - (arrayTable ? 2 : 1);
-                    const std::string section = trim(original.substr(start, length));
-                    if (section.empty() || section.find('[') != std::string::npos ||
-                        section.find(']') != std::string::npos)
-                        throw std::runtime_error(context + ": invalid table header at line " +
-                                                 std::to_string(lineNumber));
-                    if (arrayTable && section == wantedSection)
-                        throw std::runtime_error(context + ": [" + wantedSection +
-                                                 "] must be a regular table");
-                    if (regularTable && !seenTables.insert(section).second)
-                        throw std::runtime_error(context + ": duplicate table [" + section + "]");
-                    if (section == wantedSection) {
-                        if (sawWantedSection)
-                            throw std::runtime_error(context + ": duplicate table [" +
-                                                     wantedSection + "]");
-                        sawWantedSection = true;
-                    }
-                    activeSection = arrayTable ? "[[" + section + "]]" : section;
-                    continue;
-                }
-
-                const std::string current = trim(stripTomlInlineComment(line));
-                if (current.empty() || activeSection != wantedSection)
-                    continue;
-                const auto equal = findTomlAssignment(current);
-                if (equal == std::string::npos)
-                    throw std::runtime_error(context + ": malformed entry in [" + wantedSection +
-                                             "] at line " + std::to_string(lineNumber) +
-                                             ": expected key = \"value\"");
-
-                const std::string key = trim(current.substr(0, equal));
-                if (!validPackageName(key))
+                if (!validPackageName(entry.key))
                     throw std::runtime_error(context + ": invalid dependency name at line " +
-                                             std::to_string(lineNumber));
+                                             std::to_string(entry.line));
                 const std::string value = parsePackageMetadataString(
-                    current.substr(equal + 1),
-                    context + " [" + wantedSection + "] line " + std::to_string(lineNumber));
-                if (!values.emplace(key, value).second)
-                    throw std::runtime_error(context + ": duplicate key '" + key + "' in [" +
+                    entry.value,
+                    context + " [" + wantedSection + "] line " + std::to_string(entry.line));
+                if (!values.emplace(entry.key, value).second)
+                    throw std::runtime_error(context + ": duplicate key '" + entry.key + "' in [" +
                                              wantedSection + "]");
             }
             return values;
