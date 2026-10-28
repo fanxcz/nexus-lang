@@ -369,6 +369,11 @@ if (NEXUS_BUILD_TESTS)
           -P ${CMAKE_SOURCE_DIR}/tests/formatter_smoke.cmake)
   add_test(NAME nexus_self_test COMMAND $<TARGET_FILE:nexus> self-test)
   set_tests_properties(nexus_self_test PROPERTIES PASS_REGULAR_EXPRESSION "self-test: PASS")
+  add_test(NAME nexus_division_zero_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
+          -P ${CMAKE_SOURCE_DIR}/tests/division_zero_smoke.cmake)
   add_test(NAME nexus_doctor_json_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
