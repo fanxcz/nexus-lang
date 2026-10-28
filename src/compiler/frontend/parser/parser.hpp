@@ -38,6 +38,9 @@ namespace nexus {
         std::vector<std::string> recoveredErrors_;
         size_t i_ = 0;
         std::size_t recursionDepth_ = 0;
+        // Depth of explicit (), [], and {} grouping. A binary operator that
+        // starts a new line only terminates an expression at depth zero.
+        int groupingDepth_ = 0;
 
         const Token& cur() const;
         bool accept(TokenKind);

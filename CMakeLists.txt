@@ -23,9 +23,6 @@ endif()
 if (NEXUS_CXX_COMPILER)
   set(CMAKE_CXX_COMPILER ${NEXUS_CXX_COMPILER} CACHE STRING "C++ compiler" FORCE)
 endif()
-if (NEXUS_LINKER)
-  set(CMAKE_LINKER ${NEXUS_LINKER} CACHE STRING "Linker" FORCE)
-endif()
 
 # Auto-detect Clang on Windows if not explicitly set
 if (WIN32 AND NEXUS_USE_CLANG AND NOT NEXUS_C_COMPILER)
@@ -41,32 +38,30 @@ if (WIN32 AND NEXUS_USE_CLANG AND NOT NEXUS_C_COMPILER)
     if (EXISTS "${path}/bin/clang.exe")
       set(CMAKE_C_COMPILER   "${path}/bin/clang.exe"   CACHE STRING "C compiler" FORCE)
       set(CMAKE_CXX_COMPILER "${path}/bin/clang++.exe" CACHE STRING "C++ compiler" FORCE)
-      # On Windows, use MSVC linker (link.exe) for compatibility
-      # lld-link doesn't understand GNU flags like --out-implib
-      if (EXISTS "${path}/bin/lld-link.exe")
-        set(CMAKE_LINKER "${path}/bin/lld-link.exe" CACHE STRING "Linker" FORCE)
-      elseif (EXISTS "${path}/bin/lld.exe")
-        set(CMAKE_LINKER "${path}/bin/lld.exe" CACHE STRING "Linker" FORCE)
-      endif()
       message(STATUS "Found LLVM at: ${path}")
       break()
     endif()
   endforeach()
 endif()
 
-# Prefer lld/mold if available (faster linking)
-if (NOT NEXUS_LINKER)
-  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+# Select a fast linker through the compiler driver instead of overriding
+# CMAKE_LINKER. Clang and GCC both understand -fuse-ld=<flavor>, which keeps
+# CMake's platform link rules intact (the old CMAKE_LINKER + custom
+# CMAKE_*_LINK_EXECUTABLE overrides bypassed them and broke MSVC-style flags).
+set(NEXUS_LINK_FLAG "")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  if (NEXUS_LINKER)
+    set(NEXUS_LINK_FLAG "-fuse-ld=${NEXUS_LINKER}")
+    message(STATUS "Using linker flavor: ${NEXUS_LINKER}")
+  else()
     find_program(MOLD mold)
+    find_program(LLD lld lld-link)
     if (MOLD)
-      set(CMAKE_LINKER ${MOLD} CACHE STRING "Linker" FORCE)
-      message(STATUS "Using mold linker: ${MOLD}")
-    else()
-      find_program(LLD lld lld-link)
-      if (LLD)
-        set(CMAKE_LINKER ${LLD} CACHE STRING "Linker" FORCE)
-        message(STATUS "Using lld linker: ${LLD}")
-      endif()
+      set(NEXUS_LINK_FLAG "-fuse-ld=mold")
+      message(STATUS "Using mold linker")
+    elseif (LLD)
+      set(NEXUS_LINK_FLAG "-fuse-ld=lld")
+      message(STATUS "Using lld linker")
     endif()
   endif()
 endif()
@@ -120,17 +115,87 @@ endif()
 # ============================================================================
 # Sources
 # ============================================================================
+set(NEXUS_DRIVER_SOURCES
+    src/compiler/driver/driver.cpp
+    src/compiler/driver/cli/usage.cpp
+    src/compiler/driver/commands/doctor.cpp
+    src/compiler/driver/commands/export.cpp
+    src/compiler/driver/commands/format.cpp
+    src/compiler/driver/commands/info.cpp
+    src/compiler/driver/commands/quality.cpp
+    src/compiler/driver/lsp/server.cpp
+    src/compiler/driver/lsp/protocol.cpp
+    src/compiler/driver/lsp/text.cpp
+    src/compiler/driver/lsp/uri.cpp
+    src/compiler/driver/lsp/diagnostics.cpp
+    src/compiler/driver/package/command.cpp
+    src/compiler/driver/package/lockfile.cpp
+    src/compiler/driver/package/metadata.cpp
+    src/compiler/driver/package/vendor.cpp
+    src/compiler/driver/project/config.cpp
+    src/compiler/driver/project/modules.cpp
+    src/compiler/driver/project/templates.cpp
+    src/compiler/driver/repl/command.cpp
+    src/compiler/driver/repl/input.cpp
+    src/compiler/driver/repl/repl_classify.cpp
+    src/compiler/driver/repl/repl_history.cpp
+    src/compiler/driver/support/diagnostics.cpp
+    src/compiler/driver/support/process.cpp
+    src/compiler/driver/support/text.cpp
+    src/compiler/driver/support/toml.cpp
+    src/compiler/driver/toolchain/compile.cpp
+    src/compiler/driver/toolchain/exec.cpp
+    src/compiler/driver/toolchain/paths.cpp
+    src/compiler/driver/toolchain/runtime.cpp
+)
+
+set(NEXUS_CODEGEN_SOURCES
+    src/compiler/backend/codegen/llvm_ir.cpp
+    src/compiler/backend/codegen/llvm_cg_core.cpp
+    src/compiler/backend/codegen/llvm_cg_expr.cpp
+    src/compiler/backend/codegen/llvm_cg_stmt.cpp
+    src/compiler/backend/codegen/llvm_cg_program.cpp
+)
+
+set(NEXUS_NATIVE_SOURCES
+    src/compiler/backend/native/native.cpp
+    src/compiler/backend/native/native_subset.cpp
+    src/compiler/backend/native/native_gen_core.cpp
+    src/compiler/backend/native/native_gen_stmt.cpp
+    src/compiler/backend/native/native_gen_runtime.cpp
+    src/compiler/backend/native/target.cpp
+    src/compiler/backend/native/pe_elf.cpp
+)
+
+set(NEXUS_LEXER_SOURCES
+    src/compiler/frontend/lexer/lexer.cpp
+    src/compiler/frontend/lexer/lexer_token.cpp
+    src/compiler/frontend/lexer/lexer_literal.cpp
+    src/compiler/frontend/lexer/lexer_scan.cpp
+)
+
+set(NEXUS_PARSER_SOURCES
+    src/compiler/frontend/parser/parser.cpp
+    src/compiler/frontend/parser/parser_support.cpp
+    src/compiler/frontend/parser/parser_stmt.cpp
+    src/compiler/frontend/parser/parser_expr.cpp
+)
+
+set(NEXUS_SEMANTIC_SOURCES
+    src/compiler/semantic/semantic.cpp
+    src/compiler/semantic/semantic_expr.cpp
+    src/compiler/semantic/semantic_stmt.cpp
+)
+
 set(NEXUS_SOURCES
     src/cli/main.cpp
     src/compiler/format/formatter.cpp
-    src/compiler/frontend/lexer/lexer.cpp
-    src/compiler/frontend/parser/parser.cpp
-    src/compiler/semantic/semantic.cpp
-    src/compiler/backend/codegen/llvm_ir.cpp
-    src/compiler/backend/native/native.cpp
-    src/compiler/backend/native/target.cpp
-    src/compiler/backend/native/pe_elf.cpp
-    src/compiler/driver/driver.cpp
+    ${NEXUS_LEXER_SOURCES}
+    ${NEXUS_PARSER_SOURCES}
+    ${NEXUS_SEMANTIC_SOURCES}
+    ${NEXUS_CODEGEN_SOURCES}
+    ${NEXUS_NATIVE_SOURCES}
+    ${NEXUS_DRIVER_SOURCES}
 )
 
 add_executable(nexus ${NEXUS_SOURCES})
@@ -149,6 +214,9 @@ target_include_directories(nexus PRIVATE
 target_compile_features(nexus PRIVATE cxx_std_20)
 target_compile_definitions(nexus PRIVATE NEXUS_SOURCE_ROOT="${CMAKE_SOURCE_DIR}" NEXUS_VERSION="${PROJECT_VERSION}")
 target_compile_options(nexus PRIVATE ${NEXUS_COMPILE_OPTIONS})
+if (NEXUS_LINK_FLAG)
+  target_link_options(nexus PRIVATE ${NEXUS_LINK_FLAG})
+endif()
 
 # Link SDL2 if found
 if (SDL2_FOUND)
@@ -166,27 +234,16 @@ if (SDL2_FOUND)
 endif()
 
 # ============================================================================
-# Fix linker flags for lld-link on Windows
-# ============================================================================
-if (WIN32 AND CMAKE_LINKER MATCHES "lld")
-  # lld-link doesn't understand GNU flags like --out-implib
-  # Use /OUT: instead and skip implib flags
-  set(CMAKE_EXE_LINKER_FLAGS "")
-  set(CMAKE_SHARED_LINKER_FLAGS "")
-  set(CMAKE_STATIC_LINKER_FLAGS "")
-  set(CMAKE_MODULE_LINKER_FLAGS "")
-  # Tell CMake to use lld-link style flags
-  set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> <FLAGS> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-  set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-endif()
-
-# ============================================================================
 # Install
 # ============================================================================
 include(GNUInstallDirs)
 target_compile_definitions(nexus PRIVATE NEXUS_INSTALL_RUNTIME_DIR="${CMAKE_INSTALL_FULL_DATADIR}/nexus/runtime")
 install(TARGETS nexus RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES src/runtime/runtime.cpp DESTINATION ${CMAKE_INSTALL_DATADIR}/nexus/runtime)
+# The runtime is one translation unit assembled from topic files, so the
+# whole directory (runtime.cpp/runtime.c plus every *.inc part) must ship.
+install(DIRECTORY src/runtime/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/nexus/runtime
+        FILES_MATCHING PATTERN "*.cpp" PATTERN "*.c" PATTERN "*.inc" PATTERN "*.hpp")
 install(DIRECTORY stdlib/ DESTINATION ${CMAKE_INSTALL_DATADIR}/nexus/stdlib OPTIONAL)
 install(DIRECTORY examples/templates/ DESTINATION ${CMAKE_INSTALL_DATADIR}/nexus/project-templates OPTIONAL)
 install(DIRECTORY examples/assets/ DESTINATION ${CMAKE_INSTALL_DATADIR}/nexus/assets OPTIONAL)
@@ -199,14 +256,12 @@ if (NEXUS_BUILD_TESTS)
   add_executable(nexus_tests
       tests/test_main.cpp
       src/compiler/format/formatter.cpp
-      src/compiler/frontend/lexer/lexer.cpp
-      src/compiler/frontend/parser/parser.cpp
-      src/compiler/semantic/semantic.cpp
-      src/compiler/backend/codegen/llvm_ir.cpp
-      src/compiler/backend/native/native.cpp
-      src/compiler/backend/native/target.cpp
-      src/compiler/backend/native/pe_elf.cpp
-      src/compiler/driver/driver.cpp
+      ${NEXUS_LEXER_SOURCES}
+      ${NEXUS_PARSER_SOURCES}
+      ${NEXUS_SEMANTIC_SOURCES}
+      ${NEXUS_CODEGEN_SOURCES}
+      ${NEXUS_NATIVE_SOURCES}
+      ${NEXUS_DRIVER_SOURCES}
   )
   target_include_directories(nexus_tests PRIVATE
       src/compiler
@@ -276,8 +331,8 @@ if (NEXUS_BUILD_TESTS)
 
   add_executable(nexus_frontend_fuzz_smoke
       tests/frontend_fuzz_smoke.cpp
-      src/compiler/frontend/lexer/lexer.cpp
-      src/compiler/frontend/parser/parser.cpp
+      ${NEXUS_LEXER_SOURCES}
+      ${NEXUS_PARSER_SOURCES}
   )
   target_include_directories(nexus_frontend_fuzz_smoke PRIVATE
       src/compiler
@@ -406,6 +461,15 @@ if (NEXUS_BUILD_TESTS)
             -P ${CMAKE_SOURCE_DIR}/tests/match_smoke.cmake)
     set_tests_properties(nexus_match_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+
+    add_test(NAME nexus_compound_assign_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/compound_assign_smoke.cmake)
+    set_tests_properties(nexus_compound_assign_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 45)
     add_test(NAME nexus_for_smoke
         COMMAND ${CMAKE_COMMAND}
             -DNEXUS_BIN=$<TARGET_FILE:nexus>
@@ -575,7 +639,7 @@ message(STATUS "NEXUS ${PROJECT_VERSION} Configuration Summary")
 message(STATUS "==========================================")
 message(STATUS "C Compiler:   ${CMAKE_C_COMPILER}")
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
-message(STATUS "Linker:       ${CMAKE_LINKER}")
+message(STATUS "Linker:       ${NEXUS_LINK_FLAG}")
 message(STATUS "Build Type:   ${CMAKE_BUILD_TYPE}")
 message(STATUS "SDL2 Found:   ${SDL2_FOUND}")
 if (SDL2_FOUND)

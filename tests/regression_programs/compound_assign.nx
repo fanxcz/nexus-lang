@@ -1,0 +1,26 @@
+struct P { count: i64, ratio: f64, label: string }
+
+fn main() {
+    let mut p = P { count: 10, ratio: 1.5, label: "a" }
+    p.count += 5
+    p.count -= 3
+    p.count *= 2
+    p.count /= 4
+    p.count %= 5
+    print(p.count)
+    p.ratio += 0.5
+    print(p.ratio)
+    p.label += "b"
+    print(p.label)
+
+    let mut values = [1, 2, 3]
+    values[0] += 9
+    values[1] *= 4
+    print(values[0])
+    print(values[1])
+
+    let mut n = 4
+    let ptr = &n
+    *ptr += 6
+    print(n)
+}

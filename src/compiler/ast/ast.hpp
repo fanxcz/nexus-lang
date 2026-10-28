@@ -198,15 +198,24 @@ namespace nexus {
         Expr::Ptr object;
         std::string member;
         Expr::Ptr value;
+        // TokenKind::Equal for a plain store; otherwise the arithmetic
+        // operator of a compound assignment such as `+=`.
+        TokenKind op = TokenKind::Equal;
     };
 
     struct IndexAssignStmt : Stmt {
         Expr::Ptr object, index, value;
+        // TokenKind::Equal for a plain store; otherwise the arithmetic
+        // operator of a compound assignment such as `+=`.
+        TokenKind op = TokenKind::Equal;
     };
 
     // Assignment through a typed pointer, e.g. *output = value.
     struct DerefAssignStmt : Stmt {
         Expr::Ptr target, value;
+        // TokenKind::Equal for a plain store; otherwise the arithmetic
+        // operator of a compound assignment such as `+=`.
+        TokenKind op = TokenKind::Equal;
     };
 
     struct ExprStmt : Stmt {

@@ -35,7 +35,9 @@ namespace nexus {
                    text == ">" || text == ">=" || text == "+" || text == "-" || text == "*" ||
                    text == "/" || text == "%" || text == "+=" || text == "-=" || text == "*=" ||
                    text == "/=" || text == "%=" || text == "&&" || text == "||" || text == "&" ||
-                   text == "!" || text == "->" || text == "=>";
+                   text == "|" || text == "^" || text == "<<" || text == ">>" || text == "&=" ||
+                   text == "|=" || text == "^=" || text == "<<=" || text == ">>=" || text == "!" ||
+                   text == "->" || text == "=>";
         }
 
         bool isUnaryOperator(const std::vector<Lexeme>& tokens, std::size_t index) {

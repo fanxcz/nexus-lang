@@ -121,5 +121,43 @@ if(rc EQUAL 0 OR NOT syntax_error_count EQUAL 3)
   message(FATAL_ERROR "Parser did not recover all three syntax errors inside one function: ${multi_syntax_combined}")
 endif()
 
+# A literal zero divisor is always a bug; reject it at compile time instead of
+# letting the program crash with a hardware exception at run time.
+set(DIVIDE_BY_ZERO_SOURCE "${DIAGNOSTIC_DIR}/divide-by-zero.nx")
+file(WRITE "${DIVIDE_BY_ZERO_SOURCE}"
+  "fn main() { let bad = 10 / 0; print(bad) }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${DIVIDE_BY_ZERO_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(divide_by_zero_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT divide_by_zero_combined MATCHES "division by zero")
+  message(FATAL_ERROR "Constant division by zero was not rejected: ${divide_by_zero_combined}")
+endif()
+
+# `match` over a finite domain must cover every value. bool and enum domains
+# are provable at compile time; i64 domains still require an explicit catch-all
+# from the author, so they are not checked here.
+set(BOOL_MATCH_SOURCE "${DIAGNOSTIC_DIR}/non-exhaustive-bool.nx")
+file(WRITE "${BOOL_MATCH_SOURCE}"
+  "fn main() { let flag = true; match flag { true => { print(1) } } }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${BOOL_MATCH_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(bool_match_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT bool_match_combined MATCHES "match on bool is not exhaustive")
+  message(FATAL_ERROR "Non-exhaustive bool match was not rejected: ${bool_match_combined}")
+endif()
+
+set(ENUM_MATCH_SOURCE "${DIAGNOSTIC_DIR}/non-exhaustive-enum.nx")
+file(WRITE "${ENUM_MATCH_SOURCE}"
+  "enum Color { Red, Green, Blue }\nfn main() { let color = Color::Red; match color { Color::Red => {}, Color::Green => {} } }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${ENUM_MATCH_SOURCE}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(enum_match_combined "${out}\n${err}")
+if(rc EQUAL 0 OR NOT enum_match_combined MATCHES "match on enum 'Color' is not exhaustive: missing Color::Blue")
+  message(FATAL_ERROR "Non-exhaustive enum match was not rejected: ${enum_match_combined}")
+endif()
+
 file(REMOVE_RECURSE "${DIAGNOSTIC_DIR}")
 message(STATUS "NEXUS diagnostics smoke test: PASS")

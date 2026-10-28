@@ -13,7 +13,7 @@ else()
   set(EXE_SUFFIX "")
 endif()
 
-foreach(program arith calls loops for_ranges wide_frame print_types strings_full)
+foreach(program arith calls loops for_ranges wide_frame print_types strings_full short_circuit bitwise)
   set(native_output "")
   set(llvm_output "")
   foreach(backend native llvm)

@@ -1,0 +1,169 @@
+#include "lexer/lexer.hpp"
+
+#include "lexer/lexer_internal.hpp"
+
+#include <cctype>
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+
+namespace nexus {
+
+    const char* tokenName(TokenKind k) {
+
+        switch (k) {
+
+        case TokenKind::End:
+            return "end";
+        case TokenKind::Identifier:
+            return "identifier";
+        case TokenKind::Integer:
+            return "integer";
+        case TokenKind::Float:
+            return "float";
+        case TokenKind::String:
+            return "string";
+
+        case TokenKind::KwFn:
+            return "fn";
+        case TokenKind::KwLet:
+            return "let";
+        case TokenKind::KwConst:
+            return "const";
+        case TokenKind::KwMut:
+            return "mut";
+        case TokenKind::KwReturn:
+            return "return";
+        case TokenKind::KwIf:
+            return "if";
+        case TokenKind::KwElse:
+            return "else";
+        case TokenKind::KwWhile:
+            return "while";
+        case TokenKind::KwFor:
+            return "for";
+        case TokenKind::KwIn:
+            return "in";
+        case TokenKind::KwBreak:
+            return "break";
+        case TokenKind::KwContinue:
+            return "continue";
+        case TokenKind::KwDefer:
+            return "defer";
+        case TokenKind::KwStruct:
+            return "struct";
+        case TokenKind::KwEnum:
+            return "enum";
+        case TokenKind::KwImport:
+            return "import";
+        case TokenKind::KwExtern:
+            return "extern";
+        case TokenKind::KwUnsafe:
+            return "unsafe";
+        case TokenKind::KwAs:
+            return "as";
+        case TokenKind::KwMatch:
+            return "match";
+        case TokenKind::KwTrue:
+            return "true";
+        case TokenKind::KwFalse:
+            return "false";
+        case TokenKind::KwPrint:
+            return "print";
+
+        case TokenKind::Plus:
+            return "+";
+        case TokenKind::Minus:
+            return "-";
+        case TokenKind::Star:
+            return "*";
+        case TokenKind::Slash:
+            return "/";
+        case TokenKind::Percent:
+            return "%";
+        case TokenKind::PlusEqual:
+            return "+=";
+        case TokenKind::MinusEqual:
+            return "-=";
+        case TokenKind::StarEqual:
+            return "*=";
+        case TokenKind::SlashEqual:
+            return "/=";
+        case TokenKind::PercentEqual:
+            return "%=";
+        case TokenKind::Range:
+            return "..";
+        case TokenKind::Equal:
+            return "=";
+        case TokenKind::EqualEqual:
+            return "==";
+        case TokenKind::BangEqual:
+            return "!=";
+        case TokenKind::Less:
+            return "<";
+        case TokenKind::LessEqual:
+            return "<=";
+        case TokenKind::Greater:
+            return ">";
+        case TokenKind::GreaterEqual:
+            return ">=";
+        case TokenKind::Bang:
+            return "!";
+        case TokenKind::AndAnd:
+            return "&&";
+        case TokenKind::OrOr:
+            return "||";
+        case TokenKind::Ampersand:
+            return "&";
+        case TokenKind::Pipe:
+            return "|";
+        case TokenKind::Caret:
+            return "^";
+        case TokenKind::ShiftLeft:
+            return "<<";
+        case TokenKind::ShiftRight:
+            return ">>";
+        case TokenKind::AmpEqual:
+            return "&=";
+        case TokenKind::PipeEqual:
+            return "|=";
+        case TokenKind::CaretEqual:
+            return "^=";
+        case TokenKind::ShiftLeftEqual:
+            return "<<=";
+        case TokenKind::ShiftRightEqual:
+            return ">>=";
+
+        case TokenKind::LParen:
+            return "(";
+        case TokenKind::RParen:
+            return ")";
+        case TokenKind::LBrace:
+            return "{";
+        case TokenKind::RBrace:
+            return "}";
+        case TokenKind::LBracket:
+            return "[";
+        case TokenKind::RBracket:
+            return "]";
+        case TokenKind::Comma:
+            return ",";
+        case TokenKind::Colon:
+            return ":";
+        case TokenKind::ColonColon:
+            return "::";
+        case TokenKind::Dot:
+            return ".";
+        case TokenKind::Arrow:
+            return "->";
+        case TokenKind::FatArrow:
+            return "=>";
+        case TokenKind::Semicolon:
+            return ";";
+        case TokenKind::Question:
+            return "?";
+        }
+        return "?";
+    }
+
+} // namespace nexus
