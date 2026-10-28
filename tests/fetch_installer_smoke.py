@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regression coverage for scripts/fetch_installer.py.
 
-The Poker CI job used to fail because GitHub Pages answered a request for an
+The packaging CI job used to fail because GitHub Pages answered a request for an
 installer that had not been deployed yet with an HTML error page, which the
 workflow stored as NEXUS-Setup.exe. These tests pin the required behaviour:
 an HTML payload is rejected with a clear message, a checksum mismatch is
