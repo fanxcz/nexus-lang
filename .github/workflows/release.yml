@@ -38,6 +38,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read project versions
+        shell: bash
+        run: python scripts/nexus_version.py github-env >> "$GITHUB_ENV"
+
       - name: Install Linux toolchain
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang lld
@@ -68,7 +72,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             tag="${GITHUB_REF_NAME}"
           else
-            tag="v2.2.0"
+            tag="v${NEXUS_VERSION}"
           fi
           asset="${{ matrix.asset }}"
           zig_version='0.14.1'
@@ -137,7 +141,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'v2.2.0' }
+          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { "v$env:NEXUS_VERSION" }
           $asset = '${{ matrix.asset }}'
           $zigVersion = '0.14.1'
           $package = Join-Path $env:RUNNER_TEMP "NEXUS-$tag-$asset"
@@ -210,6 +214,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Read project versions
+        shell: bash
+        run: python scripts/nexus_version.py github-env >> "$GITHUB_ENV"
+
       - name: Download all platform archives
         uses: actions/download-artifact@v4
         with:
@@ -229,7 +239,7 @@ jobs:
             exit 1
           fi
           release_tag="$GITHUB_REF_NAME"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v2.2.0"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v${NEXUS_VERSION}"; fi
           gh release create "$release_tag" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --title "NEXUS $release_tag" \

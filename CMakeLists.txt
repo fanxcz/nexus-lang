@@ -438,6 +438,11 @@ if (NEXUS_BUILD_TESTS)
         COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_SOURCE_DIR}/tests/fetch_installer_smoke.py)
     set_tests_properties(nexus_fetch_installer_smoke PROPERTIES TIMEOUT 120)
+    add_test(NAME nexus_version_consistency
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tests/version_consistency_smoke.py
+            --nexus $<TARGET_FILE:nexus>)
+    set_tests_properties(nexus_version_consistency PROPERTIES TIMEOUT 60)
     if(UNIX)
       add_test(NAME nexus_repl_tty_smoke
           COMMAND ${Python3_EXECUTABLE}

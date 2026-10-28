@@ -9,23 +9,28 @@ import sys
 import zipfile
 from pathlib import Path, PurePosixPath
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from nexus_version import asset_names  # noqa: E402
+
+_NAMES = asset_names()
 ARTIFACTS = (
-    "NEXUS-Setup-2.2.0.exe",
-    "NEXUS_Windows_Portable.zip",
-    "NEXUS-Language-2.1.0.vsix",
-    "NEXUS-Paint-Windows-x64.exe",
-    "NEXUS-Paint-Windows-x64.zip",
+    _NAMES["setup"],
+    _NAMES["portable"],
+    _NAMES["vsix"],
+    _NAMES["paint_executable"],
+    _NAMES["paint_archive"],
 )
 
 DOWNLOAD_LINK = re.compile(r"\]\(\s*(?:<)?[^)]*?assets/downloads/([^)>\s]+)")
 
 ZIP_CONTENTS = {
-    "NEXUS_Windows_Portable.zip": {
+    _NAMES["portable"]: {
         "nexus.cmd", "bin/nexus-core.exe", "toolchain/zig.exe",
         "runtime/SDL2.dll", "stdlib/engine2d.nx",
     },
-    "NEXUS-Language-2.1.0.vsix": {"extension/package.json"},
-    "NEXUS-Paint-Windows-x64.zip": {
+    _NAMES["vsix"]: {"extension/package.json"},
+    _NAMES["paint_archive"]: {
         "NEXUS-Paint.exe", "NEXUS-Paint.nx", "README-WINDOWS.txt",
         "SDL2.dll", "SDL2_image.dll", "SDL2_ttf.dll", "SDL2_mixer.dll", "sqlite3.dll",
     },

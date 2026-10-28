@@ -33,12 +33,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $match = Select-String -LiteralPath 'CMakeLists.txt' `
-            -Pattern 'project\(nexus VERSION ([0-9]+\.[0-9]+\.[0-9]+)'
-          if (-not $match) { throw 'Could not read the NEXUS version from CMakeLists.txt.' }
-          $version = $match.Matches[0].Groups[1].Value
-          "NEXUS_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          Write-Host "Installer version: $version"
+          python scripts/nexus_version.py github-env | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Installer version: $env:NEXUS_VERSION"
 
       - name: Download the official NEXUS installer and checksum
         shell: pwsh

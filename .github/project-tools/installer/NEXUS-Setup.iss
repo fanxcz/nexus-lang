@@ -1,5 +1,7 @@
 #define MyAppName "NEXUS"
-#define MyAppVersion "2.2.0"
+#ifndef MyAppVersion
+  #define MyAppVersion "2.2.0"
+#endif
 #define MyAppPublisher "NEXUS Project"
 #ifndef SourceDir
   #define SourceDir "..\..\..\dist\NEXUS_Windows_Portable"
@@ -23,19 +25,19 @@ ArchitecturesInstallIn64BitMode=x64
 WizardStyle=modern
 LanguageDetectionMethod=uilanguage
 UninstallDisplayIcon={app}\bin\nexus-core.exe
-OutputBaseFilename=NEXUS-Setup-2.2.0
+OutputBaseFilename=NEXUS-Setup-{#MyAppVersion}
 Compression=lzma2/fast
 SolidCompression=yes
 ChangesEnvironment=yes
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=2.2.0.0
+VersionInfoVersion={#MyAppVersion}.0
 VersionInfoProductName=NEXUS
-VersionInfoProductVersion=2.2.0
+VersionInfoProductVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription=NEXUS 2.1 native programming language installer
-UninstallDisplayName=NEXUS 2.2.0
+VersionInfoDescription=NEXUS {#MyAppVersion} native programming language installer
+UninstallDisplayName=NEXUS {#MyAppVersion}
 
 [Languages]
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"

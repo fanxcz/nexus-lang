@@ -7,6 +7,10 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from nexus_version import asset_names  # noqa: E402
+
 ROOT = Path.cwd().resolve()
 TEXT_SUFFIXES = {
     ".md", ".mdx", ".html", ".htm", ".txt", ".yml", ".yaml", ".json",
@@ -16,13 +20,10 @@ TEXT_SUFFIXES = {
 }
 SKIP_DIRS = {".git", "node_modules", "build", "site", "dist", "target", ".venv"}
 BINARY_SUFFIXES = {".exe", ".zip", ".bmp", ".wav", ".obj", ".png", ".jpg", ".jpeg", ".dll", ".vsix"}
-GENERATED_ASSETS = {
-    "NEXUS-Setup-2.2.0.exe", "NEXUS-Setup-2.2.0.exe.sha256.txt",
-    "NEXUS_Windows_Portable.zip", "NEXUS_Windows_Portable.zip.sha256.txt",
-    "NEXUS-Language-2.1.0.vsix", "NEXUS-Language-2.1.0.vsix.sha256.txt",
-    "NEXUS-Paint-Windows-x64.exe", "NEXUS-Paint-Windows-x64.exe.sha256.txt",
-    "NEXUS-Paint-Windows-x64.zip", "NEXUS-Paint-Windows-x64.zip.sha256.txt",
-}
+GENERATED_ASSETS = set()
+for _asset in asset_names().values():
+    GENERATED_ASSETS.add(_asset)
+    GENERATED_ASSETS.add(_asset + ".sha256.txt")
 MD_LINK = re.compile(r"!?\[[^\]]*\]\(\s*(?:<([^>]+)>|([^\s)]+))", re.M)
 MD_REF = re.compile(r"(?m)^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?")
 HTML_ATTR = re.compile(r"""(?i)\b(?:href|src|poster|action)\s*=\s*["']([^"']+)["']""")
