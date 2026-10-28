@@ -207,7 +207,7 @@ fn main() {
     print("RANK")
     print(rank_name(hero.score))
 
-    let scoreMirror = hero.score
+    let mut scoreMirror = hero.score
     let scorePtr = &scoreMirror
     print("MEMORY POINTER CHECK")
     print(*scorePtr)
