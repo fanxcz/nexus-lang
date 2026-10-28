@@ -636,14 +636,18 @@ namespace nexus {
         case TokenKind::Star:
             emit(r + " = mul i64 " + lhs + ", " + rhs);
             return r;
-        case TokenKind::Slash:
-            emit("call void @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = sdiv i64 " + lhs + ", " + rhs);
+        case TokenKind::Slash: {
+            const auto checkedDivisor = next();
+            emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
+            emit(r + " = sdiv i64 " + lhs + ", " + checkedDivisor);
             return r;
-        case TokenKind::Percent:
-            emit("call void @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = srem i64 " + lhs + ", " + rhs);
+        }
+        case TokenKind::Percent: {
+            const auto checkedDivisor = next();
+            emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
+            emit(r + " = srem i64 " + lhs + ", " + checkedDivisor);
             return r;
+        }
         case TokenKind::Ampersand:
             emit(r + " = and i64 " + lhs + ", " + rhs);
             return r;
