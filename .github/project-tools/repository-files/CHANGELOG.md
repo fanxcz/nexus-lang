@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Reject structurally malformed `nexus.toml` files (truncated table headers, lines without `key = value`, duplicate tables or keys) with a file-and-line diagnostic instead of silently falling back to defaults.
+- Added regression tests for project paths and artifact names containing spaces, and for calling graphics/audio APIs before initialization.
+
 ## NEXUS 2.2.0 — bitwise operators, exhaustive match and a focused source tree (2026-10-28)
 
 - Added i64 bitwise operators `&`, `|`, `^`, `<<`, `>>` and the compound assignments `&=`, `|=`, `^=`, `<<=`, `>>=`. The lexer, parser, semantic analyzer and formatter handle them, and both the LLVM path and the built-in x86-64 native backend emit identical results.

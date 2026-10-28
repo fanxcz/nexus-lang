@@ -10,8 +10,8 @@ NEXUS currently supports **local source-package vendoring**. It does not yet pro
 - `nexus pkg update` regenerates the lockfile and SHA-256 checksums for local dependencies; it does not resolve remote or version-range dependencies.
 - `nexus pkg verify` strictly parses dependency records and the generated v2 lockfile, rejects malformed entries and duplicate tables/keys, checks that locked project name/version and each vendored package name match the manifest, confines package paths to `vendor/`, and hashes local package contents.
 - Package operations refuse a symlinked `vendor/` root. Replacing an existing package stages a backup and restores package/manifest/lockfile state if copying or lockfile refresh fails.
-- `nexus pkg build` builds the package's configured entry source. It does not build a dependency graph.
-- `nexus pkg publish` creates a local ZIP-formatted `.nxpkg` archive in `dist/`; it does not upload the archive.
+- `nexus pkg build` builds the package's configured entry source. It does not build a dependency graph.- `nexus pkg publish` creates a local ZIP-formatted `.nxpkg` archive in `dist/`; it does not upload the archive.
+- `nexus check`, `nexus build`, `nexus info` and package commands reject a structurally malformed `nexus.toml` (truncated table headers, lines without `key = value`, duplicate tables or keys) with a file-and-line diagnostic instead of silently falling back to defaults.
 
 ## Create a local package
 

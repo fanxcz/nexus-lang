@@ -396,6 +396,10 @@ if (NEXUS_BUILD_TESTS)
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -P ${CMAKE_SOURCE_DIR}/tests/project_paths_smoke.cmake)
+  add_test(NAME nexus_corrupt_inputs_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -P ${CMAKE_SOURCE_DIR}/tests/corrupt_inputs_smoke.cmake)
   add_test(NAME nexus_examples_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>

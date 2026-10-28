@@ -7,6 +7,17 @@ spirit of [Keep a Changelog](https://keepachangelog.com/).
 Release notes for versions before 2.1.0 and the detailed per-change history
 live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files/CHANGELOG.md).
 
+## Unreleased
+
+### Fixed
+
+- Project commands now reject a structurally malformed `nexus.toml` with a
+  file-and-line diagnostic instead of silently using defaults. Truncated table
+  headers, lines without `key = value`, and duplicate tables or keys fail with
+  a non-zero exit code.
+- Added regression coverage for project paths and artifact names containing
+  spaces, and for graphics/audio entry points used before initialization.
+
 ## 2.2.0 — 2026-10-28
 
 ### Added
