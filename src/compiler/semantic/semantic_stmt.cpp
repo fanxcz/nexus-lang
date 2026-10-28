@@ -52,6 +52,7 @@ namespace nexus {
                     if (pointerType.kind != TypeKind::Pointer || !pointerType.pointee)
                         throw std::runtime_error("dereference assignment requires a typed pointer");
                     validateCompoundAssign(da->op, *pointerType.pointee);
+                    validateCompoundAssignDivisor(da->op, da->value.get());
                     const auto actual = expr(da->value.get(), env);
                     if (!sameType(actual, *pointerType.pointee))
                         throw std::runtime_error("pointer assignment expects '" +
@@ -72,6 +73,7 @@ namespace nexus {
                     if (!f)
                         throw std::runtime_error("unknown field: " + ma->member);
                     validateCompoundAssign(ma->op, f->type);
+                    validateCompoundAssignDivisor(ma->op, ma->value.get());
                     auto actual = expr(ma->value.get(), env);
                     if (!sameType(actual, f->type))
                         throw std::runtime_error("cannot assign field '" + ma->member +
@@ -92,6 +94,7 @@ namespace nexus {
                     if (constantIndexOutOfBounds(ia->index.get(), ot.arraySize))
                         throw std::runtime_error("array index is out of bounds");
                     validateCompoundAssign(ia->op, *ot.element);
+                    validateCompoundAssignDivisor(ia->op, ia->value.get());
                     auto actual = expr(ia->value.get(), env);
                     if (!sameType(actual, *ot.element))
                         throw std::runtime_error("array element assignment expects '" +
