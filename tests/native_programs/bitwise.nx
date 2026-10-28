@@ -18,4 +18,13 @@ fn main() {
     g <<= 2
     g >>= 1
     print(g)
+
+    // Shift counts use the low six bits on both native and LLVM backends.
+    // Counts 64 and 65 therefore behave like 0 and 1, respectively.
+    print(1 << 64)
+    print(-8 >> 65)
+    let mut edge = 3
+    edge <<= 64
+    edge >>= 65
+    print(edge)
 }

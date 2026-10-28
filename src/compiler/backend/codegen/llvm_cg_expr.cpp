@@ -435,12 +435,21 @@ namespace nexus {
             case TokenKind::Caret:
                 emit(r + " = xor i64 " + l + ", " + rv);
                 break;
-            case TokenKind::ShiftLeft:
-                emit(r + " = shl i64 " + l + ", " + rv);
+            case TokenKind::ShiftLeft: {
+                // Match the builtin x86-64 backend: only the low six bits of an
+                // i64 shift count are significant. LLVM otherwise treats counts
+                // >= 64 as poison, causing backend-dependent program behavior.
+                const auto count = next();
+                emit(count + " = and i64 " + rv + ", 63");
+                emit(r + " = shl i64 " + l + ", " + count);
                 break;
-            case TokenKind::ShiftRight:
-                emit(r + " = ashr i64 " + l + ", " + rv);
+            }
+            case TokenKind::ShiftRight: {
+                const auto count = next();
+                emit(count + " = and i64 " + rv + ", 63");
+                emit(r + " = ashr i64 " + l + ", " + count);
                 break;
+            }
             case TokenKind::EqualEqual:
                 emit(r + " = icmp eq i64 " + l + ", " + rv);
                 break;
@@ -636,12 +645,18 @@ namespace nexus {
         case TokenKind::Caret:
             emit(r + " = xor i64 " + lhs + ", " + rhs);
             return r;
-        case TokenKind::ShiftLeft:
-            emit(r + " = shl i64 " + lhs + ", " + rhs);
+        case TokenKind::ShiftLeft: {
+            const auto count = next();
+            emit(count + " = and i64 " + rhs + ", 63");
+            emit(r + " = shl i64 " + lhs + ", " + count);
             return r;
-        case TokenKind::ShiftRight:
-            emit(r + " = ashr i64 " + lhs + ", " + rhs);
+        }
+        case TokenKind::ShiftRight: {
+            const auto count = next();
+            emit(count + " = and i64 " + rhs + ", 63");
+            emit(r + " = ashr i64 " + lhs + ", " + count);
             return r;
+        }
         default:
             throw std::runtime_error("unsupported compound assignment operator");
         }
