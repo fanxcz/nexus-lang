@@ -36,6 +36,14 @@ namespace nexus {
         return std::nullopt;
     }
 
+    inline void validateCompoundAssignDivisor(TokenKind op, const Expr* rhs) {
+        if (op != TokenKind::Slash && op != TokenKind::Percent)
+            return;
+        const auto divisor = constantIntegerValue(rhs);
+        if (divisor && *divisor == 0)
+            throw std::runtime_error("division by zero");
+    }
+
     inline bool constantIndexOutOfBounds(const Expr* index, size_t arraySize) {
         const auto value = constantIntegerValue(index);
         if (!value)
