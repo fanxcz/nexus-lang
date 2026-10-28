@@ -11,7 +11,7 @@ fn factory_worker_step(world: World, worker_index: i64) -> i64 {
     }
 
     let start = total * worker_index / worker_count
-    let end = total * (worker_index + 1) / worker_count
+    let end = total *(worker_index + 1) / worker_count
     let mut cursor = start
     let mut processed: i64 = 0
 
@@ -46,9 +46,9 @@ fn factory_run() -> i64 {
         }
         let x = entity_index % config_grid_width()
         let y = entity_index / config_grid_width()
-        if !ecs_spawn(world, kind, x, y) {
+        if ! ecs_spawn(world, kind, x, y) {
             ecs_destroy_world(world)
-            return -1
+            return-1
         }
         entity_index = entity_index + 1
     }
