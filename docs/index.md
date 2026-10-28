@@ -90,12 +90,6 @@ The compiler checks source code before building. Run `nexus doctor` if the compi
 
 <div class="grid cards" markdown>
 
--   **NEXUS Poker**
-
-    A local Texas Hold'em game with computer opponents, betting rounds, side pots, sound and a portable Windows package.
-
-    [Game guide and download instructions](https://github.com/fanxcz/nexus-lang/blob/main/examples/POKER_README.md)
-
 -   **Vector Lab**
 
     A small playable arena that demonstrates vector math, obstacle collision, delta-time movement and animation curves.
