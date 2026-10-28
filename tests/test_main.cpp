@@ -39,6 +39,30 @@ int main() {
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
+            // Address-of creates a mutable pointer in the current type system.
+            // Reject immutable roots to prevent mutation through an alias.
+            const char* invalidSources[] = {
+                "fn main(){ let value: i64 = 10; let ptr = &value; *ptr = 11 }",
+                "struct Data { value: i64 } fn main(){ let data = Data{value: 10}; let ptr = &data.value }",
+                "fn main(){ let values = [1, 2, 3]; let ptr = &values[0] }",
+            };
+            for (const auto* source : invalidSources) {
+                bool rejected = false;
+                try {
+                    auto p = parse(source);
+                    nexus::SemanticAnalyzer().analyze(p);
+                } catch (const std::exception& error) {
+                    rejected = std::string(error.what()).find(
+                                   "'&' requires mutable storage") != std::string::npos;
+                }
+                if (!rejected) {
+                    std::cerr << "address-of immutable storage was not rejected: "
+                              << source << "\\n";
+                    return 48;
+                }
+            }
+        }
+        {
 
             auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }");
 
