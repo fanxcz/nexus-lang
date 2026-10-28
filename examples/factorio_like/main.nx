@@ -1,0 +1,18 @@
+// NEXUS factory-building simulation baseline.
+import "factory_loop.nx"
+import "config.nx"
+
+fn main() {
+    let processed = factory_run()
+    if processed < 0 {
+        print("Factory simulation failed: entity allocation failed")
+        return
+    }
+
+    print("NEXUS factory simulation: complete")
+    print("Entities: " + config_entity_count())
+    print("Conveyor records: " + config_conveyor_count())
+    print("Logical workers: " + config_worker_count())
+    print("Ticks: " + config_tick_count())
+    print("Item updates: " + processed)
+}

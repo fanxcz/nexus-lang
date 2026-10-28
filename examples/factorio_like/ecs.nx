@@ -1,0 +1,86 @@
+// Minimal structure-of-arrays ECS baseline using the current typed-list API.
+import std.collections
+
+struct World {
+    ids: i64,
+    kinds: i64,
+    xs: i64,
+    ys: i64
+}
+
+fn ecs_create_world() -> World {
+    return World {
+        ids: int_list_new(),
+        kinds: int_list_new(),
+        xs: int_list_new(),
+        ys: int_list_new()
+    }
+}
+
+fn ecs_entity_count(world: World) -> i64 {
+    return int_list_len(world.ids)
+}
+
+fn ecs_spawn(world: World, kind: i64, x: i64, y: i64) -> bool {
+    let id = ecs_entity_count(world)
+    if !int_list_push(world.ids, id) {
+        return false
+    }
+    if !int_list_push(world.kinds, kind) {
+        let mut ignored: i64 = 0
+        let _ = int_list_try_pop(world.ids, &ignored)
+        return false
+    }
+    if !int_list_push(world.xs, x) {
+        let mut ignored: i64 = 0
+        let _ = int_list_try_pop(world.kinds, &ignored)
+        let _ = int_list_try_pop(world.ids, &ignored)
+        return false
+    }
+    if !int_list_push(world.ys, y) {
+        let mut ignored: i64 = 0
+        let _ = int_list_try_pop(world.xs, &ignored)
+        let _ = int_list_try_pop(world.kinds, &ignored)
+        let _ = int_list_try_pop(world.ids, &ignored)
+        return false
+    }
+    return true
+}
+
+fn ecs_kind(world: World, index: i64) -> i64 {
+    let mut value: i64 = -1
+    if !int_list_try_get(world.kinds, index, &value) {
+        return -1
+    }
+    return value
+}
+
+fn factory_entity_x(world: World, index: i64) -> i64 {
+    let mut value: i64 = -1
+    if !int_list_try_get(world.xs, index, &value) {
+        return -1
+    }
+    return value
+}
+
+fn factory_entity_y(world: World, index: i64) -> i64 {
+    let mut value: i64 = -1
+    if !int_list_try_get(world.ys, index, &value) {
+        return -1
+    }
+    return value
+}
+
+fn factory_set_position(world: World, index: i64, x: i64, y: i64) -> bool {
+    if !int_list_set(world.xs, index, x) {
+        return false
+    }
+    return int_list_set(world.ys, index, y)
+}
+
+fn ecs_destroy_world(world: World) {
+    int_list_dispose(world.ids)
+    int_list_dispose(world.kinds)
+    int_list_dispose(world.xs)
+    int_list_dispose(world.ys)
+}

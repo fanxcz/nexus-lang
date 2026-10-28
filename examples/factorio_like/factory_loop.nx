@@ -1,0 +1,69 @@
+// Four deterministic logical ranges, processed sequentially.
+// Real worker threads require the proposed chan<T>/spawn runtime.
+import "ecs.nx"
+import "config.nx"
+
+fn factory_worker_step(world: World, worker_index: i64) -> i64 {
+    let total = ecs_entity_count(world)
+    let worker_count = config_worker_count()
+    if worker_count <= 0 {
+        return 0
+    }
+
+    let start = total * worker_index / worker_count
+    let end = total * (worker_index + 1) / worker_count
+    let mut cursor = start
+    let mut processed: i64 = 0
+
+    while cursor < end {
+        // Kind 0 is a moving item; kind 1 is a stationary conveyor record.
+        if ecs_kind(world, cursor) == 0 {
+            let x = factory_entity_x(world, cursor)
+            let y = factory_entity_y(world, cursor)
+            if x >= 0 && y >= 0 {
+                let mut next_x = x + 1
+                if next_x >= config_grid_width() {
+                    next_x = 0
+                }
+                if factory_set_position(world, cursor, next_x, y) {
+                    processed = processed + 1
+                }
+            }
+        }
+        cursor = cursor + 1
+    }
+    return processed
+}
+
+fn factory_run() -> i64 {
+    let world = ecs_create_world()
+    let mut entity_index: i64 = 0
+
+    while entity_index < config_entity_count() {
+        let mut kind: i64 = 0
+        if entity_index < config_conveyor_count() {
+            kind = 1
+        }
+        let x = entity_index % config_grid_width()
+        let y = entity_index / config_grid_width()
+        if !ecs_spawn(world, kind, x, y) {
+            ecs_destroy_world(world)
+            return -1
+        }
+        entity_index = entity_index + 1
+    }
+
+    let mut total_processed: i64 = 0
+    let mut tick: i64 = 0
+    while tick < config_tick_count() {
+        let mut worker: i64 = 0
+        while worker < config_worker_count() {
+            total_processed = total_processed + factory_worker_step(world, worker)
+            worker = worker + 1
+        }
+        tick = tick + 1
+    }
+
+    ecs_destroy_world(world)
+    return total_processed
+}
