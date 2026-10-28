@@ -12,6 +12,21 @@ namespace nexus {
     // Shared semantic helpers. They are inline so the analyzer can be split
     // across several translation units without a single definition file.
 
+    // Returns the root variable that owns an assignable storage location.
+    // Taking an address yields a mutable pointer in the current type system, so
+    // the root binding must itself be mutable. The type system does not yet have
+    // const-qualified pointer types; allowing & of immutable storage would let
+    // callers mutate it through a pointer and bypass the normal let check.
+    inline const VarExpr* lvalueRootVariable(const Expr* expr) {
+        if (const auto* variable = dynamic_cast<const VarExpr*>(expr))
+            return variable;
+        if (const auto* member = dynamic_cast<const MemberExpr*>(expr))
+            return lvalueRootVariable(member->object.get());
+        if (const auto* index = dynamic_cast<const IndexExpr*>(expr))
+            return lvalueRootVariable(index->object.get());
+        return nullptr;
+    }
+
     inline const StructField* fieldOf(const StructDecl& s, const std::string& n) {
         for (auto& f : s.fields)
             if (f.name == n)
