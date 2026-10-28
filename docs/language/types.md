@@ -16,6 +16,20 @@ The current compiler has a small static type system with inference for initializ
 
 Types such as `i8`, `u8`, `i16`, `i32`, `u32`, `u64`, `char`, `str`, `Option<T>` and `Result<T, E>` are not implemented as built-in types by the current parser.
 
+## Pointer mutability rule
+
+The current pointer type `*T` does not distinguish const pointers from mutable
+pointers. Until const-qualified pointer types are implemented, the address-of
+operator `&` therefore requires mutable storage rooted in a `let mut` binding.
+For example, `let mut value = 10; let ptr = &value` is valid, while taking
+`&value` when `value` was declared with plain `let` is rejected. This also
+applies to fields and array elements owned by immutable bindings.
+
+This restriction prevents a pointer from being used to bypass ordinary binding
+immutability. It is not a full lifetime or aliasing checker: code using raw
+pointers and FFI must still ensure that pointers remain valid and that accesses
+are correctly synchronized.
+
 ## Numeric literals
 
 Integer and floating-point literals may use underscores between digits to make
