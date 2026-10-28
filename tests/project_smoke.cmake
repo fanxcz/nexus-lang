@@ -26,6 +26,7 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "version: [0-9]+[.][0-9]+[.][0-9]+")
 endif()
 
 # API docs must not advertise an obsolete hard-coded compiler version.
+file(MAKE_DIRECTORY "${SMOKE_DIR}/docs")
 file(WRITE "${SMOKE_DIR}/src/main.nx" "/// Entry point documentation.\nfn main() { print(1) }\n/// Compute a value.\nfn answer() -> i64 { return 42 }\n")
 execute_process(
   COMMAND "${NEXUS_BIN}" doc
