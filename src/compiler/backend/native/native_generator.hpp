@@ -109,8 +109,9 @@ namespace nexus::native {
             // from stdin, and returns a fresh arena string without the newline.
             void genInput();
 
-            // __nx_oom: clean out-of-string-memory failure (stderr + exit 1).
+            // Clean runtime failures for allocation and integer division.
             void genOom();
+            void genDivZero();
 
             void genEntry();
         };
