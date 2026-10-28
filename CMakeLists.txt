@@ -332,6 +332,15 @@ if (NEXUS_BUILD_TESTS)
   target_link_libraries(nexus_runtime_http_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
   add_test(NAME nexus_runtime_http_test COMMAND nexus_runtime_http_test)
 
+  add_executable(nexus_runtime_backend_state_test
+      tests/runtime_backend_state_test.cpp
+      src/runtime/runtime.cpp
+  )
+  target_compile_features(nexus_runtime_backend_state_test PRIVATE cxx_std_20)
+  target_link_libraries(nexus_runtime_backend_state_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
+  add_test(NAME nexus_runtime_backend_state_test COMMAND nexus_runtime_backend_state_test)
+  set_tests_properties(nexus_runtime_backend_state_test PROPERTIES TIMEOUT 30)
+
   add_executable(nexus_frontend_fuzz_smoke
       tests/frontend_fuzz_smoke.cpp
       ${NEXUS_LEXER_SOURCES}
@@ -383,6 +392,10 @@ if (NEXUS_BUILD_TESTS)
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
           -P ${CMAKE_SOURCE_DIR}/tests/project_smoke.cmake)
+  add_test(NAME nexus_project_paths_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -P ${CMAKE_SOURCE_DIR}/tests/project_paths_smoke.cmake)
   add_test(NAME nexus_examples_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
