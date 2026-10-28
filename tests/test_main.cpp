@@ -409,6 +409,30 @@ int main() {
                 return 44;
         }
         {
+            // Constant integer division and remainder by zero must fail during
+            // semantic analysis, rather than reaching a hardware exception.
+            const char* invalidSources[] = {
+                "fn main(){ let value = 10 / 0 }",
+                "fn main(){ let value = 10 % 0 }",
+                "fn main(){ let value = 10 / -0 }",
+                "fn main(){ let value = 10 % -0 }",
+            };
+            for (const auto* source : invalidSources) {
+                bool rejected = false;
+                try {
+                    auto p = parse(source);
+                    nexus::SemanticAnalyzer().analyze(p);
+                } catch (const std::exception& error) {
+                    rejected = std::string(error.what()).find("division by zero") !=
+                               std::string::npos;
+                }
+                if (!rejected) {
+                    std::cerr << "constant division by zero was not diagnosed: " << source << "\n";
+                    return 46;
+                }
+            }
+        }
+        {
             // Builtin native backend: target selection.
             nexus::native::NativeTarget t = nexus::native::NativeTarget::LinuxX64;
             if (!nexus::native::resolveTarget("x86_64-windows", t) ||
