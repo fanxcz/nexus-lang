@@ -420,14 +420,18 @@ namespace nexus {
             case TokenKind::Star:
                 emit(r + " = mul i64 " + l + ", " + rv);
                 break;
-            case TokenKind::Slash:
-                emit("call void @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
-                emit(r + " = sdiv i64 " + l + ", " + rv);
+            case TokenKind::Slash: {
+                const auto checkedDivisor = next();
+                emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
+                emit(r + " = sdiv i64 " + l + ", " + checkedDivisor);
                 break;
-            case TokenKind::Percent:
-                emit("call void @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
-                emit(r + " = srem i64 " + l + ", " + rv);
+            }
+            case TokenKind::Percent: {
+                const auto checkedDivisor = next();
+                emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
+                emit(r + " = srem i64 " + l + ", " + checkedDivisor);
                 break;
+            }
             case TokenKind::Ampersand:
                 emit(r + " = and i64 " + l + ", " + rv);
                 break;
