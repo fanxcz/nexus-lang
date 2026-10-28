@@ -6,7 +6,7 @@
 - Centralize version numbers in `scripts/nexus_version.py`: Pages/release workflows, download validators, the installer output name and bootstrap pins now read or are verified against `CMakeLists.txt` and the VS Code extension `package.json`. `ctest -R nexus_version_consistency` fails when a pin, artifact name or installer description goes stale, and the installer no longer claims to be "NEXUS 2.1".
 - Reject structurally malformed `nexus.toml` files (truncated table headers, lines without `key = value`, duplicate tables or keys) with a file-and-line diagnostic instead of silently falling back to defaults.
 - Report a directory passed as a source file as `cannot open <path>: is a directory` on every platform instead of leaking libstdc++'s `basic_filebuf::underflow` message.
-- Make the Poker packaging workflow read the installer version from `CMakeLists.txt`, retry while GitHub Pages publishes it, and refuse an HTML error page or a payload with a mismatched checksum.
+- Make the Windows packaging workflow read the installer version from `CMakeLists.txt`, retry while GitHub Pages publishes it, and refuse an HTML error page or a payload with a mismatched checksum.
 - Added regression tests for project paths and artifact names containing spaces, and for calling graphics/audio APIs before initialization.
 
 ## NEXUS 2.2.0 — bitwise operators, exhaustive match and a focused source tree (2026-10-28)
@@ -26,7 +26,7 @@
 - Added a basic single-line UTF-8 UI text field with click focus, code-point-aware Backspace, bounded UTF-8 input, and Enter/Tab to finish editing. The field currently uses stable layout bounds rather than explicit widget IDs; Escape cancellation, caret/selection editing, and multi-field keyboard traversal remain future work.
 - Improved checked `Option`/`Result` helpers, enum-match return-path analysis and CLI argument diagnostics.
 
-## NEXUS Poker and graphics runtime polish (2026-10-26)
+## Graphics runtime polish (2026-10-26)
 
 - Removed hover-driven cursor scaling and pulsing from the poker GUI so the custom pointer remains visually stable near button hitbox edges.
 - Added a persistent cosmetic shop with Midnight Blue, Royal Purple and Crimson table themes. Skins are purchased with chips earned during play and do not affect poker rules or AI strength.
