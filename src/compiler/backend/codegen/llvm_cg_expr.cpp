@@ -358,6 +358,13 @@ namespace nexus {
                 }
                 throw std::runtime_error("unsupported string operator");
             }
+            // Allocate any auxiliary integer result before the final result.
+            // LLVM textual IR requires numbered SSA values to appear in order.
+            std::string auxiliary;
+            if (t.kind == TypeKind::I64 &&
+                (b->op == TokenKind::Slash || b->op == TokenKind::Percent ||
+                 b->op == TokenKind::ShiftLeft || b->op == TokenKind::ShiftRight))
+                auxiliary = next();
             auto r = next();
 
             if (t.kind == TypeKind::F64) {
@@ -421,15 +428,13 @@ namespace nexus {
                 emit(r + " = mul i64 " + l + ", " + rv);
                 break;
             case TokenKind::Slash: {
-                const auto checkedDivisor = next();
-                emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
-                emit(r + " = sdiv i64 " + l + ", " + checkedDivisor);
+                emit(auxiliary + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
+                emit(r + " = sdiv i64 " + l + ", " + auxiliary);
                 break;
             }
             case TokenKind::Percent: {
-                const auto checkedDivisor = next();
-                emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
-                emit(r + " = srem i64 " + l + ", " + checkedDivisor);
+                emit(auxiliary + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
+                emit(r + " = srem i64 " + l + ", " + auxiliary);
                 break;
             }
             case TokenKind::Ampersand:
@@ -445,15 +450,13 @@ namespace nexus {
                 // Match the builtin x86-64 backend: only the low six bits of an
                 // i64 shift count are significant. LLVM otherwise treats counts
                 // >= 64 as poison, causing backend-dependent program behavior.
-                const auto count = next();
-                emit(count + " = and i64 " + rv + ", 63");
-                emit(r + " = shl i64 " + l + ", " + count);
+                emit(auxiliary + " = and i64 " + rv + ", 63");
+                emit(r + " = shl i64 " + l + ", " + auxiliary);
                 break;
             }
             case TokenKind::ShiftRight: {
-                const auto count = next();
-                emit(count + " = and i64 " + rv + ", 63");
-                emit(r + " = ashr i64 " + l + ", " + count);
+                emit(auxiliary + " = and i64 " + rv + ", 63");
+                emit(r + " = ashr i64 " + l + ", " + auxiliary);
                 break;
             }
             case TokenKind::EqualEqual:
@@ -607,8 +610,8 @@ namespace nexus {
             emit(r + " = call ptr @nexus_str_concat(ptr " + lhs + ", ptr " + rhs + ")");
             return r;
         }
-        auto r = next();
         if (type.kind == TypeKind::F64) {
+            auto r = next();
             switch (op) {
             case TokenKind::Plus:
                 emit(r + " = fadd double " + lhs + ", " + rhs);
@@ -626,6 +629,12 @@ namespace nexus {
                 throw std::runtime_error("unsupported compound assignment for f64");
             }
         }
+        // As in binary expressions, reserve the auxiliary SSA value before
+        // the instruction that consumes it, preserving valid LLVM numeric IDs.
+        const bool needsAuxiliary = op == TokenKind::Slash || op == TokenKind::Percent ||
+                                    op == TokenKind::ShiftLeft || op == TokenKind::ShiftRight;
+        const auto auxiliary = needsAuxiliary ? next() : std::string{};
+        auto r = next();
         switch (op) {
         case TokenKind::Plus:
             emit(r + " = add i64 " + lhs + ", " + rhs);
@@ -637,15 +646,13 @@ namespace nexus {
             emit(r + " = mul i64 " + lhs + ", " + rhs);
             return r;
         case TokenKind::Slash: {
-            const auto checkedDivisor = next();
-            emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = sdiv i64 " + lhs + ", " + checkedDivisor);
+            emit(auxiliary + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
+            emit(r + " = sdiv i64 " + lhs + ", " + auxiliary);
             return r;
         }
         case TokenKind::Percent: {
-            const auto checkedDivisor = next();
-            emit(checkedDivisor + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = srem i64 " + lhs + ", " + checkedDivisor);
+            emit(auxiliary + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
+            emit(r + " = srem i64 " + lhs + ", " + auxiliary);
             return r;
         }
         case TokenKind::Ampersand:
@@ -658,15 +665,13 @@ namespace nexus {
             emit(r + " = xor i64 " + lhs + ", " + rhs);
             return r;
         case TokenKind::ShiftLeft: {
-            const auto count = next();
-            emit(count + " = and i64 " + rhs + ", 63");
-            emit(r + " = shl i64 " + lhs + ", " + count);
+            emit(auxiliary + " = and i64 " + rhs + ", 63");
+            emit(r + " = shl i64 " + lhs + ", " + auxiliary);
             return r;
         }
         case TokenKind::ShiftRight: {
-            const auto count = next();
-            emit(count + " = and i64 " + rhs + ", 63");
-            emit(r + " = ashr i64 " + lhs + ", " + count);
+            emit(auxiliary + " = and i64 " + rhs + ", 63");
+            emit(r + " = ashr i64 " + lhs + ", " + auxiliary);
             return r;
         }
         default:
