@@ -410,6 +410,10 @@ if (NEXUS_BUILD_TESTS)
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
           -P ${CMAKE_SOURCE_DIR}/tests/manifest_smoke.cmake)
+  add_test(NAME nexus_lint_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -P ${CMAKE_SOURCE_DIR}/tests/lint_smoke.cmake)
   add_test(NAME nexus_examples_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>

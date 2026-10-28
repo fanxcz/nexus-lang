@@ -60,8 +60,12 @@ namespace nexus {
 
                 ++lineNo;
 
-                if (!line.empty() &&
-                    (line.back() == ' ' || line.back() == '\t' || line.back() == '\r')) {
+                // CRLF input leaves '\r' at the end of every line; that is a line
+                // ending, not trailing whitespace, and must not flood the report.
+                while (!line.empty() && line.back() == '\r')
+                    line.pop_back();
+
+                if (!line.empty() && (line.back() == ' ' || line.back() == '\t')) {
 
                     ++warnings;
                     std::cout << "warning[NX9001]: trailing whitespace at " << file << ':' << lineNo
