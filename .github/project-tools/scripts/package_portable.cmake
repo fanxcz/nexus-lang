@@ -9,7 +9,7 @@
 # Layouts produced:
 #   Windows: <OUT_DIR>/NEXUS_Windows_Portable/  (+ NEXUS_Windows_Portable.zip)
 #     root/nexus.cmd, *.bat, *.ps1, bin/nexus-core.exe, stdlib/,
-#     runtime/runtime.cpp, project-templates/, assets/, LICENSE, ...
+#     runtime/ (runtime.cpp/runtime.c + *.inc parts), project-templates/, assets/, LICENSE, ...
 #   Unix:    <OUT_DIR>/nexus-<ver>-<system>-x86_64/  (+ .tar.gz)
 #     bin/nexus, share/nexus/{stdlib,runtime,project-templates,assets}, ...
 #
@@ -73,12 +73,11 @@ if(CMAKE_HOST_WIN32)
   if(EXISTS "${SOURCE_DIR}/examples/assets")
     file(COPY "${SOURCE_DIR}/examples/assets" DESTINATION "${STAGE}")
   endif()
-  file(MAKE_DIRECTORY "${STAGE}/runtime")
-  foreach(R src/runtime/runtime.cpp src/runtime/runtime.c)
-    if(EXISTS "${SOURCE_DIR}/${R}")
-      file(COPY "${SOURCE_DIR}/${R}" DESTINATION "${STAGE}/runtime")
-    endif()
-  endforeach()
+  # The runtime is one translation unit assembled from topic files, so copy
+  # the whole tree (runtime.cpp/runtime.c plus the *.inc parts).
+  if(EXISTS "${SOURCE_DIR}/src/runtime")
+    file(COPY "${SOURCE_DIR}/src/runtime" DESTINATION "${STAGE}")
+  endif()
   # An operator-provided toolchain/ directory (Zig-backed clang++.cmd) is used
   # when present but is optional since the builtin native backend arrived.
   if(EXISTS "${SOURCE_DIR}/toolchain")
@@ -132,12 +131,11 @@ else()
   if(EXISTS "${SOURCE_DIR}/examples/assets")
     file(COPY "${SOURCE_DIR}/examples/assets" DESTINATION "${STAGE}/share/nexus")
   endif()
-  file(MAKE_DIRECTORY "${STAGE}/share/nexus/runtime")
-  foreach(R src/runtime/runtime.cpp src/runtime/runtime.c)
-    if(EXISTS "${SOURCE_DIR}/${R}")
-      file(COPY "${SOURCE_DIR}/${R}" DESTINATION "${STAGE}/share/nexus/runtime")
-    endif()
-  endforeach()
+  # The runtime is one translation unit assembled from topic files, so copy
+  # the whole tree (runtime.cpp/runtime.c plus the *.inc parts).
+  if(EXISTS "${SOURCE_DIR}/src/runtime")
+    file(COPY "${SOURCE_DIR}/src/runtime" DESTINATION "${STAGE}/share/nexus")
+  endif()
   foreach(F LICENSE README.md THIRD_PARTY_NOTICES.md)
     set(SOURCE_FILE "${SOURCE_DIR}/${F}")
     if(NOT EXISTS "${SOURCE_FILE}")

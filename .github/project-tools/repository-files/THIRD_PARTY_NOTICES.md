@@ -1,7 +1,7 @@
 # NEXUS third-party dependency and license notices (v2.1.1).
 #
 # The NEXUS compiler, standard library sources, project templates, and the
-# default runtime (src/runtime/runtime.cpp) are original works of the NEXUS
+# default runtime (src/runtime/) are original works of the NEXUS
 # Project; see LICENSE at the repository root.
 #
 # No third-party compiler toolchain is bundled in this repository:

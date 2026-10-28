@@ -100,7 +100,8 @@ jobs:
           chmod 755 "$package/bin/clang++"
 
           install -m 755 build/nexus "$package/bin/nexus"
-          install -m 644 src/runtime/runtime.cpp "$package/runtime/runtime.cpp"
+          # The runtime is one translation unit assembled from topic files.
+          cp -R src/runtime/. "$package/runtime/"
           cp -R stdlib/. "$package/stdlib/"
           cp -R examples/templates/. "$package/project-templates/"
           cp -R examples/. "$package/examples/"
@@ -161,7 +162,8 @@ jobs:
           }
           if (-not (Test-Path 'build/nexus.exe')) { throw 'Compiler executable missing.' }
           Copy-Item 'build/nexus.exe' (Join-Path $package 'bin/nexus.exe') -Force
-          Copy-Item 'src/runtime/runtime.cpp' (Join-Path $package 'runtime/runtime.cpp') -Force
+          # The runtime is one translation unit assembled from topic files.
+          Copy-Item 'src/runtime/*' (Join-Path $package 'runtime') -Recurse -Force
           Copy-Item 'stdlib/*' (Join-Path $package 'stdlib') -Recurse -Force
           Copy-Item 'examples/templates/*' (Join-Path $package 'project-templates') -Recurse -Force
           Copy-Item 'examples/*' (Join-Path $package 'examples') -Recurse -Force
