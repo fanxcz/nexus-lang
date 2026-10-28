@@ -244,7 +244,7 @@ If safety invariants fail, defer the feature instead of relabeling it stable to 
 
 ## 10. File plan and completion criteria
 
-Foundation in this change: `docs/language-spec.md`, `docs/migration-from-rust.md`, `examples/factorio_like/{main,ecs,factory_loop,config}.nx`, example README, links and CI integration.
+Foundation in this change: the language and migration specifications, semantic-safety checks, backend-parity tests, and runtime regression tests. Examples should demonstrate language features generically or use original NEXUS projects, not reproduce third-party games.
 
 Subsequent source work: lexer under `src/compiler/frontend/lexer/`; parser/AST under `src/compiler/frontend/parser/` and `src/compiler/ast/`; semantic analysis under `src/compiler/semantic/`; LLVM under `src/compiler/backend/codegen/`; native backend under `src/compiler/backend/native/`; builtins under `src/compiler/builtins/`; runtime under `src/runtime/`; standard library under `stdlib/`; tests under `tests/`; build gates in `CMakeLists.txt` and `.github/workflows/{build,sanitizers}.yml`.
 
