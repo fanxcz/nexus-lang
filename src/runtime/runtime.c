@@ -54,12 +54,13 @@ void nexus_bounds_check(int64_t index, int64_t size) {
         exit(1);
     }
 }
-void nexus_division_check(int64_t dividend, int64_t divisor) {
+int64_t nexus_division_check(int64_t dividend, int64_t divisor) {
     (void)dividend;
     if (divisor == 0) {
         fprintf(stderr, "NEXUS runtime error: division by zero\n");
         exit(1);
     }
+    return divisor;
 }
 char* nexus_str_concat(const char* a, const char* b) {
     if (!a)
