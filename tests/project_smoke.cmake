@@ -25,6 +25,26 @@ if(NOT rc EQUAL 0 OR NOT out MATCHES "version: [0-9]+[.][0-9]+[.][0-9]+")
   message(FATAL_ERROR "nexus info failed: ${out}\n${err}")
 endif()
 
+# API docs must not advertise an obsolete hard-coded compiler version.
+file(WRITE "${SMOKE_DIR}/src/main.nx" "/// Entry point documentation.\nfn main() { print(1) }\n/// Compute a value.\nfn answer() -> i64 { return 42 }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" doc
+  WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc
+  OUTPUT_VARIABLE out
+  ERROR_VARIABLE err
+)
+if(NOT rc EQUAL 0 OR NOT EXISTS "${SMOKE_DIR}/docs/API.md")
+  message(FATAL_ERROR "nexus doc failed: ${out}\n${err}")
+endif()
+file(READ "${SMOKE_DIR}/docs/API.md" generated_api)
+if(generated_api MATCHES "NEXUS 2[.]0[.]0" OR
+   NOT generated_api MATCHES "Entry point documentation" OR
+   NOT generated_api MATCHES "Compute a value" OR
+   NOT generated_api MATCHES "fn answer")
+  message(FATAL_ERROR "nexus doc output is stale or missing declarations: ${generated_api}")
+endif()
+
 execute_process(
   COMMAND "${NEXUS_BIN}" assets
   WORKING_DIRECTORY "${SMOKE_DIR}"
