@@ -136,13 +136,15 @@ namespace nexus {
             if (u->op == TokenKind::Bang && t.kind != TypeKind::Bool)
                 throw std::runtime_error("'!' requires bool");
             if (u->op == TokenKind::Ampersand) {
-                if (auto* v = dynamic_cast<VarExpr*>(u->rhs.get())) {
-                    auto it = env.find(v->name);
-                    if (it == env.end())
-                        throw std::runtime_error("unknown variable: " + v->name);
-                } else if (!dynamic_cast<MemberExpr*>(u->rhs.get()) &&
-                           !dynamic_cast<IndexExpr*>(u->rhs.get()))
+                const auto* root = lvalueRootVariable(u->rhs.get());
+                if (!root)
                     throw std::runtime_error("'&' requires a variable, field, or array element");
+                const auto it = env.find(root->name);
+                if (it == env.end())
+                    throw std::runtime_error("unknown variable: " + root->name);
+                if (!it->second.mut)
+                    throw std::runtime_error(
+                        "'&' requires mutable storage; declare the owning variable with 'let mut'");
                 return Type::ptr(t);
             }
             if (u->op == TokenKind::Star) {
