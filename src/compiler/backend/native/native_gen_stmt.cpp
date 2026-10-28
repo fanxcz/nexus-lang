@@ -194,14 +194,19 @@ namespace nexus::native {
                     out_.imulRaxRcx();
                     break;
                 case TokenKind::Slash:
+                case TokenKind::Percent: {
+                    // Use the same checked failure path as the LLVM backend.
+                    const std::string nonzero = out_.label("division.nonzero");
+                    out_.testRcxRcx();
+                    out_.jcc(J_NE, nonzero);
+                    out_.jmp("__nx_divzero");
+                    out_.def(nonzero);
                     out_.cqo();
                     out_.idivRcx();
+                    if (b->op == TokenKind::Percent)
+                        out_.movRaxRdx();
                     break;
-                case TokenKind::Percent:
-                    out_.cqo();
-                    out_.idivRcx();
-                    out_.movRaxRdx();
-                    break;
+                }
                 case TokenKind::EqualEqual:
                     out_.cmpRaxRcx();
                     out_.setcc(CC_E);
