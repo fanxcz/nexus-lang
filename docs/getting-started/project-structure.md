@@ -64,6 +64,27 @@ manifest fields documented by the current CLI and package manager; do not
 assume settings for arbitrary linkers, LTO profiles, or cross-compilation
 targets are supported simply because similar options exist in other tools.
 
+The manifest reader accepts a deliberately small TOML subset: `[table]`
+headers, `key = value` entries with bare or double-quoted values, and arrays.
+Arrays may span several lines, nest, contain comments and end with a trailing
+comma:
+
+~~~toml
+[package]
+name = "my-library"
+version = "1.0.0"
+authors = [
+  "Ada Lovelace",   # optional metadata
+  "Grace Hopper",
+]
+~~~
+
+Repeated `[[array-of-tables]]` headers are allowed and create separate
+instances; keys must be unique within one instance. A regular table and an
+array-of-tables cannot share a name. Arrays are validated structurally only:
+every field read by the current CLI and package manager is a scalar, so an
+array-valued key is treated as absent rather than parsed.
+
 Use nexus info to inspect the project metadata and nexus doctor to check the
 local compiler/runtime setup.
 

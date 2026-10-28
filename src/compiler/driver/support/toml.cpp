@@ -41,6 +41,12 @@ namespace nexus {
 
                 const auto rhs = trim(line.substr(eq + 1));
 
+                // Arrays are validated structurally by parseManifestEntries but
+                // are not exposed through the scalar accessors, so raw TOML
+                // syntax never reaches callers.
+                if (!rhs.empty() && rhs.front() == '[')
+                    continue;
+
                 if (rhs.size() >= 2 && rhs.front() == '"' && rhs.back() == '"')
                     return rhs.substr(1, rhs.size() - 2);
 

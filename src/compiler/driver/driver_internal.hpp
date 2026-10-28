@@ -106,12 +106,14 @@ namespace nexus {
         inline constexpr std::size_t kReplHistoryLimit = 500;
 
         // One parsed `key = value` entry of a project or package manifest.
-        // `section` is empty for keys that appear before any table header.
+        // `section` is empty for keys that appear before any table header;
+        // `instance` is 0 for a regular table and 1..N inside `[[table]]`.
         struct ManifestEntry {
             std::string section;
             std::string key;
             std::string value;
             std::size_t line = 0;
+            std::size_t instance = 0;
         };
 
         // Parse and validate manifest structure. See support/manifest.cpp for the
@@ -130,8 +132,17 @@ namespace nexus {
         std::string trim(std::string s);
         std::string formatDiagnostic(const std::exception& error,
                                      const std::string& code = "NX1001");
+        // Look up a string value. Input: manifest text, section name and key;
+        // section is empty for keys before any table header. Output: the raw
+        // value without surrounding quotes, or "" when the key is absent, holds
+        // an array, or repeats in a later `[[table]]` instance (the first
+        // occurrence wins). Never throws; structural problems are the parser's
+        // job, so call loadProject/parseManifestEntries first to surface them.
         std::string
         tomlString(const std::string& data, const std::string& section, const std::string& key);
+
+        // Integer lookup built on tomlString. Returns `fallback` when the key is
+        // absent, holds an array, or does not parse as a base-10 integer.
         int64_t tomlInt(const std::string& data,
                         const std::string& section,
                         const std::string& key,

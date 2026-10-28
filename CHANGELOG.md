@@ -9,6 +9,14 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ## Unreleased
 
+### Added
+
+- `nexus.toml` now accepts arrays, including multi-line and nested arrays with
+  comments and trailing commas, and repeated `[[array-of-tables]]` headers.
+  Project and package commands share one parser, so both accept and reject the
+  same files. Arrays are validated structurally; scalar fields still read only
+  scalar values.
+
 ### Fixed
 
 - Passing a directory as a source file now reports `cannot open <path>: is a
