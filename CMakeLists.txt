@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
-project(nexus VERSION 2.2.0 LANGUAGES CXX C)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ============================================================================
 # Compiler selection - ONLY CHANGE THESE IF NEEDED
 # ============================================================================
+# The compiler must be selected before project(). Forcing it afterwards leaves
+# the platform rules of the default compiler in place, which on Windows mixes
+# MinGW link flags with an MSVC-targeting clang and breaks the link step.
 # Override via command line: -DNEXUS_C_COMPILER=clang -DNEXUS_CXX_COMPILER=clang++
 # Or set in CMakePresets.json / CMakeUserPresets.json
 option(NEXUS_USE_CLANG "Use Clang compiler (auto-detected on non-Windows)" ON)
@@ -44,10 +42,15 @@ if (WIN32 AND NEXUS_USE_CLANG AND NOT NEXUS_C_COMPILER)
   endforeach()
 endif()
 
+project(nexus VERSION 2.2.0 LANGUAGES CXX C)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Select a fast linker through the compiler driver instead of overriding
 # CMAKE_LINKER. Clang and GCC both understand -fuse-ld=<flavor>, which keeps
-# CMake's platform link rules intact (the old CMAKE_LINKER + custom
-# CMAKE_*_LINK_EXECUTABLE overrides bypassed them and broke MSVC-style flags).
+# CMake's platform link rules intact.
 set(NEXUS_LINK_FLAG "")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
   if (NEXUS_LINKER)

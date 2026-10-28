@@ -111,4 +111,4 @@ fn max(a: i64, b: i64) -> i64 {
 }
 ```
 
-The compiler checks that a non-void function returns a value on every path it can prove. It does not support Rust-style `loop { break value }` expressions or block expressions that return a value. The `?` operator is supported for matching payload-enum success/failure variants on the LLVM backend; see [Error Handling](error-handling.md#propagate-an-enum-with) for its constraints. The built-in native backend does not yet support this operator.
+The compiler checks that a non-void function returns a value on every path it can prove. It does not support Rust-style `loop { break value }` expressions or block expressions that return a value. The `?` operator is supported for matching payload-enum success/failure variants on the LLVM backend; see [Error Handling](error-handling.md) for its constraints. The built-in native backend does not yet support this operator.
