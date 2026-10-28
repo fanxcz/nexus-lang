@@ -15,8 +15,8 @@ extern "C" int64_t nexus_gfx_height();
 extern "C" int64_t nexus_gfx_sound_load(const char* path);
 extern "C" bool nexus_gfx_vsync(bool enabled);
 extern "C" void nexus_gfx_clear(double r, double g, double b, double a);
-extern "C" void nexus_gfx_rect(
-    double x, double y, double w, double h, double r, double g, double b, double a);
+extern "C" void
+nexus_gfx_rect(double x, double y, double w, double h, double r, double g, double b, double a);
 extern "C" void nexus_gfx_end();
 extern "C" void nexus_gfx_shutdown();
 

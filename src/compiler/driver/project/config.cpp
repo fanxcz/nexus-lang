@@ -69,8 +69,8 @@ namespace nexus {
 
                     const std::string value = trim(text.substr(equal + 1));
 
-                    if (key.empty() || (value.front() == '"' &&
-                                        (value.size() < 2 || value.back() != '"')))
+                    if (key.empty() ||
+                        (value.front() == '"' && (value.size() < 2 || value.back() != '"')))
                         throw std::runtime_error(context + ": malformed entry at line " +
                                                  std::to_string(lineNumber) +
                                                  ": expected key = value");
@@ -113,8 +113,7 @@ namespace nexus {
             return {};
         }
 
-
-        ProjectConfig loadProject(const fs::path& requestedRoot ) {
+        ProjectConfig loadProject(const fs::path& requestedRoot) {
 
             const fs::path root = findProjectRoot(requestedRoot);
 
