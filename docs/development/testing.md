@@ -31,6 +31,10 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_vscode_extension_smoke` | Validate VS Code extension metadata, grammar, and snippets |
 | `nexus_backend_explain_smoke` | Backend-selection explanation |
 | `nexus_project_smoke` | Project creation/build workflow, formatter check mode, and VS Code settings |
+| `nexus_project_paths_smoke` | Create, format, lint, build and run a project whose directory and artifact names contain spaces |
+| `nexus_corrupt_inputs_smoke` | Malformed `nexus.toml` manifests, control bytes in sources, missing entry files and directory arguments fail with actionable diagnostics |
+| `nexus_runtime_backend_state_test` | Graphics/audio entry points return documented sentinels instead of crashing when no backend was initialized |
+| `nexus_fetch_installer_smoke` | The installer downloader rejects HTML error pages and checksum mismatches and accepts a verified PE image |
 | `nexus_paint_smoke` | Paint template compile/run smoke checks |
 | `nexus_defer_try_propagation_smoke` | Verifies `?` error returns execute all deferred cleanups in reverse order |
 | `nexus_diagnostics_smoke` | Error/diagnostic formatting |
@@ -41,6 +45,8 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_backend_parity` | Compare built-in and LLVM backend behavior where available |
 
 The exact platform-specific test list depends on the CMake options and host platform. CI builds and tests on Ubuntu, Windows, and macOS. The built-in direct machine-code backend is focused on the supported x86-64 Windows/Linux subset; platform jobs may exercise different smoke tests.
+
+CI runners do not install SDL2, so every leg also builds and tests the compiler with the graphics and audio backend unavailable. `nexus_runtime_backend_state_test` pins that degraded path: drawing calls are no-ops, `nexus_gfx_backend()` reports `uninitialized`, and a sound file that cannot be loaded returns the `0` sentinel with a recorded error message.
 
 ## Sanitizer checks
 
