@@ -447,6 +447,12 @@ if (NEXUS_BUILD_TESTS)
             ${CMAKE_SOURCE_DIR}/tests/version_consistency_smoke.py
             --nexus $<TARGET_FILE:nexus>)
     set_tests_properties(nexus_version_consistency PROPERTIES TIMEOUT 60)
+    add_test(NAME nexus_repository_sources
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tests/repository_sources_smoke.py
+            --nexus $<TARGET_FILE:nexus>
+            --root ${CMAKE_SOURCE_DIR})
+    set_tests_properties(nexus_repository_sources PROPERTIES TIMEOUT 300)
     if(UNIX)
       add_test(NAME nexus_repl_tty_smoke
           COMMAND ${Python3_EXECUTABLE}
@@ -489,6 +495,14 @@ if (NEXUS_BUILD_TESTS)
     # The Paint project uses the LLVM backend, which needs a clang-compatible
     # driver. Reuse the driver found for the self-hosting tests.
     set_tests_properties(nexus_paint_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
+    # The fixture reads a relative file, so the native backend must link the
+    # runtime through the same clang-compatible driver as the self-host tests.
+    add_test(NAME nexus_run_working_directory_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -P ${CMAKE_SOURCE_DIR}/tests/run_working_directory_smoke.cmake)
+    set_tests_properties(nexus_run_working_directory_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}")
     add_test(NAME nexus_selfhost_lexer
         COMMAND ${CMAKE_COMMAND}

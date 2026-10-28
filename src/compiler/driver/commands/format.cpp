@@ -29,6 +29,7 @@ namespace nexus {
                                                                       ".vscode",
                                                                       "build",
                                                                       "dist",
+                                                                      "site",
                                                                       "vendor",
                                                                       "node_modules",
                                                                       "CMakeFiles",
@@ -54,7 +55,8 @@ namespace nexus {
                     continue;
                 }
                 if (fs::is_directory(status) &&
-                    excludedDirectories.contains(it->path().filename().string())) {
+                    (excludedDirectories.contains(it->path().filename().string()) ||
+                     it->path().filename().string().rfind("build-", 0) == 0)) {
                     it.disable_recursion_pending();
                     continue;
                 }

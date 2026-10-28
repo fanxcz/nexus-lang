@@ -1,0 +1,13 @@
+# Repository-wide manifest. It exists so `nexus fmt --all`, `nexus check` and
+# `nexus lint` can cover the whole checkout from its root; it is tooling
+# metadata, not a published package.
+
+[package]
+name = "nexus-repository"
+version = "0.0.0"
+description = "Source tree of the NEXUS programming language"
+
+[build]
+entry = "examples/hello.nx"
+artifact = "nexus-repository"
+target = "native"
