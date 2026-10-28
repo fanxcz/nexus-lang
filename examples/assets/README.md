@@ -1,6 +1,6 @@
 # Example Assets
 
-This directory contains tracked runtime assets shared by multiple NEXUS examples, including the offline NEXUS Poker game. Keep files here unless all source and documentation references have been checked before removal.
+This directory contains tracked runtime assets used by NEXUS examples. Check source references before removing or moving shared assets.
 
 ## Contents
 
@@ -9,8 +9,6 @@ This directory contains tracked runtime assets shared by multiple NEXUS examples
 | `beep.wav` | `audio_demo.nx` and `v080_game_framework.nx` |
 | `cube.obj` | `model_demo.nx` (experimental OBJ model loader demo) |
 | `sprite_sheet.bmp` | `v080_game_framework.nx` (legacy animation sample) |
-| `cards/card_*.png`, `cards/card_back.png` | `poker_gui.nx` — 52 card faces and a graphite-and-gold NEXUS card back |
-| `table/felt.png` | `poker_gui.nx` — pre-rendered oval table |
 | `ui/cursor.png` | `poker_gui.nx` — custom pointer |
 | `sounds/deal.wav`, `chip.wav`, `fold.wav`, `lose.wav`, `win.wav` | `poker_gui.nx` — table sound effects |
 
