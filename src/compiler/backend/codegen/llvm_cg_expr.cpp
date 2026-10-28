@@ -633,10 +633,12 @@ namespace nexus {
             emit(r + " = mul i64 " + lhs + ", " + rhs);
             return r;
         case TokenKind::Slash:
+            emit("call void @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
             emit(r + " = sdiv i64 " + lhs + ", " + rhs);
             return r;
         case TokenKind::Percent:
-            emit(r + " = srem i64 " + lhs + ", " + rhs);
+            emit("call void @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
+            emit(r + " = srem i64 " + lhs + ", " + rhs + ");
             return r;
         case TokenKind::Ampersand:
             emit(r + " = and i64 " + lhs + ", " + rhs);
