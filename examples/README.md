@@ -12,7 +12,6 @@ For the broader feature guides, start at [the examples documentation](../docs/ex
 - [`new_features_demo.nx`](new_features_demo.nx) — compact feature showcase.
 - [`native_graphics_game.nx`](native_graphics_game.nx) — simple native 2D game loop.
 - [`game2d_platformer.nx`](game2d_platformer.nx) — tilemap-based platformer.
-- [`poker_gui.nx`](poker_gui.nx) — NEXUS Poker, an offline mouse-driven Texas Hold'em game. See the [standalone game and publishing guide](POKER_README.md); table/card textures and audio are documented in [`assets/`](assets/README.md).
 
 ## Language basics
 
@@ -22,8 +21,6 @@ Small, focused source files cover arrays, loops, branching, functions, structs, 
 
 - [`game2d_starter.nx`](game2d_starter.nx) — an asset-free platformer sandbox demonstrating tilemap, collision, physics, camera and animation helpers.
 
-- [`poker_gui.nx`](poker_gui.nx) — graphical No-Limit Texas Hold'em.
-- [`poker.nx`](poker.nx) — terminal poker example.
 - [`neon_survivor.nx`](neon_survivor.nx) — arena survival game.
 - [`game2d_platformer.nx`](game2d_platformer.nx) — 2D tilemap platformer.
 - [`nexus_arena.nx`](nexus_arena.nx) and [`terminal_game.nx`](terminal_game.nx) — terminal game examples.
@@ -47,11 +44,8 @@ From the repository root:
 ```sh
 nexus check examples/hello.nx
 nexus run examples/hello.nx
-nexus check examples/poker_gui.nx
 nexus check examples/vector_lab.nx
 nexus run examples/vector_lab.nx
 ```
-
-On Windows, `run_poker.bat` builds and launches the Poker GUI using the installed NEXUS toolchain. For the portable ZIP, extract everything and start `Play NEXUS Poker.bat`, which preserves startup diagnostics. See [POKER_README.md](POKER_README.md). The script expects NEXUS under `%LOCALAPPDATA%\\Programs\\NEXUS`; edit the script if the installation is elsewhere.
 
 Some examples load assets through repository-relative paths. Run them from the repository root unless their own launcher changes the working directory. See [`assets/README.md`](assets/README.md) before moving or removing files under `assets/`.
