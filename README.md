@@ -43,7 +43,7 @@ Start with the [application-development guide](docs/applications.md) or create a
 - The standard-library/runtime foundations cover file and input operations, filesystem helpers, networking helpers, JSON access, SQLite, SHA-256, memory utilities, graphics, and audio. Individual APIs have specific limits; consult their docs before relying on them in production.
 - The LLVM compilation path adds floating-point `sin`, `cos`, `tan`, `atan2`, `floor`, `ceil` and `pow` built-ins.
 - NEXUS includes small native-app and creative-tool examples such as [NEXUS Paint](examples/nexus_paint.nx), [the native app sample](examples/native_app.nx), and the interactive [UI Playground](examples/ui_playground.nx), plus a source-buildable [NEXUS Studio](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio).
-- Graphics/game examples also improved in 2.1.0: NEXUS Poker has refined hand ranking and a cosmetic table-skin shop, while [Vector Lab](examples/vector_lab.nx) demonstrates vector math, camera helpers, collisions, and easing.
+- [Vector Lab](examples/vector_lab.nx) demonstrates vector math, camera helpers, collisions, and easing in a small original game prototype.
 
 ## Core language features introduced in 2.0
 
