@@ -1,4 +1,6 @@
 // Three-dimensional vector value and common spatial operations.
+import std.math
+
 struct Vec3 {
     x: f64
     y: f64
@@ -31,8 +33,8 @@ fn vec3_dot(a: Vec3, b: Vec3) -> f64 {
 
 fn vec3_cross(a: Vec3, b: Vec3) -> Vec3 {
     return vec3(a.y * b.z - a.z * b.y,
-                a.z * b.x - a.x * b.z,
-                a.x * b.y - a.y * b.x)
+    a.z * b.x - a.x * b.z,
+    a.x * b.y - a.y * b.x)
 }
 
 fn vec3_length_squared(value: Vec3) -> f64 {
@@ -55,7 +57,7 @@ fn vec3_normalize(value: Vec3) -> Vec3 {
 
 fn vec3_lerp(a: Vec3, b: Vec3, amount: f64) -> Vec3 {
     let t = math_clamp(amount, 0.0, 1.0)
-    return vec3(a.x + (b.x - a.x) * t,
-                a.y + (b.y - a.y) * t,
-                a.z + (b.z - a.z) * t)
+    return vec3(a.x +(b.x - a.x) * t,
+    a.y +(b.y - a.y) * t,
+    a.z +(b.z - a.z) * t)
 }
