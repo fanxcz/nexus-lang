@@ -53,6 +53,15 @@ foreach(program arith calls loops for_ranges wide_frame print_types strings_full
     message(FATAL_ERROR
       "Backend output mismatch for ${program}.nx:\n--- native ---\n${native_output}\n--- LLVM ---\n${llvm_output}")
   endif()
+  if(program STREQUAL "bitwise")
+    set(expected_bitwise "8;15;6;32;16;-4;20;1;-4;1")
+    string(REPLACE ";" "\n" expected_bitwise "${expected_bitwise}")
+    if(NOT native_output STREQUAL expected_bitwise OR
+       NOT llvm_output STREQUAL expected_bitwise)
+      message(FATAL_ERROR
+        "Unexpected bitwise/shift result. Expected:\n${expected_bitwise}\n--- native ---\n${native_output}\n--- LLVM ---\n${llvm_output}")
+    endif()
+  endif()
   message(STATUS "  PASS backend parity: ${program}.nx")
 endforeach()
 
