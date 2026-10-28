@@ -33,6 +33,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_project_smoke` | Project creation/build workflow, formatter check mode, and VS Code settings |
 | `nexus_project_paths_smoke` | Create, format, lint, build and run a project whose directory and artifact names contain spaces |
 | `nexus_corrupt_inputs_smoke` | Malformed `nexus.toml` manifests, control bytes in sources, missing entry files and directory arguments fail with actionable diagnostics |
+| `nexus_templates_smoke` | Every shipped template either scaffolds a project that passes `nexus check` or is rejected as an unknown template |
 | `nexus_runtime_backend_state_test` | Graphics/audio entry points return documented sentinels instead of crashing when no backend was initialized |
 | `nexus_fetch_installer_smoke` | The installer downloader rejects HTML error pages and checksum mismatches and accepts a verified PE image |
 | `nexus_paint_smoke` | Paint template compile/run smoke checks |
