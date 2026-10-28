@@ -36,7 +36,7 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   file-and-line diagnostic instead of silently using defaults. Truncated table
   headers, lines without `key = value`, and duplicate tables or keys fail with
   a non-zero exit code.
-- The Poker packaging workflow no longer races the documentation deployment.
+- The Windows packaging workflow no longer races the documentation deployment.
   It reads the installer version from `CMakeLists.txt`, retries while GitHub
   Pages publishes the file, and rejects an HTML error page served as
   `NEXUS-Setup-*.exe` or a payload whose checksum does not match.
@@ -101,5 +101,5 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   utilities, graphics and audio.
 - Added floating-point `sin`, `cos`, `tan`, `atan2`, `floor`, `ceil` and `pow`
   built-ins to the LLVM path.
-- Added the native app sample, NEXUS Paint, the UI Playground and NEXUS Poker
-  examples, plus the source-buildable NEXUS Studio.
+- Added the native app sample, NEXUS Paint, the UI Playground and the
+  source-buildable NEXUS Studio.

@@ -26,17 +26,12 @@
 - Added a basic single-line UTF-8 UI text field with click focus, code-point-aware Backspace, bounded UTF-8 input, and Enter/Tab to finish editing. The field currently uses stable layout bounds rather than explicit widget IDs; Escape cancellation, caret/selection editing, and multi-field keyboard traversal remain future work.
 - Improved checked `Option`/`Result` helpers, enum-match return-path analysis and CLI argument diagnostics.
 
-## Graphics runtime polish (2026-10-26)
+## Graphics runtime reliability (2026-10-26)
 
-- Removed hover-driven cursor scaling and pulsing from the poker GUI so the custom pointer remains visually stable near button hitbox edges.
-- Added a persistent cosmetic shop with Midnight Blue, Royal Purple and Crimson table themes. Skins are purchased with chips earned during play and do not affect poker rules or AI strength.
 - Made `gfx_cursor_visible` idempotent in the runtime by caching the requested SDL visibility state and resetting the cache when graphics initializes.
-- Updated poker example documentation and the 2.1.0 feature summary.
 
-## NEXUS 2.1.0 release alignment and Poker scoring (2026-10-26)
+## Application release metadata (2026-10-26)
 
-- Aligned the graphical poker demo, its window/menu branding, and example documentation on NEXUS Poker 2.1.0.
-- Corrected five-card hand scoring to compare all relevant kickers in order and to detect straight flushes only when all five cards share a suit; Ace-low straights are handled explicitly.
 - Updated the Paint installer display name to NEXUS Paint 2.1.0 so its uninstall metadata matches its product version.
 
 ## Download reliability and site usability (2026-10-26)
