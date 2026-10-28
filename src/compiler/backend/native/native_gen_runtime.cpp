@@ -480,6 +480,30 @@ namespace nexus::native {
             }
         }
 
+        void Generator::genDivZero() {
+            const std::size_t m = internString("NEXUS runtime error: division by zero\n");
+            out_.def("__nx_divzero");
+            out_.leaRcxRip("str" + std::to_string(m));
+            out_.movRdxImm32(static_cast<std::uint32_t>(image_.strings[m].size()));
+            if (target_ == NativeTarget::WindowsX64) {
+                out_.andRspMinus16();
+                stubCall("__nx_write");
+                out_.andRspMinus16();
+                out_.movEcxImm32(1);
+                out_.subRsp(32);
+                out_.callIAT("__iat_ExitProcess");
+                out_.ud2();
+            } else {
+                out_.movRsiRcx();
+                out_.movEaxImm32(1); // sys_write
+                out_.movEdiImm32(2); // stderr
+                out_.syscall();
+                out_.movEaxImm32(60); // sys_exit
+                out_.movEdiImm32(1);
+                out_.syscall();
+            }
+        }
+
         void Generator::genEntry() {
             out_.def("_start");
             // Reserve the string bump arena before user code runs: 16 MiB of
