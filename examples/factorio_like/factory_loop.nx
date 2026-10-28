@@ -18,14 +18,14 @@ fn factory_worker_step(world: World, worker_index: i64) -> i64 {
     while cursor < end {
         // Kind 0 is a moving item; kind 1 is a stationary conveyor record.
         if ecs_kind(world, cursor) == 0 {
-            let x = ecs_x(world, cursor)
-            let y = ecs_y(world, cursor)
+            let x = factory_entity_x(world, cursor)
+            let y = factory_entity_y(world, cursor)
             if x >= 0 && y >= 0 {
                 let mut next_x = x + 1
                 if next_x >= config_grid_width() {
                     next_x = 0
                 }
-                if ecs_set_position(world, cursor, next_x, y) {
+                if factory_set_position(world, cursor, next_x, y) {
                     processed = processed + 1
                 }
             }
