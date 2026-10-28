@@ -360,8 +360,12 @@ namespace nexus {
                     deployRuntimeLibraries(out);
 
                 if (cmd == "run" && rc == 0) {
+                    // An explicit source file runs from the directory the command
+                    // was invoked in; `nexus run` without a file runs from the
+                    // project root so relative assets keep resolving there.
                     const fs::path root =
-                        hasProject && input.empty() ? cfg.root : out.parent_path();
+                        input.empty() ? (hasProject ? cfg.root : fs::current_path())
+                                      : fs::current_path();
                     return launchExecutable(out, root);
                 }
                 std::cout << "build: OK -> " << out << "\n";
