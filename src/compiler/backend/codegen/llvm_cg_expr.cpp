@@ -638,7 +638,7 @@ namespace nexus {
             return r;
         case TokenKind::Percent:
             emit("call void @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = srem i64 " + lhs + ", " + rhs + ");
+            emit(r + " = srem i64 " + lhs + ", " + rhs);
             return r;
         case TokenKind::Ampersand:
             emit(r + " = and i64 " + lhs + ", " + rhs);
