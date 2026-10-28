@@ -433,6 +433,32 @@ int main() {
             }
         }
         {
+            // Compound assignment must reject a constant zero divisor for
+            // fields, array elements and pointer targets before code generation.
+            const char* invalidSources[] = {
+                "struct Counter { value: i64 } fn main(){ let mut c = Counter{value: 10}; c.value /= 0 }",
+                "struct Counter { value: i64 } fn main(){ let mut c = Counter{value: 10}; c.value %= -0 }",
+                "fn main(){ let mut values = [10, 20]; values[0] /= 0 }",
+                "fn main(){ let mut values = [10, 20]; values[0] %= -0 }",
+                "fn main(){ let mut value: i64 = 10; let ptr = &value; *ptr /= 0 }",
+            };
+            for (const auto* source : invalidSources) {
+                bool rejected = false;
+                try {
+                    auto p = parse(source);
+                    nexus::SemanticAnalyzer().analyze(p);
+                } catch (const std::exception& error) {
+                    rejected = std::string(error.what()).find("division by zero") !=
+                               std::string::npos;
+                }
+                if (!rejected) {
+                    std::cerr << "compound assignment division by zero was not diagnosed: "
+                              << source << "\n";
+                    return 47;
+                }
+            }
+        }
+        {
             // Builtin native backend: target selection.
             nexus::native::NativeTarget t = nexus::native::NativeTarget::LinuxX64;
             if (!nexus::native::resolveTarget("x86_64-windows", t) ||
