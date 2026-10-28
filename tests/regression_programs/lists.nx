@@ -10,7 +10,7 @@ fn main() {
     print("pushed " + n)
     print("first " + ilist_get(nums, 0))
     print("last " + ilist_get(nums, n - 1))
-    print("oob " + ilist_get(nums, -1))
+    print("oob " + ilist_get(nums,-1))
 
     let words = slist_new()
     slist_push(words, "lex")

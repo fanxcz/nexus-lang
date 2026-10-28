@@ -135,7 +135,7 @@ fn main() {
                     while b < 8 {
                         let byte = v % 256
                         mem_set(cell + b, byte, 1)
-                        v = (v - byte) / 256
+                        v =(v - byte) / 256
                         b = b + 1
                     }
                     let target = ilist_get(hits, idx)

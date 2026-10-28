@@ -48,7 +48,7 @@ fn mem_of(line: string) -> i64 {
     while i < len {
         let b = string.byte_at(mem, i)
         if b >= 48 && b <= 57 {
-            value = value * 10 + (b - 48)
+            value = value * 10 +(b - 48)
         }
         i = i + 1
     }

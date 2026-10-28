@@ -12,14 +12,14 @@ fn tilemap_create(width: i64, height: i64) -> i64 {
     if width > 262144 / height { return 0 }
 
     let cells = ilist_new()
-    if !ilist_reserve(cells, width * height) {
+    if ! ilist_reserve(cells, width * height) {
         ilist_free(cells)
         return 0
     }
 
     let mut i = 0
     while i < width * height {
-        if !ilist_push_checked(cells, 0) {
+        if ! ilist_push_checked(cells, 0) {
             ilist_free(cells)
             return 0
         }
@@ -29,18 +29,18 @@ fn tilemap_create(width: i64, height: i64) -> i64 {
 }
 
 fn tilemap_get(map: i64, width: i64, height: i64, x: i64, y: i64) -> i64 {
-    if !tilemap_valid(map, width, height) { return 0 }
+    if ! tilemap_valid(map, width, height) { return 0 }
     if x < 0 || y < 0 || x >= width || y >= height { return 0 }
     return ilist_get(map, y * width + x)
 }
 
 fn tilemap_set(map: i64, width: i64, height: i64, x: i64, y: i64, tile: i64) {
-    if !tilemap_valid(map, width, height) { return }
+    if ! tilemap_valid(map, width, height) { return }
     if x < 0 || y < 0 || x >= width || y >= height { return }
     ilist_set(map, y * width + x, tile)
 }
 fn tilemap_try_set(map: i64, width: i64, height: i64, x: i64, y: i64, tile: i64) -> bool {
-    if !tilemap_valid(map, width, height) { return false }
+    if ! tilemap_valid(map, width, height) { return false }
     if x < 0 || y < 0 || x >= width || y >= height { return false }
     return ilist_set_checked(map, y * width + x, tile)
 }
@@ -52,10 +52,10 @@ fn tilemap_destroy(map: i64) -> bool {
 
 // Set every cell to the same tile ID. Returns false for invalid maps or failed writes.
 fn tilemap_fill(map: i64, width: i64, height: i64, tile: i64) -> bool {
-    if !tilemap_valid(map, width, height) { return false }
+    if ! tilemap_valid(map, width, height) { return false }
     let mut index = 0
     while index < width * height {
-        if !ilist_set_checked(map, index, tile) { return false }
+        if ! ilist_set_checked(map, index, tile) { return false }
         index = index + 1
     }
     return true
@@ -63,9 +63,9 @@ fn tilemap_fill(map: i64, width: i64, height: i64, tile: i64) -> bool {
 
 // Fill a rectangle of cells. The full requested rectangle must be inside the map.
 fn tilemap_fill_rect(map: i64, width: i64, height: i64,
-                      x: i64, y: i64, rect_width: i64, rect_height: i64,
-                      tile: i64) -> bool {
-    if !tilemap_valid(map, width, height) { return false }
+x: i64, y: i64, rect_width: i64, rect_height: i64,
+tile: i64) -> bool {
+    if ! tilemap_valid(map, width, height) { return false }
     if rect_width <= 0 || rect_height <= 0 || x < 0 || y < 0 { return false }
     if x >= width || y >= height { return false }
     if rect_width > width - x || rect_height > height - y { return false }
@@ -73,7 +73,7 @@ fn tilemap_fill_rect(map: i64, width: i64, height: i64,
     while row < y + rect_height {
         let mut col = x
         while col < x + rect_width {
-            if !ilist_set_checked(map, row * width + col, tile) { return false }
+            if ! ilist_set_checked(map, row * width + col, tile) { return false }
             col = col + 1
         }
         row = row + 1
@@ -82,7 +82,7 @@ fn tilemap_fill_rect(map: i64, width: i64, height: i64,
 }
 
 fn tilemap_count(map: i64, width: i64, height: i64, tile: i64) -> i64 {
-    if !tilemap_valid(map, width, height) { return 0 }
+    if ! tilemap_valid(map, width, height) { return 0 }
     let mut count = 0
     let mut index = 0
     while index < width * height {

@@ -9,7 +9,7 @@ fn main() {
     print(true && touch())
     print(false || touch())
     let z = 0
-    if z != 0 && (10 / z) > 1 { print("bad") } else { print("guard") }
+    if z != 0 &&(10 / z) > 1 { print("bad") } else { print("guard") }
     let mut i = 0
     while i < 10 && i != 3 { i += 1 }
     print(i)

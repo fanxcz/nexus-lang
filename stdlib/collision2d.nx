@@ -3,28 +3,28 @@ import std.tilemap
 import std.math
 
 fn collision2d_aabb(ax: f64, ay: f64, aw: f64, ah: f64,
-                    bx: f64, by: f64, bw: f64, bh: f64) -> bool {
+bx: f64, by: f64, bw: f64, bh: f64) -> bool {
     return physics_aabb(ax, ay, aw, ah, bx, by, bw, bh)
 }
 
 fn collision2d_circle(ax: f64, ay: f64, ar: f64,
-                      bx: f64, by: f64, br: f64) -> bool {
+bx: f64, by: f64, br: f64) -> bool {
     return physics_circle(ax, ay, ar, bx, by, br)
 }
 
 // Point-vs-AABB and circle-vs-AABB helpers for UI, pickups and projectiles.
 fn collision2d_point_aabb(px: f64, py: f64, x: f64, y: f64,
-                          width: f64, height: f64) -> bool {
+width: f64, height: f64) -> bool {
     // Validate finite coordinates, positive size and finite right/bottom edges.
-    if !physics_aabb(x, y, width, height, x, y, width, height) { return false }
+    if ! physics_aabb(x, y, width, height, x, y, width, height) { return false }
     return px >= x && py >= y && px <= x + width && py <= y + height
 }
 
 fn collision2d_circle_aabb(cx: f64, cy: f64, radius: f64,
-                           x: f64, y: f64, width: f64, height: f64) -> bool {
-    if !physics_aabb(x, y, width, height, x, y, width, height) { return false }
+x: f64, y: f64, width: f64, height: f64) -> bool {
+    if ! physics_aabb(x, y, width, height, x, y, width, height) { return false }
     // This self-circle query validates the circle center and radius as well.
-    if !physics_circle(cx, cy, radius, cx, cy, 0.0) { return false }
+    if ! physics_circle(cx, cy, radius, cx, cy, 0.0) { return false }
     let mut closest_x = cx
     let mut closest_y = cy
     if closest_x < x { closest_x = x }
@@ -36,26 +36,26 @@ fn collision2d_circle_aabb(cx: f64, cy: f64, radius: f64,
 
 // Returns overlapping rectangle area; zero means separated or just touching.
 fn collision2d_aabb_overlap_area(ax: f64, ay: f64, aw: f64, ah: f64,
-                                 bx: f64, by: f64, bw: f64, bh: f64) -> f64 {
+bx: f64, by: f64, bw: f64, bh: f64) -> f64 {
     // Invalid geometry, separated boxes and edge-only contact all have zero area.
-    if !collision2d_aabb(ax, ay, aw, ah, bx, by, bw, bh) { return 0.0 }
+    if ! collision2d_aabb(ax, ay, aw, ah, bx, by, bw, bh) { return 0.0 }
     let left = math_max(ax, bx)
     let top = math_max(ay, by)
     let right = math_min(ax + aw, bx + bw)
     let bottom = math_min(ay + ah, by + bh)
     if right <= left || bottom <= top { return 0.0 }
-    return (right - left) * (bottom - top)
+    return(right - left) *(bottom - top)
 }
 
 fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
-                            tile_size: f64, x: f64, y: f64,
-                            box_width: f64, box_height: f64) -> bool {
-    if !tilemap_valid(map, map_width, map_height) { return false }
+tile_size: f64, x: f64, y: f64,
+box_width: f64, box_height: f64) -> bool {
+    if ! tilemap_valid(map, map_width, map_height) { return false }
     if tile_size < 1.0 ||
-       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) {
+    !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) {
         return false
     }
-    if !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
+    if ! physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
         return false
     }
 
@@ -84,7 +84,7 @@ fn collision2d_map_overlaps(map: i64, map_width: i64, map_height: i64,
 }
 
 fn collision2d_column_solid(map: i64, map_width: i64, map_height: i64,
-                            column: i64, top: i64, bottom: i64) -> bool {
+column: i64, top: i64, bottom: i64) -> bool {
     let mut row = top
     while row <= bottom {
         if tilemap_get(map, map_width, map_height, column, row) > 0 {
@@ -96,7 +96,7 @@ fn collision2d_column_solid(map: i64, map_width: i64, map_height: i64,
 }
 
 fn collision2d_row_solid(map: i64, map_width: i64, map_height: i64,
-                         row: i64, left: i64, right: i64) -> bool {
+row: i64, left: i64, right: i64) -> bool {
     let mut column = left
     while column <= right {
         if tilemap_get(map, map_width, map_height, column, row) > 0 {
@@ -110,17 +110,17 @@ fn collision2d_row_solid(map: i64, map_width: i64, map_height: i64,
 // Sweep the moving box across crossed tile columns, checking only rows occupied by the box.
 // Returns the exact touching position. Starting positions must not already overlap solids.
 fn collision2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
-                      x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
-    if !tilemap_valid(map, map_width, map_height) { return x }
+x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if ! tilemap_valid(map, map_width, map_height) { return x }
     if delta == 0.0 { return x }
     if tile_size < 1.0 ||
-       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) ||
-       !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
+    !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) ||
+    !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
         return x
     }
 
     let target = x + delta
-    if !physics_aabb(target, y, box_width, box_height, target, y, box_width, box_height) {
+    if ! physics_aabb(target, y, box_width, box_height, target, y, box_width, box_height) {
         return x
     }
     let mut top = math_floor(y / tile_size)
@@ -160,17 +160,17 @@ fn collision2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
 
 // Sweep vertically through crossed tile rows while checking columns occupied by the box.
 fn collision2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
-                      x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
-    if !tilemap_valid(map, map_width, map_height) { return y }
+x: f64, y: f64, box_width: f64, box_height: f64, delta: f64) -> f64 {
+    if ! tilemap_valid(map, map_width, map_height) { return y }
     if delta == 0.0 { return y }
     if tile_size < 1.0 ||
-       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) ||
-       !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
+    !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) ||
+    !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
         return y
     }
 
     let target = y + delta
-    if !physics_aabb(x, target, box_width, box_height, x, target, box_width, box_height) {
+    if ! physics_aabb(x, target, box_width, box_height, x, target, box_width, box_height) {
         return y
     }
     let mut left = math_floor(x / tile_size)

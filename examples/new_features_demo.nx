@@ -1,7 +1,7 @@
 fn main() {
     // Smart concat: string + number / bool
     let code = 42
-    print("code=" + code + " ok=" + (1 < 2))
+    print("code=" + code + " ok=" +(1 < 2))
     let pi = 3.5
     print("half=" + pi)
 

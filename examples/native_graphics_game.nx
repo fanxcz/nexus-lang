@@ -1,6 +1,6 @@
 fn main() {
     let ok = gfx_init(960, 540, "NEXUS Game")
-    if !ok {
+    if ! ok {
         print("Graphics backend unavailable: " + gfx_error())
         return
     }
@@ -11,7 +11,7 @@ fn main() {
     let mut enemyX: f64 = 720.0
     let mut enemyY: f64 = 250.0
 
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
         let dt = gfx_dt()
         let speed = 240.0 * dt

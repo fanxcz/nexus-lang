@@ -17,64 +17,64 @@ fn main() {
     let mut failed = 0
 
     failed = failed + check(
-        "literals",
-        "42 3.5 \"hi\" true",
-        "(expr (int 42))\n(expr (float 3.5))\n(expr (str hi))\n(expr (bool true))\n")
+    "literals",
+    "42 3.5 \"hi\" true",
+    "(expr (int 42))\n(expr (float 3.5))\n(expr (str hi))\n(expr (bool true))\n")
 
     failed = failed + check(
-        "precedence: mul over add",
-        "print(1 + 2 * 3)",
-        "(print (+ (int 1) (* (int 2) (int 3))))\n")
+    "precedence: mul over add",
+    "print(1 + 2 * 3)",
+    "(print (+ (int 1) (* (int 2) (int 3))))\n")
 
     failed = failed + check(
-        "precedence: parens override",
-        "print((1 + 2) * 3)",
-        "(print (* (+ (int 1) (int 2)) (int 3)))\n")
+    "precedence: parens override",
+    "print((1 + 2) * 3)",
+    "(print (* (+ (int 1) (int 2)) (int 3)))\n")
 
     failed = failed + check(
-        "precedence: cmp over and over or",
-        "a < 1 && b > 2 || c == 3",
-        "(expr (|| (&& (< (ident a) (int 1)) (> (ident b) (int 2))) (== (ident c) (int 3))))\n")
+    "precedence: cmp over and over or",
+    "a < 1 && b > 2 || c == 3",
+    "(expr (|| (&& (< (ident a) (int 1)) (> (ident b) (int 2))) (== (ident c) (int 3))))\n")
 
     failed = failed + check(
-        "left associativity",
-        "10 - 4 - 3",
-        "(expr (- (- (int 10) (int 4)) (int 3)))\n")
+    "left associativity",
+    "10 - 4 - 3",
+    "(expr (- (- (int 10) (int 4)) (int 3)))\n")
 
     failed = failed + check(
-        "unary",
-        "print(-x)",
-        "(print (neg (ident x)))\n")
+    "unary",
+    "print(-x)",
+    "(print (neg (ident x)))\n")
 
     failed = failed + check(
-        "let and assignment",
-        "let a = 5\na = a + 1",
-        "(let a (int 5))\n(assign a (+ (ident a) (int 1)))\n")
+    "let and assignment",
+    "let a = 5\na = a + 1",
+    "(let a (int 5))\n(assign a (+ (ident a) (int 1)))\n")
 
     failed = failed + check(
-        "call with args",
-        "add(1, 2 * 3, x)",
-        "(expr (call (ident add) (int 1) (* (int 2) (int 3)) (ident x)))\n")
+    "call with args",
+    "add(1, 2 * 3, x)",
+    "(expr (call (ident add) (int 1) (* (int 2) (int 3)) (ident x)))\n")
 
     failed = failed + check(
-        "if/else and while blocks",
-        "if a { print(1) } else { print(2) }\nwhile a < 10 { a = a + 1 }",
-        "(if (ident a)\n  (block\n  (print (int 1)))\n  (block\n  (print (int 2))))\n(while (< (ident a) (int 10))\n  (block\n  (assign a (+ (ident a) (int 1)))))\n")
+    "if/else and while blocks",
+    "if a { print(1) } else { print(2) }\nwhile a < 10 { a = a + 1 }",
+    "(if (ident a)\n  (block\n  (print (int 1)))\n  (block\n  (print (int 2))))\n(while (< (ident a) (int 10))\n  (block\n  (assign a (+ (ident a) (int 1)))))\n")
 
     failed = failed + check(
-        "error: missing operand",
-        "print(1 +)",
-        "error expected expression, got RParen")
+    "error: missing operand",
+    "print(1 +)",
+    "error expected expression, got RParen")
 
     failed = failed + check(
-        "error: missing brace",
-        "if a { print(1)",
-        "error expected }")
+    "error: missing brace",
+    "if a { print(1)",
+    "error expected }")
 
     failed = failed + check(
-        "error: bad let",
-        "let 5 = 3",
-        "error expected variable name after let")
+    "error: bad let",
+    "let 5 = 3",
+    "error expected variable name after let")
 
     if failed == 0 {
         print("all parser tests passed")

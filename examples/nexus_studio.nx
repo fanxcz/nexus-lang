@@ -16,7 +16,7 @@ fn guess_game() {
     let secret = random_i64(1, 100)
     let mut attempts = 0
     let mut won = false
-    while !won {
+    while ! won {
         let guess = input_i64("Guess 1..100 (0 quit): ")
         if guess == 0 { return }
         attempts = attempts + 1

@@ -5,7 +5,7 @@ fn hit(mx: f64, my: f64, x: f64, y: f64, w: f64, h: f64) -> bool {
 
 fn main() {
     let ok = gfx_init(1000, 720, "NEXUS Focus")
-    if !ok {
+    if ! ok {
         print("NEXUS Focus could not start graphics: " + gfx_error())
         return
     }
@@ -24,7 +24,7 @@ fn main() {
         previousSessions = file_read("nexus_focus_sessions.txt")
     }
 
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
         let dt = gfx_dt()
         let mx = gfx_mouse_x()
@@ -37,7 +37,7 @@ fn main() {
 
         if running {
             remaining = remaining - dt
-            if !breakMode { totalFocusSeconds = totalFocusSeconds + dt }
+            if ! breakMode { totalFocusSeconds = totalFocusSeconds + dt }
         }
 
         if remaining <= 0.0 {
@@ -45,7 +45,7 @@ fn main() {
             running = false
             finished = true
             gfx_sound_tone(880.0, 220, 0.18)
-            if !breakMode {
+            if ! breakMode {
                 sessions = sessions + 1
                 file_write("nexus_focus_sessions.txt", str_i64(sessions))
                 breakMode = true
@@ -81,7 +81,7 @@ fn main() {
 
         let mut duration: f64 = 1500.0
         if breakMode { duration = 300.0 }
-        let progress = (duration - remaining) / duration
+        let progress =(duration - remaining) / duration
         let focusMinutes = to_i64(totalFocusSeconds / 60.0)
 
         gfx_begin()

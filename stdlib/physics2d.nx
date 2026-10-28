@@ -54,29 +54,29 @@ fn physics2d_clamp_vertical(vy: f64, max_rise: f64, max_fall: f64) -> f64 {
 
 // Resolve horizontal movement against a tilemap. Returns the new x.
 fn physics2d_move_x(map: i64, map_width: i64, map_height: i64, tile_size: f64,
-                    x: f64, y: f64, box_width: f64, box_height: f64,
-                    vx: f64, dt: f64) -> f64 {
+x: f64, y: f64, box_width: f64, box_height: f64,
+vx: f64, dt: f64) -> f64 {
     let delta = vx * dt
     return collision2d_move_x(map, map_width, map_height, tile_size, x, y, box_width, box_height, delta)
 }
 
 // Resolve vertical movement against a tilemap. Returns the new y.
 fn physics2d_move_y(map: i64, map_width: i64, map_height: i64, tile_size: f64,
-                    x: f64, y: f64, box_width: f64, box_height: f64,
-                    vy: f64, dt: f64) -> f64 {
+x: f64, y: f64, box_width: f64, box_height: f64,
+vy: f64, dt: f64) -> f64 {
     let delta = vy * dt
     return collision2d_move_y(map, map_width, map_height, tile_size, x, y, box_width, box_height, delta)
 }
 
 // Returns true if the entity is on the ground (solid tile directly below).
 fn physics2d_on_ground(map: i64, map_width: i64, map_height: i64, tile_size: f64,
-                       x: f64, y: f64, box_width: f64, box_height: f64) -> bool {
-    if !tilemap_valid(map, map_width, map_height) { return false }
+x: f64, y: f64, box_width: f64, box_height: f64) -> bool {
+    if ! tilemap_valid(map, map_width, map_height) { return false }
     if tile_size < 1.0 ||
-       !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) {
+    !physics_aabb(0.0, 0.0, tile_size, tile_size, 0.0, 0.0, tile_size, tile_size) {
         return false
     }
-    if !physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
+    if ! physics_aabb(x, y, box_width, box_height, x, y, box_width, box_height) {
         return false
     }
     let below = y + box_height

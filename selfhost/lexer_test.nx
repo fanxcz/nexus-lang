@@ -17,79 +17,79 @@ fn main() {
     let mut failed = 0
 
     failed = failed + check(
-        "keywords and identifiers",
-        "fn main() { let printf = true }",
-        "1:1 KwFn fn\n1:4 Identifier main\n1:8 LParen (\n1:9 RParen )\n1:11 LBrace {\n1:13 KwLet let\n1:17 Identifier printf\n1:24 Equal =\n1:26 KwTrue true\n1:31 RBrace }\n1:32 End \n")
+    "keywords and identifiers",
+    "fn main() { let printf = true }",
+    "1:1 KwFn fn\n1:4 Identifier main\n1:8 LParen (\n1:9 RParen )\n1:11 LBrace {\n1:13 KwLet let\n1:17 Identifier printf\n1:24 Equal =\n1:26 KwTrue true\n1:31 RBrace }\n1:32 End \n")
 
     failed = failed + check(
-        "numbers",
-        "42 3.14 7. 100",
-        "1:1 Integer 42\n1:4 Float 3.14\n1:9 Integer 7\n1:10 Dot .\n1:12 Integer 100\n1:15 End \n")
+    "numbers",
+    "42 3.14 7. 100",
+    "1:1 Integer 42\n1:4 Float 3.14\n1:9 Integer 7\n1:10 Dot .\n1:12 Integer 100\n1:15 End \n")
 
     failed = failed + check(
-        "numeric separators and scientific notation",
-        "1_000 2.5e-3 1E+4",
-        "1:1 Integer 1_000\n1:7 Float 2.5e-3\n1:14 Float 1E+4\n1:18 End \n")
+    "numeric separators and scientific notation",
+    "1_000 2.5e-3 1E+4",
+    "1:1 Integer 1_000\n1:7 Float 2.5e-3\n1:14 Float 1E+4\n1:18 End \n")
 
     failed = failed + check(
-        "error: malformed numeric separator",
-        "1__0",
-        "error 1:2 misplaced numeric separator\n")
+    "error: malformed numeric separator",
+    "1__0",
+    "error 1:2 misplaced numeric separator\n")
 
     failed = failed + check(
-        "error: missing exponent digits",
-        "1e+",
-        "error 1:4 expected exponent digits\n")
+    "error: missing exponent digits",
+    "1e+",
+    "error 1:4 expected exponent digits\n")
 
     failed = failed + check(
-        "two-char operators",
-        "== => -> :: <= >= != && || += *= a+=b",
-        "1:1 EqualEqual ==\n1:4 FatArrow =>\n1:7 Arrow ->\n1:10 ColonColon ::\n1:13 LessEqual <=\n1:16 GreaterEqual >=\n1:19 BangEqual !=\n1:22 AndAnd &&\n1:25 OrOr ||\n1:28 PlusEqual +=\n1:31 StarEqual *=\n1:34 Identifier a\n1:35 PlusEqual +=\n1:37 Identifier b\n1:38 End \n")
+    "two-char operators",
+    "== => -> :: <= >= != && || += *= a+=b",
+    "1:1 EqualEqual ==\n1:4 FatArrow =>\n1:7 Arrow ->\n1:10 ColonColon ::\n1:13 LessEqual <=\n1:16 GreaterEqual >=\n1:19 BangEqual !=\n1:22 AndAnd &&\n1:25 OrOr ||\n1:28 PlusEqual +=\n1:31 StarEqual *=\n1:34 Identifier a\n1:35 PlusEqual +=\n1:37 Identifier b\n1:38 End \n")
 
     failed = failed + check(
-        "string escapes",
-        "\"a\\tb\\n\\\"q\\\"\\\\\"",
-        "1:1 String a\tb\n\"q\"\\\n1:16 End \n")
+    "string escapes",
+    "\"a\\tb\\n\\\"q\\\"\\\\\"",
+    "1:1 String a\tb\n\"q\"\\\n1:16 End \n")
 
     failed = failed + check(
-        "Unicode scalar string escapes",
-        "\"\\u{41}\\u{1F642}\"",
-        "1:1 String A🙂\n1:18 End \n")
+    "Unicode scalar string escapes",
+    "\"\\u{41}\\u{1F642}\"",
+    "1:1 String A🙂\n1:18 End \n")
 
     failed = failed + check(
-        "error: invalid Unicode scalar",
-        "\"\\u{D800}\"",
-        "error 1:2 invalid Unicode scalar value\n")
+    "error: invalid Unicode scalar",
+    "\"\\u{D800}\"",
+    "error 1:2 invalid Unicode scalar value\n")
 
     failed = failed + check(
-        "comments are skipped",
-        "// line\nlet x = 1 /* mid\ncomment */ + 2",
-        "2:1 KwLet let\n2:5 Identifier x\n2:7 Equal =\n2:9 Integer 1\n3:12 Plus +\n3:14 Integer 2\n3:15 End \n")
+    "comments are skipped",
+    "// line\nlet x = 1 /* mid\ncomment */ + 2",
+    "2:1 KwLet let\n2:5 Identifier x\n2:7 Equal =\n2:9 Integer 1\n3:12 Plus +\n3:14 Integer 2\n3:15 End \n")
 
     failed = failed + check(
-        "error: unterminated string",
-        "let s = \"oops",
-        "1:1 KwLet let\n1:5 Identifier s\n1:7 Equal =\nerror 1:9 unterminated string\n")
+    "error: unterminated string",
+    "let s = \"oops",
+    "1:1 KwLet let\n1:5 Identifier s\n1:7 Equal =\nerror 1:9 unterminated string\n")
 
     failed = failed + check(
-        "error: unknown escape",
-        "\"\\q\"",
-        "error 1:2 unknown string escape\n")
+    "error: unknown escape",
+    "\"\\q\"",
+    "error 1:2 unknown string escape\n")
 
     failed = failed + check(
-        "error: unexpected character",
-        "let a @ b",
-        "1:1 KwLet let\n1:5 Identifier a\nerror 1:7 unexpected character\n")
+    "error: unexpected character",
+    "let a @ b",
+    "1:1 KwLet let\n1:5 Identifier a\nerror 1:7 unexpected character\n")
 
     failed = failed + check(
-        "error: lone pipe",
-        "a | b",
-        "1:1 Identifier a\nerror 1:3 unexpected character\n")
+    "error: lone pipe",
+    "a | b",
+    "1:1 Identifier a\nerror 1:3 unexpected character\n")
 
     failed = failed + check(
-        "empty source",
-        "",
-        "1:1 End \n")
+    "empty source",
+    "",
+    "1:1 End \n")
 
     if failed == 0 {
         print("all lexer tests passed")

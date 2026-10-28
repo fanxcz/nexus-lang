@@ -62,17 +62,17 @@ fn engine2d_mouse_clicked_in(x: f64, y: f64, width: f64, height: f64) -> bool {
 }
 
 fn engine2d_draw_rect(x: f64, y: f64, width: f64, height: f64,
-                      red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     gfx_rect(x, y, width, height, red, green, blue, alpha)
 }
 
 fn engine2d_draw_circle(x: f64, y: f64, radius: f64,
-                        red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     gfx_circle(x, y, radius, red, green, blue, alpha)
 }
 
 fn engine2d_draw_text(x: f64, y: f64, scale: f64, value: string,
-                      red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     gfx_text(x, y, scale, value, red, green, blue, alpha)
 }
 
@@ -86,7 +86,7 @@ fn engine2d_vsync(enabled: bool) {
 }
 
 fn engine2d_draw_line(x1: f64, y1: f64, x2: f64, y2: f64,
-                      thickness: f64, red: f64, green: f64, blue: f64, alpha: f64) {
+thickness: f64, red: f64, green: f64, blue: f64, alpha: f64) {
     if thickness <= 0.0 { return }
     gfx_line(x1, y1, x2, y2, thickness, red, green, blue, alpha)
 }

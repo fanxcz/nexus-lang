@@ -30,37 +30,37 @@ fn ui2d_inset(rect: UIRect, padding: f64) -> UIRect {
     let px = math_min(pad, width * 0.5)
     let py = math_min(pad, height * 0.5)
     return ui2d_rect(rect.x + px, rect.y + py,
-                     math_max(0.0, width - px * 2.0),
-                     math_max(0.0, height - py * 2.0))
+    math_max(0.0, width - px * 2.0),
+    math_max(0.0, height - py * 2.0))
 }
 
 fn ui2d_row_cell(parent: UIRect, index: i64, count: i64, gap: f64) -> UIRect {
     if count <= 0 || index < 0 || index >= count { return ui2d_rect(parent.x, parent.y, 0.0, 0.0) }
     let mut spacing = gap
     if spacing < 0.0 { spacing = 0.0 }
-    let width = math_max(0.0, (parent.width - spacing * to_f64(count - 1)) / to_f64(count))
-    return ui2d_rect(parent.x + to_f64(index) * (width + spacing), parent.y, width, math_max(0.0, parent.height))
+    let width = math_max(0.0,(parent.width - spacing * to_f64(count - 1)) / to_f64(count))
+    return ui2d_rect(parent.x + to_f64(index) *(width + spacing), parent.y, width, math_max(0.0, parent.height))
 }
 
 fn ui2d_column_cell(parent: UIRect, index: i64, count: i64, gap: f64) -> UIRect {
     if count <= 0 || index < 0 || index >= count { return ui2d_rect(parent.x, parent.y, 0.0, 0.0) }
     let mut spacing = gap
     if spacing < 0.0 { spacing = 0.0 }
-    let height = math_max(0.0, (parent.height - spacing * to_f64(count - 1)) / to_f64(count))
-    return ui2d_rect(parent.x, parent.y + to_f64(index) * (height + spacing), math_max(0.0, parent.width), height)
+    let height = math_max(0.0,(parent.height - spacing * to_f64(count - 1)) / to_f64(count))
+    return ui2d_rect(parent.x, parent.y + to_f64(index) *(height + spacing), math_max(0.0, parent.width), height)
 }
 
 fn ui2d_grid_cell(parent: UIRect, column: i64, row: i64,
-                  columns: i64, rows: i64, gap: f64) -> UIRect {
+columns: i64, rows: i64, gap: f64) -> UIRect {
     if columns <= 0 || rows <= 0 || column < 0 || row < 0 || column >= columns || row >= rows {
         return ui2d_rect(parent.x, parent.y, 0.0, 0.0)
     }
     let mut spacing = gap
     if spacing < 0.0 { spacing = 0.0 }
-    let cell_width = math_max(0.0, (parent.width - spacing * to_f64(columns - 1)) / to_f64(columns))
-    let cell_height = math_max(0.0, (parent.height - spacing * to_f64(rows - 1)) / to_f64(rows))
-    return ui2d_rect(parent.x + to_f64(column) * (cell_width + spacing),
-                     parent.y + to_f64(row) * (cell_height + spacing), cell_width, cell_height)
+    let cell_width = math_max(0.0,(parent.width - spacing * to_f64(columns - 1)) / to_f64(columns))
+    let cell_height = math_max(0.0,(parent.height - spacing * to_f64(rows - 1)) / to_f64(rows))
+    return ui2d_rect(parent.x + to_f64(column) *(cell_width + spacing),
+    parent.y + to_f64(row) *(cell_height + spacing), cell_width, cell_height)
 }
 
 fn ui2d_panel(rect: UIRect, red: f64, green: f64, blue: f64, alpha: f64) {
@@ -92,7 +92,7 @@ fn ui2d_progress(rect: UIRect, value: f64, red: f64, green: f64, blue: f64, alph
     ui_progress(rect.x, rect.y, rect.width, rect.height, math_clamp(value, 0.0, 1.0), red, green, blue, alpha)
 }
 fn ui2d_separator(x1: f64, y1: f64, x2: f64, y2: f64, thickness: f64,
-                  red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     if thickness <= 0.0 { return }
     gfx_line(x1, y1, x2, y2, thickness, red, green, blue, alpha)
 }
@@ -103,5 +103,5 @@ fn ui2d_separator(x1: f64, y1: f64, x2: f64, y2: f64, thickness: f64,
 fn ui2d_text_field(rect: UIRect, value: string, placeholder: string, max_bytes: i64) -> string {
     if rect.width <= 0.0 || rect.height <= 0.0 { return value }
     return ui_text_field(rect.x, rect.y, rect.width, rect.height,
-                         value, placeholder, max_bytes)
+    value, placeholder, max_bytes)
 }

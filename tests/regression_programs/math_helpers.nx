@@ -4,7 +4,7 @@ fn main() {
     if math_clamp(5.0, 0.0, 3.0) != 3.0 { print("clamp upper failed"); return }
     if math_clamp(-2.0, 0.0, 3.0) != 0.0 { print("clamp lower failed"); return }
     if math_lerp(10.0, 20.0, 0.5) != 15.0 { print("lerp failed"); return }
-    if math_lerp(10.0, 20.0, -1.0) != 10.0 { print("lerp lower clamp failed"); return }
+    if math_lerp(10.0, 20.0,-1.0) != 10.0 { print("lerp lower clamp failed"); return }
     if math_approach(0.0, 10.0, 3.0) != 3.0 { print("approach positive failed"); return }
     if math_approach(9.0, 10.0, 3.0) != 10.0 { print("approach clamp failed"); return }
     if math_approach(10.0, 0.0, 3.0) != 7.0 { print("approach negative failed"); return }

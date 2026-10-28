@@ -53,8 +53,8 @@ fn vec2_perpendicular(value: Vec2) -> Vec2 {
 
 fn vec2_lerp(a: Vec2, b: Vec2, amount: f64) -> Vec2 {
     let t = math_clamp(amount, 0.0, 1.0)
-    return vec2(a.x + (b.x - a.x) * t,
-                a.y + (b.y - a.y) * t)
+    return vec2(a.x +(b.x - a.x) * t,
+    a.y +(b.y - a.y) * t)
 }
 
 fn vec2_move_towards(current: Vec2, target: Vec2, max_delta: f64) -> Vec2 {

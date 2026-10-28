@@ -16,7 +16,7 @@ fn main() {
     let map_height: i64 = 16
 
     let ok = engine2d_init(960, 540, "NEXUS 2D Starter")
-    if !ok {
+    if ! ok {
         print("Graphics backend unavailable: " + gfx_error())
         return
     }
@@ -42,7 +42,7 @@ fn main() {
     let mut elapsed: f64 = 0.0
 
     engine2d_vsync(true)
-    while !engine2d_should_close() && !engine2d_key_down("ESC") {
+    while ! engine2d_should_close() && !engine2d_key_down("ESC") {
         // Poll events before simulation so key_pressed reflects this frame.
         engine2d_begin_frame(0.025, 0.035, 0.065, 1.0)
         let dt = engine2d_delta_time()
@@ -52,11 +52,11 @@ fn main() {
         if engine2d_key_down("A") || engine2d_key_down("LEFT") { move_x = -220.0 }
         if engine2d_key_down("D") || engine2d_key_down("RIGHT") { move_x = 220.0 }
         player_x = physics2d_move_x(map, map_width, map_height, tile_size,
-                                    player_x, player_y, player_width, player_height, move_x, dt)
+        player_x, player_y, player_width, player_height, move_x, dt)
 
         if physics2d_on_ground(map, map_width, map_height, tile_size,
-                               player_x, player_y, player_width, player_height) &&
-           engine2d_key_pressed("SPACE") {
+        player_x, player_y, player_width, player_height) &&
+        engine2d_key_pressed("SPACE") {
             velocity_y = physics2d_jump_velocity(900.0, 76.0)
         }
 
@@ -64,32 +64,32 @@ fn main() {
         velocity_y = physics2d_clamp_vertical(velocity_y, 440.0, 620.0)
         let wanted_y = player_y + velocity_y * dt
         player_y = physics2d_move_y(map, map_width, map_height, tile_size,
-                                    player_x, player_y, player_width, player_height, velocity_y, dt)
+        player_x, player_y, player_width, player_height, velocity_y, dt)
         if player_y != wanted_y { velocity_y = 0.0 }
 
         camera = camera2d_follow(camera,
-            vec2(player_x + player_width * 0.5, player_y + player_height * 0.5), 7.0, dt)
+        vec2(player_x + player_width * 0.5, player_y + player_height * 0.5), 7.0, dt)
         camera = camera2d_clamp(camera, to_f64(map_width) * tile_size,
-                                to_f64(map_height) * tile_size,
-                                screen_width, screen_height, 1.0)
+        to_f64(map_height) * tile_size,
+        screen_width, screen_height, 1.0)
 
         let view_x = camera.x - screen_width * 0.5
         let view_y = camera.y - screen_height * 0.5
         tilemap_render_draw(map, map_width, map_height, tile_size,
-                            view_x, view_y, screen_width, screen_height)
+        view_x, view_y, screen_width, screen_height)
 
         let player_screen = camera2d_world_to_screen(vec2(player_x, player_y), camera, 1.0,
-                                                     screen_width, screen_height)
+        screen_width, screen_height)
         engine2d_draw_rect(player_screen.x, player_screen.y, player_width, player_height,
-                           0.18, 0.70, 0.98, 1.0)
+        0.18, 0.70, 0.98, 1.0)
         engine2d_draw_rect(player_screen.x + 5.0, player_screen.y + 6.0, 5.0, 5.0,
-                           0.02, 0.06, 0.10, 1.0)
+        0.02, 0.06, 0.10, 1.0)
         let pulse = 8.0 + animation2d_ping_pong(elapsed, 0.75) * 5.0
         let beacon = camera2d_world_to_screen(vec2(450.0, 300.0), camera, 1.0,
-                                              screen_width, screen_height)
+        screen_width, screen_height)
         engine2d_draw_circle(beacon.x, beacon.y, pulse, 1.0, 0.70, 0.20, 0.9)
         engine2d_draw_text(22.0, 22.0, 1.25, "A/D or arrows: move   SPACE: jump   ESC: quit",
-                           0.9, 0.93, 1.0, 1.0)
+        0.9, 0.93, 1.0, 1.0)
         engine2d_end_frame()
     }
 

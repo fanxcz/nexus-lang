@@ -13,29 +13,29 @@ fn camera2d_follow(current: Vec2, target: Vec2, speed: f64, dt: f64) -> Vec2 {
 // Convert world coordinates into screen coordinates for a centered viewport.
 // zoom must be positive; invalid zoom falls back to 1 to avoid division by zero.
 fn camera2d_world_to_screen(world: Vec2, position: Vec2, zoom: f64,
-                            viewport_width: f64, viewport_height: f64) -> Vec2 {
+viewport_width: f64, viewport_height: f64) -> Vec2 {
     let mut z = zoom
     if z <= 0.0 { z = 1.0 }
     return vec2((world.x - position.x) * z + viewport_width * 0.5,
-                (world.y - position.y) * z + viewport_height * 0.5)
+    (world.y - position.y) * z + viewport_height * 0.5)
 }
 
 fn camera2d_screen_to_world(screen: Vec2, position: Vec2, zoom: f64,
-                            viewport_width: f64, viewport_height: f64) -> Vec2 {
+viewport_width: f64, viewport_height: f64) -> Vec2 {
     let mut z = zoom
     if z <= 0.0 { z = 1.0 }
     return vec2((screen.x - viewport_width * 0.5) / z + position.x,
-                (screen.y - viewport_height * 0.5) / z + position.y)
+    (screen.y - viewport_height * 0.5) / z + position.y)
 }
 
 // Clamp the camera center so that the viewport remains inside the world.
 // If the world is smaller than the viewport on an axis, center it on that axis.
 fn camera2d_clamp(position: Vec2, world_width: f64, world_height: f64,
-                  viewport_width: f64, viewport_height: f64, zoom: f64) -> Vec2 {
+viewport_width: f64, viewport_height: f64, zoom: f64) -> Vec2 {
     let mut z = zoom
     if z <= 0.0 { z = 1.0 }
-    let half_w = viewport_width / (2.0 * z)
-    let half_h = viewport_height / (2.0 * z)
+    let half_w = viewport_width /(2.0 * z)
+    let half_h = viewport_height /(2.0 * z)
     let mut x = position.x
     let mut y = position.y
     if world_width <= half_w * 2.0 {
@@ -63,7 +63,7 @@ fn camera2d_reset() {
 // Apply a world-space camera center calculated by the helpers below.
 // The runtime camera API takes an offset from the viewport's default center.
 fn camera2d_apply(position: Vec2, zoom: f64,
-                  viewport_width: f64, viewport_height: f64) {
+viewport_width: f64, viewport_height: f64) {
     gfx_camera_set(position.x - viewport_width * 0.5,
-                   position.y - viewport_height * 0.5, zoom)
+    position.y - viewport_height * 0.5, zoom)
 }

@@ -1,6 +1,6 @@
 fn main() {
     let ok = gfx_init(1100, 700, "NEXUS 0.8 Game Framework")
-    if !ok {
+    if ! ok {
         print("Graphics error: " + gfx_error())
         return
     }
@@ -28,7 +28,7 @@ fn main() {
     ecs_set_texture(player, sprite)
     ecs_set_position(enemy, 820.0, 320.0)
     ecs_set_size(enemy, 64.0, 64.0)
-    ecs_set_velocity(enemy, -60.0, 0.0)
+    ecs_set_velocity(enemy,-60.0, 0.0)
     ecs_set_color(enemy, 1.0, 0.55, 0.55, 1.0)
     scene_add(scene, player)
     scene_add(scene, enemy)
@@ -37,15 +37,15 @@ fn main() {
     let mut volume: f64 = 0.7
     let mut enabled = true
 
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
         let dt = gfx_dt()
         gfx_anim_update(anim, dt)
         ecs_update(dt)
 
-        if gfx_key_down("A") { ecs_set_velocity(player, -180.0, 0.0) }
+        if gfx_key_down("A") { ecs_set_velocity(player,-180.0, 0.0) }
         if gfx_key_down("D") { ecs_set_velocity(player, 180.0, 0.0) }
-        if !gfx_key_down("A") && !gfx_key_down("D") { ecs_set_velocity(player, 0.0, 0.0) }
+        if ! gfx_key_down("A") && !gfx_key_down("D") { ecs_set_velocity(player, 0.0, 0.0) }
 
         if physics_aabb(ecs_x(player), ecs_y(player), 64.0, 64.0, ecs_x(enemy), ecs_y(enemy), 64.0, 64.0) {
             hp = hp - dt * 0.2

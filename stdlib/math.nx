@@ -31,7 +31,7 @@ fn math_floor(value: f64) -> i64 {
 }
 
 fn math_lerp(start: f64, finish: f64, amount: f64) -> f64 {
-    return start + (finish - start) * math_clamp(amount, 0.0, 1.0)
+    return start +(finish - start) * math_clamp(amount, 0.0, 1.0)
 }
 
 fn math_approach(value: f64, target: f64, amount: f64) -> f64 {
@@ -50,7 +50,7 @@ fn math_approach(value: f64, target: f64, amount: f64) -> f64 {
 }
 
 fn math_sign(value: f64) -> f64 {
-    if value < 0.0 { return -1.0 }
+    if value < 0.0 { return-1.0 }
     if value > 0.0 { return 1.0 }
     return 0.0
 }

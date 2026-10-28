@@ -59,25 +59,25 @@ fn main() {
     let mut e4hp: i64 = 2
 
     let ok = gfx_init(1280, 720, "NEXUS - NEON SURVIVOR")
-    if !ok {
+    if ! ok {
         print("Graphics error: " + gfx_error())
         return
     }
     gfx_vsync(true)
     gfx_sound_tone(520.0, 120, 0.18)
 
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
         let dt = gfx_dt()
         let width = gfx_width()
         let height = gfx_height()
         let arenaW: f64 = 980.0
         let arenaH: f64 = 540.0
-        let arenaX = (to_f64(width) - 980.0) / 2.0
-        let arenaY = (to_f64(height) - 540.0) / 2.0 + 20.0
+        let arenaX =(to_f64(width) - 980.0) / 2.0
+        let arenaY =(to_f64(height) - 540.0) / 2.0 + 20.0
         let centerX = arenaX + arenaW / 2.0
         let centerY = arenaY + arenaH / 2.0
-        if !started {
+        if ! started {
             gfx_begin()
             gfx_clear(0.015, 0.02, 0.04, 1.0)
             gfx_text(centerX - 250.0, 170.0, 4.0, "NEXUS NEON SURVIVOR", 0.15, 0.9, 1.0, 1.0)
@@ -106,7 +106,7 @@ fn main() {
 
         if gfx_key_down("ESC") { break }
 
-        if !paused && !gameOver {
+        if ! paused && !gameOver {
             let speed = 250.0 + to_f64(wave * 8)
             if gfx_key_down("W") { py = py - speed * dt }
             if gfx_key_down("S") { py = py + speed * dt }
@@ -128,21 +128,21 @@ fn main() {
                 if len > 1.0 {
                     let vx = dx / len * 650.0
                     let vy = dy / len * 650.0
-                    if !b1alive { b1alive=true; b1x=px; b1y=py; b1vx=vx; b1vy=vy }
-                    else if !b2alive { b2alive=true; b2x=px; b2y=py; b2vx=vx; b2vy=vy }
-                    else if !b3alive { b3alive=true; b3x=px; b3y=py; b3vx=vx; b3vy=vy }
-                    else if !b4alive { b4alive=true; b4x=px; b4y=py; b4vx=vx; b4vy=vy }
-                    else if !b5alive { b5alive=true; b5x=px; b5y=py; b5vx=vx; b5vy=vy }
+                    if ! b1alive { b1alive = true; b1x = px; b1y = py; b1vx = vx; b1vy = vy }
+                    else if ! b2alive { b2alive = true; b2x = px; b2y = py; b2vx = vx; b2vy = vy }
+                    else if ! b3alive { b3alive = true; b3x = px; b3y = py; b3vx = vx; b3vy = vy }
+                    else if ! b4alive { b4alive = true; b4x = px; b4y = py; b4vx = vx; b4vy = vy }
+                    else if ! b5alive { b5alive = true; b5x = px; b5y = py; b5vx = vx; b5vy = vy }
                     gfx_sound_tone(920.0, 45, 0.09)
                     fireCooldown = 0.13
                 }
             }
 
-            if b1alive { b1x=b1x+b1vx*dt; b1y=b1y+b1vy*dt; if b1x<arenaX||b1x>arenaX+arenaW||b1y<arenaY||b1y>arenaY+arenaH { b1alive=false } }
-            if b2alive { b2x=b2x+b2vx*dt; b2y=b2y+b2vy*dt; if b2x<arenaX||b2x>arenaX+arenaW||b2y<arenaY||b2y>arenaY+arenaH { b2alive=false } }
-            if b3alive { b3x=b3x+b3vx*dt; b3y=b3y+b3vy*dt; if b3x<arenaX||b3x>arenaX+arenaW||b3y<arenaY||b3y>arenaY+arenaH { b3alive=false } }
-            if b4alive { b4x=b4x+b4vx*dt; b4y=b4y+b4vy*dt; if b4x<arenaX||b4x>arenaX+arenaW||b4y<arenaY||b4y>arenaY+arenaH { b4alive=false } }
-            if b5alive { b5x=b5x+b5vx*dt; b5y=b5y+b5vy*dt; if b5x<arenaX||b5x>arenaX+arenaW||b5y<arenaY||b5y>arenaY+arenaH { b5alive=false } }
+            if b1alive { b1x = b1x + b1vx * dt; b1y = b1y + b1vy * dt; if b1x < arenaX || b1x > arenaX + arenaW || b1y < arenaY || b1y > arenaY + arenaH { b1alive = false } }
+            if b2alive { b2x = b2x + b2vx * dt; b2y = b2y + b2vy * dt; if b2x < arenaX || b2x > arenaX + arenaW || b2y < arenaY || b2y > arenaY + arenaH { b2alive = false } }
+            if b3alive { b3x = b3x + b3vx * dt; b3y = b3y + b3vy * dt; if b3x < arenaX || b3x > arenaX + arenaW || b3y < arenaY || b3y > arenaY + arenaH { b3alive = false } }
+            if b4alive { b4x = b4x + b4vx * dt; b4y = b4y + b4vy * dt; if b4x < arenaX || b4x > arenaX + arenaW || b4y < arenaY || b4y > arenaY + arenaH { b4alive = false } }
+            if b5alive { b5x = b5x + b5vx * dt; b5y = b5y + b5vy * dt; if b5x < arenaX || b5x > arenaX + arenaW || b5y < arenaY || b5y > arenaY + arenaH { b5alive = false } }
 
             let es = 45.0 + to_f64(wave * 4)
             if e1alive {
@@ -162,32 +162,32 @@ fn main() {
                 if e4y < py { e4y = e4y + es * dt } else { e4y = e4y - es * dt }
             }
 
-            if b1alive && e1alive && physics_circle(b1x,b1y,8.0,e1x,e1y,22.0) { b1alive=false; e1hp=e1hp-1; gfx_sound_tone(1300.0,55,0.13); if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
-            if b1alive && e2alive && physics_circle(b1x,b1y,8.0,e2x,e2y,22.0) { b1alive=false; e2hp=e2hp-1; gfx_sound_tone(1300.0,55,0.13); if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
-            if b1alive && e3alive && physics_circle(b1x,b1y,8.0,e3x,e3y,22.0) { b1alive=false; e3hp=e3hp-1; gfx_sound_tone(1300.0,55,0.13); if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
-            if b1alive && e4alive && physics_circle(b1x,b1y,8.0,e4x,e4y,22.0) { b1alive=false; e4hp=e4hp-1; gfx_sound_tone(1300.0,55,0.13); if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
-            if b2alive && e1alive && physics_circle(b2x,b2y,8.0,e1x,e1y,22.0) { b2alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
-            if b2alive && e2alive && physics_circle(b2x,b2y,8.0,e2x,e2y,22.0) { b2alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
-            if b2alive && e3alive && physics_circle(b2x,b2y,8.0,e3x,e3y,22.0) { b2alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
-            if b2alive && e4alive && physics_circle(b2x,b2y,8.0,e4x,e4y,22.0) { b2alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
-            if b3alive && e1alive && physics_circle(b3x,b3y,8.0,e1x,e1y,22.0) { b3alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
-            if b3alive && e2alive && physics_circle(b3x,b3y,8.0,e2x,e2y,22.0) { b3alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
-            if b3alive && e3alive && physics_circle(b3x,b3y,8.0,e3x,e3y,22.0) { b3alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
-            if b3alive && e4alive && physics_circle(b3x,b3y,8.0,e4x,e4y,22.0) { b3alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
-            if b4alive && e1alive && physics_circle(b4x,b4y,8.0,e1x,e1y,22.0) { b4alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
-            if b4alive && e2alive && physics_circle(b4x,b4y,8.0,e2x,e2y,22.0) { b4alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
-            if b4alive && e3alive && physics_circle(b4x,b4y,8.0,e3x,e3y,22.0) { b4alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
-            if b4alive && e4alive && physics_circle(b4x,b4y,8.0,e4x,e4y,22.0) { b4alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
-            if b5alive && e1alive && physics_circle(b5x,b5y,8.0,e1x,e1y,22.0) { b5alive=false; e1hp=e1hp-1; if e1hp<=0 {e1alive=false;kills=kills+1;score=score+100} }
-            if b5alive && e2alive && physics_circle(b5x,b5y,8.0,e2x,e2y,22.0) { b5alive=false; e2hp=e2hp-1; if e2hp<=0 {e2alive=false;kills=kills+1;score=score+100} }
-            if b5alive && e3alive && physics_circle(b5x,b5y,8.0,e3x,e3y,22.0) { b5alive=false; e3hp=e3hp-1; if e3hp<=0 {e3alive=false;kills=kills+1;score=score+100} }
-            if b5alive && e4alive && physics_circle(b5x,b5y,8.0,e4x,e4y,22.0) { b5alive=false; e4hp=e4hp-1; if e4hp<=0 {e4alive=false;kills=kills+1;score=score+100} }
+            if b1alive && e1alive && physics_circle(b1x, b1y, 8.0, e1x, e1y, 22.0) { b1alive = false; e1hp = e1hp - 1; gfx_sound_tone(1300.0, 55, 0.13); if e1hp <= 0 { e1alive = false; kills = kills + 1; score = score + 100 } }
+            if b1alive && e2alive && physics_circle(b1x, b1y, 8.0, e2x, e2y, 22.0) { b1alive = false; e2hp = e2hp - 1; gfx_sound_tone(1300.0, 55, 0.13); if e2hp <= 0 { e2alive = false; kills = kills + 1; score = score + 100 } }
+            if b1alive && e3alive && physics_circle(b1x, b1y, 8.0, e3x, e3y, 22.0) { b1alive = false; e3hp = e3hp - 1; gfx_sound_tone(1300.0, 55, 0.13); if e3hp <= 0 { e3alive = false; kills = kills + 1; score = score + 100 } }
+            if b1alive && e4alive && physics_circle(b1x, b1y, 8.0, e4x, e4y, 22.0) { b1alive = false; e4hp = e4hp - 1; gfx_sound_tone(1300.0, 55, 0.13); if e4hp <= 0 { e4alive = false; kills = kills + 1; score = score + 100 } }
+            if b2alive && e1alive && physics_circle(b2x, b2y, 8.0, e1x, e1y, 22.0) { b2alive = false; e1hp = e1hp - 1; if e1hp <= 0 { e1alive = false; kills = kills + 1; score = score + 100 } }
+            if b2alive && e2alive && physics_circle(b2x, b2y, 8.0, e2x, e2y, 22.0) { b2alive = false; e2hp = e2hp - 1; if e2hp <= 0 { e2alive = false; kills = kills + 1; score = score + 100 } }
+            if b2alive && e3alive && physics_circle(b2x, b2y, 8.0, e3x, e3y, 22.0) { b2alive = false; e3hp = e3hp - 1; if e3hp <= 0 { e3alive = false; kills = kills + 1; score = score + 100 } }
+            if b2alive && e4alive && physics_circle(b2x, b2y, 8.0, e4x, e4y, 22.0) { b2alive = false; e4hp = e4hp - 1; if e4hp <= 0 { e4alive = false; kills = kills + 1; score = score + 100 } }
+            if b3alive && e1alive && physics_circle(b3x, b3y, 8.0, e1x, e1y, 22.0) { b3alive = false; e1hp = e1hp - 1; if e1hp <= 0 { e1alive = false; kills = kills + 1; score = score + 100 } }
+            if b3alive && e2alive && physics_circle(b3x, b3y, 8.0, e2x, e2y, 22.0) { b3alive = false; e2hp = e2hp - 1; if e2hp <= 0 { e2alive = false; kills = kills + 1; score = score + 100 } }
+            if b3alive && e3alive && physics_circle(b3x, b3y, 8.0, e3x, e3y, 22.0) { b3alive = false; e3hp = e3hp - 1; if e3hp <= 0 { e3alive = false; kills = kills + 1; score = score + 100 } }
+            if b3alive && e4alive && physics_circle(b3x, b3y, 8.0, e4x, e4y, 22.0) { b3alive = false; e4hp = e4hp - 1; if e4hp <= 0 { e4alive = false; kills = kills + 1; score = score + 100 } }
+            if b4alive && e1alive && physics_circle(b4x, b4y, 8.0, e1x, e1y, 22.0) { b4alive = false; e1hp = e1hp - 1; if e1hp <= 0 { e1alive = false; kills = kills + 1; score = score + 100 } }
+            if b4alive && e2alive && physics_circle(b4x, b4y, 8.0, e2x, e2y, 22.0) { b4alive = false; e2hp = e2hp - 1; if e2hp <= 0 { e2alive = false; kills = kills + 1; score = score + 100 } }
+            if b4alive && e3alive && physics_circle(b4x, b4y, 8.0, e3x, e3y, 22.0) { b4alive = false; e3hp = e3hp - 1; if e3hp <= 0 { e3alive = false; kills = kills + 1; score = score + 100 } }
+            if b4alive && e4alive && physics_circle(b4x, b4y, 8.0, e4x, e4y, 22.0) { b4alive = false; e4hp = e4hp - 1; if e4hp <= 0 { e4alive = false; kills = kills + 1; score = score + 100 } }
+            if b5alive && e1alive && physics_circle(b5x, b5y, 8.0, e1x, e1y, 22.0) { b5alive = false; e1hp = e1hp - 1; if e1hp <= 0 { e1alive = false; kills = kills + 1; score = score + 100 } }
+            if b5alive && e2alive && physics_circle(b5x, b5y, 8.0, e2x, e2y, 22.0) { b5alive = false; e2hp = e2hp - 1; if e2hp <= 0 { e2alive = false; kills = kills + 1; score = score + 100 } }
+            if b5alive && e3alive && physics_circle(b5x, b5y, 8.0, e3x, e3y, 22.0) { b5alive = false; e3hp = e3hp - 1; if e3hp <= 0 { e3alive = false; kills = kills + 1; score = score + 100 } }
+            if b5alive && e4alive && physics_circle(b5x, b5y, 8.0, e4x, e4y, 22.0) { b5alive = false; e4hp = e4hp - 1; if e4hp <= 0 { e4alive = false; kills = kills + 1; score = score + 100 } }
 
-            if physics_circle(px,py,18.0,e1x,e1y,22.0) || physics_circle(px,py,18.0,e2x,e2y,22.0) || physics_circle(px,py,18.0,e3x,e3y,22.0) || physics_circle(px,py,18.0,e4x,e4y,22.0) {
+            if physics_circle(px, py, 18.0, e1x, e1y, 22.0) || physics_circle(px, py, 18.0, e2x, e2y, 22.0) || physics_circle(px, py, 18.0, e3x, e3y, 22.0) || physics_circle(px, py, 18.0, e4x, e4y, 22.0) {
                 hp = hp - 22.0 * dt
                 if hitCooldown <= 0.0 { gfx_sound_tone(180.0, 90, 0.14); hitCooldown = 0.3 }
             }
-            if hp <= 0.0 { hp=0.0; gameOver=true; gfx_sound_tone(90.0, 600, 0.2) }
+            if hp <= 0.0 { hp = 0.0; gameOver = true; gfx_sound_tone(90.0, 600, 0.2) }
 
             if e1alive == false {
                 if kills % 4 == 0 { e1x = arenaX + 70.0; e1y = arenaY + 70.0 }
@@ -217,7 +217,7 @@ fn main() {
                 else { e4x = arenaX + 70.0; e4y = arenaY + arenaH - 70.0 }
                 e4alive = true; e4hp = 2 + wave / 3
             }
-            wave = 1 + kills/10
+            wave = 1 + kills / 10
         }
 
         gfx_begin()
@@ -225,45 +225,45 @@ fn main() {
         gfx_rect(0.0, 0.0, to_f64(width), 82.0, 0.025, 0.04, 0.075, 1.0)
         gfx_text(28.0, 18.0, 2.5, "NEON SURVIVOR", 0.2, 0.85, 1.0, 1.0)
         gfx_text(28.0, 50.0, 1.2, "WASD  MOVE     MOUSE  AIM     LMB  FIRE     P  PAUSE     ESC  QUIT", 0.65, 0.75, 0.9, 1.0)
-        gfx_rect(arenaX-6.0, arenaY-6.0, arenaW+12.0, arenaH+12.0, 0.08, 0.2, 0.3, 1.0)
+        gfx_rect(arenaX - 6.0, arenaY - 6.0, arenaW + 12.0, arenaH + 12.0, 0.08, 0.2, 0.3, 1.0)
         gfx_rect(arenaX, arenaY, arenaW, arenaH, 0.015, 0.025, 0.045, 1.0)
-        gfx_line(arenaX+arenaW/2.0, arenaY, arenaX+arenaW/2.0, arenaY+arenaH, 0.06, 0.12, 0.18, 1.0, 1.0)
-        gfx_line(arenaX, arenaY+arenaH/2.0, arenaX+arenaW, arenaY+arenaH/2.0, 0.06, 0.12, 0.18, 1.0, 1.0)
+        gfx_line(arenaX + arenaW / 2.0, arenaY, arenaX + arenaW / 2.0, arenaY + arenaH, 0.06, 0.12, 0.18, 1.0, 1.0)
+        gfx_line(arenaX, arenaY + arenaH / 2.0, arenaX + arenaW, arenaY + arenaH / 2.0, 0.06, 0.12, 0.18, 1.0, 1.0)
 
-        if e1alive { gfx_circle(e1x,e1y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e1x,e1y,9.0,1.0,0.5,0.18,1.0) }
-        if e2alive { gfx_circle(e2x,e2y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e2x,e2y,9.0,1.0,0.5,0.18,1.0) }
-        if e3alive { gfx_circle(e3x,e3y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e3x,e3y,9.0,1.0,0.5,0.18,1.0) }
-        if e4alive { gfx_circle(e4x,e4y,22.0,0.95,0.18,0.32,1.0); gfx_circle(e4x,e4y,9.0,1.0,0.5,0.18,1.0) }
+        if e1alive { gfx_circle(e1x, e1y, 22.0, 0.95, 0.18, 0.32, 1.0); gfx_circle(e1x, e1y, 9.0, 1.0, 0.5, 0.18, 1.0) }
+        if e2alive { gfx_circle(e2x, e2y, 22.0, 0.95, 0.18, 0.32, 1.0); gfx_circle(e2x, e2y, 9.0, 1.0, 0.5, 0.18, 1.0) }
+        if e3alive { gfx_circle(e3x, e3y, 22.0, 0.95, 0.18, 0.32, 1.0); gfx_circle(e3x, e3y, 9.0, 1.0, 0.5, 0.18, 1.0) }
+        if e4alive { gfx_circle(e4x, e4y, 22.0, 0.95, 0.18, 0.32, 1.0); gfx_circle(e4x, e4y, 9.0, 1.0, 0.5, 0.18, 1.0) }
 
-        if b1alive { gfx_circle(b1x,b1y,6.0,0.9,0.95,1.0,1.0) }
-        if b2alive { gfx_circle(b2x,b2y,6.0,0.9,0.95,1.0,1.0) }
-        if b3alive { gfx_circle(b3x,b3y,6.0,0.9,0.95,1.0,1.0) }
-        if b4alive { gfx_circle(b4x,b4y,6.0,0.9,0.95,1.0,1.0) }
-        if b5alive { gfx_circle(b5x,b5y,6.0,0.9,0.95,1.0,1.0) }
+        if b1alive { gfx_circle(b1x, b1y, 6.0, 0.9, 0.95, 1.0, 1.0) }
+        if b2alive { gfx_circle(b2x, b2y, 6.0, 0.9, 0.95, 1.0, 1.0) }
+        if b3alive { gfx_circle(b3x, b3y, 6.0, 0.9, 0.95, 1.0, 1.0) }
+        if b4alive { gfx_circle(b4x, b4y, 6.0, 0.9, 0.95, 1.0, 1.0) }
+        if b5alive { gfx_circle(b5x, b5y, 6.0, 0.9, 0.95, 1.0, 1.0) }
 
-        gfx_circle(px,py,18.0,0.15,0.85,1.0,1.0)
-        gfx_circle(px,py,8.0,0.9,1.0,1.0,1.0)
+        gfx_circle(px, py, 18.0, 0.15, 0.85, 1.0, 1.0)
+        gfx_circle(px, py, 8.0, 0.9, 1.0, 1.0, 1.0)
         gfx_line(px, py, gfx_mouse_x(), gfx_mouse_y(), 0.15, 0.5, 0.7, 0.35, 1.0)
 
-        gfx_text(arenaX, arenaY+arenaH+18.0, 1.4, "HP", 0.8,0.85,0.95,1.0)
-        gfx_rect(arenaX+42.0, arenaY+arenaH+14.0, 240.0, 22.0, 0.08,0.1,0.14,1.0)
-        gfx_rect(arenaX+42.0, arenaY+arenaH+14.0, 240.0*(hp/100.0), 22.0, 0.12,0.82,0.46,1.0)
-        gfx_text(arenaX+300.0, arenaY+arenaH+18.0, 1.4, "SCORE " + str_i64(score), 0.7,0.8,1.0,1.0)
-        gfx_text(arenaX+500.0, arenaY+arenaH+18.0, 1.4, "WAVE " + str_i64(wave), 0.8,0.55,1.0,1.0)
-        gfx_text(arenaX+680.0, arenaY+arenaH+18.0, 1.4, "KILLS " + str_i64(kills), 0.95,0.7,0.35,1.0)
+        gfx_text(arenaX, arenaY + arenaH + 18.0, 1.4, "HP", 0.8, 0.85, 0.95, 1.0)
+        gfx_rect(arenaX + 42.0, arenaY + arenaH + 14.0, 240.0, 22.0, 0.08, 0.1, 0.14, 1.0)
+        gfx_rect(arenaX + 42.0, arenaY + arenaH + 14.0, 240.0 *(hp / 100.0), 22.0, 0.12, 0.82, 0.46, 1.0)
+        gfx_text(arenaX + 300.0, arenaY + arenaH + 18.0, 1.4, "SCORE " + str_i64(score), 0.7, 0.8, 1.0, 1.0)
+        gfx_text(arenaX + 500.0, arenaY + arenaH + 18.0, 1.4, "WAVE " + str_i64(wave), 0.8, 0.55, 1.0, 1.0)
+        gfx_text(arenaX + 680.0, arenaY + arenaH + 18.0, 1.4, "KILLS " + str_i64(kills), 0.95, 0.7, 0.35, 1.0)
 
         if paused {
-            gfx_rect(arenaX+320.0, arenaY+190.0, 340.0, 120.0, 0.03,0.05,0.09,0.94)
-            gfx_text(arenaX+410.0, arenaY+235.0, 2.6, "PAUSED", 0.55,0.9,1.0,1.0)
-            gfx_text(arenaX+365.0, arenaY+272.0, 1.3, "PRESS P TO CONTINUE", 0.75,0.8,0.9,1.0)
+            gfx_rect(arenaX + 320.0, arenaY + 190.0, 340.0, 120.0, 0.03, 0.05, 0.09, 0.94)
+            gfx_text(arenaX + 410.0, arenaY + 235.0, 2.6, "PAUSED", 0.55, 0.9, 1.0, 1.0)
+            gfx_text(arenaX + 365.0, arenaY + 272.0, 1.3, "PRESS P TO CONTINUE", 0.75, 0.8, 0.9, 1.0)
         }
         if gameOver {
-            gfx_rect(arenaX+270.0, arenaY+160.0, 440.0, 200.0, 0.04,0.02,0.05,0.96)
-            gfx_text(arenaX+370.0, arenaY+210.0, 3.0, "GAME OVER", 1.0,0.25,0.35,1.0)
-            gfx_text(arenaX+390.0, arenaY+255.0, 1.7, "SCORE " + str_i64(score), 0.85,0.9,1.0,1.0)
-            gfx_text(arenaX+350.0, arenaY+292.0, 1.2, "RESTART WITH ENTER OR ESC TO QUIT", 0.75,0.8,0.9,1.0)
+            gfx_rect(arenaX + 270.0, arenaY + 160.0, 440.0, 200.0, 0.04, 0.02, 0.05, 0.96)
+            gfx_text(arenaX + 370.0, arenaY + 210.0, 3.0, "GAME OVER", 1.0, 0.25, 0.35, 1.0)
+            gfx_text(arenaX + 390.0, arenaY + 255.0, 1.7, "SCORE " + str_i64(score), 0.85, 0.9, 1.0, 1.0)
+            gfx_text(arenaX + 350.0, arenaY + 292.0, 1.2, "RESTART WITH ENTER OR ESC TO QUIT", 0.75, 0.8, 0.9, 1.0)
             if gfx_key_down("ENTER") {
-                score=0;kills=0;wave=1;hp=100.0;gameOver=false;px=centerX;py=centerY;e1alive=true;e2alive=true;e3alive=true;e4alive=true;e1hp=2;e2hp=2;e3hp=2;e4hp=2;gfx_sound_tone(760.0,100,0.16)
+                score = 0; kills = 0; wave = 1; hp = 100.0; gameOver = false; px = centerX; py = centerY; e1alive = true; e2alive = true; e3alive = true; e4alive = true; e1hp = 2; e2hp = 2; e3hp = 2; e4hp = 2; gfx_sound_tone(760.0, 100, 0.16)
             }
         }
         gfx_end()

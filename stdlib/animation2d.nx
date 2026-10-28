@@ -2,7 +2,7 @@
 import std.math
 
 fn animation2d_frame_at(elapsed_seconds: f64, frame_count: i64, frames_per_second: f64,
-                         looped: bool) -> i64 {
+looped: bool) -> i64 {
     if frame_count <= 0 || frames_per_second <= 0.0 { return 0 }
     let mut elapsed = elapsed_seconds
     if elapsed < 0.0 { elapsed = 0.0 }
@@ -28,7 +28,7 @@ fn animation2d_ease_in(amount: f64) -> f64 {
 
 fn animation2d_ease_out(amount: f64) -> f64 {
     let t = math_clamp(amount, 0.0, 1.0)
-    return 1.0 - (1.0 - t) * (1.0 - t)
+    return 1.0 -(1.0 - t) *(1.0 - t)
 }
 
 fn animation2d_ease_in_out(amount: f64) -> f64 {
@@ -40,7 +40,7 @@ fn animation2d_ease_in_out(amount: f64) -> f64 {
 
 fn animation2d_smoothstep(amount: f64) -> f64 {
     let t = math_clamp(amount, 0.0, 1.0)
-    return t * t * (3.0 - 2.0 * t)
+    return t * t *(3.0 - 2.0 * t)
 }
 
 // Repeating triangle wave from 0 to 1 to 0; non-positive duration returns 0.
@@ -50,7 +50,7 @@ fn animation2d_ping_pong(elapsed_seconds: f64, duration: f64) -> f64 {
     if t < 0.0 { t = 0.0 }
     let whole = math_floor(t / duration)
     let phase = whole % 2
-    let local = (t / duration) - to_f64(whole)
+    let local =(t / duration) - to_f64(whole)
     if phase == 0 { return local }
     return 1.0 - local
 }
@@ -67,6 +67,6 @@ fn animation2d_progress(elapsed_seconds: f64, duration: f64, looped: bool) -> f6
     let mut elapsed = elapsed_seconds
     if elapsed < 0.0 { elapsed = 0.0 }
     let amount = elapsed / duration
-    if !looped { return math_clamp(amount, 0.0, 1.0) }
+    if ! looped { return math_clamp(amount, 0.0, 1.0) }
     return amount - to_f64(math_floor(amount))
 }

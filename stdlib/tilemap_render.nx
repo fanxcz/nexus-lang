@@ -3,8 +3,8 @@ import std.tilemap
 import std.math
 
 fn tilemap_render_draw(map: i64, map_width: i64, map_height: i64, tile_size: f64,
-                       view_x: f64, view_y: f64, view_width: f64, view_height: f64) {
-    if !tilemap_valid(map, map_width, map_height) { return }
+view_x: f64, view_y: f64, view_width: f64, view_height: f64) {
+    if ! tilemap_valid(map, map_width, map_height) { return }
     if tile_size < 1.0 || view_width <= 0.0 || view_height <= 0.0 { return }
 
     let mut start_x = math_floor(view_x / tile_size)

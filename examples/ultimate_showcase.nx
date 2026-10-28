@@ -1,6 +1,6 @@
 fn main() {
     let ok = gfx_init(1280, 720, "NEXUS 0.6 Ultimate Showcase")
-    if !ok {
+    if ! ok {
         print("Graphics unavailable: " + gfx_error())
         return
     }
@@ -10,7 +10,7 @@ fn main() {
     let enemy = ecs_create()
     ecs_set_position(hero, 300.0, 330.0)
     ecs_set_position(enemy, 800.0, 330.0)
-    ecs_set_velocity(enemy, -80.0, 0.0)
+    ecs_set_velocity(enemy,-80.0, 0.0)
     ecs_set_size(hero, 72.0, 72.0)
     ecs_set_size(enemy, 64.0, 64.0)
     ecs_set_color(hero, 0.2, 0.85, 1.0, 1.0)
@@ -64,7 +64,7 @@ fn main() {
     }
 
     gfx_music_stop()
-    if music != 0 { }
+    if music != 0 {}
     if font != 0 { gfx_font_unload(font) }
     if playerTex != 0 { gfx_texture_unload(playerTex) }
     ecs_destroy(hero)

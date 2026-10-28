@@ -2,5 +2,5 @@ fn main() {
     print("string.len: " + str_i64(string.len("Hello")))
     print("string.byte_at: " + str_i64(string.byte_at("Hello", 0)))
     print("string.byte_at OOB: " + str_i64(string.byte_at("Hello", 10)))
-    print("string.byte_at neg: " + str_i64(string.byte_at("Hello", -1)))
+    print("string.byte_at neg: " + str_i64(string.byte_at("Hello",-1)))
 }

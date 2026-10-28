@@ -78,7 +78,7 @@ fn ident_name(node: string) -> string {
     ilist_push(p, 0)
     let body = node_body(node)
     skip_ws(body, p)
-    read_node(body, p)  // ident
+    read_node(body, p) // ident
     return read_node(body, p)
 }
 
@@ -165,7 +165,7 @@ fn infer_type(node: string, names: i64, types: i64, fns: i64, frets: i64) -> str
         let rhs = read_node(body, p)
         let lt = infer_type(lhs, names, types, fns, frets)
         let rt = infer_type(rhs, names, types, fns, frets)
-        if h == "+" && (lt == "string" || rt == "string") {
+        if h == "+" &&(lt == "string" || rt == "string") {
             return "string"
         }
         if lt == "f64" || rt == "f64" {
@@ -337,7 +337,7 @@ fn gen_expr(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         while arg_node != "" {
             let v = gen_expr(arg_node, names, types, out, reg, globals, fns, frets)
             let at = infer_type(arg_node, names, types, fns, frets)
-            if !first {
+            if ! first {
                 arg_str = arg_str + ", "
             }
             arg_str = arg_str + llvm_type(at) + " " + v
@@ -379,7 +379,7 @@ fn gen_stmt(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         let v = gen_expr(value, names, types, out, reg, globals, fns, frets)
         let want = env_lookup_type(names, types, name)
         let st = want
-        if want == "" { }
+        if want == "" {}
         else {
             // store using variable's declared type
         }
@@ -464,18 +464,18 @@ fn gen_stmt(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         }
         emit_line(out, l_then + ":")
         let tt = gen_block(then_block, names, types, out, reg, globals, fns, frets, ret_ty, break_lbl, cont_lbl)
-        if !tt {
+        if ! tt {
             emit_line(out, "  br label %" + l_end)
         }
         let mut et = false
         if else_block != "" {
             emit_line(out, l_else + ":")
             et = gen_block(else_block, names, types, out, reg, globals, fns, frets, ret_ty, break_lbl, cont_lbl)
-            if !et {
+            if ! et {
                 emit_line(out, "  br label %" + l_end)
             }
         }
-        if tt && (else_block != "" && et) {
+        if tt &&(else_block != "" && et) {
             return true
         }
         if else_block == "" {
@@ -507,7 +507,7 @@ fn gen_stmt(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         emit_line(out, "  br i1 " + c + ", label %" + l_body + ", label %" + l_end)
         emit_line(out, l_body + ":")
         let bt = gen_block(for_body, names, types, out, reg, globals, fns, frets, ret_ty, l_end, l_inc)
-        if !bt {
+        if ! bt {
             emit_line(out, "  br label %" + l_inc)
         }
         emit_line(out, l_inc + ":")
@@ -532,7 +532,7 @@ fn gen_stmt(node: string, names: i64, types: i64, out: i64, reg: i64, globals: i
         emit_line(out, "  br i1 " + c + ", label %" + l_body + ", label %" + l_end)
         emit_line(out, l_body + ":")
         let bt = gen_block(block, names, types, out, reg, globals, fns, frets, ret_ty, l_end, l_top)
-        if !bt {
+        if ! bt {
             emit_line(out, "  br label %" + l_top)
         }
         emit_line(out, l_end + ":")
@@ -618,7 +618,7 @@ fn codegen(src: string) -> string {
             ilist_push(qp, 0)
             let b = node_body(nd)
             skip_ws(b, qp)
-            read_node(b, qp)  // fn
+            read_node(b, qp) // fn
             let nm = read_node(b, qp)
             if nm == "main" {
                 has_main = true
@@ -643,7 +643,7 @@ fn codegen(src: string) -> string {
     emit_line(mod, "declare i1 @nexus_str_equal(ptr, ptr)")
     emit_line(mod, "")
 
-    if !has_fn {
+    if ! has_fn {
         let body_lines = slist_new()
         emit_line(body_lines, "define i32 @main() {")
         emit_line(body_lines, "entry:")
@@ -656,7 +656,7 @@ fn codegen(src: string) -> string {
             gen_stmt(slist_get(nodes, k), names, types, body_lines, reg, globals, fns, frets, "i32", "", "")
             k = k + 1
         }
-        if !starts_with(last_line(body_lines), "  ret ") {
+        if ! starts_with(last_line(body_lines), "  ret ") {
             emit_line(body_lines, "  ret i32 0")
         }
         emit_line(body_lines, "}")
@@ -677,7 +677,7 @@ fn codegen(src: string) -> string {
                 ilist_push(bp, 0)
                 let b = node_body(nd)
                 skip_ws(b, bp)
-                read_node(b, bp)  // fn
+                read_node(b, bp) // fn
                 let name = read_node(b, bp)
                 let params_node = read_node(b, bp)
                 let ret_node = read_node(b, bp)
@@ -690,14 +690,14 @@ fn codegen(src: string) -> string {
                 ilist_push(pp, 0)
                 let params_body = node_body(params_node)
                 skip_ws(params_body, pp)
-                read_node(params_body, pp)  // params
+                read_node(params_body, pp) // params
                 let mut pr = read_node(params_body, pp)
                 while pr != "" {
                     let rpp = ilist_new()
                     ilist_push(rpp, 0)
                     let pb = node_body(pr)
                     skip_ws(pb, rpp)
-                    read_node(pb, rpp)  // param
+                    read_node(pb, rpp) // param
                     let pname = read_node(pb, rpp)
                     let ptype = read_node(pb, rpp)
                     slist_push(param_names, pname)
@@ -710,7 +710,7 @@ fn codegen(src: string) -> string {
                 ilist_push(rrp, 0)
                 let rb = node_body(ret_node)
                 skip_ws(rb, rrp)
-                read_node(rb, rrp)  // ret
+                read_node(rb, rrp) // ret
                 let ret_type_atom = read_node(rb, rrp)
                 let mut ret_ty = ret_type_atom
                 if ret_ty == "" {
@@ -754,7 +754,7 @@ fn codegen(src: string) -> string {
                     j = j + 1
                 }
                 let term = gen_block(fn_body, names, types, body_lines, reg, globals, fns, frets, ret_ty, "", "")
-                if !term && !starts_with(last_line(body_lines), "  ret ") {
+                if ! term && !starts_with(last_line(body_lines), "  ret ") {
                     if name == "main" {
                         emit_line(body_lines, "  ret i32 0")
                     } else {
@@ -776,7 +776,7 @@ fn codegen(src: string) -> string {
         }
 
         // implicit main from top-level statements if no explicit main
-        if !has_main {
+        if ! has_main {
             let stmts = slist_new()
             let mut j = 0
             while j < slist_len(nodes) {
@@ -799,7 +799,7 @@ fn codegen(src: string) -> string {
                     gen_stmt(slist_get(stmts, k), names, types, body_lines, reg, globals, fns, frets, "i32", "", "")
                     k = k + 1
                 }
-                if !starts_with(last_line(body_lines), "  ret ") {
+                if ! starts_with(last_line(body_lines), "  ret ") {
                     emit_line(body_lines, "  ret i32 0")
                 }
                 emit_line(body_lines, "}")

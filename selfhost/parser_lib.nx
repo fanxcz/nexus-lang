@@ -106,7 +106,7 @@ fn parse_primary(t: i64, p: i64) -> string {
         if string.slice(inner, 0, 5) == "error" {
             return inner
         }
-        if !eat(t, p, "RParen") {
+        if ! eat(t, p, "RParen") {
             return "error expected )"
         }
         return inner
@@ -152,7 +152,7 @@ fn parse_call(t: i64, p: i64) -> string {
                 args = args + " " + b
             }
         }
-        if !eat(t, p, "RParen") {
+        if ! eat(t, p, "RParen") {
             return "error expected ) after arguments"
         }
         node = args + ")"
@@ -185,7 +185,7 @@ fn fold_ops(t: i64, p: i64, ops: i64, tighter: i64, tighter_kind: i64) -> string
     }
     let mut node = lhs
     let mut done = false
-    while !done {
+    while ! done {
         let kind = cur_kind(t, p)
         let mut matched = false
         let k = slist_len(ops)
@@ -196,7 +196,7 @@ fn fold_ops(t: i64, p: i64, ops: i64, tighter: i64, tighter_kind: i64) -> string
             }
             oi = oi + 1
         }
-        if !matched {
+        if ! matched {
             done = true
         } else {
             bump(t, p)
@@ -281,7 +281,7 @@ fn parse_param(t: i64, p: i64) -> string {
     }
     let name = cur_text(t, p)
     bump(t, p)
-    if !eat(t, p, "Colon") {
+    if ! eat(t, p, "Colon") {
         return "error expected : in parameter"
     }
     if cur_kind(t, p) != "Identifier" {
@@ -293,7 +293,7 @@ fn parse_param(t: i64, p: i64) -> string {
 }
 
 fn parse_fn(t: i64, p: i64) -> string {
-    if !eat(t, p, "KwFn") {
+    if ! eat(t, p, "KwFn") {
         return "error expected fn"
     }
     if cur_kind(t, p) != "Identifier" {
@@ -301,7 +301,7 @@ fn parse_fn(t: i64, p: i64) -> string {
     }
     let name = cur_text(t, p)
     bump(t, p)
-    if !eat(t, p, "LParen") {
+    if ! eat(t, p, "LParen") {
         return "error expected ( after function name"
     }
     let mut params = "(params"
@@ -320,7 +320,7 @@ fn parse_fn(t: i64, p: i64) -> string {
         }
     }
     params = params + ")"
-    if !eat(t, p, "RParen") {
+    if ! eat(t, p, "RParen") {
         return "error expected ) in parameter list"
     }
     let mut ret = "(ret)"
@@ -343,7 +343,7 @@ fn parse_fn(t: i64, p: i64) -> string {
 // ---- statements ----
 
 fn parse_block(t: i64, p: i64) -> string {
-    if !eat(t, p, "LBrace") {
+    if ! eat(t, p, "LBrace") {
         return "error expected {"
     }
     let mut out = "(block"
@@ -354,7 +354,7 @@ fn parse_block(t: i64, p: i64) -> string {
         }
         out = out + "\n  " + s
     }
-    if !eat(t, p, "RBrace") {
+    if ! eat(t, p, "RBrace") {
         return "error expected }"
     }
     return out + ")"
@@ -376,7 +376,7 @@ fn parse_stmt(t: i64, p: i64) -> string {
         }
         let name = cur_text(t, p)
         bump(t, p)
-        if !eat(t, p, "Equal") {
+        if ! eat(t, p, "Equal") {
             return "error expected = in let"
         }
         let init = parse_or(t, p)
@@ -445,14 +445,14 @@ fn parse_stmt(t: i64, p: i64) -> string {
         }
         let var = cur_text(t, p)
         bump(t, p)
-        if !eat(t, p, "KwIn") {
+        if ! eat(t, p, "KwIn") {
             return "error expected in"
         }
         let start = parse_or(t, p)
         if string.slice(start, 0, 5) == "error" {
             return start
         }
-        if !eat(t, p, "DotDot") {
+        if ! eat(t, p, "DotDot") {
             return "error expected .. in for loop"
         }
         let endv = parse_or(t, p)
@@ -517,13 +517,13 @@ fn tokenize_into(t: i64, src: string) -> bool {
 
 fn parse(src: string) -> string {
     let t = slist_new()
-    if !tokenize_into(t, src) {
+    if ! tokenize_into(t, src) {
         return "error lexical error"
     }
     let p = ilist_new()
     ilist_push(p, 0)
     let mut out = ""
-    while !at_end(t, p) && cur_kind(t, p) != "End" {
+    while ! at_end(t, p) && cur_kind(t, p) != "End" {
         let s = parse_stmt(t, p)
         if string.slice(s, 0, 5) == "error" {
             return s

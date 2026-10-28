@@ -14,7 +14,7 @@ fn blocked(x: f64, y: f64) -> bool {
 }
 
 fn main() {
-    if !engine2d_init(960, 640, "NEXUS Vector Lab") {
+    if ! engine2d_init(960, 640, "NEXUS Vector Lab") {
         print("Graphics initialization failed: " + gfx_error())
         return
     }
@@ -25,7 +25,7 @@ fn main() {
     let mut score = 0
     let mut beacon = 0
 
-    while !engine2d_should_close() {
+    while ! engine2d_should_close() {
         engine2d_begin_frame(0.018, 0.027, 0.045, 1.0)
         let dt = math_clamp(engine2d_delta_time(), 0.0, 0.05)
         elapsed = elapsed + dt
@@ -50,9 +50,9 @@ fn main() {
         // Resolve X and Y independently so the player slides along obstacles.
         let delta = vec2_scale(velocity, dt)
         let next_x = player.x + delta.x
-        if !blocked(next_x, player.y) { player.x = next_x }
+        if ! blocked(next_x, player.y) { player.x = next_x }
         let next_y = player.y + delta.y
-        if !blocked(player.x, next_y) { player.y = next_y }
+        if ! blocked(player.x, next_y) { player.y = next_y }
 
         if player.x < 18.0 { player.x = 18.0 }
         if player.x > 942.0 { player.x = 942.0 }
@@ -65,29 +65,29 @@ fn main() {
         if beacon == 2 { beacon_x = 190.0; beacon_y = 120.0 }
         if collision2d_circle(player.x, player.y, 18.0, beacon_x, beacon_y, 18.0) {
             score = score + 1
-            beacon = (beacon + 1) % 3
+            beacon =(beacon + 1) % 3
         }
 
         // Quiet background grid.
         let mut gx = 0
         while gx <= 24 {
             engine2d_draw_rect(to_f64(gx) * 40.0, 80.0, 1.0, 560.0,
-                               0.18, 0.23, 0.29, 0.28)
+            0.18, 0.23, 0.29, 0.28)
             gx = gx + 1
         }
         let mut gy = 2
         while gy <= 16 {
             engine2d_draw_rect(0.0, to_f64(gy) * 40.0, 960.0, 1.0,
-                               0.18, 0.23, 0.29, 0.28)
+            0.18, 0.23, 0.29, 0.28)
             gy = gy + 1
         }
 
         engine2d_draw_rect(0.0, 0.0, 960.0, 72.0, 0.035, 0.049, 0.073, 1.0)
         engine2d_draw_rect(0.0, 70.0, 960.0, 2.0, 0.20, 0.78, 0.92, 0.8)
         engine2d_draw_text(24.0, 18.0, 2.0, "NEXUS VECTOR LAB",
-                           0.86, 0.94, 1.0, 1.0)
+        0.86, 0.94, 1.0, 1.0)
         engine2d_draw_text(26.0, 48.0, 1.0, "MOVE: WASD / ARROWS    AVOID AMBER BLOCKS    COLLECT BEACONS",
-                           0.57, 0.68, 0.78, 1.0)
+        0.57, 0.68, 0.78, 1.0)
 
         // Obstacles have an outer rim and a darker inset for depth.
         engine2d_draw_rect(326.0, 91.0, 98.0, 228.0, 0.78, 0.48, 0.16, 1.0)
@@ -100,25 +100,25 @@ fn main() {
         let pulse = animation2d_ping_pong(elapsed, 0.65)
         let pulse_radius = 16.0 + 9.0 * pulse
         engine2d_draw_circle(beacon_x, beacon_y, pulse_radius + 8.0,
-                             0.10, 0.76, 0.92, 0.18)
+        0.10, 0.76, 0.92, 0.18)
         engine2d_draw_circle(beacon_x, beacon_y, pulse_radius,
-                             0.10, 0.76, 0.92, 0.95)
+        0.10, 0.76, 0.92, 0.95)
         engine2d_draw_circle(beacon_x, beacon_y, 5.0,
-                             0.92, 0.98, 1.0, 1.0)
+        0.92, 0.98, 1.0, 1.0)
 
         // Vector-based player rendering makes the current position explicit.
         engine2d_draw_circle(player.x, player.y, 24.0, 0.13, 0.55, 0.84, 0.35)
         engine2d_draw_circle(player.x, player.y, 18.0, 0.22, 0.78, 1.0, 1.0)
         engine2d_draw_circle(player.x - 5.0, player.y - 5.0, 5.0,
-                             0.92, 0.98, 1.0, 1.0)
+        0.92, 0.98, 1.0, 1.0)
 
         engine2d_draw_rect(760.0, 82.0, 180.0, 54.0, 0.035, 0.049, 0.073, 0.96)
         engine2d_draw_text(777.0, 91.0, 1.0, "BEACONS", 0.57, 0.68, 0.78, 1.0)
         engine2d_draw_text(777.0, 108.0, 1.25, str_i64(score),
-                           0.25, 0.86, 0.96, 1.0)
+        0.25, 0.86, 0.96, 1.0)
         engine2d_draw_text(24.0, 596.0, 1.0,
-                           "Vec2 length: " + str_i64(to_i64(vec2_length(player))),
-                           0.65, 0.73, 0.80, 1.0)
+        "Vec2 length: " + str_i64(to_i64(vec2_length(player))),
+        0.65, 0.73, 0.80, 1.0)
 
         engine2d_end_frame()
     }

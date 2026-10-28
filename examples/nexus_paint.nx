@@ -72,7 +72,7 @@ fn main() {
     const CANVAS_HEIGHT: f64 = 720.0
 
     let ok = gfx_init(1400, 900, "Nexus Paint")
-    if !ok {
+    if ! ok {
         print("Graphics backend unavailable: " + gfx_error())
         return
     }
@@ -82,9 +82,9 @@ fn main() {
     gfx_vsync(true)
 
     let mut canvas = gfx_canvas_create(
-        to_i64(CANVAS_WIDTH),
-        to_i64(CANVAS_HEIGHT),
-        1.0, 1.0, 1.0, 1.0
+    to_i64(CANVAS_WIDTH),
+    to_i64(CANVAS_HEIGHT),
+    1.0, 1.0, 1.0, 1.0
     )
 
     if canvas == 0 {
@@ -107,7 +107,7 @@ fn main() {
     let mut f11_down = false
     let mut fullscreen = false
 
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
 
         let f11 = gfx_key_down("F11")
@@ -133,26 +133,26 @@ fn main() {
         let display_width = CANVAS_WIDTH * scale
         let display_height = CANVAS_HEIGHT * scale
 
-        let canvas_left = canvas_x + (canvas_area_width - display_width) * 0.5
-        let canvas_top = canvas_y + (canvas_area_height - display_height) * 0.5
+        let canvas_left = canvas_x +(canvas_area_width - display_width) * 0.5
+        let canvas_top = canvas_y +(canvas_area_height - display_height) * 0.5
         let panel_x = canvas_x + canvas_area_width + GAP
 
         let mouse_x = gfx_mouse_x()
         let mouse_y = gfx_mouse_y()
 
         let inside_canvas =
-            mouse_x >= canvas_left && mouse_x < canvas_left + display_width &&
-            mouse_y >= canvas_top && mouse_y < canvas_top + display_height
+        mouse_x >= canvas_left && mouse_x < canvas_left + display_width &&
+        mouse_y >= canvas_top && mouse_y < canvas_top + display_height
 
         let image_x = clamp_f64(
-            (mouse_x - canvas_left) / scale,
-            0.0,
-            CANVAS_WIDTH - 1.0
+        (mouse_x - canvas_left) / scale,
+        0.0,
+        CANVAS_WIDTH - 1.0
         )
         let image_y = clamp_f64(
-            (mouse_y - canvas_top) / scale,
-            0.0,
-            CANVAS_HEIGHT - 1.0
+        (mouse_y - canvas_top) / scale,
+        0.0,
+        CANVAS_HEIGHT - 1.0
         )
 
         if gfx_event_is("mouse_down") && gfx_event_mouse_button() == 1 && inside_canvas {
@@ -181,12 +181,12 @@ fn main() {
         if drawing && gfx_mouse_down(1) && inside_canvas {
             if tool == 0 {
                 gfx_canvas_line(canvas, last_x, last_y, image_x, image_y,
-                    brush_size, red, green, blue, 1.0)
+                brush_size, red, green, blue, 1.0)
             }
 
             if tool == 1 {
                 gfx_canvas_line(canvas, last_x, last_y, image_x, image_y,
-                    brush_size, 1.0, 1.0, 1.0, 1.0)
+                brush_size, 1.0, 1.0, 1.0, 1.0)
             }
 
             last_x = image_x
@@ -196,14 +196,14 @@ fn main() {
         if drawing && gfx_event_is("mouse_up") && gfx_event_mouse_button() == 1 {
             if tool == 2 {
                 gfx_canvas_line(canvas, start_x, start_y, image_x, image_y,
-                    brush_size, red, green, blue, 1.0)
+                brush_size, red, green, blue, 1.0)
                 status = "Line"
             }
 
             if tool == 4 {
                 gfx_canvas_rect(canvas, start_x, start_y,
-                    image_x - start_x, image_y - start_y,
-                    brush_size, red, green, blue, 1.0, false)
+                image_x - start_x, image_y - start_y,
+                brush_size, red, green, blue, 1.0, false)
                 status = "Rectangle"
             }
 
@@ -214,21 +214,21 @@ fn main() {
         gfx_clear(0.055, 0.06, 0.085, 1.0)
 
         gfx_rect(0.0, 0.0, UI_WIDTH, TOOLBAR_HEIGHT,
-            0.040, 0.045, 0.070, 1.0)
+        0.040, 0.045, 0.070, 1.0)
 
         gfx_rect(canvas_left - 12.0, canvas_top - 12.0,
-            display_width + 24.0, display_height + 24.0,
-            0.12, 0.13, 0.17, 1.0)
+        display_width + 24.0, display_height + 24.0,
+        0.12, 0.13, 0.17, 1.0)
 
         gfx_canvas_draw(canvas, canvas_left, canvas_top,
-            display_width, display_height, 1.0)
+        display_width, display_height, 1.0)
 
         gfx_rect(panel_x, canvas_y, PANEL_WIDTH, canvas_area_height,
-            0.040, 0.045, 0.070, 1.0)
+        0.040, 0.045, 0.070, 1.0)
 
         gfx_rect(panel_x + 16.0, canvas_y + 16.0,
-            PANEL_WIDTH - 32.0, 2.0,
-            0.10, 0.30, 0.85, 1.0)
+        PANEL_WIDTH - 32.0, 2.0,
+        0.10, 0.30, 0.85, 1.0)
 
         let button_y = 16.0
         if ui_button(18.0, button_y, 82.0, 40.0, "NEW") {
@@ -277,11 +277,11 @@ fn main() {
         for i in 0..10 {
             let px = 18.0 + to_f64(i) * 36.0
             gfx_rect(px, 66.0, 28.0, 20.0,
-                palette_r(i), palette_g(i), palette_b(i), 1.0)
+            palette_r(i), palette_g(i), palette_b(i), 1.0)
 
             if gfx_event_is("mouse_down") && gfx_event_mouse_button() == 1 &&
-                mouse_x >= px && mouse_x <= px + 28.0 &&
-                mouse_y >= 66.0 && mouse_y <= 86.0 {
+            mouse_x >= px && mouse_x <= px + 28.0 &&
+            mouse_y >= 66.0 && mouse_y <= 86.0 {
                 red = palette_r(i)
                 green = palette_g(i)
                 blue = palette_b(i)
@@ -290,8 +290,8 @@ fn main() {
         }
 
         brush_size = 2.0 + ui_slider(
-            420.0, 65.0, 180.0, 22.0,
-            (brush_size - 2.0) / 62.0
+        420.0, 65.0, 180.0, 22.0,
+        (brush_size - 2.0) / 62.0
         ) * 62.0
 
         ui_label(620.0, 69.0, "SIZE", 0.85)
@@ -306,8 +306,8 @@ fn main() {
         ui_label(info_x, canvas_y + 180.0, "LINE / RECT / FILL", 0.86)
         ui_label(info_x, canvas_y + 224.0, "CANVAS", 1.15)
         ui_label(info_x, canvas_y + 254.0,
-            str_i64(gfx_canvas_width(canvas)) + " x " +
-            str_i64(gfx_canvas_height(canvas)), 0.86)
+        str_i64(gfx_canvas_width(canvas)) + " x " +
+        str_i64(gfx_canvas_height(canvas)), 0.86)
         ui_label(info_x, canvas_y + 294.0, "VIEW", 1.15)
         ui_label(info_x, canvas_y + 324.0, str_f64(scale) + "x", 0.86)
         ui_label(info_x, canvas_y + 348.0, "F11: FULLSCREEN", 0.86)
@@ -321,8 +321,8 @@ fn main() {
 
         if inside_canvas {
             gfx_circle(mouse_x, mouse_y,
-                brush_size * 0.5 + 1.0,
-                red, green, blue, 0.8)
+            brush_size * 0.5 + 1.0,
+            red, green, blue, 0.8)
         }
 
         gfx_end()

@@ -1,6 +1,6 @@
 fn main() {
     let ok = gfx_init(1400, 800, "NEXUS Scene Editor")
-    if !ok {
+    if ! ok {
         print("Graphics backend unavailable: " + gfx_error())
         return
     }

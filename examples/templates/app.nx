@@ -1,14 +1,14 @@
 fn main() {
     let ok = gfx_init(1000, 640, "NEXUS App")
-    if !ok { print("Graphics backend unavailable: " + gfx_error()); return }
+    if ! ok { print("Graphics backend unavailable: " + gfx_error()); return }
     let mut clicks: i64 = 0
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
         if gfx_key_down("ESC") { break }
         let mx = gfx_mouse_x()
         let my = gfx_mouse_y()
         if gfx_mouse_clicked(1) && mx >= 80.0 && mx <= 400.0 &&
-           my >= 230.0 && my <= 350.0 { clicks = clicks + 1 }
+        my >= 230.0 && my <= 350.0 { clicks = clicks + 1 }
         gfx_begin()
         gfx_clear(0.035, 0.045, 0.08, 1.0)
         gfx_rect(40.0, 40.0, 920.0, 110.0, 0.07, 0.12, 0.22, 1.0)

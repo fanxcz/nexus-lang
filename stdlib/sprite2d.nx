@@ -20,26 +20,26 @@ fn sprite2d_draw_texture(texture: i64, x: f64, y: f64, width: f64, height: f64) 
 }
 
 fn sprite2d_draw_frame(texture: i64, x: f64, y: f64, width: f64, height: f64,
-                       frame: i64, frame_width: i64, frame_height: i64, columns: i64) {
+frame: i64, frame_width: i64, frame_height: i64, columns: i64) {
     gfx_texture_draw_frame(texture, x, y, width, height, frame,
-                           frame_width, frame_height, columns, 1.0, 1.0, 1.0, 1.0)
+    frame_width, frame_height, columns, 1.0, 1.0, 1.0, 1.0)
 }
 
 
 // Explicitly tinted variants are useful for flashes, team colors and fade effects.
 fn sprite2d_draw_tinted_texture(texture: i64, x: f64, y: f64, width: f64, height: f64,
-                                red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     if texture <= 0 || width <= 0.0 || height <= 0.0 { return }
     gfx_texture_draw(texture, x, y, width, height, red, green, blue, alpha)
 }
 
 fn sprite2d_draw_tinted_frame(texture: i64, x: f64, y: f64, width: f64, height: f64,
-                              frame: i64, frame_width: i64, frame_height: i64, columns: i64,
-                              red: f64, green: f64, blue: f64, alpha: f64) {
+frame: i64, frame_width: i64, frame_height: i64, columns: i64,
+red: f64, green: f64, blue: f64, alpha: f64) {
     if texture <= 0 || width <= 0.0 || height <= 0.0 { return }
     if frame_width <= 0 || frame_height <= 0 || columns <= 0 || frame < 0 { return }
     gfx_texture_draw_frame(texture, x, y, width, height, frame,
-                           frame_width, frame_height, columns, red, green, blue, alpha)
+    frame_width, frame_height, columns, red, green, blue, alpha)
 }
 
 fn sprite2d_texture_ready(texture: i64) -> bool {

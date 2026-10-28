@@ -42,12 +42,12 @@ fn new_player(name: string, human: bool) -> Player {
 fn build_players(bots: i64, human_chips: i64) -> [Player; 6] {
     let names = ["ACE", "NOVA", "RAVEN", "BLAZE", "VIPER"]
     let mut ps: [Player; 6] = [
-        new_player("YOU", true),
-        new_player("", false),
-        new_player("", false),
-        new_player("", false),
-        new_player("", false),
-        new_player("", false)
+    new_player("YOU", true),
+    new_player("", false),
+    new_player("", false),
+    new_player("", false),
+    new_player("", false),
+    new_player("", false)
     ]
     ps[0].chips = human_chips
     let mut i = 1
@@ -154,14 +154,14 @@ fn first_actionable(ps: [Player; 6]) -> i64 {
         }
         i = i + 1
     }
-    return -1
+    return-1
 }
 
 // Next seat clockwise from `from` (exclusive) that still has chips.
 fn next_live(ps: [Player; 6], from: i64) -> i64 {
     let mut k = 1
     while k <= 6 {
-        let s = (from + k) % 6
+        let s =(from + k) % 6
         if ps[s].chips > 0 { return s }
         k = k + 1
     }
@@ -172,33 +172,33 @@ fn next_live(ps: [Player; 6], from: i64) -> i64 {
 fn next_actionable(ps: [Player; 6], from: i64) -> i64 {
     let mut k = 1
     while k <= 6 {
-        let s = (from + k) % 6
+        let s =(from + k) % 6
         if ps[s].active && !ps[s].folded && !ps[s].all_in && ps[s].chips > 0 {
             return s
         }
         k = k + 1
     }
-    return -1
+    return-1
 }
 
 // Next seat that still owes an action or chips on this street.
 fn next_needs(ps: [Player; 6], from: i64, current_bet: i64) -> i64 {
     let mut k = 1
     while k <= 6 {
-        let s = (from + k) % 6
+        let s =(from + k) % 6
         if ps[s].active && !ps[s].folded && !ps[s].all_in && ps[s].chips > 0 {
-            if !ps[s].acted || ps[s].round_bet < current_bet { return s }
+            if ! ps[s].acted || ps[s].round_bet < current_bet { return s }
         }
         k = k + 1
     }
-    return -1
+    return-1
 }
 
 fn round_done(ps: [Player; 6], current_bet: i64) -> bool {
     let mut i = 0
     while i < 6 {
         if ps[i].active && !ps[i].folded && !ps[i].all_in && ps[i].chips > 0 {
-            if !ps[i].acted || ps[i].round_bet < current_bet { return false }
+            if ! ps[i].acted || ps[i].round_bet < current_bet { return false }
         }
         i = i + 1
     }
@@ -230,8 +230,8 @@ fn sort5(a: i64, b: i64, c: i64, d: i64, e: i64) -> [i64; 5] {
 fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
     let ranks = [c0 / 4, c1 / 4, c2 / 4, c3 / 4, c4 / 4]
     let suits = [c0 % 4, c1 % 4, c2 % 4, c3 % 4, c4 % 4]
-    let mut counts: [i64; 13] = [0,0,0,0,0,0,0,0,0,0,0,0,0]
-    let mut suit_counts: [i64; 4] = [0,0,0,0]
+    let mut counts: [i64; 13] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    let mut suit_counts: [i64; 4] = [0, 0, 0, 0]
     let mut i = 0
     while i < 5 {
         counts[ranks[i]] = counts[ranks[i]] + 1
@@ -248,13 +248,13 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
     let mut high = 12
     while high >= 4 {
         if counts[high] > 0 && counts[high - 1] > 0 && counts[high - 2] > 0 &&
-           counts[high - 3] > 0 && counts[high - 4] > 0 {
+        counts[high - 3] > 0 && counts[high - 4] > 0 {
             if straight_high < 0 { straight_high = high }
         }
         high = high - 1
     }
     if straight_high < 0 && counts[12] > 0 && counts[0] > 0 &&
-       counts[1] > 0 && counts[2] > 0 && counts[3] > 0 { straight_high = 3 }
+    counts[1] > 0 && counts[2] > 0 && counts[3] > 0 { straight_high = 3 }
 
     // A straight flush requires the same suit on every card in the sequence.
     let mut sf_high = -1
@@ -272,13 +272,13 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
                     if ranks[i] == wanted && suits[i] == suit { found = true }
                     i = i + 1
                 }
-                if !found { have_straight = false }
+                if ! found { have_straight = false }
                 off = off + 1
             }
             if have_straight && high > sf_high { sf_high = high }
             high = high - 1
         }
-        let wheel_ranks = [12,0,1,2,3]
+        let wheel_ranks = [12, 0, 1, 2, 3]
         let mut wheel = true
         i = 0
         while i < 5 {
@@ -288,7 +288,7 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
                 if ranks[j] == wheel_ranks[i] && suits[j] == suit { found = true }
                 j = j + 1
             }
-            if !found { wheel = false }
+            if ! found { wheel = false }
             i = i + 1
         }
         if wheel && sf_high < 3 { sf_high = 3 }
@@ -299,7 +299,7 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
     let mut trip = -1
     let mut pair_hi = -1
     let mut pair_lo = -1
-    let mut singles: [i64; 5] = [0,0,0,0,0]
+    let mut singles: [i64; 5] = [0, 0, 0, 0, 0]
     let mut single_n = 0
     let mut rank = 12
     while rank >= 0 {
@@ -316,7 +316,7 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
         rank = rank - 1
     }
 
-    let mut kick: [i64; 5] = [0,0,0,0,0]
+    let mut kick: [i64; 5] = [0, 0, 0, 0, 0]
     let mut cat = 0
     if sf_high >= 0 {
         cat = 8
@@ -390,7 +390,7 @@ fn score_hand(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64) -> i64 {
 }
 
 fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64,
-                 c5: i64, c6: i64) -> i64 {
+c5: i64, c6: i64) -> i64 {
     let cards = [c0, c1, c2, c3, c4, c5, c6]
     let mut best = 0
     let mut i = 0
@@ -404,7 +404,7 @@ fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64,
                     let mut m = l + 1
                     while m < 7 {
                         let s = score_hand(cards[i], cards[j], cards[k],
-                                           cards[l], cards[m])
+                        cards[l], cards[m])
                         if s > best { best = s }
                         m = m + 1
                     }
@@ -420,7 +420,7 @@ fn best_of_seven(c0: i64, c1: i64, c2: i64, c3: i64, c4: i64,
 }
 
 fn best_of_board(c0: i64, c1: i64, b0: i64, b1: i64, b2: i64,
-                 b3: i64, b4: i64, board_n: i64) -> i64 {
+b3: i64, b4: i64, board_n: i64) -> i64 {
     // Evaluate only the cards that have actually been dealt. Using the whole
     // seven-card array before the turn/river would leak future board cards to
     // the hand label and to the bots' decisions.
@@ -440,7 +440,7 @@ fn best_of_board(c0: i64, c1: i64, b0: i64, b1: i64, b2: i64,
                     let mut m = l + 1
                     while m < total {
                         let s = score_hand(cards[i], cards[j], cards[k],
-                                           cards[l], cards[m])
+                        cards[l], cards[m])
                         if s > best { best = s }
                         m = m + 1
                     }
@@ -509,7 +509,7 @@ fn preflop_label(c0: i64, c1: i64) -> string {
 // Maps a seven-card score to a 0..100 aggression strength.
 fn postflop_strength(score: i64) -> i64 {
     let cat = score / 10000000
-    let top = (score % 10000000) / 28561
+    let top =(score % 10000000) / 28561
     let mut s = 24 + top * 2
     if cat == 1 { s = 46 + top * 2 }
     if cat == 2 { s = 64 + top }
@@ -527,8 +527,8 @@ fn postflop_strength(score: i64) -> i64 {
 // Bot brain. Returns 0 = fold, 1 = check/call, 2 = raise, 3 = all-in.
 // ---------------------------------------------------------------------------
 fn ai_action(preflop: bool, strength: i64, need: i64, pot: i64, chips: i64,
-             current_bet: i64, min_raise: i64, round_bet: i64,
-             aggression: i64, raises: i64) -> i64 {
+current_bet: i64, min_raise: i64, round_bet: i64,
+aggression: i64, raises: i64) -> i64 {
     if chips <= 0 { return 1 }
     let max_to = round_bet + chips
     let min_to = current_bet + min_raise
@@ -553,7 +553,7 @@ fn ai_action(preflop: bool, strength: i64, need: i64, pot: i64, chips: i64,
         return 1
     }
 
-    let odds = need * 100 / (pot + need)
+    let odds = need * 100 /(pot + need)
     if strength >= 88 {
         if can_raise && raises < 4 && roll < 62 { return 2 }
         return 1
@@ -581,11 +581,11 @@ fn ai_action(preflop: bool, strength: i64, need: i64, pot: i64, chips: i64,
 }
 
 fn ai_raise_to(pot: i64, current_bet: i64, min_raise: i64,
-               round_bet: i64, chips: i64) -> i64 {
+round_bet: i64, chips: i64) -> i64 {
     let mut target = current_bet + min_raise
     let sized = pot * 2 / 3
     if sized > target { target = sized }
-    target = (target / 10) * 10
+    target =(target / 10) * 10
     if target < current_bet + min_raise { target = current_bet + min_raise }
     let max_to = round_bet + chips
     if target > max_to { target = max_to }
@@ -601,7 +601,7 @@ fn asset_path(rel: string) -> string {
 }
 
 fn load_saved_number(path: string, fallback: i64) -> i64 {
-    if !file_exists(path) { return fallback }
+    if ! file_exists(path) { return fallback }
     let text = file_read(path)
     let n = len(text)
     let mut value = 0
@@ -610,12 +610,12 @@ fn load_saved_number(path: string, fallback: i64) -> i64 {
     while i < n {
         let b = byte_at(text, i)
         if b >= 48 && b <= 57 {
-            value = value * 10 + (b - 48)
+            value = value * 10 +(b - 48)
             seen = true
         }
         i = i + 1
     }
-    if !seen { return fallback }
+    if ! seen { return fallback }
     return value
 }
 fn load_chips() -> i64 {
@@ -659,7 +659,7 @@ fn money(v: i64) -> string {
     if v < 1000 { return str_i64(v) }
     if v < 1000000 { return str_i64(v / 1000) + "," + pad3(v % 1000) }
     return str_i64(v / 1000000) + "," + pad3((v / 1000) % 1000) + "," +
-           pad3(v % 1000)
+    pad3(v % 1000)
 }
 // ---------------------------------------------------------------------------
 // Typography helpers: the TTF backend when available, bitmap text otherwise.
@@ -675,7 +675,7 @@ fn text_h(font: i64) -> f64 {
 }
 
 fn text_at(font: i64, x: f64, y: f64, s: string,
-            red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     if s == "" { return }
     if font > 0 {
         gfx_text_font(font, x, y, s, red, green, blue, alpha)
@@ -685,12 +685,12 @@ fn text_at(font: i64, x: f64, y: f64, s: string,
 }
 
 fn text_c(font: i64, cx: f64, y: f64, s: string,
-          red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     text_at(font, cx - text_w(font, s) / 2.0, y, s, red, green, blue, alpha)
 }
 
 fn text_r(font: i64, right: f64, y: f64, s: string,
-          red: f64, green: f64, blue: f64, alpha: f64) {
+red: f64, green: f64, blue: f64, alpha: f64) {
     text_at(font, right - text_w(font, s), y, s, red, green, blue, alpha)
 }
 
@@ -728,11 +728,11 @@ fn draw_avatar(seat: i64, x: f64, y: f64, folded: bool) {
     engine2d_draw_circle(x, y + 38.0, 2.3, ar, ag, ab, 1.0)
     engine2d_draw_circle(x - 38.0, y, 2.3, ar, ag, ab, 1.0)
     engine2d_draw_text(x - 10.0, y - 12.0, 2.0, initials[seat],
-                       ar, ag, ab, 1.0)
+    ar, ag, ab, 1.0)
 }
 
 fn draw_card(x: f64, y: f64, w: f64, h: f64, tex: i64, back_tex: i64,
-             face: bool) {
+face: bool) {
     engine2d_draw_rect(x + 5.0, y + 8.0, w, h, 0.0, 0.0, 0.0, 0.34)
     if face {
         if tex > 0 {
@@ -740,7 +740,7 @@ fn draw_card(x: f64, y: f64, w: f64, h: f64, tex: i64, back_tex: i64,
         } else {
             engine2d_draw_rect(x, y, w, h, 0.96, 0.94, 0.88, 1.0)
             engine2d_draw_rect(x + 3.0, y + 3.0, w - 6.0, h - 6.0,
-                               0.86, 0.84, 0.78, 1.0)
+            0.86, 0.84, 0.78, 1.0)
         }
     } else {
         if back_tex > 0 {
@@ -748,7 +748,7 @@ fn draw_card(x: f64, y: f64, w: f64, h: f64, tex: i64, back_tex: i64,
         } else {
             engine2d_draw_rect(x, y, w, h, 0.10, 0.14, 0.42, 1.0)
             engine2d_draw_rect(x + 6.0, y + 6.0, w - 12.0, h - 12.0,
-                               0.16, 0.22, 0.56, 1.0)
+            0.16, 0.22, 0.56, 1.0)
         }
     }
     engine2d_draw_rect(x, y, w, h, 1.0, 1.0, 1.0, 0.12)
@@ -767,12 +767,12 @@ fn draw_chip(x: f64, y: f64, radius: f64, kind: i64) {
     engine2d_draw_circle(x, y, radius, cr * 0.38, cg * 0.38, cb * 0.38, 1.0)
     engine2d_draw_circle(x, y, radius * 0.90, cr, cg, cb, 1.0)
     engine2d_draw_circle(x, y, radius * 0.54, 0.97, 0.95, 0.90, 0.97)
-    let px = [0.0, 0.66, 0.93, 0.66, 0.0, -0.66, -0.93, -0.66]
-    let py = [-0.93, -0.66, 0.0, 0.66, 0.93, 0.66, 0.0, -0.66]
+    let px = [0.0, 0.66, 0.93, 0.66, 0.0,-0.66,-0.93,-0.66]
+    let py = [-0.93,-0.66, 0.0, 0.66, 0.93, 0.66, 0.0,-0.66]
     let mut i = 0
     while i < 8 {
         engine2d_draw_circle(x + px[i] * radius, y + py[i] * radius,
-                             radius * 0.075, 1.0, 0.98, 0.94, 0.82)
+        radius * 0.075, 1.0, 0.98, 0.94, 0.82)
         i = i + 1
     }
 }
@@ -813,11 +813,11 @@ fn draw_pot(cx: f64, amount: i64, font_small: i64, font_num: i64) {
     if amount <= 0 { return }
     engine2d_draw_circle(cx, 632.0, 118.0, 1.0, 0.80, 0.28, 0.06)
     engine2d_draw_circle(cx, 632.0, 108.0, 0.02, 0.05, 0.03, 0.35)
-    let xs = [-88.0, -44.0, 0.0, 44.0, 88.0]
+    let xs = [-88.0,-44.0, 0.0, 44.0, 88.0]
     let kinds = [100, 25, 1000, 100, 500]
     let mut c = 0
     while c < 5 {
-        let mut n = 2 + (amount / 220) % 4
+        let mut n = 2 +(amount / 220) % 4
         if n > 5 { n = 5 }
         let mut k = 0
         while k < n {
@@ -840,12 +840,12 @@ fn panel(x: f64, y: f64, w: f64, h: f64) {
 
 // Draws one button; returns true while the pointer is over it.
 fn paint_button(x: f64, y: f64, w: f64, h: f64, label: string, font: i64,
-                cr: f64, cg: f64, cb: f64, enabled: bool) -> bool {
+cr: f64, cg: f64, cb: f64, enabled: bool) -> bool {
     let hot = enabled && engine2d_mouse_over(x, y, w, h)
     let mut r = cr
     let mut g = cg
     let mut b = cb
-    if !enabled { r = 0.15; g = 0.16; b = 0.18 }
+    if ! enabled { r = 0.15; g = 0.16; b = 0.18 }
     if hot {
         r = r + 0.15
         g = g + 0.13
@@ -862,7 +862,7 @@ fn paint_button(x: f64, y: f64, w: f64, h: f64, label: string, font: i64,
         engine2d_draw_rect(x, y, w, 2.5, 1.0, 0.84, 0.34, 1.0)
         engine2d_draw_rect(x, y + h - 2.5, w, 2.5, 1.0, 0.84, 0.34, 1.0)
     }
-    let ty = y + (h - text_h(font)) / 2.0 - 3.0
+    let ty = y +(h - text_h(font)) / 2.0 - 3.0
     if enabled {
         text_c(font, x + w / 2.0, ty, label, 1.0, 1.0, 1.0, 1.0)
     } else {
@@ -874,7 +874,7 @@ fn paint_button(x: f64, y: f64, w: f64, h: f64, label: string, font: i64,
 // Use the native operating-system cursor; do not paint a pointer into the game canvas.
 
 fn draw_help(f_title: i64, f_h1: i64, f_ui: i64,
-              f_small: i64, f_tiny: i64) {
+f_small: i64, f_tiny: i64) {
     engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.0, 0.0, 0.0, 0.76)
     panel(430.0, 235.0, 1060.0, 620.0)
     text_c(f_title, 960.0, 265.0, "QUICK HELP", 1.0, 0.82, 0.30, 1.0)
@@ -905,9 +905,9 @@ fn draw_table_skin(skin: i64) {
 // Main menu.
 // ---------------------------------------------------------------------------
 fn draw_menu(bot_count: i64, bankroll: i64, selected_skin: i64, table_tex: i64,
-             f_huge: i64, f_title: i64, f_h1: i64, f_ui: i64,
-             f_small: i64, f_tiny: i64, f_num: i64,
-             session_hands: i64, session_wins: i64, session_net: i64) {
+f_huge: i64, f_title: i64, f_h1: i64, f_ui: i64,
+f_small: i64, f_tiny: i64, f_num: i64,
+session_hands: i64, session_wins: i64, session_net: i64) {
     if table_tex > 0 {
         sprite2d_draw_texture(table_tex, 0.0, 0.0, 1920.0, 1080.0)
     } else {
@@ -930,16 +930,16 @@ fn draw_menu(bot_count: i64, bankroll: i64, selected_skin: i64, table_tex: i64,
     engine2d_draw_rect(41.0, 33.0, 42.0, 46.0, 0.025, 0.028, 0.030, 1.0)
     text_at(f_h1, 48.0, 32.0, "N", 0.96, 0.78, 0.14, 1.0)
     text_c(f_tiny, 960.0, 46.0, "SINGLE-PLAYER  •  TEXAS HOLD'EM",
-           0.72, 0.74, 0.68, 1.0)
+    0.72, 0.74, 0.68, 1.0)
     text_c(f_title, 960.0, 178.0, "POKER", 0.98, 0.97, 0.92, 1.0)
     text_c(f_ui, 960.0, 258.0, "NO-LIMIT TEXAS HOLD'EM",
-           0.96, 0.78, 0.14, 1.0)
+    0.96, 0.78, 0.14, 1.0)
 
     panel(480.0, 420.0, 960.0, 468.0)
     text_c(f_h1, 960.0, 448.0, "CHOOSE YOUR OPPONENTS", 1.0, 0.93, 0.74, 1.0)
     text_c(f_small, 960.0, 496.0,
-           "Pick one to five bots. Your table starts with 1,000 chips each.",
-           0.68, 0.76, 0.68, 1.0)
+    "Pick one to five bots. Your table starts with 1,000 chips each.",
+    0.68, 0.76, 0.68, 1.0)
 
     let mut i = 0
     while i < 5 {
@@ -956,33 +956,33 @@ fn draw_menu(bot_count: i64, bankroll: i64, selected_skin: i64, table_tex: i64,
 
     let mut players_total = bot_count + 1
     text_c(f_small, 960.0, 650.0,
-           str_i64(bot_count) + " opponents  •  " +
-           str_i64(players_total) + " players  •  blinds 10 / 20",
-           0.82, 0.86, 0.80, 1.0)
+    str_i64(bot_count) + " opponents  •  " +
+    str_i64(players_total) + " players  •  blinds 10 / 20",
+    0.82, 0.86, 0.80, 1.0)
     text_c(f_ui, 960.0, 680.0, "YOUR STACK  " + money(bankroll),
-           1.0, 0.86, 0.40, 1.0)
+    1.0, 0.86, 0.40, 1.0)
 
     paint_button(760.0, 728.0, 400.0, 82.0, "START TABLE", f_h1,
-                 0.66, 0.48, 0.10, true)
+    0.66, 0.48, 0.10, true)
     paint_button(760.0, 830.0, 400.0, 58.0, "COSMETIC SHOP", f_ui,
-                 0.18, 0.24, 0.31, true)
+    0.18, 0.24, 0.31, true)
 
     text_c(f_tiny, 960.0, 920.0,
-            "H HELP  •  S SOUND  •  T AUTO-NEXT  •  V FAST BOTS  •  F11 FULLSCREEN",
-            0.62, 0.68, 0.62, 1.0)
+    "H HELP  •  S SOUND  •  T AUTO-NEXT  •  V FAST BOTS  •  F11 FULLSCREEN",
+    0.62, 0.68, 0.62, 1.0)
     text_c(f_tiny, 960.0, 960.0,
-            "SESSION  " + str_i64(session_hands) + " HANDS  •  " +
-            str_i64(session_wins) + " WINS  •  NET " + money(session_net),
-            0.78, 0.82, 0.70, 1.0)
+    "SESSION  " + str_i64(session_hands) + " HANDS  •  " +
+    str_i64(session_wins) + " WINS  •  NET " + money(session_net),
+    0.78, 0.82, 0.70, 1.0)
     text_c(f_tiny, 960.0, 1000.0,
-            "F FOLD  •  C CHECK/CALL  •  R RAISE  •  A ALL-IN  •  M MENU",
-            0.58, 0.64, 0.58, 0.9)
+    "F FOLD  •  C CHECK/CALL  •  R RAISE  •  A ALL-IN  •  M MENU",
+    0.58, 0.64, 0.58, 0.9)
 }
 
 fn draw_shop(selected_skin: i64, bankroll: i64, owned_blue: bool,
-             owned_purple: bool, owned_crimson: bool, table_tex: i64,
-             f_title: i64, f_h1: i64, f_ui: i64, f_small: i64,
-             f_tiny: i64, f_num: i64, shop_msg: string) {
+owned_purple: bool, owned_crimson: bool, table_tex: i64,
+f_title: i64, f_h1: i64, f_ui: i64, f_small: i64,
+f_tiny: i64, f_num: i64, shop_msg: string) {
     if table_tex > 0 {
         sprite2d_draw_texture(table_tex, 0.0, 0.0, 1920.0, 1080.0)
     } else {
@@ -991,13 +991,13 @@ fn draw_shop(selected_skin: i64, bankroll: i64, owned_blue: bool,
     draw_table_skin(selected_skin)
     engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0, 0.010, 0.016, 0.024, 0.76)
     text_c(f_tiny, 960.0, 58.0, "NEXUS POKER  •  COSMETIC COLLECTION",
-           0.70, 0.76, 0.72, 1.0)
+    0.70, 0.76, 0.72, 1.0)
     text_c(f_title, 960.0, 112.0, "THE STYLE SHOP", 1.0, 0.84, 0.42, 1.0)
     text_c(f_small, 960.0, 184.0,
-           "Visual table themes only. No gameplay advantages.",
-           0.76, 0.82, 0.76, 1.0)
+    "Visual table themes only. No gameplay advantages.",
+    0.76, 0.82, 0.76, 1.0)
     text_c(f_ui, 960.0, 236.0, "YOUR CHIPS  " + money(bankroll),
-           1.0, 0.89, 0.52, 1.0)
+    1.0, 0.89, 0.52, 1.0)
     panel(220.0, 300.0, 400.0, 430.0)
     panel(760.0, 300.0, 400.0, 430.0)
     panel(1300.0, 300.0, 400.0, 430.0)
@@ -1027,18 +1027,18 @@ fn draw_shop(selected_skin: i64, bankroll: i64, owned_blue: bool,
     }
     paint_button(760.0, 850.0, 400.0, 66.0, "BACK TO MENU", f_ui, 0.18, 0.20, 0.24, true)
     text_c(f_tiny, 960.0, 1000.0,
-           "Cosmetics are saved locally in your NEXUS Poker profile.",
-           0.58, 0.64, 0.60, 1.0)
+    "Cosmetics are saved locally in your NEXUS Poker profile.",
+    0.58, 0.64, 0.60, 1.0)
 }
 
 fn anim_t(anim: f64, start: f64) -> f64 {
-    let p = (anim - start) / 0.30
+    let p =(anim - start) / 0.30
     if p <= 0.0 { return 0.0 }
     if p >= 1.0 { return 1.0 }
-    return 1.0 - (1.0 - p) * (1.0 - p)
+    return 1.0 -(1.0 - p) *(1.0 - p)
 }
 
-fn lerp(a: f64, b: f64, t: f64) -> f64 { return a + (b - a) * t }
+fn lerp(a: f64, b: f64, t: f64) -> f64 { return a +(b - a) * t }
 
 fn main() {
     engine2d_init(1920, 1080, "NEXUS Poker - Texas Hold'em")
@@ -1066,11 +1066,11 @@ fn main() {
 
     let back_tex = sprite2d_load_texture(asset_path("assets/cards/card_back.png"))
     let table_tex = sprite2d_load_texture(asset_path("assets/table/felt.png"))
-    let mut card_tex: [i64; 52] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    let mut card_tex: [i64; 52] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     let mut li = 0
     while li < 52 {
         card_tex[li] = sprite2d_load_texture(
-            asset_path("assets/cards/card_" + str_i64(li) + ".png"))
+        asset_path("assets/cards/card_" + str_i64(li) + ".png"))
         li = li + 1
     }
 
@@ -1150,7 +1150,7 @@ fn main() {
     let mut last_4 = false
     let mut last_5 = false
 
-    while !engine2d_should_close() {
+    while ! engine2d_should_close() {
         let dt = engine2d_delta_time()
         clock = clock + dt
         ui_hot = false
@@ -1179,7 +1179,7 @@ fn main() {
             if hand_timer > 0.0 {
                 hand_timer = hand_timer - dt
                 if hand_timer <= 0.0 && !game_over && bust_timer <= 0.0 &&
-                   champ_timer <= 0.0 { want_deal = true }
+                champ_timer <= 0.0 { want_deal = true }
             }
         }
 
@@ -1254,15 +1254,15 @@ fn main() {
             }
             let space = engine2d_key_down("SPACE")
             let start_clicked = engine2d_mouse_clicked_in(760.0, 728.0,
-                                                          400.0, 82.0)
+            400.0, 82.0)
             let shop_clicked = engine2d_mouse_clicked_in(760.0, 830.0,
-                                                         400.0, 58.0)
+            400.0, 58.0)
             if menu_guard <= 0.0 && shop_clicked {
                 screen = 2
                 shop_msg = ""
                 play_sound(snd_chip, sound_enabled)
             }
-            if menu_guard <= 0.0 && (start_clicked || (space && !last_space)) {
+            if menu_guard <= 0.0 &&(start_clicked ||(space && !last_space)) {
                 if bankroll < 100 { bankroll = 1000 }
                 session_hands = 0
                 session_wins = 0
@@ -1296,7 +1296,7 @@ fn main() {
             last_space = space
 
             draw_menu(bot_count, bankroll, selected_skin, table_tex, f_huge, f_title, f_h1,
-                      f_ui, f_small, f_tiny, f_num, session_hands, session_wins, session_net)
+            f_ui, f_small, f_tiny, f_num, session_hands, session_wins, session_net)
             if show_help { draw_help(f_title, f_h1, f_ui, f_small, f_tiny) }
             engine2d_end_frame()
         } else if screen == 2 {
@@ -1361,8 +1361,8 @@ fn main() {
                 play_sound(snd_chip, sound_enabled)
             }
             draw_shop(selected_skin, bankroll, owned_blue, owned_purple,
-                      owned_crimson, table_tex, f_title, f_h1, f_ui,
-                      f_small, f_tiny, f_num, shop_msg)
+            owned_crimson, table_tex, f_title, f_h1, f_ui,
+            f_small, f_tiny, f_num, shop_msg)
             if show_help { draw_help(f_title, f_h1, f_ui, f_small, f_tiny) }
             engine2d_end_frame()
         } else {
@@ -1382,9 +1382,9 @@ fn main() {
 
             let menu_ok = phase != 1
             if paint_button(1600.0, 18.0, 140.0, 44.0, "MENU", f_small,
-                            0.20, 0.17, 0.14, menu_ok) { ui_hot = true }
-            if menu_ok && (engine2d_mouse_clicked_in(1600.0, 18.0, 140.0, 44.0) ||
-                           (k_m && !last_m)) {
+            0.20, 0.17, 0.14, menu_ok) { ui_hot = true }
+            if menu_ok &&(engine2d_mouse_clicked_in(1600.0, 18.0, 140.0, 44.0) ||
+            (k_m && !last_m)) {
                 bankroll = players[0].chips
                 if bankroll < 100 { bankroll = 1000 }
                 save_chips(bankroll)
@@ -1463,17 +1463,17 @@ fn main() {
                     ui_hot = true
                 }
                 if phase == 0 &&
-                   (engine2d_mouse_clicked_in(760.0, 988.0, 400.0, 64.0) ||
-                    (space && !last_space)) {
+                (engine2d_mouse_clicked_in(760.0, 988.0, 400.0, 64.0) ||
+                (space && !last_space)) {
                     want_deal = true
                 }
                 if phase == 2 &&
-                   (engine2d_mouse_clicked_in(760.0, 1006.0, 240.0, 54.0) ||
-                    (space && !last_space) || (k_n && !last_n)) {
+                (engine2d_mouse_clicked_in(760.0, 1006.0, 240.0, 54.0) ||
+                (space && !last_space) ||(k_n && !last_n)) {
                     want_deal = true
                 }
                 if phase == 2 &&
-                   engine2d_mouse_clicked_in(1020.0, 1006.0, 180.0, 54.0) {
+                engine2d_mouse_clicked_in(1020.0, 1006.0, 180.0, 54.0) {
                     bankroll = players[0].chips
                     if bankroll < 100 { bankroll = 1000 }
                     save_chips(bankroll)
@@ -1513,7 +1513,7 @@ fn main() {
                         players[sb_seat].action = "SB " + money(10)
                         players = pay(players, bb_seat, 20)
                         players[bb_seat].action = "BB " + money(20)
-                        let mut deck: [i64; 52] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                        let mut deck: [i64; 52] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                         let mut di = 0
                         while di < 52 { deck[di] = di; di = di + 1 }
                         di = 51
@@ -1601,7 +1601,7 @@ fn main() {
 
                 // ---- human action ----------------------------------------
                 let human_turn = phase == 1 && to_act == 0 && !animating &&
-                                 !showdown_pending && !game_over
+                !showdown_pending && !game_over
                 let mut need = current_bet - players[0].round_bet
                 if need < 0 { need = 0 }
                 let max_to = players[0].round_bet + players[0].chips
@@ -1620,20 +1620,20 @@ fn main() {
                     let track_w = 500.0
                     let track_y = 1018.0
                     if can_raise &&
-                       engine2d_mouse_over(track_x - 12.0, track_y - 24.0,
-                                           track_w + 24.0, 48.0) {
+                    engine2d_mouse_over(track_x - 12.0, track_y - 24.0,
+                    track_w + 24.0, 48.0) {
                         ui_hot = true
                         if engine2d_mouse_down(1) { dragging = true }
                     }
-                    if !engine2d_mouse_down(1) { dragging = false }
+                    if ! engine2d_mouse_down(1) { dragging = false }
                     if dragging && can_raise {
                         let mx = engine2d_mouse_x()
-                        let mut frac = (mx - track_x) / track_w
+                        let mut frac =(mx - track_x) / track_w
                         if frac < 0.0 { frac = 0.0 }
                         if frac > 1.0 { frac = 1.0 }
                         let span = max_to - min_to
                         let mut v = min_to + to_i64(frac * to_f64(span))
-                        v = (v / 10) * 10
+                        v =(v / 10) * 10
                         if v < min_to { v = min_to }
                         if v > max_to { v = max_to }
                         raise_to = v
@@ -1644,22 +1644,22 @@ fn main() {
                     let mut do_raise = false
                     let mut do_allin = false
                     if paint_button(280.0, 982.0, 160.0, 62.0, "F  FOLD",
-                                    f_ui, 0.52, 0.13, 0.13, human_turn) {
+                    f_ui, 0.52, 0.13, 0.13, human_turn) {
                         ui_hot = true
                     }
                     let mut call_label = "CHECK"
                     if need > 0 { call_label = "CALL " + money(need) }
                     if paint_button(456.0, 982.0, 230.0, 62.0, call_label,
-                                    f_ui, 0.12, 0.36, 0.28, human_turn) {
+                    f_ui, 0.12, 0.36, 0.28, human_turn) {
                         ui_hot = true
                     }
                     if paint_button(702.0, 982.0, 150.0, 62.0, "A  ALL-IN",
-                                    f_ui, 0.38, 0.18, 0.50, human_turn) {
+                    f_ui, 0.38, 0.18, 0.50, human_turn) {
                         ui_hot = true
                     }
                     if paint_button(1440.0, 982.0, 200.0, 62.0, "R  RAISE",
-                                    f_ui, 0.64, 0.47, 0.10,
-                                    human_turn && can_raise) {
+                    f_ui, 0.64, 0.47, 0.10,
+                    human_turn && can_raise) {
                         ui_hot = true
                     }
                     if engine2d_mouse_clicked_in(280.0, 982.0, 160.0, 62.0) {
@@ -1672,7 +1672,7 @@ fn main() {
                         do_allin = true
                     }
                     if can_raise &&
-                       engine2d_mouse_clicked_in(1440.0, 982.0, 200.0, 62.0) {
+                    engine2d_mouse_clicked_in(1440.0, 982.0, 200.0, 62.0) {
                         do_raise = true
                     }
                     if (k_f && !last_f) { do_fold = true }
@@ -1715,7 +1715,7 @@ fn main() {
                             let mut ri = 1
                             while ri < 6 {
                                 if players[ri].active && !players[ri].folded &&
-                                   !players[ri].all_in {
+                                !players[ri].all_in {
                                     players[ri].acted = false
                                 }
                                 ri = ri + 1
@@ -1744,7 +1744,7 @@ fn main() {
                                 let mut ri = 1
                                 while ri < 6 {
                                     if players[ri].active && !players[ri].folded &&
-                                       !players[ri].all_in {
+                                    !players[ri].all_in {
                                         players[ri].acted = false
                                     }
                                     ri = ri + 1
@@ -1759,7 +1759,7 @@ fn main() {
 
                 // ---- bot action ------------------------------------------
                 if phase == 1 && to_act > 0 && !animating && !showdown_pending &&
-                   !game_over {
+                !game_over {
                     if bot_timer <= 0.0 {
                         let s = to_act
                         let bneed = current_bet - players[s].round_bet
@@ -1769,20 +1769,20 @@ fn main() {
                         let mut strength = 0
                         if board_count < 3 {
                             strength = preflop_strength(players[s].card0,
-                                                        players[s].card1)
+                            players[s].card1)
                         } else {
                             strength = postflop_strength(
-                                best_of_board(players[s].card0,
-                                              players[s].card1,
-                                              board[0], board[1], board[2],
-                                              board[3], board[4], board_count))
+                            best_of_board(players[s].card0,
+                            players[s].card1,
+                            board[0], board[1], board[2],
+                            board[3], board[4], board_count))
                         }
                         let aggression = s % 3
                         let act = ai_action(board_count < 3, strength, bneed2,
-                                            bpot, players[s].chips,
-                                            current_bet, min_raise,
-                                            players[s].round_bet, aggression,
-                                            raises_street)
+                        bpot, players[s].chips,
+                        current_bet, min_raise,
+                        players[s].round_bet, aggression,
+                        raises_street)
                         if act == 0 {
                             players[s].folded = true
                             players[s].acted = true
@@ -1803,8 +1803,8 @@ fn main() {
                             play_sound(snd_chip, sound_enabled)
                         } else if act == 2 {
                             let target = ai_raise_to(bpot, current_bet, min_raise,
-                                                     players[s].round_bet,
-                                                     players[s].chips)
+                            players[s].round_bet,
+                            players[s].chips)
                             let old_bet = current_bet
                             let add = target - players[s].round_bet
                             players = pay(players, s, add)
@@ -1816,7 +1816,7 @@ fn main() {
                                 let mut ri = 0
                                 while ri < 6 {
                                     if players[ri].active && !players[ri].folded &&
-                                       !players[ri].all_in && ri != s {
+                                    !players[ri].all_in && ri != s {
                                         players[ri].acted = false
                                     }
                                     ri = ri + 1
@@ -1845,8 +1845,8 @@ fn main() {
                                     let mut ri = 0
                                     while ri < 6 {
                                         if players[ri].active &&
-                                           !players[ri].folded &&
-                                           !players[ri].all_in && ri != s {
+                                        !players[ri].folded &&
+                                        !players[ri].all_in && ri != s {
                                             players[ri].acted = false
                                         }
                                         ri = ri + 1
@@ -1909,7 +1909,7 @@ fn main() {
                                 } else {
                                     raise_to = current_bet + min_raise
                                     let mx_to = players[0].round_bet +
-                                                players[0].chips
+                                    players[0].chips
                                     if raise_to > mx_to { raise_to = mx_to }
                                 }
                             }
@@ -1930,7 +1930,7 @@ fn main() {
                             } else {
                                 raise_to = current_bet + min_raise
                                 let mx_to = players[0].round_bet +
-                                            players[0].chips
+                                players[0].chips
                                 if raise_to > mx_to { raise_to = mx_to }
                             }
                         }
@@ -1962,8 +1962,8 @@ fn main() {
                     while si < 6 {
                         if players[si].active && !players[si].folded {
                             players[si].score = best_of_seven(
-                                players[si].card0, players[si].card1,
-                                board[0], board[1], board[2], board[3], board[4])
+                            players[si].card0, players[si].card1,
+                            board[0], board[1], board[2], board[3], board[4])
                         }
                         si = si + 1
                     }
@@ -1982,7 +1982,7 @@ fn main() {
                                 if levels[lj] == cval { exists = true }
                                 lj = lj + 1
                             }
-                            if !exists {
+                            if ! exists {
                                 let mut pos = 0
                                 while pos < nl && levels[pos] < cval {
                                     pos = pos + 1
@@ -2015,14 +2015,14 @@ fn main() {
                         while si < 6 {
                             let mut cc = players[si].committed
                             if cc > level { cc = level }
-                            if cc > prev { pot_amt = pot_amt + (cc - prev) }
+                            if cc > prev { pot_amt = pot_amt +(cc - prev) }
                             si = si + 1
                         }
                         let mut best = -1
                         si = 0
                         while si < 6 {
                             if players[si].active && !players[si].folded &&
-                               players[si].committed >= level {
+                            players[si].committed >= level {
                                 if players[si].score > best {
                                     best = players[si].score
                                 }
@@ -2035,8 +2035,8 @@ fn main() {
                         if best >= 0 {
                             while si < 6 {
                                 if players[si].active && !players[si].folded &&
-                                   players[si].committed >= level &&
-                                   players[si].score == best {
+                                players[si].committed >= level &&
+                                players[si].score == best {
                                     winners[si] = true
                                     wcount = wcount + 1
                                 }
@@ -2089,10 +2089,10 @@ fn main() {
                     }
                     if win_count == 1 && last_winner >= 0 {
                         msg1 = players[last_winner].name + " wins " +
-                               money(won[last_winner])
+                        money(won[last_winner])
                         if show_all {
                             msg1 = msg1 + " with " + cat_name(
-                                players[last_winner].score / 10000000)
+                            players[last_winner].score / 10000000)
                         }
                         msg2 = ""
                     } else if win_count > 1 {
@@ -2102,9 +2102,9 @@ fn main() {
                         si = 0
                         while si < 6 {
                             if won[si] > 0 {
-                                if !first_name { msg2 = msg2 + "  •  " }
+                                if ! first_name { msg2 = msg2 + "  •  " }
                                 msg2 = msg2 + players[si].name + " +" +
-                                       money(won[si])
+                                money(won[si])
                                 first_name = false
                             }
                             si = si + 1
@@ -2154,7 +2154,7 @@ fn main() {
                 sprite2d_draw_texture(table_tex, 0.0, 0.0, 1920.0, 1080.0)
             } else {
                 engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0,
-                                   0.03, 0.20, 0.10, 1.0)
+                0.03, 0.20, 0.10, 1.0)
             }
             draw_table_skin(selected_skin)
 
@@ -2177,7 +2177,7 @@ fn main() {
                     let dx = lerp(1522.0, target_x, t)
                     let dy = lerp(520.0, 392.0, t)
                     draw_card(dx, dy, 118.0, 166.0, card_tex[board[ci2]],
-                              back_tex, true)
+                    back_tex, true)
                 }
                 ci2 = ci2 + 1
             }
@@ -2198,8 +2198,8 @@ fn main() {
             }
 
             // ---- seats ----------------------------------------------------
-            let reveal_all = (phase == 2 || showdown_pending) &&
-                             nonfolded_count(players) > 1
+            let reveal_all =(phase == 2 || showdown_pending) &&
+            nonfolded_count(players) > 1
             let mut s = 0
             while s < 6 {
                 if players[s].active || players[s].chips > 0 {
@@ -2220,16 +2220,16 @@ fn main() {
                         while k2 < 2 {
                             let mut t = 1.0
                             if animating && street == 0 && board_count == 0 &&
-                               phase == 1 {
+                            phase == 1 {
                                 t = anim_t(anim, to_f64(s * 2 + k2) * 0.045)
                             }
-                            let tx = base_x + to_f64(k2) * (cw + gap)
+                            let tx = base_x + to_f64(k2) *(cw + gap)
                             let dx = lerp(1522.0, tx, t)
                             let dy = lerp(520.0, base_y, t)
                             let mut card_id = players[s].card0
                             if k2 == 1 { card_id = players[s].card1 }
                             draw_card(dx, dy, cw, ch, card_tex[card_id],
-                                      back_tex, face)
+                            back_tex, face)
                             k2 = k2 + 1
                         }
                     }
@@ -2237,26 +2237,26 @@ fn main() {
                     // Current street bet in front of the seat.
                     if phase == 1 && players[s].round_bet > 0 {
                         draw_pile(bx[s], by[s], players[s].round_bet,
-                                  f_tiny, false)
+                        f_tiny, false)
                     }
 
                     // Turn / winner glow around the avatar.
                     let is_turn = phase == 1 && to_act == s &&
-                                  !showdown_pending && !game_over
+                    !showdown_pending && !game_over
                     if is_turn {
                         engine2d_draw_circle(ax, ay, 56.0,
-                                             1.0, 0.78, 0.28, 1.0)
+                        1.0, 0.78, 0.28, 1.0)
                         engine2d_draw_circle(ax, ay, 51.0,
-                                             0.90, 0.63, 0.16, 0.55)
+                        0.90, 0.63, 0.16, 0.55)
                     }
                     if phase == 2 && winner_flags[s] {
                         engine2d_draw_circle(ax, ay, 60.0,
-                                             1.0, 0.82, 0.30, 0.85)
+                        1.0, 0.82, 0.30, 0.85)
                         engine2d_draw_circle(ax, ay, 52.0,
-                                             1.0, 0.70, 0.18, 0.55)
+                        1.0, 0.70, 0.18, 0.55)
                     }
                     engine2d_draw_circle(ax + 3.0, ay + 5.0, 48.0,
-                                         0.0, 0.0, 0.0, 0.38)
+                    0.0, 0.0, 0.0, 0.38)
                     engine2d_draw_circle(ax, ay, 48.0, 0.10, 0.12, 0.16, 1.0)
                     draw_avatar(s, ax, ay, players[s].folded)
 
@@ -2269,7 +2269,7 @@ fn main() {
                             let orbit_x = cos(angle) * 56.0
                             let orbit_y = sin(angle) * 56.0
                             engine2d_draw_circle(ax + orbit_x, ay + orbit_y,
-                                                 3.2, 1.0, 0.88, 0.42, 1.0)
+                            3.2, 1.0, 0.88, 0.42, 1.0)
                             d = d + 1
                         }
                     }
@@ -2277,11 +2277,11 @@ fn main() {
                     // Dealer button and blind tags.
                     if s == dealer && phase > 0 {
                         engine2d_draw_circle(ax - 60.0, ay - 6.0, 16.0,
-                                             0.96, 0.95, 0.89, 1.0)
+                        0.96, 0.95, 0.89, 1.0)
                         engine2d_draw_circle(ax - 60.0, ay - 6.0, 13.0,
-                                             0.99, 0.98, 0.92, 1.0)
+                        0.99, 0.98, 0.92, 1.0)
                         text_c(f_tiny, ax - 60.0, ay - 18.0, "D",
-                               0.06, 0.06, 0.06, 1.0)
+                        0.06, 0.06, 0.06, 1.0)
                     }
 
                     // Name plate.
@@ -2289,30 +2289,30 @@ fn main() {
                         let px = 834.0
                         let py = 884.0
                         engine2d_draw_rect(px + 2.0, py + 3.0, 252.0, 46.0,
-                                           0.0, 0.0, 0.0, 0.40)
+                        0.0, 0.0, 0.0, 0.40)
                         engine2d_draw_rect(px, py, 252.0, 46.0,
-                                           0.045, 0.058, 0.080, 0.96)
+                        0.045, 0.058, 0.080, 0.96)
                         engine2d_draw_rect(px, py, 252.0, 2.0,
-                                           0.96, 0.78, 0.14, 0.95)
+                        0.96, 0.78, 0.14, 0.95)
                         let mut hero_tag = "YOU"
                         if s == sb_seat { hero_tag = "YOU  •  SB" }
                         if s == bb_seat { hero_tag = "YOU  •  BB" }
                         text_at(f_small, px + 12.0, py + 9.0, hero_tag,
-                                0.92, 0.94, 0.90, 1.0)
+                        0.92, 0.94, 0.90, 1.0)
                         text_r(f_num, px + 238.0, py + 8.0,
-                               money(players[0].chips),
-                               1.0, 0.86, 0.38, 1.0)
+                        money(players[0].chips),
+                        1.0, 0.86, 0.38, 1.0)
                     } else {
                         let px = ax + 58.0
                         let py = ay - 38.0
                         engine2d_draw_rect(px + 2.0, py + 3.0, 220.0, 76.0,
-                                           0.0, 0.0, 0.0, 0.40)
+                        0.0, 0.0, 0.0, 0.40)
                         engine2d_draw_rect(px, py, 220.0, 76.0,
-                                           0.045, 0.058, 0.080, 0.95)
+                        0.045, 0.058, 0.080, 0.95)
                         let mut br = 0.32
                         let mut bg = 0.27
                         let mut bb = 0.16
-                        if is_turn || (phase == 2 && winner_flags[s]) {
+                        if is_turn ||(phase == 2 && winner_flags[s]) {
                             br = 0.95; bg = 0.76; bb = 0.28
                         }
                         engine2d_draw_rect(px, py, 220.0, 2.0, br, bg, bb, 0.95)
@@ -2321,20 +2321,20 @@ fn main() {
                         let mut nb = 0.88
                         if players[s].folded { nr = 0.50; ng = 0.52; nb = 0.52 }
                         text_at(f_small, px + 14.0, py + 8.0,
-                                players[s].name, nr, ng, nb, 1.0)
+                        players[s].name, nr, ng, nb, 1.0)
                         let mut cr = 1.0
                         let mut cg = 0.86
                         let mut cb = 0.38
                         if players[s].folded { cr = 0.48; cg = 0.48; cb = 0.46 }
                         text_at(f_num, px + 14.0, py + 38.0,
-                                money(players[s].chips), cr, cg, cb, 1.0)
+                        money(players[s].chips), cr, cg, cb, 1.0)
                         if s == sb_seat {
                             text_r(f_tiny, px + 206.0, py + 10.0, "SB",
-                                   0.70, 0.78, 0.68, 1.0)
+                            0.70, 0.78, 0.68, 1.0)
                         }
                         if s == bb_seat {
                             text_r(f_tiny, px + 206.0, py + 10.0, "BB",
-                                   0.70, 0.78, 0.68, 1.0)
+                            0.70, 0.78, 0.68, 1.0)
                         }
                     }
 
@@ -2360,7 +2360,7 @@ fn main() {
                         if s == 1 || s == 5 { ly = ay + 56.0 }
                         let lw = text_w(f_tiny, label) + 22.0
                         engine2d_draw_rect(lx - lw / 2.0, ly, lw, 26.0,
-                                           0.02, 0.03, 0.04, 0.80)
+                        0.02, 0.03, 0.04, 0.80)
                         text_c(f_tiny, lx, ly + 3.0, label, lr, lg, lb, 1.0)
                     }
                     if label != "" && s == 0 {
@@ -2372,18 +2372,18 @@ fn main() {
 
             // ---- top bar --------------------------------------------------
             engine2d_draw_rect(0.0, 0.0, 1920.0, 80.0,
-                               0.020, 0.028, 0.040, 0.98)
+            0.020, 0.028, 0.040, 0.98)
             engine2d_draw_rect(0.0, 79.0, 1920.0, 2.0,
-                               0.96, 0.78, 0.14, 1.0)
+            0.96, 0.78, 0.14, 1.0)
             engine2d_draw_rect(24.0, 12.0, 48.0, 54.0,
-                               0.96, 0.78, 0.14, 1.0)
+            0.96, 0.78, 0.14, 1.0)
             engine2d_draw_rect(27.0, 15.0, 42.0, 48.0,
-                               0.025, 0.028, 0.030, 1.0)
+            0.025, 0.028, 0.030, 1.0)
             text_at(f_h1, 31.0, 14.0, "N", 0.96, 0.78, 0.14, 1.0)
             text_at(f_h1, 88.0, 14.0, "POKER", 0.96, 0.96, 0.92, 1.0)
             text_at(f_tiny, 404.0, 22.0, "HAND", 0.52, 0.60, 0.54, 1.0)
             text_at(f_num, 404.0, 42.0, str_i64(hand_no),
-                    0.92, 0.94, 0.90, 1.0)
+            0.92, 0.94, 0.90, 1.0)
             let mut street_name = "PRE-FLOP"
             if board_count == 3 { street_name = "FLOP" }
             if board_count == 4 { street_name = "TURN" }
@@ -2397,38 +2397,38 @@ fn main() {
             draw_chip(902.0, 40.0, 14.0, 1000)
             text_at(f_tiny, 924.0, 22.0, "POT", 0.52, 0.60, 0.54, 1.0)
             text_at(f_num, 924.0, 42.0, money(pot_all),
-                    1.0, 0.86, 0.38, 1.0)
+            1.0, 0.86, 0.38, 1.0)
             let mut sound_text = "S: SOUND ON"
-            if !sound_enabled { sound_text = "S: SOUND OFF" }
+            if ! sound_enabled { sound_text = "S: SOUND OFF" }
             text_at(f_tiny, 1090.0, 20.0, sound_text, 0.78, 0.84, 0.76, 1.0)
             let mut ai_text = "V: AI NORMAL"
             if fast_bots { ai_text = "V: AI FAST" }
             text_at(f_tiny, 1090.0, 42.0, ai_text, 0.78, 0.84, 0.76, 1.0)
 
             engine2d_draw_rect(1260.0, 12.0, 300.0, 56.0,
-                               0.060, 0.075, 0.100, 1.0)
+            0.060, 0.075, 0.100, 1.0)
             draw_chip(1280.0, 40.0, 13.0, 25)
             text_at(f_tiny, 1300.0, 20.0, "YOUR STACK", 0.56, 0.64, 0.58, 1.0)
             text_at(f_num, 1300.0, 38.0, money(players[0].chips),
-                    1.0, 0.90, 0.56, 1.0)
+            1.0, 0.90, 0.56, 1.0)
             if paint_button(1600.0, 18.0, 140.0, 44.0, "MENU", f_small,
-                            0.20, 0.17, 0.14, phase != 1) {
+            0.20, 0.17, 0.14, phase != 1) {
                 ui_hot = true
             }
             let fs_label = "FULLSCREEN"
             if paint_button(1750.0, 18.0, 140.0, 44.0, "F11", f_small,
-                            0.16, 0.20, 0.26, true) {
+            0.16, 0.20, 0.26, true) {
                 ui_hot = true
             }
 
             // ---- bottom action bar ---------------------------------------
             engine2d_draw_rect(0.0, 936.0, 1920.0, 144.0,
-                               0.020, 0.028, 0.040, 0.98)
+            0.020, 0.028, 0.040, 0.98)
             engine2d_draw_rect(0.0, 936.0, 1920.0, 2.0,
-                               0.96, 0.78, 0.14, 1.0)
+            0.96, 0.78, 0.14, 1.0)
 
             let human_turn2 = phase == 1 && to_act == 0 && !animating &&
-                              !showdown_pending && !game_over && bust_timer <= 0.0
+            !showdown_pending && !game_over && bust_timer <= 0.0
             let mut need2 = current_bet - players[0].round_bet
             if need2 < 0 { need2 = 0 }
             let max_to2 = players[0].round_bet + players[0].chips
@@ -2440,10 +2440,10 @@ fn main() {
 
             if phase == 0 {
                 text_c(f_ui, 960.0, 948.0,
-                       "BLINDS 10 / 20   •   SIX-HANDED NO-LIMIT HOLD'EM",
-                       0.72, 0.82, 0.72, 1.0)
+                "BLINDS 10 / 20   •   SIX-HANDED NO-LIMIT HOLD'EM",
+                0.72, 0.82, 0.72, 1.0)
                 if paint_button(760.0, 988.0, 400.0, 64.0, "DEAL HAND",
-                                f_h1, 0.66, 0.48, 0.10, true) {
+                f_h1, 0.66, 0.48, 0.10, true) {
                     ui_hot = true
                 }
             } else if phase == 1 {
@@ -2451,13 +2451,13 @@ fn main() {
                 if players[0].active && !players[0].folded {
                     if board_count >= 3 {
                         let hs = best_of_board(players[0].card0,
-                                               players[0].card1, board[0],
-                                               board[1], board[2], board[3],
-                                               board[4], board_count)
+                        players[0].card1, board[0],
+                        board[1], board[2], board[3],
+                        board[4], board_count)
                         human_hand = cat_name(hs / 10000000)
                     } else {
                         human_hand = preflop_label(players[0].card0,
-                                                   players[0].card1)
+                        players[0].card1)
                     }
                 }
                 let mut status = ""
@@ -2491,20 +2491,20 @@ fn main() {
                 let mut call_label = "C  CHECK"
                 if need2 > 0 { call_label = "C  CALL " + money(need2) }
                 if paint_button(280.0, 982.0, 160.0, 62.0, "FOLD",
-                                f_ui, 0.52, 0.13, 0.13, human_turn2) {
+                f_ui, 0.52, 0.13, 0.13, human_turn2) {
                     ui_hot = true
                 }
                 if paint_button(456.0, 982.0, 230.0, 62.0, call_label,
-                                f_ui, 0.12, 0.36, 0.28, human_turn2) {
+                f_ui, 0.12, 0.36, 0.28, human_turn2) {
                     ui_hot = true
                 }
                 if paint_button(702.0, 982.0, 150.0, 62.0, "ALL-IN",
-                                f_ui, 0.38, 0.18, 0.50, human_turn2) {
+                f_ui, 0.38, 0.18, 0.50, human_turn2) {
                     ui_hot = true
                 }
                 if paint_button(1440.0, 982.0, 200.0, 62.0, "RAISE",
-                                f_ui, 0.64, 0.47, 0.10,
-                                human_turn2 && can_raise2) {
+                f_ui, 0.64, 0.47, 0.10,
+                human_turn2 && can_raise2) {
                     ui_hot = true
                 }
 
@@ -2515,64 +2515,64 @@ fn main() {
                 let mut frac = 0.0
                 if max_to2 > min_to2 {
                     frac = to_f64(raise_to - min_to2) /
-                           to_f64(max_to2 - min_to2)
+                    to_f64(max_to2 - min_to2)
                 }
                 if frac < 0.0 { frac = 0.0 }
                 if frac > 1.0 { frac = 1.0 }
                 text_at(f_tiny, track_x, 960.0,
-                        "1 MIN  •  2 HALF POT  •  3 POT",
-                        0.62, 0.68, 0.60, 1.0)
+                "1 MIN  •  2 HALF POT  •  3 POT",
+                0.62, 0.68, 0.60, 1.0)
                 text_at(f_tiny, track_x, 980.0,
-                        "RAISE TO  " + money(raise_to),
-                        0.88, 0.86, 0.70, 1.0)
+                "RAISE TO  " + money(raise_to),
+                0.88, 0.86, 0.70, 1.0)
                 engine2d_draw_rect(track_x, track_y - 6.0, track_w, 12.0,
-                                   0.09, 0.11, 0.14, 1.0)
+                0.09, 0.11, 0.14, 1.0)
                 engine2d_draw_rect(track_x, track_y - 6.0, track_w * frac,
-                                   12.0, 0.96, 0.78, 0.14, 1.0)
+                12.0, 0.96, 0.78, 0.14, 1.0)
                 text_at(f_tiny, track_x, 1032.0, money(min_to2),
-                        0.46, 0.52, 0.48, 1.0)
+                0.46, 0.52, 0.48, 1.0)
                 text_r(f_tiny, track_x + track_w, 1032.0, money(max_to2),
-                       0.46, 0.52, 0.48, 1.0)
+                0.46, 0.52, 0.48, 1.0)
                 engine2d_draw_circle(track_x + track_w * frac, track_y,
-                                     15.0, 0.0, 0.0, 0.0, 0.35)
+                15.0, 0.0, 0.0, 0.0, 0.35)
                 engine2d_draw_circle(track_x + track_w * frac, track_y,
-                                     13.0, 1.0, 0.84, 0.34, 1.0)
+                13.0, 1.0, 0.84, 0.34, 1.0)
                 engine2d_draw_circle(track_x + track_w * frac, track_y,
-                                     7.0, 0.05, 0.05, 0.07, 1.0)
+                7.0, 0.05, 0.05, 0.07, 1.0)
                 // Compact 0-100 hand-strength heuristic, separate from pot odds.
                 let mut meter_value = 0
                 let meter_available = players[0].active && !players[0].folded
                 if meter_available {
                     if board_count >= 3 {
                         let meter_score = best_of_board(players[0].card0,
-                            players[0].card1, board[0], board[1], board[2],
-                            board[3], board[4], board_count)
+                        players[0].card1, board[0], board[1], board[2],
+                        board[3], board[4], board_count)
                         meter_value = postflop_strength(meter_score)
                     } else {
                         meter_value = preflop_strength(players[0].card0,
-                                                       players[0].card1)
+                        players[0].card1)
                     }
                 }
 
                 let mut required_equity = 0
                 if need2 > 0 && pot_all + need2 > 0 {
-                    required_equity = need2 * 100 / (pot_all + need2)
+                    required_equity = need2 * 100 /(pot_all + need2)
                 }
                 text_at(f_tiny, 1665.0, 946.0, "NEEDED EQUITY",
-                        0.66, 0.72, 0.66, 1.0)
+                0.66, 0.72, 0.66, 1.0)
                 text_r(f_num, 1885.0, 944.0, str_i64(required_equity) + "%",
-                       1.0, 0.87, 0.46, 1.0)
+                1.0, 0.87, 0.46, 1.0)
                 text_at(f_tiny, 1665.0, 980.0, "HAND STRENGTH",
-                        0.66, 0.72, 0.66, 1.0)
+                0.66, 0.72, 0.66, 1.0)
                 if meter_available {
                     text_r(f_num, 1885.0, 978.0, str_i64(meter_value) + "%",
-                           1.0, 0.87, 0.46, 1.0)
+                    1.0, 0.87, 0.46, 1.0)
                 } else {
                     text_r(f_tiny, 1885.0, 980.0, "FOLDED",
-                           0.55, 0.58, 0.58, 1.0)
+                    0.55, 0.58, 0.58, 1.0)
                 }
                 engine2d_draw_rect(1665.0, 1013.0, 220.0, 10.0,
-                                   0.09, 0.11, 0.14, 1.0)
+                0.09, 0.11, 0.14, 1.0)
                 let meter_width = 220.0 * to_f64(meter_value) / 100.0
                 let mut meter_r = 0.80
                 let mut meter_g = 0.24
@@ -2585,41 +2585,41 @@ fn main() {
                 }
                 if meter_available {
                     engine2d_draw_rect(1665.0, 1013.0, meter_width, 10.0,
-                                       meter_r, meter_g, meter_b, 1.0)
+                    meter_r, meter_g, meter_b, 1.0)
                 }
                 text_at(f_tiny, 1665.0, 1032.0, "LOW",
-                        0.45, 0.52, 0.48, 1.0)
+                0.45, 0.52, 0.48, 1.0)
                 text_r(f_tiny, 1885.0, 1032.0, "HIGH",
-                       0.45, 0.52, 0.48, 1.0)
+                0.45, 0.52, 0.48, 1.0)
             } else {
                 text_c(f_ui, 960.0, 944.0, msg1, 1.0, 0.90, 0.56, 1.0)
                 if msg2 != "" {
                     text_c(f_small, 960.0, 976.0, msg2,
-                           0.80, 0.86, 0.78, 1.0)
+                    0.80, 0.86, 0.78, 1.0)
                 }
                 if paint_button(760.0, 1006.0, 240.0, 54.0, "NEXT HAND",
-                                f_ui, 0.62, 0.46, 0.10, true) {
+                f_ui, 0.62, 0.46, 0.10, true) {
                     ui_hot = true
                 }
                 if paint_button(1020.0, 1006.0, 180.0, 54.0, "MENU",
-                                f_small, 0.20, 0.17, 0.14, true) {
+                f_small, 0.20, 0.17, 0.14, true) {
                     ui_hot = true
                 }
                 if auto_next && hand_timer > 0.0 {
                     let secs = to_i64(hand_timer) + 1
                     text_at(f_tiny, 1220.0, 1022.0,
-                            "AUTO NEXT " + str_i64(secs) + "s  •  T: OFF",
-                            0.46, 0.52, 0.48, 1.0)
+                    "AUTO NEXT " + str_i64(secs) + "s  •  T: OFF",
+                    0.46, 0.52, 0.48, 1.0)
                 } else {
                     text_at(f_tiny, 1220.0, 1022.0, "AUTO NEXT OFF  •  T: ON",
-                            0.72, 0.75, 0.62, 1.0)
+                    0.72, 0.75, 0.62, 1.0)
                 }
             }
 
             // ---- game over overlay ---------------------------------------
             if game_over {
                 engine2d_draw_rect(0.0, 0.0, 1920.0, 1080.0,
-                                   0.0, 0.0, 0.0, 0.72)
+                0.0, 0.0, 0.0, 0.72)
                 panel(560.0, 320.0, 800.0, 450.0)
                 let mut headline = "YOU'RE OUT"
                 let mut subtitle = "Your stack reached zero."
@@ -2628,25 +2628,25 @@ fn main() {
                     subtitle = "Every bot at the table has been eliminated."
                 }
                 text_c(f_title, 960.0, 360.0, headline,
-                       1.0, 0.82, 0.30, 1.0)
+                1.0, 0.82, 0.30, 1.0)
                 text_c(f_ui, 960.0, 456.0, subtitle,
-                       0.80, 0.86, 0.78, 1.0)
+                0.80, 0.86, 0.78, 1.0)
                 text_c(f_small, 960.0, 500.0,
-                        "Session hands " + str_i64(session_hands) +
-                        "  •  Wins " + str_i64(session_wins) +
-                        "  •  Net " + money(session_net),
-                        0.66, 0.72, 0.66, 1.0)
+                "Session hands " + str_i64(session_hands) +
+                "  •  Wins " + str_i64(session_wins) +
+                "  •  Net " + money(session_net),
+                0.66, 0.72, 0.66, 1.0)
                 if paint_button(660.0, 590.0, 280.0, 72.0, "PLAY AGAIN",
-                                f_ui, 0.62, 0.46, 0.10, true) {
+                f_ui, 0.62, 0.46, 0.10, true) {
                     ui_hot = true
                 }
                 if paint_button(980.0, 590.0, 280.0, 72.0, "MAIN MENU",
-                                f_ui, 0.18, 0.20, 0.24, true) {
+                f_ui, 0.18, 0.20, 0.24, true) {
                     ui_hot = true
                 }
                 text_c(f_tiny, 960.0, 700.0,
-                       "A new game starts everyone with 1,000 chips.",
-                       0.52, 0.58, 0.52, 1.0)
+                "A new game starts everyone with 1,000 chips.",
+                0.52, 0.58, 0.52, 1.0)
             }
 
             if show_help { draw_help(f_title, f_h1, f_ui, f_small, f_tiny) }

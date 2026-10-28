@@ -28,7 +28,7 @@ fn main() {
     print("Starting main loop...")
     print("")
 
-    while !gfx_should_close() && running {
+    while ! gfx_should_close() && running {
         gfx_poll()
         let dt = gfx_dt()
         time = time + dt

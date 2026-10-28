@@ -6,20 +6,20 @@ fn main() {
     print(string.len("hello"))
     print(string.len("hello world"))
     print(string.len("日本語"))
-    
+
     // string.byte_at tests
     print("\nstring.byte_at tests:")
     let s = "ABC"
-    print(string.byte_at(s, 0))  // 65 'A'
-    print(string.byte_at(s, 1))  // 66 'B'
-    print(string.byte_at(s, 2))  // 67 'C'
-    print(string.byte_at(s, 3))  // -1 out of bounds
-    print(string.byte_at(s, -1)) // -1 negative index
+    print(string.byte_at(s, 0)) // 65 'A'
+    print(string.byte_at(s, 1)) // 66 'B'
+    print(string.byte_at(s, 2)) // 67 'C'
+    print(string.byte_at(s, 3)) // -1 out of bounds
+    print(string.byte_at(s,-1)) // -1 negative index
     print(string.byte_at("", 0)) // -1 empty string
-    
+
     // Test with multibyte UTF-8
-    let utf8 = "é"  // 2 bytes: 0xC3 0xA9
-    print(string.byte_at(utf8, 0))  // 0xC3 = 195
-    print(string.byte_at(utf8, 1))  // 0xA9 = 169
-    print(string.byte_at(utf8, 2))  // -1 out of bounds
+    let utf8 = "é" // 2 bytes: 0xC3 0xA9
+    print(string.byte_at(utf8, 0)) // 0xC3 = 195
+    print(string.byte_at(utf8, 1)) // 0xA9 = 169
+    print(string.byte_at(utf8, 2)) // -1 out of bounds
 }

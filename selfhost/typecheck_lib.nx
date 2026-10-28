@@ -117,7 +117,7 @@ fn infer(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let name = read_node(body, p)
         let t = env_lookup(names, types, name)
         if t == "" {
@@ -133,13 +133,13 @@ fn infer(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let inner = read_node(body, p)
         let t = infer(inner, names, types)
         if string.slice(t, 0, 5) == "error" {
             return t
         }
-        if !is_numeric(t) {
+        if ! is_numeric(t) {
             return "error unary - requires a number"
         }
         return t
@@ -149,7 +149,7 @@ fn infer(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let inner = read_node(body, p)
         let t = infer(inner, names, types)
         if string.slice(t, 0, 5) == "error" {
@@ -165,7 +165,7 @@ fn infer(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let lhs = read_node(body, p)
         let rhs = read_node(body, p)
         let lt = infer(lhs, names, types)
@@ -179,10 +179,10 @@ fn infer(node: string, names: i64, types: i64) -> string {
         if lt == "unknown" || rt == "unknown" {
             return "unknown"
         }
-        if h == "+" && (lt == "string" || rt == "string") {
+        if h == "+" &&(lt == "string" || rt == "string") {
             return "string"
         }
-        if !is_numeric(lt) || !is_numeric(rt) {
+        if ! is_numeric(lt) || !is_numeric(rt) {
             return "error operator " + h + " requires numbers, got " + lt + " and " + rt
         }
         if lt == "f64" || rt == "f64" {
@@ -195,7 +195,7 @@ fn infer(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let lhs = read_node(body, p)
         let rhs = read_node(body, p)
         let lt = infer(lhs, names, types)
@@ -219,7 +219,7 @@ fn infer(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let lhs = read_node(body, p)
         let rhs = read_node(body, p)
         let lt = infer(lhs, names, types)
@@ -245,10 +245,10 @@ fn check_fn(node: string, names: i64, types: i64) -> string {
     ilist_push(p, 0)
     let body = node_body(node)
     skip_ws(body, p)
-    read_node(body, p)  // fn
-    read_node(body, p)  // name
+    read_node(body, p) // fn
+    read_node(body, p) // name
     let params_node = read_node(body, p)
-    read_node(body, p)  // ret
+    read_node(body, p) // ret
     let fn_body = read_node(body, p)
 
     let lnames = slist_new()
@@ -257,14 +257,14 @@ fn check_fn(node: string, names: i64, types: i64) -> string {
     ilist_push(pp, 0)
     let params_body = node_body(params_node)
     skip_ws(params_body, pp)
-    read_node(params_body, pp)  // params
+    read_node(params_body, pp) // params
     let mut pr = read_node(params_body, pp)
     while pr != "" {
         let rpp = ilist_new()
         ilist_push(rpp, 0)
         let pb = node_body(pr)
         skip_ws(pb, rpp)
-        read_node(pb, rpp)  // param
+        read_node(pb, rpp) // param
         let pname = read_node(pb, rpp)
         let ptype = read_node(pb, rpp)
         slist_push(lnames, pname)
@@ -286,7 +286,7 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let name = read_node(body, p)
         let init = read_node(body, p)
         let t = infer(init, names, types)
@@ -302,7 +302,7 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let name = read_node(body, p)
         let value = read_node(body, p)
         let want = env_lookup(names, types, name)
@@ -323,7 +323,7 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let value = read_node(body, p)
         let t = infer(value, names, types)
         if string.slice(t, 0, 5) == "error" {
@@ -336,17 +336,17 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // for
+        read_node(body, p) // for
         let var = read_node(body, p)
         let start = read_node(body, p)
         let endv = read_node(body, p)
         let fn_body = read_node(body, p)
         let st = infer(start, names, types)
         if string.slice(st, 0, 5) == "error" { return st }
-        if !is_numeric(st) { return "error for start must be numeric" }
+        if ! is_numeric(st) { return "error for start must be numeric" }
         let et = infer(endv, names, types)
         if string.slice(et, 0, 5) == "error" { return et }
-        if !is_numeric(et) { return "error for end must be numeric" }
+        if ! is_numeric(et) { return "error for end must be numeric" }
         let lnames = slist_new()
         let ltypes = slist_new()
         let k = slist_len(names)
@@ -365,7 +365,7 @@ fn check_stmt(node: string, names: i64, types: i64) -> string {
         ilist_push(p, 0)
         let body = node_body(node)
         skip_ws(body, p)
-        read_node(body, p)  // skip the head atom
+        read_node(body, p) // skip the head atom
         let cond = read_node(body, p)
         let ct = infer(cond, names, types)
         if string.slice(ct, 0, 5) == "error" {

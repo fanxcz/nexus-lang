@@ -10,11 +10,11 @@ fn main() {
     }
     defer tilemap_dispose(map)
 
-    if !tilemap_try_set(map, 4, 4, 1, 2, 1) {
+    if ! tilemap_try_set(map, 4, 4, 1, 2, 1) {
         print("NEXUS tilemap: FAIL checked set")
         return
     }
-    if tilemap_try_set(map, 4, 4, -1, 2, 1) {
+    if tilemap_try_set(map, 4, 4,-1, 2, 1) {
         print("NEXUS tilemap: FAIL invalid checked set")
         return
     }
@@ -22,11 +22,11 @@ fn main() {
         print("NEXUS tilemap: FAIL get/set")
         return
     }
-    if tilemap_get(map, 4, 4, -1, 2) != 0 {
+    if tilemap_get(map, 4, 4,-1, 2) != 0 {
         print("NEXUS tilemap: FAIL out-of-bounds read")
         return
     }
-    if !collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
+    if ! collision2d_map_overlaps(map, 4, 4, 32.0, 32.0, 64.0, 24.0, 24.0) {
         print("NEXUS tilemap: FAIL overlap")
         return
     }
@@ -34,7 +34,7 @@ fn main() {
         print("NEXUS tilemap: FAIL empty-cell overlap")
         return
     }
-    if collision2d_map_overlaps(map, 4, 4, 32.0, -100000.0, 0.0, 1.0, 100000000.0) {
+    if collision2d_map_overlaps(map, 4, 4, 32.0,-100000.0, 0.0, 1.0, 100000000.0) {
         print("NEXUS tilemap: FAIL out-of-map overlap")
         return
     }
@@ -56,12 +56,12 @@ fn main() {
         print("NEXUS tilemap: FAIL empty-space movement " + outside)
         return
     }
-    let left_hit = collision2d_move_x(map, 4, 4, 32.0, 80.0, 64.0, 24.0, 24.0, -32.0)
+    let left_hit = collision2d_move_x(map, 4, 4, 32.0, 80.0, 64.0, 24.0, 24.0,-32.0)
     if left_hit < 63.9 || left_hit > 64.1 {
         print("NEXUS tilemap: FAIL negative horizontal resolution " + left_hit)
         return
     }
-    let up_hit = collision2d_move_y(map, 4, 4, 32.0, 32.0, 100.0, 24.0, 24.0, -32.0)
+    let up_hit = collision2d_move_y(map, 4, 4, 32.0, 32.0, 100.0, 24.0, 24.0,-32.0)
     if up_hit < 95.9 || up_hit > 96.1 {
         print("NEXUS tilemap: FAIL negative vertical resolution " + up_hit)
         return

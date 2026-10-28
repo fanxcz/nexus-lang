@@ -3,23 +3,23 @@ import std.collections
 fn main() {
     let numbers = int_list_new()
     defer int_list_dispose(numbers)
-    if !int_list_reserve(numbers, 4) {
+    if ! int_list_reserve(numbers, 4) {
         print("int reserve: FAIL")
         return
     }
-    if !int_list_push(numbers, 10) {
+    if ! int_list_push(numbers, 10) {
         print("int push: FAIL")
         return
     }
-    if !int_list_push(numbers, 20) {
+    if ! int_list_push(numbers, 20) {
         print("int push: FAIL")
         return
     }
-    if !int_list_push(numbers, 30) {
+    if ! int_list_push(numbers, 30) {
         print("int push: FAIL")
         return
     }
-    if !int_list_insert(numbers, 1, 15) {
+    if ! int_list_insert(numbers, 1, 15) {
         print("int insert: FAIL")
         return
     }
@@ -29,7 +29,7 @@ fn main() {
     }
 
     let mut number: i64 = -1
-    if !int_list_try_get(numbers, 1, &number) {
+    if ! int_list_try_get(numbers, 1,&number) {
         print("int try-get: FAIL")
         return
     }
@@ -37,11 +37,11 @@ fn main() {
         print("int try-get value: FAIL")
         return
     }
-    if !int_list_set(numbers, 1, 17) {
+    if ! int_list_set(numbers, 1, 17) {
         print("int set: FAIL")
         return
     }
-    if !int_list_remove(numbers, 2, &number) {
+    if ! int_list_remove(numbers, 2,&number) {
         print("int remove: FAIL")
         return
     }
@@ -49,7 +49,7 @@ fn main() {
         print("int remove value: FAIL")
         return
     }
-    if !int_list_try_pop(numbers, &number) {
+    if ! int_list_try_pop(numbers,&number) {
         print("int pop: FAIL")
         return
     }
@@ -57,61 +57,61 @@ fn main() {
         print("int pop value/length: FAIL")
         return
     }
-    if int_list_try_get(numbers, 99, &number) {
+    if int_list_try_get(numbers, 99,&number) {
         print("int invalid index: FAIL")
         return
     }
-    if !int_list_clear(numbers) || int_list_len(numbers) != 0 {
+    if ! int_list_clear(numbers) || int_list_len(numbers) != 0 {
         print("int clear: FAIL")
         return
     }
-    if int_list_try_pop(numbers, &number) {
+    if int_list_try_pop(numbers,&number) {
         print("int empty pop: FAIL")
         return
     }
 
     let words = string_list_new()
     defer string_list_dispose(words)
-    if !string_list_reserve(words, 4) {
+    if ! string_list_reserve(words, 4) {
         print("string reserve: FAIL")
         return
     }
-    if !string_list_push(words, "alpha") || !string_list_push(words, "gamma") {
+    if ! string_list_push(words, "alpha") || !string_list_push(words, "gamma") {
         print("string push: FAIL")
         return
     }
-    if !string_list_insert(words, 1, "beta") {
+    if ! string_list_insert(words, 1, "beta") {
         print("string insert: FAIL")
         return
     }
     let mut word: string = "sentinel"
-    if !string_list_try_get(words, 1, &word) || word != "beta" {
+    if ! string_list_try_get(words, 1,&word) || word != "beta" {
         print("string try-get: FAIL")
         return
     }
-    if !string_list_set(words, 1, "BETA") {
+    if ! string_list_set(words, 1, "BETA") {
         print("string set: FAIL")
         return
     }
-    if !string_list_remove(words, 2, &word) || word != "gamma" {
+    if ! string_list_remove(words, 2,&word) || word != "gamma" {
         print("string remove: FAIL")
         return
     }
-    if !string_list_try_pop(words, &word) || word != "BETA" {
+    if ! string_list_try_pop(words,&word) || word != "BETA" {
         print("string pop: FAIL")
         return
     }
-    if !string_list_clear(words) || string_list_len(words) != 0 {
+    if ! string_list_clear(words) || string_list_len(words) != 0 {
         print("string clear: FAIL")
         return
     }
-    if string_list_try_get(words, 0, &word) {
+    if string_list_try_get(words, 0,&word) {
         print("string invalid index: FAIL")
         return
     }
 
     let disposable = int_list_new()
-    if !int_list_free(disposable) {
+    if ! int_list_free(disposable) {
         print("int free: FAIL")
         return
     }
@@ -121,7 +121,7 @@ fn main() {
     }
 
     let disposable_words = string_list_new()
-    if !string_list_free(disposable_words) {
+    if ! string_list_free(disposable_words) {
         print("string free: FAIL")
         return
     }

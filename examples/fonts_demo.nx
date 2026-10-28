@@ -3,7 +3,7 @@
 // Requires a build with SDL2 and the LLVM backend.
 
 fn main() {
-    if !gfx_init(800, 480, "NEXUS fonts") {
+    if ! gfx_init(800, 480, "NEXUS fonts") {
         print(gfx_error())
         return
     }
@@ -18,7 +18,7 @@ fn main() {
     let h = to_f64(gfx_text_height(font))
     print("text is " + w + " x " + h + " px")
 
-    while !gfx_should_close() {
+    while ! gfx_should_close() {
         gfx_poll()
         gfx_begin()
         gfx_clear(0.08, 0.09, 0.12, 1.0)

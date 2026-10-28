@@ -7,7 +7,7 @@ fn main() {
         print("write-empty: FAIL")
         return
     }
-    if !fs_read_checked("empty.txt", &content) {
+    if ! fs_read_checked("empty.txt",&content) {
         print("read-empty: FAIL")
         return
     }
@@ -16,7 +16,7 @@ fn main() {
         return
     }
 
-    if fs_read_checked("missing-file.txt", &content) {
+    if fs_read_checked("missing-file.txt",&content) {
         print("missing-file: FAIL")
         return
     }
@@ -25,7 +25,7 @@ fn main() {
         print("write-payload: FAIL")
         return
     }
-    if !fs_read_checked("payload.txt", &content) {
+    if ! fs_read_checked("payload.txt",&content) {
         print("read-payload: FAIL")
         return
     }

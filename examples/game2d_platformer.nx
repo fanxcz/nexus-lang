@@ -8,7 +8,7 @@ import std.collision2d
 import std.tilemap_render
 
 fn main() {
-    if !engine2d_init(960, 540, "NEXUS 2D Platformer") {
+    if ! engine2d_init(960, 540, "NEXUS 2D Platformer") {
         print("Could not initialize graphics: " + gfx_error())
         return
     }
@@ -56,7 +56,7 @@ fn main() {
     let gravity = 1100.0
     let jump_speed = -430.0
 
-    while !engine2d_should_close() {
+    while ! engine2d_should_close() {
         // begin_frame polls input, starts drawing and clears the screen.
         engine2d_begin_frame(0.035, 0.055, 0.12, 1.0)
         let frame_dt = math_clamp(engine2d_delta_time(), 0.0, 0.05)
@@ -75,8 +75,8 @@ fn main() {
 
         let desired_x = player_x + velocity_x * frame_dt
         let resolved_x = collision2d_move_x(map, map_width, map_height, tile_size,
-                                            player_x, player_y, player_w, player_h,
-                                            velocity_x * frame_dt)
+        player_x, player_y, player_w, player_h,
+        velocity_x * frame_dt)
         if resolved_x != desired_x { velocity_x = 0.0 }
         player_x = resolved_x
         if player_x < 0.0 { player_x = 0.0 }
@@ -91,8 +91,8 @@ fn main() {
         velocity_y = velocity_y + gravity * frame_dt
         let desired_y = player_y + velocity_y * frame_dt
         let resolved_y = collision2d_move_y(map, map_width, map_height, tile_size,
-                                            player_x, player_y, player_w, player_h,
-                                            velocity_y * frame_dt)
+        player_x, player_y, player_w, player_h,
+        velocity_y * frame_dt)
         if resolved_y != desired_y {
             if velocity_y > 0.0 { grounded = true }
             velocity_y = 0.0

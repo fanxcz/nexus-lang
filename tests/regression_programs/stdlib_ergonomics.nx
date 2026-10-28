@@ -5,7 +5,7 @@ fn main() {
     // Smart concat: string + i64/f64/bool
     let code = 42
     print("code=" + code)
-    print("ok=" + (1 < 2))
+    print("ok=" +(1 < 2))
     print("half=" + 0.5 + "!")
 
     // Discard binding repeated in one scope
