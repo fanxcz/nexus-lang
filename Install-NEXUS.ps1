@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$version = '2.1.1'
+$version = '2.2.0'
 $fileName = "NEXUS-Setup-$version.exe"
 $baseUrl = 'https://fanxcz.github.io/nexus-lang/assets/downloads'
 $installerUrl = "$baseUrl/$fileName"

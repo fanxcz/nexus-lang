@@ -8,9 +8,17 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
-**Windows installer:** download `NEXUS-Setup-2.1.1.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
+
+## What's new in 2.2.0
+
+- Adds i64 bitwise `&`, `|`, `^`, `<<`, `>>` and the compound forms `&=`, `|=`, `^=`, `<<=`, `>>=` in both compilation backends.
+- `match` is now checked for exhaustiveness over `bool` and enums.
+- Fixes `&&`/`||` short-circuiting, compound assignment on fields, elements and dereferences, and newline-sensitive statement boundaries.
+- Splits the compiler and runtime into focused files; the installer and portable ZIP ship the complete runtime tree.
+- Adds regression tests for bitwise expressions, short-circuiting, statement lines and compound assignment.
 
 ## Current status
 
@@ -21,7 +29,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 ## Install on Windows 11
 
 1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-2. Download `NEXUS-Setup-2.1.1.exe` only from an official project artifact.
+2. Download `NEXUS-Setup-2.2.0.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
 5. Open a **new** PowerShell window and verify:
@@ -182,6 +190,7 @@ Linux/macOS builds use the corresponding executable path (for example, `./build/
 - `examples/` — example programs, assets, and project templates
 - `tests/` — regression and runtime tests
 - `docs/` — user and developer documentation
+- `CHANGELOG.md` — release history and notable changes
 - `.github/workflows/` — CI, packaging, and documentation deployment
 - `.github/project-tools/` — repository automation, Windows packaging, installer definition, and editor tooling
 

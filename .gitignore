@@ -55,6 +55,7 @@ nexus_paint.bmp
 
 # Temporary self-hosted compiler test output
 selfhost-*-out.txt
+selfhost-out.txt
 
 # Poker example save state
 poker_save.txt

@@ -92,8 +92,10 @@ match score {
 
 Match is not a general expression in this compiler version. Destructured struct
 patterns and or-patterns are not supported.
-`match` does not perform exhaustiveness checking: if no arm matches, execution
-continues after the `match` statement.
+`match` is checked for exhaustiveness over finite domains: a `bool` match must
+cover both `true` and `false`, and an enum match must cover every variant (or
+provide a catch-all `_` arm). An `i64` domain cannot be checked, so it still
+falls through when no arm matches. Guarded arms do not count towards coverage.
 
 ## Returns
 
@@ -109,4 +111,4 @@ fn max(a: i64, b: i64) -> i64 {
 }
 ```
 
-The compiler checks that a non-void function returns a value on every path it can prove. It does not support Rust-style `loop { break value }` expressions or block expressions that return a value. The `?` operator is supported for matching payload-enum success/failure variants on the LLVM backend; see [Error Handling](error-handling.md#propagate-an-enum-with-) for its constraints. The built-in native backend does not yet support this operator.
+The compiler checks that a non-void function returns a value on every path it can prove. It does not support Rust-style `loop { break value }` expressions or block expressions that return a value. The `?` operator is supported for matching payload-enum success/failure variants on the LLVM backend; see [Error Handling](error-handling.md#propagate-an-enum-with) for its constraints. The built-in native backend does not yet support this operator.

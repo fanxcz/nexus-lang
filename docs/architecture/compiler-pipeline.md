@@ -30,15 +30,18 @@ Source (.nx)
 
 ### Semantic analysis — `src/compiler/semantic/`
 
-The semantic pass validates declarations, names, mutability, expression types, structs, enums, function signatures and runtime built-ins. Some advanced language capabilities remain experimental and are documented separately.
+The semantic pass validates declarations, names, mutability, expression types, structs, enums, function signatures and runtime built-ins. Built-in signatures live under `src/compiler/builtins/`, grouped by topic (`core`, `strings`, `collections`, `graphics`, `screen`, `ui`, `audio`, `game`, `math`, `data`), with `builtins.hpp` as the lookup facade. Some advanced language capabilities remain experimental and are documented separately.
 
-### Backend — `src/compiler/backend/codegen/`
+### Backends — `src/compiler/backend/`
 
-`llvm_ir.cpp` lowers the validated program to LLVM IR. The driver invokes the available native Clang toolchain to link the generated IR with `src/runtime/runtime.cpp`.
+There are two backends that share the same validated AST and semantics.
+
+- **LLVM IR** (`codegen/`): `llvm_ir.cpp` is the public entry point, `llvm_cg.hpp` declares the internal `CG` emitter, and the implementation is split by topic across `llvm_cg_core.cpp` (module/type/struct helpers), `llvm_cg_expr.cpp` (expressions, defer, compound assignment), `llvm_cg_stmt.cpp` (statements), and `llvm_cg_program.cpp` (program layout). The driver invokes the available native Clang toolchain to link the generated IR with the runtime translation unit `src/runtime/runtime.cpp`, which is assembled from the topic files under `src/runtime/`.
+- **Builtin native** (`native/`): `native.cpp` exposes the supported-subset check and executable writer, `native_subset.cpp` implements the subset type checker, `x64_emitter.hpp` holds the x86-64 instruction encoder, `native_generator.hpp` declares the code generator, and `native_gen_core.cpp`, `native_gen_stmt.cpp` and `native_gen_runtime.cpp` implement it by topic.
 
 ### Driver and tooling — `src/compiler/driver/`
 
-`driver.cpp` provides the CLI workflows: project creation, checking, building/running programs, standard-module resolution, package commands, formatter/linter entry points, and the LSP transport.
+`driver.cpp` orchestrates the CLI workflows. The remaining driver code is grouped by responsibility under `cli/`, `commands/`, `lsp/`, `package/`, `project/`, `repl/`, `support/`, and `toolchain/`, with the shared internal interface in `driver_internal.hpp`. The LSP transport in `lsp/` keeps the protocol loop in `server.cpp` and puts reusable JSON-RPC framing (`protocol.cpp`), UTF-16/line helpers (`text.cpp`), URI conversion (`uri.cpp`), and diagnostic collection (`diagnostics.cpp`) in separate units.
 
 ## Source diagnostics
 

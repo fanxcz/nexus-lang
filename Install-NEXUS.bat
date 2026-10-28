@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title NEXUS 2.1.1 Installer
+title NEXUS 2.2.0 Installer
 
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
@@ -18,7 +18,7 @@ if not exist "%~dp0Install-NEXUS.ps1" (
 )
 
 echo.
-echo NEXUS Setup 2.1.1
+echo NEXUS Setup 2.2.0
 echo This script downloads the official installer, verifies SHA-256,
 echo then opens the normal per-user setup wizard.
 echo No administrator rights are required for the default install.

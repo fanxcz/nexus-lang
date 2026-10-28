@@ -10,8 +10,8 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
-**Windows installer:** download `NEXUS-Setup-2.1.1.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-**One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 2.1.1 installer, verifies SHA-256, then launches setup.
+**Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 2.2.0 installer, verifies SHA-256, then launches setup.
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
@@ -20,6 +20,14 @@
 NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
 
 Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Games remain a supported area for graphics and runtime experimentation.
+
+## What's new in 2.2.0
+
+- Adds i64 bitwise operators `&`, `|`, `^`, `<<`, `>>` together with the compound forms `&=`, `|=`, `^=`, `<<=`, `>>=`. They work in the LLVM path and the built-in x86-64 native backend, and the formatter preserves them.
+- `match` is now checked for exhaustiveness over `bool` and enum domains, so a missing variant is a compile-time error instead of a silent fall-through.
+- Fixes `&&` and `||` short-circuit evaluation, compound assignment on fields, array elements and dereferences, statement boundaries that depended on newlines, and adds compile-time division-by-zero and constant-index diagnostics.
+- Reorganizes the source tree into focused units: the lexer, parser, semantic analyzer, both code generators, the driver, the builtins table, the LSP server helpers and the REPL now live in separate files, and the runtime is assembled from topic-based `.inc` files under `src/runtime/`.
+- Packages and release artifacts ship the complete runtime tree, so installed compiler binaries can still build programs with either backend.
 
 ## What's new in 2.1.1
 
@@ -61,7 +69,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 ## Install on Windows 11
 
 1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-2. Download `NEXUS-Setup-2.1.1.exe` only from an official project artifact.
+2. Download `NEXUS-Setup-2.2.0.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
 5. Open a **new** PowerShell window and verify:
@@ -248,11 +256,12 @@ Linux/macOS builds use the corresponding executable path (for example, `./build/
 
 ## Repository map
 
-- `src/` — compiler frontend, semantic analysis, code generation, driver, and CLI
+- `src/` — compiler frontend, semantic analysis, code generation (`backend/codegen`, `backend/native`), driver workflows (`driver/` grouped by responsibility), and the runtime (`runtime/`, one translation unit assembled from topic files)
 - `stdlib/` — standard library modules
 - `examples/` — example programs, assets, and project templates
 - `tests/` — regression and runtime tests
 - `docs/` — user and developer documentation
+- [`CHANGELOG.md`](CHANGELOG.md) — release history and notable changes
 - [Platform support matrix](https://github.com/fanxcz/nexus-lang/blob/main/docs/development/platform-support.md) — tested hosts, native backend targets, and runtime limitations
 - `.github/workflows/` — CI, packaging, and documentation deployment
 - `.github/project-tools/` — repository automation, Windows packaging, installer definition, and editor tooling

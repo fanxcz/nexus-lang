@@ -1,11 +1,21 @@
+# Changelog
+
+## NEXUS 2.2.0 — bitwise operators, exhaustive match and a focused source tree (2026-10-28)
+
+- Added i64 bitwise operators `&`, `|`, `^`, `<<`, `>>` and the compound assignments `&=`, `|=`, `^=`, `<<=`, `>>=`. The lexer, parser, semantic analyzer and formatter handle them, and both the LLVM path and the built-in x86-64 native backend emit identical results.
+- Made `match` exhaustiveness a semantic requirement over `bool` and enum domains; a missing variant now fails compilation instead of falling through.
+- Fixed `&&`/`||` short-circuit evaluation, compound assignment on struct fields, array elements and dereferences, newline-dependent statement boundaries, and added compile-time division-by-zero and constant index diagnostics.
+- Split the compiler into focused translation units: `lexer`, `parser`, `semantic`, LLVM code generation, native code generation, the driver, the builtins signature table, LSP server helpers (`protocol`, `text`, `uri`, `diagnostics`) and REPL helpers all now live in dedicated files with internal headers.
+- Split the runtime into topic directories (`core`, `graphics`, `audio`, `io`, `data`, `strings`, `collections`, `ui`, `game`, `math`, `memory`, `net`, `crypto`) assembled by a thin `runtime.cpp`; install rules, portable packaging and the release workflow now ship the complete tree.
+- Bumped the compiler, installer, website download links and bootstrap scripts to 2.2.0. Added `CMake` source groups so the split files build and install consistently across targets.
+- Added regression coverage for bitwise expressions, short-circuit evaluation, statement lines and compound assignment on fields, elements and dereferences.
+
 ## NEXUS 2.1.1 — installer and UI improvements (2026-10-26)
 
 - Added root-level `Install-NEXUS.bat` and `Install-NEXUS.ps1` bootstrap scripts. They download the official Windows installer, validate its SHA-256 digest and launch setup only after verification.
 - Bumped the compiler/setup package to 2.1.1; the Pages workflow builds and publishes `NEXUS-Setup-2.1.1.exe` with a matching checksum.
 - Added a basic single-line UTF-8 UI text field with click focus, code-point-aware Backspace, bounded UTF-8 input, and Enter/Tab to finish editing. The field currently uses stable layout bounds rather than explicit widget IDs; Escape cancellation, caret/selection editing, and multi-field keyboard traversal remain future work.
 - Improved checked `Option`/`Result` helpers, enum-match return-path analysis and CLI argument diagnostics.
-
-# Changelog
 
 ## NEXUS Poker and graphics runtime polish (2026-10-26)
 
@@ -83,8 +93,6 @@
 - Added the Windows ZIP and SHA-256 checksum to the MkDocs site downloads section.
 - Fixed GitHub Pages dependency installation to include `mkdocs-minify-plugin`.
 - Excluded `.git`, build caches, and generated website files from the source-release bundle.
-
-# Changelog
 
 ## 1.1.0 - Graphics backend rewrite
 

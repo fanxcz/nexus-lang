@@ -42,7 +42,7 @@ nexus run examples/vector_lab.nx
 
 ## NEXUS Poker
 
-The game uses a minimal graphite-and-yellow identity, a single N mark in the upper-left, flat seat monograms, and a graphite-and-gold card back. A dedicated Windows packaging workflow creates a ZIP for distribution. See the [standalone instructions and release guide](../../examples/POKER_README.md).
+The game uses a minimal graphite-and-yellow identity, a single N mark in the upper-left, flat seat monograms, and a graphite-and-gold card back. A dedicated Windows packaging workflow creates a ZIP for distribution. See the [standalone instructions and release guide](https://github.com/fanxcz/nexus-lang/blob/main/examples/POKER_README.md).
 
 [`examples/poker_gui.nx`](https://github.com/fanxcz/nexus-lang/blob/main/examples/poker_gui.nx) is a windowed no-limit Texas Hold'em table for the mouse, built on `std.engine2d`, `std.sprite2d` and `std.audio2d`. The 2.1.0 update corrects five-card hand scoring, compares kickers in order, and requires all five cards to share a suit for a straight flush. The menu also includes a persistent cosmetic shop with blue, purple and crimson table themes bought with chips earned in play. The custom cursor keeps a fixed size to avoid hover-edge pulsing.
 

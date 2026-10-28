@@ -6,7 +6,7 @@ Choose an installer for the simplest setup, or a portable ZIP if you do not want
 
 ## One-click Windows installation
 
-The repository root includes [`Install-NEXUS.bat`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/Install-NEXUS.bat) and its companion [`Install-NEXUS.ps1`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/Install-NEXUS.ps1). Download both files into the same folder and run the BAT file, or run it from a checkout of the repository. It downloads the official NEXUS 2.1.1 Setup installer and its SHA-256 checksum, verifies the digest and recorded filename before execution, then opens the normal per-user installer. Administrator rights are not required.
+The repository root includes [`Install-NEXUS.bat`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/Install-NEXUS.bat) and its companion [`Install-NEXUS.ps1`](https://raw.githubusercontent.com/fanxcz/nexus-lang/main/Install-NEXUS.ps1). Download both files into the same folder and run the BAT file, or run it from a checkout of the repository. It downloads the official NEXUS 2.2.0 Setup installer and its SHA-256 checksum, verifies the digest and recorded filename before execution, then opens the normal per-user installer. Administrator rights are not required.
 
 <div class="admonition info">
 <p class="admonition-title">Recommended Windows download</p>
@@ -19,9 +19,9 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     Installs the NEXUS compiler for the current user, including the bundled fallback toolchain, runtime files and standard library. It can add NEXUS to your user PATH and create shortcuts; administrator rights are not required.
 
-    [Download NEXUS Setup (.exe)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.1.1.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.1.1.exe" }
+    [Download NEXUS Setup (.exe)](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.2.0.exe){ .md-button .md-button--primary download="NEXUS-Setup-2.2.0.exe" }
 
-    [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.1.1.exe.sha256.txt){ download="NEXUS-Setup-2.1.1.exe.sha256.txt" }
+    [Download SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Setup-2.2.0.exe.sha256.txt){ download="NEXUS-Setup-2.2.0.exe.sha256.txt" }
 
     For a fresh source checkout, you can also launch [`Install-NEXUS.bat`](https://github.com/fanxcz/nexus-lang/blob/main/Install-NEXUS.bat). It downloads the official installer and verifies SHA-256 before opening the setup wizard.
 
@@ -73,7 +73,7 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
 ## Install and verify NEXUS on Windows
 
-1. Download `NEXUS-Setup-2.1.1.exe` above and run it.
+1. Download `NEXUS-Setup-2.2.0.exe` above and run it.
 2. Choose whether to create Start menu/desktop shortcuts and add the launcher to your user PATH.
 3. Open a **new** PowerShell window and run:
 

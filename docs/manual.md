@@ -1,6 +1,6 @@
 # NEXUS Language Manual
 
-Version 2.1.1  
+Version 2.2.0  
 Author: fanxcz  
 Repository: https://github.com/fanxcz/nexus-lang
 
@@ -22,8 +22,9 @@ NEXUS has three major parts:
 
 1. **Compiler** (`src/`) — lexer, parser, semantic analysis, and code
    generation.
-2. **Runtime** (`src/runtime/runtime.cpp`) — console, files, networking,
-   graphics, audio, input, and helper functions.
+2. **Runtime** (`src/runtime/`) — console, files, networking,
+   graphics, audio, input, and helper functions. It is one translation unit
+   (`runtime.cpp`) assembled from small topic files.
 3. **Standard library** (`stdlib/`) — convenience wrappers written in NEXUS.
 4. **Self-hosting toolchain** (`selfhost/`) — lexer, parser, type checker,
    and code generator written in NEXUS.
@@ -460,7 +461,22 @@ a >= b
 
 Comparisons produce a `bool`.
 
-### 8.3 Logical operators
+### 8.3 Bitwise operators
+
+```nx
+a & b
+a | b
+a ^ b
+a << b
+a >> b
+```
+
+Bitwise `&`, `|`, `^`, `<<`, and `>>` require `i64` operands and produce an
+`i64`. Shifts use a signed (arithmetic) right shift. The compound forms `&=`,
+`|=`, `^=`, `<<=`, and `>>=` are also supported. Bitwise operators have lower
+precedence than comparisons and higher precedence than `&&`/`||`.
+
+### 8.4 Logical operators
 
 ```nx
 a && b
@@ -468,9 +484,10 @@ a || b
 !a
 ```
 
-`&&` and `||` operate on boolean values.
+`&&` and `||` operate on boolean values and short-circuit: the right operand is
+only evaluated when the left operand does not already decide the result.
 
-### 8.4 Unary minus
+### 8.5 Unary minus
 
 ```nx
 -x
@@ -479,7 +496,7 @@ a || b
 For `i64`, this computes zero minus the value. For `f64`, it negates the
 floating point value.
 
-### 8.5 String concatenation
+### 8.6 String concatenation
 
 ```nx
 let s = "hello" + " " + "world"
@@ -487,17 +504,22 @@ let s = "hello" + " " + "world"
 
 The `+` operator concatenates strings when at least one operand is a string.
 
-### 8.6 Precedence
+### 8.7 Precedence
 
 From highest to lowest:
 
 1. Primary expressions and function calls
-2. Unary `-` and `!`
+2. Unary `-`, `!`, `&`, and `*`
 3. `*`, `/`, `%`
 4. `+`, `-`
-5. Comparisons
-6. `&&`
-7. `||`
+5. `<<`, `>>`
+6. `<`, `<=`, `>`, `>=`
+7. `==`, `!=`
+8. `&`
+9. `^`
+10. `|`
+11. `&&`
+12. `||`
 
 Parentheses can be used to override precedence.
 
@@ -700,9 +722,11 @@ match value {
 ```
 
 The compiler rejects arms that appear after a catch-all because they would be
-unreachable. A `match` does not have to be exhaustive: if no arm matches, the
-`match` simply does nothing and execution continues after it. To make a
-function return on every path, include a catch-all arm or add a `return` after
+unreachable. `match` is exhaustive over finite domains: a `bool` match must
+cover both `true` and `false`, and an enum match must cover every variant or
+include a catch-all `_` arm. An `i64` match cannot be proven exhaustive, so if
+no arm matches it simply does nothing and execution continues after it. To make
+a function return on every path, include a catch-all arm or add a `return` after
 the `match`.
 
 #### Matching booleans
@@ -1221,7 +1245,7 @@ statement    := let | const | assign | print | if | while | for | match
               | break | continue | return | block | expression
 let          := "let" "mut"? IDENT (":" type)? "=" expression
 const        := "const" IDENT (":" type)? "=" expression
-assign       := lvalue ("=" | "+=" | "-=" | "*=" | "/=" | "%=") expression
+assign       := lvalue ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>=") expression
 lvalue       := IDENT | expression "." IDENT | expression "[" expression "]"
 print        := "print" "(" expression ")"
 if           := "if" expression block ("else" (block | if))?
@@ -1235,7 +1259,7 @@ continue     := "continue"
 return       := "return" expression?
 
 expression   := binary expression with precedence:
-                ||  <  &&  <  comparison  <  + -  <  * / %
+                ||  <  &&  <  |  <  ^  <  &  <  == !=  <  < <= > >=  <  << >>  <  + -  <  * / %
 unary        := ("-" | "!" | "&" | "*") unary | postfix
 postfix      := primary ("(" arguments ")")? ("." IDENT | "[" expression "]")*
 primary      := INTEGER | FLOAT | STRING | "true" | "false"
@@ -1453,7 +1477,7 @@ that documentation and examples do not imply support that does not exist.
 | Function overloading | not implemented; function names must be unique |
 | Generic `Option<T>` / `Result<T, E>` | not implemented; use concrete payload enums |
 | Enum payloads | implemented for one scalar payload (`i64`, `f64`, `bool`, `string`, pointer) on the LLVM path; generic/nested payloads are unsupported |
-| `match` exhaustiveness checking | not implemented; unmatched values fall through |
+| `match` exhaustiveness checking | implemented for `bool` and enums; `i64` values still fall through |
 | Iterators and lazy sequences | not implemented |
 | Macros, attributes, `#[...]` | not implemented |
 | Compile-time evaluation of `const` | not implemented; `const` is an immutable binding |

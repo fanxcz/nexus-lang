@@ -34,10 +34,10 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $base = 'https://fanxcz.github.io/nexus-lang/assets/downloads'
-          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.1.1.exe'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.2.0.exe'
           $checksum = "$installer.sha256.txt"
-          Invoke-WebRequest "$base/NEXUS-Setup-2.1.1.exe" -OutFile $installer
-          Invoke-WebRequest "$base/NEXUS-Setup-2.1.1.exe.sha256.txt" -OutFile $checksum
+          Invoke-WebRequest "$base/NEXUS-Setup-2.2.0.exe" -OutFile $installer
+          Invoke-WebRequest "$base/NEXUS-Setup-2.2.0.exe.sha256.txt" -OutFile $checksum
           $expected = ((Get-Content -LiteralPath $checksum -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
           $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($expected -notmatch '^[0-9a-f]{64}$' -or $actual -ne $expected) {
@@ -49,13 +49,13 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.1.1.exe'
+          $installer = Join-Path $env:RUNNER_TEMP 'NEXUS-Setup-2.2.0.exe'
           $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/TASKS=addtopath') -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "NEXUS Setup failed with exit code $($process.ExitCode)." }
           $nexus = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS\nexus.cmd'
           if (-not (Test-Path -LiteralPath $nexus)) { throw 'Installed nexus.cmd was not found.' }
           $version = & $nexus --version 2>&1
-          if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.1\.1')) {
+          if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.2\.0')) {
             throw "Unexpected installed compiler version: $($version -join "`n")"
           }
           Write-Host ($version -join "`n")

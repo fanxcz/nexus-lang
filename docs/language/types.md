@@ -98,7 +98,7 @@ fn main() {
 }
 ```
 
-Struct fields and enum variants are statically checked. Enum variants may be unit variants or carry one payload of type `i64`, `f64`, `bool`, `string`, or pointer. Payload matching uses a binding pattern such as `Payload::Value(value)`. Generic enum payload types, multiple payload fields, structs/arrays/nested enums as payloads, and general exhaustiveness checking are not implemented. The LLVM backend currently represents enum values as a tag plus one 64-bit payload slot; the built-in native backend has a smaller supported subset.
+Struct fields and enum variants are statically checked. Enum variants may be unit variants or carry one payload of type `i64`, `f64`, `bool`, `string`, or pointer. Payload matching uses a binding pattern such as `Payload::Value(value)`. Generic enum payload types, multiple payload fields, structs/arrays/nested enums as payloads, and exhaustiveness checking for `i64` domains are not implemented. The LLVM backend currently represents enum values as a tag plus one 64-bit payload slot; the built-in native backend has a smaller supported subset.
 
 ## Pointers
 

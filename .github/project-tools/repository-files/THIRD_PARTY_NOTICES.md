@@ -1,4 +1,4 @@
-# NEXUS third-party dependency and license notices (v2.1.1).
+# NEXUS third-party dependency and license notices (v2.2.0).
 #
 # The NEXUS compiler, standard library sources, project templates, and the
 # default runtime (src/runtime/) are original works of the NEXUS

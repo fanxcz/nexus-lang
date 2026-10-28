@@ -68,7 +68,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             tag="${GITHUB_REF_NAME}"
           else
-            tag="v2.1.1"
+            tag="v2.2.0"
           fi
           asset="${{ matrix.asset }}"
           zig_version='0.14.1'
@@ -137,7 +137,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'v2.1.1' }
+          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'v2.2.0' }
           $asset = '${{ matrix.asset }}'
           $zigVersion = '0.14.1'
           $package = Join-Path $env:RUNNER_TEMP "NEXUS-$tag-$asset"
@@ -229,7 +229,7 @@ jobs:
             exit 1
           fi
           release_tag="$GITHUB_REF_NAME"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v2.1.1"; fi
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v2.2.0"; fi
           gh release create "$release_tag" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --title "NEXUS $release_tag" \

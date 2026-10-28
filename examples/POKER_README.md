@@ -17,7 +17,7 @@ Download the **NEXUS Poker Windows ZIP** from this repository's [Actions artifac
 
 ## Build from source
 
-Install NEXUS 2.1.1 or later, then run from a repository checkout:
+Install NEXUS 2.2.0 or later, then run from a repository checkout:
 
 ```powershell
 nexus check examples/poker_gui.nx

@@ -121,6 +121,8 @@ nav:
       - std.sprite2d: std/sprite2d.md
       - std.camera2d: std/camera2d.md
       - std.audio2d: std/audio2d.md
+      - std.vec2: std/vec2.md
+      - std.vec3: std/vec3.md
   - Runtime:
       - Overview: runtime/index.md
       - Runtime Overview: runtime/overview.md

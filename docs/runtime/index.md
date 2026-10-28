@@ -1,6 +1,6 @@
 # Runtime API
 
-The runtime exposes built-in functions to NEXUS programs. This reference describes the current implementation in `src/runtime/runtime.cpp`, rather than a planned game-engine API.
+The runtime exposes built-in functions to NEXUS programs. This reference describes the current implementation in `src/runtime/`, which is one translation unit (`runtime.cpp`) assembled from small topic files (`core/`, `graphics/`, `audio/`, `io/`, `data/`, `strings/`, `collections/`, `ui/`, `game/`, `math/`, `memory/`, `net/`, `crypto/`) rather than a planned game-engine API.
 
 ## Pages
 
