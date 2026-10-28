@@ -155,7 +155,9 @@ Fixed-size arrays can be declared explicitly as `[i64; 3]`. Runtime checks prote
 ## Integer bitwise and shift operators
 
 The `i64` type supports `&`, `|`, `^`, `<<`, `>>` and their compound
-assignment forms. Right shift is arithmetic (the sign bit is preserved).
+assignment forms. Integer division and remainder reject a literal zero divisor
+during semantic analysis and report a runtime error when a divisor becomes zero
+only during execution. Right shift is arithmetic (the sign bit is preserved).
 For both shift directions, only the low six bits of the shift count are used;
 this is consistent between the built-in x86-64 backend and LLVM. For example,
 `1 << 64` behaves like `1 << 0`, and `-8 >> 65` behaves like `-8 >> 1`.
