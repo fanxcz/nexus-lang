@@ -13,6 +13,8 @@ This reference documents the syntax implemented by the NEXUS compiler. Planned f
 | [Control Flow](control-flow.md) | Conditions, loops and statement-form match |
 | [Imports](modules.md) | Standard-library and file-based imports |
 | [Error Handling](error-handling.md) | Checked operations, concrete enum payloads, ? and defer |
+| [Systems language proposal](../language-spec.md) | Proposed ownership, concurrency, SIMD, ECS and 12-week roadmap |
+| [Migrating from Rust](../migration-from-rust.md) | Current limitations and a practical porting guide |
 | [FFI](ffi.md) | Experimental external function declarations |
 
 ## Quick reference
