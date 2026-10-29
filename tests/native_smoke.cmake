@@ -62,7 +62,7 @@ check_native(strings_full "\nabc\nHello, Nexus!\ntrue\nfalse\nfalse\ntrue\n-1234
 check_native(string_edges "string.len: 5\nstring.byte_at: 72\nstring.byte_at OOB: -1\nstring.byte_at neg: -1")
 check_native(short_circuit "false\ntrue\nrhs\ntrue\nrhs\ntrue\nguard\n3")
 check_native(statement_lines "2")
-check_native(bitwise "8\n15\n6\n32\n16\n-4\n20")
+check_native(bitwise "8\n15\n6\n32\n16\n-4\n20\n1\n-4\n1")
 
 # input.nx reads one line from stdin; pipe a fixed name in.
 if(WIN32)
