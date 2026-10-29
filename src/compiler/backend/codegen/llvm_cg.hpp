@@ -73,6 +73,8 @@ namespace nexus {
         std::string compoundValue(TokenKind op, const Type& type, const std::string& lhs,
                                   const std::string& rhs);
 
+        bool matchExhaustive(const MatchStmt* match, const Type& type) const;
+
         bool stmtBlock(const Block* nested, Type ret);
 
         bool stmt(const Stmt* s, Type ret);

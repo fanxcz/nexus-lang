@@ -5,6 +5,51 @@
 namespace nexus {
 
 
+    bool CG::matchExhaustive(const MatchStmt* match, const Type& type) const {
+        bool coversTrue = false;
+        bool coversFalse = false;
+        std::unordered_map<std::string, bool> coveredVariants;
+
+        for (const auto& arm : match->arms) {
+            // Guarded patterns may fail, so they cannot prove domain coverage.
+            if (arm.guard)
+                continue;
+
+            if (arm.wildcard || (!arm.binding.empty() && !arm.pattern))
+                return true;
+
+            if (type.kind == TypeKind::Bool) {
+                if (const auto* value = dynamic_cast<const BoolExpr*>(arm.pattern.get())) {
+                    if (value->value)
+                        coversTrue = true;
+                    else
+                        coversFalse = true;
+                }
+            } else if (type.kind == TypeKind::Enum) {
+                if (const auto* variant =
+                        dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
+                    if (variant->enumName == type.name)
+                        coveredVariants.emplace(variant->variant, true);
+                }
+            }
+        }
+
+        if (type.kind == TypeKind::Bool)
+            return coversTrue && coversFalse;
+
+        if (type.kind == TypeKind::Enum) {
+            const auto& declaration = getEnum(type.name);
+            if (declaration.variants.empty())
+                return false;
+            for (const auto& variant : declaration.variants) {
+                if (!coveredVariants.contains(variant.name))
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     bool CG::stmtBlock(const Block* nested, Type ret) {
         auto savedVars = vars;
         auto savedTypes = types;
@@ -433,7 +478,15 @@ namespace nexus {
                 if (k + 1 < mm->arms.size())
                     current = tests[k];
             }
-            if (hasCatchAll && allTerminated) {
+            const bool exhaustive = hasCatchAll || matchExhaustive(mm, vt);
+            if (exhaustive && allTerminated) {
+                // A finite-domain match with no wildcard still has a syntactic
+                // final failure edge. It is unreachable after semantic checking;
+                // terminate that basic block explicitly so the LLVM CFG is valid.
+                if (!hasCatchAll) {
+                    startBlock(end);
+                    emit("unreachable");
+                }
                 terminated = true;
                 return true;
             }
