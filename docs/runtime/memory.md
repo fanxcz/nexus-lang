@@ -20,3 +20,9 @@ fn main() {
 ```
 
 The pointer-like values are represented as integers at the language/runtime boundary. Only pass valid current handles and safe sizes; do not pass arbitrary or stale values. Prefer ordinary language values unless low-level memory access is specifically required.
+
+## Allocation lifetime
+
+`mem_alloc` routes through the runtime's managed allocator. That allocator can run a conservative mark-and-sweep collection during later allocations; it scans the owning thread's active stack and saved register snapshot, and scans contents for eligible managed blocks. It is not a precise language-level ownership system, and a pointer stored as an integer or referenced only from another thread is not guaranteed to remain discoverable by the collector.
+
+Use `mem_free(ptr)` for deterministic release, and never use a handle after freeing it. `mem_set`, `mem_copy`, and `mem_read` are low-level operations: they do not validate arbitrary addresses or prove that a pointer is live, correctly sized, or aligned. Keep sizes and addresses under caller control, and do not rely on the collector to make invalid memory access safe.
