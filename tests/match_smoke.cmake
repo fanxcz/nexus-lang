@@ -32,9 +32,24 @@ endif()
 
 string(REPLACE "\r\n" "\n" run_out "${run_out}")
 string(REGEX REPLACE "\n+$" "" run_out "${run_out}")
-set(expected "zero\nunit\ntens\nnegative\nlarge\nlow\nhigh\nyes\nno\nbig=12")
+set(expected "zero\nunit\ntens\nnegative\nlarge\nlow\nhigh\nyes\nno\nbig=12\n1\n0\n20")
 if(NOT run_out STREQUAL expected)
   message(FATAL_ERROR "Unexpected match output:\n--- actual ---\n${run_out}\n--- expected ---\n${expected}")
+endif()
+
+
+# Guarded arms cannot prove exhaustive control flow: a guard may evaluate false.
+set(GUARDED_BOOL "${SCRATCH}/guarded_bool_return.nx")
+file(WRITE "${GUARDED_BOOL}" "fn guarded(flag: bool) -> i64 {\n match flag {\n true if flag => { return 1 }\n false => { return 0 }\n }\n}\nfn main() { print(guarded(true)) }\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${GUARDED_BOOL}"
+  RESULT_VARIABLE guarded_rc
+  OUTPUT_VARIABLE guarded_out
+  ERROR_VARIABLE guarded_err
+)
+set(guarded_diagnostics "${guarded_out}\n${guarded_err}")
+if(guarded_rc EQUAL 0 OR NOT guarded_diagnostics MATCHES "match on bool is not exhaustive")
+  message(FATAL_ERROR "A guarded boolean arm was incorrectly counted as exhaustive:\n${guarded_diagnostics}")
 endif()
 
 message(STATUS "NEXUS match range/binding/guard smoke test: PASS")

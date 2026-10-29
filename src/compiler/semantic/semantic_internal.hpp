@@ -149,41 +149,5 @@ namespace nexus {
                                      "' cannot be applied to '" + describeType(target) + "'");
     }
 
-    // Conservative control-flow check: only accept constructs that guarantee a
-    // return on every path. Loops are deliberately not assumed to execute.
-    inline bool blockAlwaysReturns(const Block& block) {
-        for (const auto& statement : block.statements) {
-            if (dynamic_cast<const ReturnStmt*>(statement.get()))
-                return true;
-
-            if (auto* nested = dynamic_cast<const Block*>(statement.get())) {
-                if (blockAlwaysReturns(*nested))
-                    return true;
-            }
-
-            if (auto* branch = dynamic_cast<const IfStmt*>(statement.get())) {
-                if (branch->elseBlock && blockAlwaysReturns(*branch->thenBlock) &&
-                    blockAlwaysReturns(*branch->elseBlock)) {
-                    return true;
-                }
-            }
-
-            if (auto* match = dynamic_cast<const MatchStmt*>(statement.get())) {
-                bool hasWildcard = false;
-                bool everyArmReturns = !match->arms.empty();
-                for (const auto& arm : match->arms) {
-                    hasWildcard = hasWildcard ||
-                                  ((arm.wildcard || (!arm.binding.empty() && !arm.pattern)) &&
-                                   !arm.guard);
-                    if (!arm.body || !blockAlwaysReturns(*arm.body)) {
-                        everyArmReturns = false;
-                    }
-                }
-                if (hasWildcard && everyArmReturns)
-                    return true;
-            }
-        }
-        return false;
-    }
 
 } // namespace nexus

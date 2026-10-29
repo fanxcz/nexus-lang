@@ -25,6 +25,20 @@ fn level_name(level: Level) -> string {
     }
 }
 
+fn flag_code(flag: bool) -> i64 {
+    match flag {
+        true => { return 1 }
+        false => { return 0 }
+    }
+}
+
+fn level_code(level: Level) -> i64 {
+    match level {
+        Level::Low => { return 10 }
+        Level::High => { return 20 }
+    }
+}
+
 fn print_flag(flag: bool) {
     match flag {
         true => { print("yes") }
@@ -48,4 +62,8 @@ fn main() {
         small if small < 10 => { print("small") }
         big => { print("big=" + str_i64(big)) }
     }
+
+    print(flag_code(true))
+    print(flag_code(false))
+    print(level_code(Level::High))
 }

@@ -22,6 +22,86 @@ namespace nexus {
             throw std::runtime_error("unknown enum: " + n);
         return *it->second;
     }
+    // Return-path analysis follows the finite-domain coverage rules used by
+    // semantic match validation. Guards cannot prove coverage because they may fail.
+    bool SemanticAnalyzer::blockAlwaysReturns(const Block& block) const {
+        for (const auto& statement : block.statements) {
+            if (dynamic_cast<const ReturnStmt*>(statement.get()))
+                return true;
+
+            if (const auto* nested = dynamic_cast<const Block*>(statement.get())) {
+                if (blockAlwaysReturns(*nested))
+                    return true;
+            }
+
+            if (const auto* branch = dynamic_cast<const IfStmt*>(statement.get())) {
+                if (branch->elseBlock && blockAlwaysReturns(*branch->thenBlock) &&
+                    blockAlwaysReturns(*branch->elseBlock)) {
+                    return true;
+                }
+            }
+
+            if (const auto* match = dynamic_cast<const MatchStmt*>(statement.get())) {
+                if (match->arms.empty())
+                    continue;
+
+                bool catchAll = false;
+                bool everyArmReturns = true;
+                bool coversTrue = false;
+                bool coversFalse = false;
+                std::string enumName;
+                std::unordered_map<std::string, bool> coveredVariants;
+
+                for (const auto& arm : match->arms) {
+                    if (!arm.body || !blockAlwaysReturns(*arm.body))
+                        everyArmReturns = false;
+
+                    if (const auto* variant =
+                            dynamic_cast<const EnumVariantExpr*>(arm.pattern.get())) {
+                        if (enumName.empty())
+                            enumName = variant->enumName;
+                        if (!arm.guard && variant->enumName == enumName)
+                            coveredVariants.emplace(variant->variant, true);
+                    }
+
+                    if (arm.guard)
+                        continue;
+
+                    if (arm.wildcard || (!arm.binding.empty() && !arm.pattern))
+                        catchAll = true;
+
+                    if (const auto* boolean = dynamic_cast<const BoolExpr*>(arm.pattern.get())) {
+                        if (boolean->value)
+                            coversTrue = true;
+                        else
+                            coversFalse = true;
+                    }
+                }
+
+                if (!everyArmReturns)
+                    continue;
+                if (catchAll || (coversTrue && coversFalse))
+                    return true;
+
+                if (!enumName.empty()) {
+                    const auto found = enums_.find(enumName);
+                    if (found != enums_.end() && !found->second->variants.empty()) {
+                        bool exhaustive = true;
+                        for (const auto& variant : found->second->variants) {
+                            if (!coveredVariants.contains(variant.name)) {
+                                exhaustive = false;
+                                break;
+                            }
+                        }
+                        if (exhaustive)
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     void SemanticAnalyzer::normalize(Type& type) const {
         if ((type.kind == TypeKind::Struct || type.kind == TypeKind::Enum) &&
             enums_.contains(type.name)) {

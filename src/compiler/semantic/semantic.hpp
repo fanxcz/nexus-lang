@@ -38,6 +38,8 @@ namespace nexus {
 
         const EnumDecl& getEnum(const std::string& n) const;
 
+        bool blockAlwaysReturns(const Block& block) const;
+
         // Parser produces Type::named for every identifier, so resolve names
         // against the declaration tables once they are known.
         void normalize(Type& type) const;
