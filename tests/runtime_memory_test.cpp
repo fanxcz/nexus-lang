@@ -76,6 +76,14 @@ int main() {
         std::fprintf(stderr, "checked memory read/write returned wrong data\n");
         return 7;
     }
+    if (nexus_mem_read(buffer + 1) != repeatedBytePattern) {
+        std::fprintf(stderr, "checked unaligned memory read returned wrong data\n");
+        return 9;
+    }
+    if (nexus_mem_read(0) != 0) {
+        std::fprintf(stderr, "null memory read did not preserve zero result\n");
+        return 10;
+    }
     // Overlap is defined for mem_copy; it behaves like memmove.
     nexus_mem_copy(buffer + 4, buffer, 8);
     if (nexus_mem_read(buffer + 4) != repeatedBytePattern) {
