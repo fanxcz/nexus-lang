@@ -51,14 +51,18 @@ namespace nexus {
             if (source == branch.end())
                 continue;
 
-            if (target.managedAllocation == source->second.managedAllocation) {
+            if (target.managedAllocation == source->second.managedAllocation &&
+                target.managedAllocationParameter == source->second.managedAllocationParameter) {
                 target.managedAllocationFreed =
                     target.managedAllocationFreed || source->second.managedAllocationFreed;
-            } else if (target.managedAllocation || source->second.managedAllocation) {
+            } else if (target.managedAllocation || source->second.managedAllocation ||
+                       target.managedAllocationParameter ||
+                       source->second.managedAllocationParameter) {
                 // A control-flow join with different allocation identities is
                 // intentionally left untracked rather than guessing which
                 // allocation the binding contains.
                 target.managedAllocation = nullptr;
+                target.managedAllocationParameter.reset();
                 target.managedAllocationFreed = false;
             }
 
@@ -107,9 +111,10 @@ namespace nexus {
                     Symbol symbol{t, l->mut, scopeDepth_,
                                   typeMayContainPointer(t) ? pointerOrigin(l->init.get(), env)
                                                            : std::nullopt,
-                                  nullptr, false};
+                                  nullptr, std::nullopt, false};
                     if (const auto managed = managedAllocationOrigin(l->init.get(), env, !inLoop)) {
                         symbol.managedAllocation = managed->allocation;
+                        symbol.managedAllocationParameter = managed->parameter;
                         symbol.managedAllocationFreed = managed->freed;
                     }
                     env[l->name] = std::move(symbol);
@@ -133,6 +138,8 @@ namespace nexus {
                     it->second.borrowedFrom = origin;
                     const auto managed = managedAllocationOrigin(a->value.get(), env, !inLoop);
                     it->second.managedAllocation = managed ? managed->allocation : nullptr;
+                    it->second.managedAllocationParameter = managed ? managed->parameter
+                                                                    : std::nullopt;
                     it->second.managedAllocationFreed = managed ? managed->freed : false;
                 } else if (auto* da = dynamic_cast<DerefAssignStmt*>(s.get())) {
                     const auto pointerType = expr(da->target.get(), env);
@@ -238,6 +245,17 @@ namespace nexus {
                     if (!sameType(t, ret))
                         throw std::runtime_error("return expects '" + describeType(ret) +
                                                  "' but got '" + describeType(t) + "'");
+                    if (ret.kind == TypeKind::I64) {
+                        const auto managed =
+                            managedAllocationOrigin(r->expr.get(), env, !inLoop);
+                        if (!managed) {
+                            currentFunctionReturnManagedUnknown_ = true;
+                        } else if (managed->parameter) {
+                            currentFunctionReturnManagedParams_.push_back(*managed->parameter);
+                        } else if (managed->allocation) {
+                            currentFunctionReturnManagedFresh_ = true;
+                        }
+                    }
                     const auto origin = typeMayContainPointer(t) ? pointerOrigin(r->expr.get(), env)
                                                                  : std::nullopt;
                     if (origin && origin->scopeDepth == 0) {
@@ -308,6 +326,7 @@ namespace nexus {
                             ? pointerOrigin(f->collection.get(), env)
                             : std::nullopt,
                         nullptr,
+                        std::nullopt,
                         false};
                     block(*f->body, local, ret, true);
                     mergeBorrowState(env, local);
@@ -383,6 +402,7 @@ namespace nexus {
                                     ? pointerOrigin(mm->value.get(), env)
                                     : std::nullopt,
                                 nullptr,
+                                std::nullopt,
                                 false};
                         }
 
