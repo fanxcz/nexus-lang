@@ -3,6 +3,7 @@
 #include "builtins.hpp"
 #include "semantic/semantic_internal.hpp"
 
+#include <algorithm>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
@@ -120,6 +121,14 @@ namespace nexus {
         returnedBorrowParams_.clear();
         currentFunctionParameterIndices_.clear();
         currentFunctionReturnBorrowParams_.clear();
+        returnedManagedParams_.clear();
+        returnedManagedFresh_.clear();
+        returnedManagedUnknown_.clear();
+        freedManagedParams_.clear();
+        currentFunctionReturnManagedParams_.clear();
+        currentFunctionFreedManagedParams_.clear();
+        currentFunctionReturnManagedFresh_ = false;
+        currentFunctionReturnManagedUnknown_ = false;
         funcs_.clear();
         structs_.clear();
         enums_.clear();
@@ -256,7 +265,7 @@ namespace nexus {
                                             ? std::optional<BorrowOrigin>(
                                                   BorrowOrigin{0, parameter.name})
                                             : std::nullopt;
-                    env[parameter.name] = {parameter.type, true, 1, origin, nullptr, false};
+                    env[parameter.name] = {parameter.type, true, 1, origin, nullptr, std::nullopt, false};
                 }
 
                 auto savedDiagnostics = std::move(diagnostics_);
@@ -286,6 +295,105 @@ namespace nexus {
                 break;
         }
 
+        // Infer which i64 parameters may be returned as managed allocation
+        // handles, whether a function creates a fresh handle, and which parameters
+        // may be released. Fixed-point iteration handles forward-declared wrappers.
+        for (std::size_t pass = 0; pass <= p.functions.size(); ++pass) {
+            bool changed = false;
+            for (auto& f : p.functions) {
+                if (f.external || !f.body)
+                    continue;
+
+                std::unordered_map<std::string, Symbol> env;
+                currentFunctionParameterIndices_.clear();
+                currentFunctionReturnManagedParams_.clear();
+                currentFunctionFreedManagedParams_.clear();
+                currentFunctionReturnManagedFresh_ = false;
+                currentFunctionReturnManagedUnknown_ = false;
+                for (std::size_t index = 0; index < f.params.size(); ++index) {
+                    const auto& parameter = f.params[index];
+                    currentFunctionParameterIndices_[parameter.name] = index;
+                    const auto managedParameter =
+                        parameter.type.kind == TypeKind::I64
+                            ? std::optional<std::size_t>(index)
+                            : std::nullopt;
+                    env[parameter.name] = {parameter.type, true, 1, std::nullopt, nullptr,
+                                           managedParameter, false};
+                }
+
+                auto savedDiagnostics = std::move(diagnostics_);
+                diagnostics_.clear();
+                scopeDepth_ = 0;
+                currentFunctionReturnType_ = f.ret;
+                block(*f.body, env, f.ret, false);
+                scopeDepth_ = 0;
+                diagnostics_ = std::move(savedDiagnostics);
+
+                auto appendUnique = [&](std::vector<std::size_t>& target,
+                                        const std::vector<std::size_t>& values) {
+                    for (const auto value : values) {
+                        if (std::find(target.begin(), target.end(), value) == target.end()) {
+                            target.push_back(value);
+                            changed = true;
+                        }
+                    }
+                };
+                appendUnique(returnedManagedParams_[f.name],
+                             currentFunctionReturnManagedParams_);
+                appendUnique(freedManagedParams_[f.name], currentFunctionFreedManagedParams_);
+                if (currentFunctionReturnManagedFresh_ && !returnedManagedFresh_[f.name]) {
+                    returnedManagedFresh_[f.name] = true;
+                    changed = true;
+                }
+            }
+            if (!changed)
+                break;
+        }
+
+        // A return summary is trusted only when every i64 return expression has
+        // a recognized managed origin. Propagate incompleteness through wrappers
+        // so a mixed/opaque result never masquerades as an allocation handle.
+        for (std::size_t pass = 0; pass <= p.functions.size(); ++pass) {
+            bool changed = false;
+            for (auto& f : p.functions) {
+                if (f.external || !f.body || f.ret.kind != TypeKind::I64 ||
+                    (returnedManagedUnknown_.contains(f.name) && returnedManagedUnknown_[f.name]))
+                    continue;
+
+                std::unordered_map<std::string, Symbol> env;
+                currentFunctionParameterIndices_.clear();
+                currentFunctionReturnManagedParams_.clear();
+                currentFunctionFreedManagedParams_.clear();
+                currentFunctionReturnManagedFresh_ = false;
+                currentFunctionReturnManagedUnknown_ = false;
+                for (std::size_t index = 0; index < f.params.size(); ++index) {
+                    const auto& parameter = f.params[index];
+                    currentFunctionParameterIndices_[parameter.name] = index;
+                    const auto managedParameter =
+                        parameter.type.kind == TypeKind::I64
+                            ? std::optional<std::size_t>(index)
+                            : std::nullopt;
+                    env[parameter.name] = {parameter.type, true, 1, std::nullopt, nullptr,
+                                           managedParameter, false};
+                }
+
+                auto savedDiagnostics = std::move(diagnostics_);
+                diagnostics_.clear();
+                scopeDepth_ = 0;
+                currentFunctionReturnType_ = f.ret;
+                block(*f.body, env, f.ret, false);
+                scopeDepth_ = 0;
+                diagnostics_ = std::move(savedDiagnostics);
+
+                if (currentFunctionReturnManagedUnknown_) {
+                    returnedManagedUnknown_[f.name] = true;
+                    changed = true;
+                }
+            }
+            if (!changed)
+                break;
+        }
+
         // Validate function bodies with the completed summaries. Parameter values
         // carry a depth-zero origin, while taking the address of the parameter
         // itself still points at local stack storage and remains non-escapable.
@@ -295,6 +403,10 @@ namespace nexus {
             std::unordered_map<std::string, Symbol> env;
             currentFunctionParameterIndices_.clear();
             currentFunctionReturnBorrowParams_.clear();
+            currentFunctionReturnManagedParams_.clear();
+            currentFunctionFreedManagedParams_.clear();
+            currentFunctionReturnManagedFresh_ = false;
+            currentFunctionReturnManagedUnknown_ = false;
             for (std::size_t index = 0; index < f.params.size(); ++index) {
                 auto& a = f.params[index];
                 if (env.contains(a.name)) {
@@ -306,7 +418,11 @@ namespace nexus {
                                         ? std::optional<BorrowOrigin>(
                                               BorrowOrigin{0, a.name})
                                         : std::nullopt;
-                env[a.name] = {a.type, true, 1, origin, nullptr, false};
+                env[a.name] = {a.type, true, 1, origin, nullptr,
+                               a.type.kind == TypeKind::I64
+                                   ? std::optional<std::size_t>(index)
+                                   : std::nullopt,
+                               false};
             }
             if (f.body) {
                 currentFunctionReturnType_ = f.ret;
