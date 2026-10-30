@@ -6,6 +6,9 @@ size_t nexus_runtime_test_live_bytes() {
 void nexus_runtime_test_collect() {
     nx_gc_collect();
 }
+int nexus_runtime_test_try_free(void* pointer) {
+    return nx_managed_try_free(pointer) ? 1 : 0;
+}
 #endif
 
 void* nexus_alloc(size_t n) {
