@@ -112,6 +112,7 @@ namespace nexus::native {
             // Clean runtime failures for allocation and integer division.
             void genOom();
             void genDivZero();
+            void genDivOverflow();
 
             void genEntry();
         };
