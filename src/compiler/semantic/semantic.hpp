@@ -15,6 +15,7 @@ namespace nexus {
 
     struct ManagedAllocationState {
         const Expr* allocation = nullptr;
+        std::optional<std::size_t> parameter;
         bool freed = false;
     };
 
@@ -27,6 +28,7 @@ namespace nexus {
         std::optional<BorrowOrigin> borrowedFrom;
         // The syntactic mem_alloc site shared by direct local aliases, when known.
         const Expr* managedAllocation = nullptr;
+        std::optional<std::size_t> managedAllocationParameter;
         bool managedAllocationFreed = false;
     };
 
@@ -42,6 +44,17 @@ namespace nexus {
         std::unordered_map<std::string, std::vector<std::size_t>> returnedBorrowParams_;
         std::unordered_map<std::string, std::size_t> currentFunctionParameterIndices_;
         std::vector<std::size_t> currentFunctionReturnBorrowParams_;
+
+        // Managed-handle summaries are intentionally limited to i64 return values
+        // and direct parameter effects; opaque external functions remain unknown.
+        std::unordered_map<std::string, std::vector<std::size_t>> returnedManagedParams_;
+        std::unordered_map<std::string, bool> returnedManagedFresh_;
+        std::unordered_map<std::string, bool> returnedManagedUnknown_;
+        std::unordered_map<std::string, std::vector<std::size_t>> freedManagedParams_;
+        std::vector<std::size_t> currentFunctionReturnManagedParams_;
+        std::vector<std::size_t> currentFunctionFreedManagedParams_;
+        bool currentFunctionReturnManagedFresh_ = false;
+        bool currentFunctionReturnManagedUnknown_ = false;
 
         std::vector<std::string> diagnostics_;
 
@@ -71,7 +84,7 @@ namespace nexus {
 
         void releaseManagedAllocation(const Expr* e,
                                       std::unordered_map<std::string, Symbol>& env,
-                                      bool deferred) const;
+                                      bool deferred);
 
         std::optional<Type> provenanceType(
             const Expr* e, const std::unordered_map<std::string, Symbol>& env) const;
