@@ -445,8 +445,12 @@ a / b
 a % b
 ```
 
-Integer operations use signed 64-bit arithmetic. If either operand is `f64`,
-the operation is performed in floating point.
+Integer operations use signed 64-bit arithmetic. Addition, subtraction,
+multiplication, and unary negation wrap modulo 2^64. Integer division and
+remainder by zero terminate with a runtime error. The unrepresentable pair
+`INT64_MIN / -1` and `INT64_MIN % -1` also terminates with a runtime error
+rather than trapping or producing an undefined backend result. If either
+operand is `f64`, the operation is performed in floating point.
 
 ### 8.2 Comparisons
 
