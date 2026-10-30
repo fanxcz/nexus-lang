@@ -11,6 +11,65 @@
 
 namespace nexus {
 
+    std::optional<BorrowOrigin> SemanticAnalyzer::pointerOrigin(
+        const Expr* e, const std::unordered_map<std::string, Symbol>& env) const {
+        if (!e)
+            return std::nullopt;
+
+        if (const auto* variable = dynamic_cast<const VarExpr*>(e)) {
+            const auto it = env.find(variable->name);
+            return it == env.end() ? std::nullopt : it->second.borrowedFrom;
+        }
+
+        if (const auto* unary = dynamic_cast<const UnaryExpr*>(e)) {
+            if (unary->op == TokenKind::Ampersand) {
+                const auto* root = lvalueRootVariable(unary->rhs.get());
+                if (!root)
+                    return std::nullopt;
+                const auto it = env.find(root->name);
+                if (it == env.end())
+                    return std::nullopt;
+                return BorrowOrigin{it->second.scopeDepth, root->name};
+            }
+
+            // Dereferencing a pointer-to-pointer reads the pointer value stored
+            // in the referenced binding, so preserve that binding's provenance.
+            if (unary->op == TokenKind::Star) {
+                const auto storage = pointerOrigin(unary->rhs.get(), env);
+                if (storage) {
+                    const auto it = env.find(storage->binding);
+                    if (it != env.end())
+                        return it->second.borrowedFrom;
+                }
+                return std::nullopt;
+            }
+        }
+
+        std::optional<BorrowOrigin> result;
+        const auto merge = [&](const std::optional<BorrowOrigin>& candidate) {
+            if (candidate && (!result || candidate->scopeDepth > result->scopeDepth))
+                result = candidate;
+        };
+
+        if (const auto* array = dynamic_cast<const ArrayExpr*>(e)) {
+            for (const auto& element : array->elements)
+                merge(pointerOrigin(element.get(), env));
+        } else if (const auto* object = dynamic_cast<const StructInitExpr*>(e)) {
+            for (const auto& [name, value] : object->fields) {
+                (void)name;
+                merge(pointerOrigin(value.get(), env));
+            }
+        } else if (const auto* variant = dynamic_cast<const EnumVariantExpr*>(e)) {
+            merge(pointerOrigin(variant->payload.get(), env));
+        } else if (const auto* member = dynamic_cast<const MemberExpr*>(e)) {
+            merge(pointerOrigin(member->object.get(), env));
+        } else if (const auto* index = dynamic_cast<const IndexExpr*>(e)) {
+            merge(pointerOrigin(index->object.get(), env));
+        }
+
+        return result;
+    }
+
     Type SemanticAnalyzer::expr(Expr* e, std::unordered_map<std::string, Symbol>& env) {
         try {
             return exprImpl(e, env);
