@@ -142,6 +142,11 @@ namespace nexus::native {
                 b(0xB8);
                 i64(v);
             }
+            void movR11Imm64(std::uint64_t v) {
+                b(0x49);
+                b(0xBB);
+                i64(v);
+            }
             void movEcxImm32(std::uint32_t v) {
                 b(0xB9);
                 i32(v);
@@ -489,6 +494,12 @@ namespace nexus::native {
                 b(0x48);
                 b(0x83);
                 b(0xF8);
+                b(v);
+            }
+            void cmpRcxImm8(std::uint8_t v) {
+                b(0x48);
+                b(0x83);
+                b(0xF9);
                 b(v);
             }
             void cmpBytePtrRcx(std::uint8_t v) {
