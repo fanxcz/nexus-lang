@@ -79,14 +79,24 @@
             gNxBytesSinceCollection += size;
         return resized;
     }
-    static void nx_managed_free(void* pointer) {
+    static bool nx_managed_try_free(void* pointer) {
         if (!pointer)
-            return;
+            return true;
         {
             std::lock_guard<std::mutex> lock(gNxManagedMutex);
-            gNxManagedBlocks.erase(pointer);
+            const auto block = gNxManagedBlocks.find(pointer);
+            if (block == gNxManagedBlocks.end())
+                return false;
+            gNxManagedBlocks.erase(block);
         }
         std::free(pointer);
+        return true;
+    }
+    static void nx_managed_free(void* pointer) {
+        if (!nx_managed_try_free(pointer)) {
+            std::fputs("Nexus runtime error: invalid or already freed allocation\\n", stderr);
+            std::exit(1);
+        }
     }
     // Conservative collection scans arbitrary machine words from the active stack.
     // ASan deliberately poisons stack red-zones, although those bytes are part of the
