@@ -117,6 +117,9 @@ namespace nexus {
         diagnostics_.clear();
         currentFunctionReturnType_ = Type::void_();
         scopeDepth_ = 0;
+        returnedBorrowParams_.clear();
+        currentFunctionParameterIndices_.clear();
+        currentFunctionReturnBorrowParams_.clear();
         funcs_.clear();
         structs_.clear();
         enums_.clear();
@@ -225,6 +228,7 @@ namespace nexus {
                 validateTypeAt(field.type, field.span.valid ? field.span : s.span, false);
             }
 
+        // Normalize every signature before deriving interprocedural borrow summaries.
         for (auto& f : p.functions) {
             for (auto& a : f.params) {
                 normalize(a.type);
@@ -232,19 +236,83 @@ namespace nexus {
             }
             normalize(f.ret);
             validateTypeAt(f.ret, f.span, true);
+        }
+
+        // Infer a conservative set of parameters that can flow into a function result.
+        // Run to a fixed point so forward-declared helper functions work as well.
+        for (std::size_t pass = 0; pass <= p.functions.size(); ++pass) {
+            bool changed = false;
+            for (auto& f : p.functions) {
+                if (f.external || !f.body || !typeMayContainPointer(f.ret))
+                    continue;
+
+                std::unordered_map<std::string, Symbol> env;
+                currentFunctionParameterIndices_.clear();
+                currentFunctionReturnBorrowParams_.clear();
+                for (std::size_t index = 0; index < f.params.size(); ++index) {
+                    const auto& parameter = f.params[index];
+                    currentFunctionParameterIndices_[parameter.name] = index;
+                    const auto origin = typeMayContainPointer(parameter.type)
+                                            ? std::optional<BorrowOrigin>(
+                                                  BorrowOrigin{0, parameter.name})
+                                            : std::nullopt;
+                    env[parameter.name] = {parameter.type, true, 1, origin};
+                }
+
+                auto savedDiagnostics = std::move(diagnostics_);
+                diagnostics_.clear();
+                scopeDepth_ = 0;
+                currentFunctionReturnType_ = f.ret;
+                block(*f.body, env, f.ret, false);
+                scopeDepth_ = 0;
+                diagnostics_ = std::move(savedDiagnostics);
+
+                auto& known = returnedBorrowParams_[f.name];
+                for (const auto index : currentFunctionReturnBorrowParams_) {
+                    bool alreadyKnown = false;
+                    for (const auto existing : known) {
+                        if (existing == index) {
+                            alreadyKnown = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyKnown) {
+                        known.push_back(index);
+                        changed = true;
+                    }
+                }
+            }
+            if (!changed)
+                break;
+        }
+
+        // Validate function bodies with the completed summaries. Parameter values
+        // carry a depth-zero origin, while taking the address of the parameter
+        // itself still points at local stack storage and remains non-escapable.
+        for (auto& f : p.functions) {
             if (f.external)
                 continue;
             std::unordered_map<std::string, Symbol> env;
-            for (auto& a : f.params) {
+            currentFunctionParameterIndices_.clear();
+            currentFunctionReturnBorrowParams_.clear();
+            for (std::size_t index = 0; index < f.params.size(); ++index) {
+                auto& a = f.params[index];
                 if (env.contains(a.name)) {
                     report("duplicate parameter: " + a.name, a.span.valid ? a.span : f.span);
                     continue;
                 }
-                env[a.name] = {a.type, true, 1, std::nullopt};
+                currentFunctionParameterIndices_[a.name] = index;
+                const auto origin = typeMayContainPointer(a.type)
+                                        ? std::optional<BorrowOrigin>(
+                                              BorrowOrigin{0, a.name})
+                                        : std::nullopt;
+                env[a.name] = {a.type, true, 1, origin};
             }
             if (f.body) {
                 currentFunctionReturnType_ = f.ret;
+                scopeDepth_ = 0;
                 block(*f.body, env, f.ret, false);
+                scopeDepth_ = 0;
                 if (f.ret.kind != TypeKind::Void && !blockAlwaysReturns(*f.body)) {
                     std::string message = "function may exit without returning a value: " + f.name;
                     if (f.span.valid)
