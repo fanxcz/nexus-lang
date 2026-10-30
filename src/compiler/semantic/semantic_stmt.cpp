@@ -3,10 +3,10 @@
 #include "semantic/semantic_internal.hpp"
 
 #include <set>
-#include <unordered_set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace nexus {
 
