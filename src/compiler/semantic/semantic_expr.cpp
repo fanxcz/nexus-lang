@@ -97,16 +97,37 @@ namespace nexus {
 
         if (const auto* variable = dynamic_cast<const VarExpr*>(e)) {
             const auto it = env.find(variable->name);
-            if (it == env.end() || !it->second.managedAllocation)
+            if (it == env.end() ||
+                (!it->second.managedAllocation && !it->second.managedAllocationParameter))
                 return std::nullopt;
             return ManagedAllocationState{it->second.managedAllocation,
-                                           it->second.managedAllocationFreed};
+                                          it->second.managedAllocationParameter,
+                                          it->second.managedAllocationFreed};
         }
 
-        if (trackAllocationSite) {
-            if (const auto* call = dynamic_cast<const CallExpr*>(e);
-                call && call->callee == "mem_alloc")
-                return ManagedAllocationState{e, false};
+        if (const auto* call = dynamic_cast<const CallExpr*>(e)) {
+            if (call->callee == "mem_alloc" && trackAllocationSite)
+                return ManagedAllocationState{e, std::nullopt, false};
+
+            const auto function = funcs_.find(call->callee);
+            if (function == funcs_.end() || function->second->ret.kind != TypeKind::I64 ||
+                returnedManagedUnknown_.contains(call->callee) &&
+                    returnedManagedUnknown_.at(call->callee))
+                return std::nullopt;
+
+            const auto params = returnedManagedParams_.find(call->callee);
+            const bool returnsFresh = returnedManagedFresh_.contains(call->callee) &&
+                                      returnedManagedFresh_.at(call->callee);
+            const std::size_t paramCount =
+                params == returnedManagedParams_.end() ? 0 : params->second.size();
+            if (paramCount == 1 && !returnsFresh) {
+                const auto index = params->second.front();
+                if (index >= call->args.size())
+                    return std::nullopt;
+                return managedAllocationOrigin(call->args[index].get(), env, trackAllocationSite);
+            }
+            if (paramCount == 0 && returnsFresh && trackAllocationSite)
+                return ManagedAllocationState{e, std::nullopt, false};
         }
         return std::nullopt;
     }
@@ -118,7 +139,8 @@ namespace nexus {
         if (!variable)
             return;
         const auto it = env.find(variable->name);
-        if (it != env.end() && it->second.managedAllocation &&
+        if (it != env.end() &&
+            (it->second.managedAllocation || it->second.managedAllocationParameter) &&
             it->second.managedAllocationFreed) {
             throw std::runtime_error("use after mem_free of managed allocation '" +
                                      variable->name + "' in " + operation);
@@ -126,12 +148,13 @@ namespace nexus {
     }
 
     void SemanticAnalyzer::releaseManagedAllocation(
-        const Expr* e, std::unordered_map<std::string, Symbol>& env, bool deferred) const {
+        const Expr* e, std::unordered_map<std::string, Symbol>& env, bool deferred) {
         const auto* variable = dynamic_cast<const VarExpr*>(e);
         if (!variable)
             return;
         const auto it = env.find(variable->name);
-        if (it == env.end() || !it->second.managedAllocation)
+        if (it == env.end() ||
+            (!it->second.managedAllocation && !it->second.managedAllocationParameter))
             return;
         if (it->second.managedAllocationFreed)
             throw std::runtime_error("double free of managed allocation '" + variable->name + "'");
@@ -139,9 +162,14 @@ namespace nexus {
             return;
 
         const auto* allocation = it->second.managedAllocation;
+        const auto parameter = it->second.managedAllocationParameter;
+        if (parameter)
+            currentFunctionFreedManagedParams_.push_back(*parameter);
+
         for (auto& [name, symbol] : env) {
             (void)name;
-            if (symbol.managedAllocation == allocation)
+            if (symbol.managedAllocation == allocation &&
+                symbol.managedAllocationParameter == parameter)
                 symbol.managedAllocationFreed = true;
         }
     }
@@ -516,6 +544,13 @@ namespace nexus {
                                              f->params[i].name + "') of '" + c->callee +
                                              "' expects '" + describeType(f->params[i].type) +
                                              "' but got '" + describeType(actual) + "'");
+            }
+            const auto freed = freedManagedParams_.find(c->callee);
+            if (!analyzingDeferredCall_ && freed != freedManagedParams_.end()) {
+                for (const auto index : freed->second) {
+                    if (index < c->args.size())
+                        releaseManagedAllocation(c->args[index].get(), env, false);
+                }
             }
             return f->ret;
         }
