@@ -221,11 +221,15 @@ namespace nexus {
                     }
                     auto a = env;
                     block(*ifs->thenBlock, a, ret, inLoop);
-                    mergeBorrowState(env, a);
                     if (ifs->elseBlock) {
+                        // Both branches start from the same incoming state. Merging
+                        // one before analyzing the other would create impossible paths.
                         auto c = env;
                         block(*ifs->elseBlock, c, ret, inLoop);
+                        mergeBorrowState(env, a);
                         mergeBorrowState(env, c);
+                    } else {
+                        mergeBorrowState(env, a);
                     }
                 } else if (auto* w = dynamic_cast<WhileStmt*>(s.get())) {
                     {
@@ -279,6 +283,7 @@ namespace nexus {
                     std::unordered_map<std::string, bool> seenPatterns;
                     std::set<std::string> coveredEnumVariants;
                     std::set<bool> coveredBoolValues;
+                    auto mergedArmBorrows = env;
                     for (auto& arm : mm->arms) {
                         const bool catchAll =
                             (arm.wildcard ||
@@ -393,8 +398,9 @@ namespace nexus {
                         }
 
                         block(*arm.body, local, ret, inLoop);
-                        mergeBorrowState(env, local);
+                        mergeBorrowState(mergedArmBorrows, local);
                     }
+                    mergeBorrowState(env, mergedArmBorrows);
                     // Exhaustiveness is only provable for finite domains:
                     // bool (two values) and enums (one value per variant).
                     // An i64 domain cannot be checked, so it keeps the
