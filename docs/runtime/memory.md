@@ -36,9 +36,14 @@ The pointer-like values are represented as integers at the language/runtime boun
 
 Use `mem_free(ptr)` for deterministic release, and never use a handle after freeing it. The managed C++ runtime checks that `mem_free` receives a currently registered allocation; an unknown or already-freed handle terminates with a runtime diagnostic. Range validation is performed while holding the allocation registry lock, so an explicit free or collection cannot race between the bounds check and the corresponding read/write/copy. This does not provide a language-level borrow checker or make an integer handle safe to use after it has been freed.
 
-The semantic analyzer currently catches obvious use-after-free through direct
-local aliases: after `mem_free(handle)`, using that known handle in
-`mem_read`, `mem_set` or `mem_copy` is rejected, and a second direct free is
-diagnosed. This initial pass does not follow pointer arithmetic, aggregates,
-function wrappers, opaque calls, deferred frees or loop-carried rebindings.
-Runtime validation remains authoritative for every checked memory operation.
+The semantic analyzer catches obvious use-after-free through direct
+local aliases and supported user-function wrappers. It follows a single
+managed-handle return origin through identity/forwarding functions, recognizes
+functions that return a fresh allocation, and propagates direct `mem_free`
+effects through helper chains. After a known release, subsequent uses in
+`mem_read`, `mem_set` or `mem_copy` are rejected, as are known double frees.
+
+This is not a complete ownership checker. Mixed/ambiguous return origins,
+aggregate handles, pointer arithmetic, external calls, deferred cleanup and
+loop-carried rebindings are not tracked. Runtime validation remains
+authoritative for every checked memory operation.
