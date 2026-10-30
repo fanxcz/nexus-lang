@@ -129,6 +129,7 @@ namespace nexus {
         currentFunctionReturnManagedParams_.clear();
         currentFunctionFreedManagedParams_.clear();
         currentFunctionReturnManagedFresh_ = false;
+        currentFunctionReturnManagedFreshFreed_ = false;
         currentFunctionReturnManagedUnknown_ = false;
         funcs_.clear();
         structs_.clear();
