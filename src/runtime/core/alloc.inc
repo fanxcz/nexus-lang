@@ -24,9 +24,12 @@ void nexus_bounds_check(int64_t i, int64_t n) {
     }
 }
 int64_t nexus_division_check(int64_t dividend, int64_t divisor) {
-    (void)dividend;
     if (divisor == 0) {
         std::fprintf(stderr, "NEXUS runtime error: division by zero\n");
+        std::exit(1);
+    }
+    if (dividend == INT64_MIN && divisor == -1) {
+        std::fprintf(stderr, "NEXUS runtime error: signed integer division overflow\n");
         std::exit(1);
     }
     return divisor;
