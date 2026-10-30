@@ -92,6 +92,34 @@
         std::free(pointer);
         return true;
     }
+    // The whole access must fit inside one currently registered allocation.
+    // Callers that hold the registry mutex use the _locked variant so validation
+    // and the ensuing memory operation cannot race with free or collection.
+    static bool nx_managed_range_is_valid_locked(int64_t address, int64_t bytes) {
+        if (address <= 0 || bytes <= 0)
+            return false;
+        const uint64_t rawAddress = static_cast<uint64_t>(address);
+        const uint64_t rawSize = static_cast<uint64_t>(bytes);
+        const uint64_t maxAddress =
+            static_cast<uint64_t>(std::numeric_limits<uintptr_t>::max());
+        if (rawAddress > maxAddress || rawSize > maxAddress - rawAddress)
+            return false;
+        const uintptr_t begin = static_cast<uintptr_t>(rawAddress);
+        const uintptr_t end = begin + static_cast<uintptr_t>(rawSize);
+        for (const auto& [pointer, block] : gNxManagedBlocks) {
+            const uintptr_t base = reinterpret_cast<uintptr_t>(pointer);
+            if (block.size > std::numeric_limits<uintptr_t>::max() - base)
+                continue;
+            const uintptr_t blockEnd = base + static_cast<uintptr_t>(block.size);
+            if (begin >= base && end <= blockEnd)
+                return true;
+        }
+        return false;
+    }
+    static bool nx_managed_range_is_valid(int64_t address, int64_t bytes) {
+        std::lock_guard<std::mutex> lock(gNxManagedMutex);
+        return nx_managed_range_is_valid_locked(address, bytes);
+    }
     static void nx_managed_free(void* pointer) {
         if (!nx_managed_try_free(pointer)) {
             std::fputs("Nexus runtime error: invalid or already freed allocation\n", stderr);
