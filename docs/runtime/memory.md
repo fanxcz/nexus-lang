@@ -40,8 +40,10 @@ The semantic analyzer catches obvious use-after-free through direct
 local aliases and supported user-function wrappers. It follows a single
 managed-handle return origin through identity/forwarding functions, recognizes
 functions that return a fresh allocation, and propagates direct `mem_free`
-effects through helper chains. After a known release, subsequent uses in
-`mem_read`, `mem_set` or `mem_copy` are rejected, as are known double frees.
+effects through helper chains, and retain freed state when a function
+returns a handle that it already released internally. After a known release,
+subsequent uses in `mem_read`, `mem_set` or `mem_copy` are rejected, as are
+known double frees.
 
 This is not a complete ownership checker. Mixed/ambiguous return origins,
 aggregate handles, pointer arithmetic, external calls, deferred cleanup and
