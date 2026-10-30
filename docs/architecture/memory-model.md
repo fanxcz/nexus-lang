@@ -35,16 +35,22 @@ pointers passed through FFI remain outside the registry and require separate
 validation.
 
 The semantic analyzer also performs a narrow managed-allocation lifetime check.
-It tracks a direct `mem_alloc` result through local variable aliases, marks all
-known aliases after a direct `mem_free`, rejects a second direct free, and
-merges freed state across branches when the allocation identity is unchanged.
-It checks direct arguments to `mem_read`, `mem_set`, and `mem_copy`. This is
-not a general pointer/ownership analysis: pointer arithmetic, aggregates,
-function wrappers, opaque external calls, deferred cleanup, and loop-carried
-rebindings are not covered. A control-flow join that changes allocation
-identity drops the static fact rather than guessing. The analyzer still does
-not prove unique mutable access, and pointer-containing values crossing opaque
-external APIs require manual review.
+It tracks a direct `mem_alloc` result through local aliases and known user
+functions. Fixed-point summaries follow a single managed `i64` return origin
+through identity/forwarding wrappers, identify functions that return a fresh
+allocation, and propagate direct `mem_free` effects on arguments through
+wrapper chains. Known aliases are marked after release, double frees are
+diagnosed, and freed state is merged conservatively across branches. Direct
+`mem_read`, `mem_set`, and `mem_copy` arguments are checked after their
+expressions are analyzed.
+
+This remains a deliberately small analysis, not a general pointer/ownership
+system. Mixed-origin return paths, aggregate handles, pointer arithmetic,
+opaque external calls, deferred cleanup, and loop-carried rebindings are not
+followed; ambiguous return summaries are discarded rather than guessed.
+A control-flow join that changes allocation identity also drops the static
+fact. Runtime checks remain authoritative, and the analyzer does not prove
+unique mutable access.
 
 ## Current limitations
 
