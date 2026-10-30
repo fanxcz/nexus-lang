@@ -7,6 +7,7 @@ extern "C" char* nexus_str_concat(const char* left, const char* right);
 extern "C" void nexus_free(void* pointer);
 extern "C" size_t nexus_runtime_test_live_bytes();
 extern "C" void nexus_runtime_test_collect();
+extern "C" int nexus_runtime_test_try_free(void* pointer);
 
 int main() {
     // These strings must remain valid across many collection cycles.
@@ -32,6 +33,23 @@ int main() {
     if (liveBytes > 2u * 1024u * 1024u) {
         std::fprintf(stderr, "runtime string heap remained too large: %zu bytes\n", liveBytes);
         return 2;
+    }
+
+    char* freedProbe = nexus_str_concat("freed ", "probe");
+    if (!freedProbe) {
+        std::fprintf(stderr, "runtime allocation probe failed\\n");
+        return 3;
+    }
+    nexus_free(freedProbe);
+    if (nexus_runtime_test_try_free(freedProbe) != 0) {
+        std::fprintf(stderr, "runtime accepted a double free\\n");
+        return 4;
+    }
+
+    int stackValue = 0;
+    if (nexus_runtime_test_try_free(&stackValue) != 0) {
+        std::fprintf(stderr, "runtime accepted a non-managed pointer free\\n");
+        return 5;
     }
 
     nexus_free(persistent);
