@@ -39,10 +39,11 @@ It tracks a direct `mem_alloc` result through local aliases and known user
 functions. Fixed-point summaries follow a single managed `i64` return origin
 through identity/forwarding wrappers, identify functions that return a fresh
 allocation, and propagate direct `mem_free` effects on arguments through
-wrapper chains. Known aliases are marked after release, double frees are
-diagnosed, and freed state is merged conservatively across branches. Direct
-`mem_read`, `mem_set`, and `mem_copy` arguments are checked after their
-expressions are analyzed.
+wrapper chains, including the case where a function returns a fresh
+handle that it already freed internally. Known aliases are marked after
+release, double frees are diagnosed, and freed state is merged conservatively
+across branches. Direct `mem_read`, `mem_set`, and `mem_copy` arguments are
+checked after their expressions are analyzed.
 
 This remains a deliberately small analysis, not a general pointer/ownership
 system. Mixed-origin return paths, aggregate handles, pointer arithmetic,
