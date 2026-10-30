@@ -94,7 +94,7 @@
     }
     static void nx_managed_free(void* pointer) {
         if (!nx_managed_try_free(pointer)) {
-            std::fputs("Nexus runtime error: invalid or already freed allocation\\n", stderr);
+            std::fputs("Nexus runtime error: invalid or already freed allocation\n", stderr);
             std::exit(1);
         }
     }
