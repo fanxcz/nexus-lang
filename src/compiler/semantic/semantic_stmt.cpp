@@ -47,10 +47,22 @@ namespace nexus {
         std::unordered_map<std::string, Symbol>& destination,
         const std::unordered_map<std::string, Symbol>& branch) const {
         for (auto& [name, target] : destination) {
-            if (!typeMayContainPointer(target.type))
-                continue;
             const auto source = branch.find(name);
-            if (source == branch.end() || !source->second.borrowedFrom)
+            if (source == branch.end())
+                continue;
+
+            if (target.managedAllocation == source->second.managedAllocation) {
+                target.managedAllocationFreed =
+                    target.managedAllocationFreed || source->second.managedAllocationFreed;
+            } else if (target.managedAllocation || source->second.managedAllocation) {
+                // A control-flow join with different allocation identities is
+                // intentionally left untracked rather than guessing which
+                // allocation the binding contains.
+                target.managedAllocation = nullptr;
+                target.managedAllocationFreed = false;
+            }
+
+            if (!typeMayContainPointer(target.type) || !source->second.borrowedFrom)
                 continue;
             if (!target.borrowedFrom ||
                 source->second.borrowedFrom->scopeDepth > target.borrowedFrom->scopeDepth)
@@ -92,9 +104,14 @@ namespace nexus {
                                                  describeType(l->type) + "' but got '" +
                                                  describeType(t) + "'");
                     l->type = t;
-                    env[l->name] = {t, l->mut, scopeDepth_,
-                                    typeMayContainPointer(t) ? pointerOrigin(l->init.get(), env)
-                                                             : std::nullopt};
+                    Symbol symbol{t, l->mut, scopeDepth_,
+                                  typeMayContainPointer(t) ? pointerOrigin(l->init.get(), env)
+                                                           : std::nullopt};
+                    if (const auto managed = managedAllocationOrigin(l->init.get(), env, !inLoop)) {
+                        symbol.managedAllocation = managed->allocation;
+                        symbol.managedAllocationFreed = managed->freed;
+                    }
+                    env[l->name] = std::move(symbol);
                 } else if (auto* a = dynamic_cast<AssignStmt*>(s.get())) {
                     auto it = env.find(a->name);
                     if (it == env.end())
@@ -113,6 +130,9 @@ namespace nexus {
                         throw std::runtime_error("cannot store pointer to shorter-lived local '" +
                                                  origin->binding + "' in '" + a->name + "'");
                     it->second.borrowedFrom = origin;
+                    const auto managed = managedAllocationOrigin(a->value.get(), env, !inLoop);
+                    it->second.managedAllocation = managed ? managed->allocation : nullptr;
+                    it->second.managedAllocationFreed = managed ? managed->freed : false;
                 } else if (auto* da = dynamic_cast<DerefAssignStmt*>(s.get())) {
                     const auto pointerType = expr(da->target.get(), env);
                     if (pointerType.kind != TypeKind::Pointer || !pointerType.pointee)
@@ -201,6 +221,14 @@ namespace nexus {
                 else if (auto* d = dynamic_cast<DeferStmt*>(s.get())) {
                     if (!dynamic_cast<CallExpr*>(d->call.get()))
                         throw std::runtime_error("defer requires a function call");
+                    struct DeferredCallGuard {
+                        bool& active;
+                        bool previous;
+                        explicit DeferredCallGuard(bool& value) : active(value), previous(value) {
+                            active = true;
+                        }
+                        ~DeferredCallGuard() { active = previous; }
+                    } deferredCallGuard(analyzingDeferredCall_);
                     const auto deferredType = expr(d->call.get(), env);
                     if (deferredType.kind != TypeKind::Void)
                         throw std::runtime_error("defer requires a call returning void");
