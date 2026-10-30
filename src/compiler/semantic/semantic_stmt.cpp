@@ -3,6 +3,7 @@
 #include "semantic/semantic_internal.hpp"
 
 #include <set>
+#include <unordered_set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -10,9 +11,36 @@
 namespace nexus {
 
     bool SemanticAnalyzer::typeMayContainPointer(const Type& type) const {
-        // Structs, enums and arrays may recursively contain pointer values.
-        return type.kind == TypeKind::Pointer || type.kind == TypeKind::Struct ||
-               type.kind == TypeKind::Enum || type.kind == TypeKind::Array;
+        std::unordered_set<std::string> visited;
+        const auto contains = [&](const auto& self, const Type& candidate) -> bool {
+            if (candidate.kind == TypeKind::Pointer)
+                return true;
+            if (candidate.kind == TypeKind::Array)
+                return candidate.element && self(self, *candidate.element);
+            if (candidate.kind == TypeKind::Struct) {
+                if (!visited.insert("struct:" + candidate.name).second)
+                    return false;
+                const auto declaration = structs_.find(candidate.name);
+                if (declaration == structs_.end())
+                    return false;
+                for (const auto& field : declaration->second->fields) {
+                    if (self(self, field.type))
+                        return true;
+                }
+            } else if (candidate.kind == TypeKind::Enum) {
+                if (!visited.insert("enum:" + candidate.name).second)
+                    return false;
+                const auto declaration = enums_.find(candidate.name);
+                if (declaration == enums_.end())
+                    return false;
+                for (const auto& variant : declaration->second->variants) {
+                    if (variant.payload && self(self, *variant.payload))
+                        return true;
+                }
+            }
+            return false;
+        };
+        return contains(contains, type);
     }
 
     void SemanticAnalyzer::block(Block& b,
