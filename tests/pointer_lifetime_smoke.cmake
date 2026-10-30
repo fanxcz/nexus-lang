@@ -66,6 +66,26 @@ if(escape_rc EQUAL 0 OR
   message(FATAL_ERROR "A nested pointer escape was not rejected:\n${escape_combined}")
 endif()
 
+# Branch-local assignments must be merged into the outer borrow state.
+set(BRANCH_SOURCE "${TEST_DIR}/branch-escape.nx")
+file(WRITE "${BRANCH_SOURCE}"
+  "extern \"C\" fn external_pointer() -> *i64\n"
+  "fn leak_branch() -> *i64 {\n"
+  "  let mut local = 5\n"
+  "  let mut pointer = external_pointer()\n"
+  "  if true { pointer = &local }\n"
+  "  return pointer\n"
+  "}\n"
+  "fn main() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${BRANCH_SOURCE}"
+  RESULT_VARIABLE branch_rc OUTPUT_VARIABLE branch_out ERROR_VARIABLE branch_err)
+set(branch_combined "${branch_out}\n${branch_err}")
+if(branch_rc EQUAL 0 OR
+   NOT branch_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "A branch-local borrow was lost during flow merging:\n${branch_combined}")
+endif()
+
 # Pointer provenance must survive aggregate construction and reject local escapes.
 set(AGGREGATE_SOURCE "${TEST_DIR}/aggregate-escape.nx")
 file(WRITE "${AGGREGATE_SOURCE}"
