@@ -129,7 +129,15 @@ namespace nexus {
                 result = candidate;
         };
 
-        if (const auto* array = dynamic_cast<const ArrayExpr*>(e)) {
+        if (const auto* call = dynamic_cast<const CallExpr*>(e)) {
+            const auto summary = returnedBorrowParams_.find(call->callee);
+            if (summary != returnedBorrowParams_.end()) {
+                for (const auto index : summary->second) {
+                    if (index < call->args.size())
+                        merge(pointerOrigin(call->args[index].get(), env));
+                }
+            }
+        } else if (const auto* array = dynamic_cast<const ArrayExpr*>(e)) {
             if (!array->elements.empty()) {
                 const auto elementType = provenanceType(array->elements.front().get(), env);
                 if (elementType && typeMayContainPointer(*elementType)) {
