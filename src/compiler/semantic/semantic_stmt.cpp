@@ -254,6 +254,8 @@ namespace nexus {
                             currentFunctionReturnManagedParams_.push_back(*managed->parameter);
                         } else if (managed->allocation) {
                             currentFunctionReturnManagedFresh_ = true;
+                            currentFunctionReturnManagedFreshFreed_ =
+                                currentFunctionReturnManagedFreshFreed_ || managed->freed;
                         }
                     }
                     const auto origin = typeMayContainPointer(t) ? pointerOrigin(r->expr.get(), env)
