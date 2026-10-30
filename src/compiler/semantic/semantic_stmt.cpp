@@ -9,6 +9,12 @@
 
 namespace nexus {
 
+    bool SemanticAnalyzer::typeMayContainPointer(const Type& type) const {
+        // Structs, enums and arrays may recursively contain pointer values.
+        return type.kind == TypeKind::Pointer || type.kind == TypeKind::Struct ||
+               type.kind == TypeKind::Enum || type.kind == TypeKind::Array;
+    }
+
     void SemanticAnalyzer::block(Block& b,
                                  std::unordered_map<std::string, Symbol>& env,
                                  Type ret,
@@ -42,7 +48,9 @@ namespace nexus {
                                                  describeType(l->type) + "' but got '" +
                                                  describeType(t) + "'");
                     l->type = t;
-                    env[l->name] = {t, l->mut, scopeDepth_, pointerOrigin(l->init.get(), env)};
+                    env[l->name] = {t, l->mut, scopeDepth_,
+                                    typeMayContainPointer(t) ? pointerOrigin(l->init.get(), env)
+                                                             : std::nullopt};
                 } else if (auto* a = dynamic_cast<AssignStmt*>(s.get())) {
                     auto it = env.find(a->name);
                     if (it == env.end())
@@ -54,7 +62,9 @@ namespace nexus {
                         throw std::runtime_error("cannot assign to '" + a->name + "': expected '" +
                                                  describeType(it->second.type) + "' but got '" +
                                                  describeType(actual) + "'");
-                    const auto origin = pointerOrigin(a->value.get(), env);
+                    const auto origin = typeMayContainPointer(it->second.type)
+                                            ? pointerOrigin(a->value.get(), env)
+                                            : std::nullopt;
                     if (origin && origin->scopeDepth > it->second.scopeDepth)
                         throw std::runtime_error("cannot store pointer to shorter-lived local '" +
                                                  origin->binding + "' in '" + a->name + "'");
@@ -93,7 +103,9 @@ namespace nexus {
                                                  "' but got '" + describeType(actual) + "'");
                     if (const auto* root = lvalueRootVariable(ma->object.get())) {
                         auto it = env.find(root->name);
-                        const auto origin = pointerOrigin(ma->value.get(), env);
+                        const auto origin = typeMayContainPointer(f->type)
+                                                ? pointerOrigin(ma->value.get(), env)
+                                                : std::nullopt;
                         if (it != env.end() && origin) {
                             if (origin->scopeDepth > it->second.scopeDepth)
                                 throw std::runtime_error("cannot store pointer to shorter-lived local '" +
@@ -126,7 +138,9 @@ namespace nexus {
                                                  describeType(actual) + "'");
                     if (const auto* root = lvalueRootVariable(ia->object.get())) {
                         auto it = env.find(root->name);
-                        const auto origin = pointerOrigin(ia->value.get(), env);
+                        const auto origin = typeMayContainPointer(*ot.element)
+                                                ? pointerOrigin(ia->value.get(), env)
+                                                : std::nullopt;
                         if (it != env.end() && origin) {
                             if (origin->scopeDepth > it->second.scopeDepth)
                                 throw std::runtime_error("cannot store pointer to shorter-lived local '" +
@@ -149,7 +163,8 @@ namespace nexus {
                     if (!sameType(t, ret))
                         throw std::runtime_error("return expects '" + describeType(ret) +
                                                  "' but got '" + describeType(t) + "'");
-                    const auto origin = pointerOrigin(r->expr.get(), env);
+                    const auto origin = typeMayContainPointer(t) ? pointerOrigin(r->expr.get(), env)
+                                                                 : std::nullopt;
                     if (origin && origin->scopeDepth > 0)
                         throw std::runtime_error("cannot return a pointer to local storage '" +
                                                  origin->binding + "'");
@@ -200,7 +215,11 @@ namespace nexus {
                         }
                     }
                     auto local = env;
-                    local[f->name] = {varType, false};
+                    local[f->name] = {
+                        varType, false, scopeDepth_ + 1,
+                        typeMayContainPointer(varType)
+                            ? pointerOrigin(f->collection.get(), env)
+                            : std::nullopt};
                     block(*f->body, local, ret, true);
                 } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
 
@@ -267,7 +286,11 @@ namespace nexus {
                                     }
                                 }
                             }
-                            local[arm.binding] = {bindType, false};
+                            local[arm.binding] = {
+                                bindType, false, scopeDepth_ + 1,
+                                typeMayContainPointer(bindType)
+                                    ? pointerOrigin(mm->value.get(), env)
+                                    : std::nullopt};
                         }
 
                         if (arm.rangeEnd) {
