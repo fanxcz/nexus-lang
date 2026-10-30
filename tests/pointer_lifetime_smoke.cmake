@@ -89,14 +89,14 @@ endif()
 # Mutually exclusive if branches must not leak state into each other.
 set(BRANCH_VALID_SOURCE "${TEST_DIR}/branch-valid.nx")
 file(WRITE "${BRANCH_VALID_SOURCE}"
-  "extern \"C\" fn external_pointer() -> *i64\\n"
-  "fn conditional_return() -> *i64 {\\n"
-  "  let mut local = 6\\n"
-  "  let mut pointer = external_pointer()\\n"
-  "  if true { pointer = &local } else { return pointer }\\n"
-  "  return external_pointer()\\n"
-  "}\\n"
-  "fn main() {}\\n")
+  "extern \"C\" fn external_pointer() -> *i64\n"
+  "fn conditional_return() -> *i64 {\n"
+  "  let mut local = 6\n"
+  "  let mut pointer = external_pointer()\n"
+  "  if true { pointer = &local } else { return pointer }\n"
+  "  return external_pointer()\n"
+  "}\n"
+  "fn main() {}\n")
 execute_process(
   COMMAND "${NEXUS_BIN}" check "${BRANCH_VALID_SOURCE}"
   RESULT_VARIABLE branch_valid_rc OUTPUT_VARIABLE branch_valid_out ERROR_VARIABLE branch_valid_err)
