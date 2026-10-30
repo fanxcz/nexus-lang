@@ -89,6 +89,63 @@ namespace nexus {
         return std::nullopt;
     }
 
+    std::optional<ManagedAllocationState> SemanticAnalyzer::managedAllocationOrigin(
+        const Expr* e, const std::unordered_map<std::string, Symbol>& env,
+        bool trackAllocationSite) const {
+        if (!e)
+            return std::nullopt;
+
+        if (const auto* variable = dynamic_cast<const VarExpr*>(e)) {
+            const auto it = env.find(variable->name);
+            if (it == env.end() || !it->second.managedAllocation)
+                return std::nullopt;
+            return ManagedAllocationState{it->second.managedAllocation,
+                                           it->second.managedAllocationFreed};
+        }
+
+        if (trackAllocationSite) {
+            if (const auto* call = dynamic_cast<const CallExpr*>(e);
+                call && call->callee == "mem_alloc")
+                return ManagedAllocationState{e, false};
+        }
+        return std::nullopt;
+    }
+
+    void SemanticAnalyzer::checkManagedAllocationUse(
+        const Expr* e, const std::unordered_map<std::string, Symbol>& env,
+        const std::string& operation) const {
+        const auto* variable = dynamic_cast<const VarExpr*>(e);
+        if (!variable)
+            return;
+        const auto it = env.find(variable->name);
+        if (it != env.end() && it->second.managedAllocation &&
+            it->second.managedAllocationFreed) {
+            throw std::runtime_error("use after mem_free of managed allocation '" +
+                                     variable->name + "' in " + operation);
+        }
+    }
+
+    void SemanticAnalyzer::releaseManagedAllocation(
+        const Expr* e, std::unordered_map<std::string, Symbol>& env, bool deferred) const {
+        const auto* variable = dynamic_cast<const VarExpr*>(e);
+        if (!variable)
+            return;
+        const auto it = env.find(variable->name);
+        if (it == env.end() || !it->second.managedAllocation)
+            return;
+        if (it->second.managedAllocationFreed)
+            throw std::runtime_error("double free of managed allocation '" + variable->name + "'");
+        if (deferred)
+            return;
+
+        const auto* allocation = it->second.managedAllocation;
+        for (auto& [name, symbol] : env) {
+            (void)name;
+            if (symbol.managedAllocation == allocation)
+                symbol.managedAllocationFreed = true;
+        }
+    }
+
     std::optional<BorrowOrigin> SemanticAnalyzer::pointerOrigin(
         const Expr* e, const std::unordered_map<std::string, Symbol>& env) const {
         if (!e)
@@ -430,6 +487,11 @@ namespace nexus {
                 if (bi->params.size() != c->args.size())
                     throw std::runtime_error("wrong argument count for builtin " + c->callee);
                 for (size_t i = 0; i < c->args.size(); ++i) {
+                    if ((c->callee == "mem_read" || c->callee == "mem_set") && i == 0)
+                        checkManagedAllocationUse(c->args[i].get(), env, c->callee);
+                    else if (c->callee == "mem_copy" && i < 2)
+                        checkManagedAllocationUse(c->args[i].get(), env, c->callee);
+
                     auto actual = expr(c->args[i].get(), env);
                     if (!sameType(actual, bi->params[i]))
                         throw std::runtime_error("argument " + std::to_string(i + 1) +
@@ -437,6 +499,8 @@ namespace nexus {
                                                  describeType(bi->params[i]) + "' but got '" +
                                                  describeType(actual) + "'");
                 }
+                if (c->callee == "mem_free")
+                    releaseManagedAllocation(c->args[0].get(), env, analyzingDeferredCall_);
                 return bi->ret;
             }
             auto it = funcs_.find(c->callee);
