@@ -52,8 +52,10 @@ namespace nexus {
         std::unordered_map<std::string, bool> returnedManagedFreshFreed_;
         std::unordered_map<std::string, bool> returnedManagedUnknown_;
         std::unordered_map<std::string, std::vector<std::size_t>> freedManagedParams_;
+        std::unordered_map<std::string, std::vector<std::size_t>> usedManagedParams_;
         std::vector<std::size_t> currentFunctionReturnManagedParams_;
         std::vector<std::size_t> currentFunctionFreedManagedParams_;
+        std::vector<std::size_t> currentFunctionUsedManagedParams_;
         bool currentFunctionReturnManagedFresh_ = false;
         bool currentFunctionReturnManagedFreshFreed_ = false;
         bool currentFunctionReturnManagedUnknown_ = false;
@@ -83,6 +85,9 @@ namespace nexus {
         void checkManagedAllocationUse(
             const Expr* e, const std::unordered_map<std::string, Symbol>& env,
             const std::string& operation) const;
+
+        void recordManagedAllocationUse(
+            const Expr* e, const std::unordered_map<std::string, Symbol>& env);
 
         void releaseManagedAllocation(const Expr* e,
                                       std::unordered_map<std::string, Symbol>& env,
