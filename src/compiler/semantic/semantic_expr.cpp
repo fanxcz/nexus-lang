@@ -111,8 +111,8 @@ namespace nexus {
 
             const auto function = funcs_.find(call->callee);
             if (function == funcs_.end() || function->second->ret.kind != TypeKind::I64 ||
-                returnedManagedUnknown_.contains(call->callee) &&
-                    returnedManagedUnknown_.at(call->callee))
+                (returnedManagedUnknown_.contains(call->callee) &&
+                 returnedManagedUnknown_.at(call->callee)))
                 return std::nullopt;
 
             const auto params = returnedManagedParams_.find(call->callee);
@@ -135,41 +135,35 @@ namespace nexus {
     void SemanticAnalyzer::checkManagedAllocationUse(
         const Expr* e, const std::unordered_map<std::string, Symbol>& env,
         const std::string& operation) const {
-        const auto* variable = dynamic_cast<const VarExpr*>(e);
-        if (!variable)
+        const auto managed = managedAllocationOrigin(e, env, true);
+        if (!managed || !managed->freed)
             return;
-        const auto it = env.find(variable->name);
-        if (it != env.end() &&
-            (it->second.managedAllocation || it->second.managedAllocationParameter) &&
-            it->second.managedAllocationFreed) {
-            throw std::runtime_error("use after mem_free of managed allocation '" +
-                                     variable->name + "' in " + operation);
-        }
+        const auto* variable = dynamic_cast<const VarExpr*>(e);
+        const std::string name = variable ? "'" + variable->name + "'" : "returned handle";
+        throw std::runtime_error("use after mem_free of managed allocation " + name +
+                                 " in " + operation);
     }
 
     void SemanticAnalyzer::releaseManagedAllocation(
         const Expr* e, std::unordered_map<std::string, Symbol>& env, bool deferred) {
-        const auto* variable = dynamic_cast<const VarExpr*>(e);
-        if (!variable)
+        const auto managed = managedAllocationOrigin(e, env, true);
+        if (!managed)
             return;
-        const auto it = env.find(variable->name);
-        if (it == env.end() ||
-            (!it->second.managedAllocation && !it->second.managedAllocationParameter))
-            return;
-        if (it->second.managedAllocationFreed)
-            throw std::runtime_error("double free of managed allocation '" + variable->name + "'");
+        if (managed->freed) {
+            const auto* variable = dynamic_cast<const VarExpr*>(e);
+            const std::string name = variable ? "'" + variable->name + "'" : "returned handle";
+            throw std::runtime_error("double free of managed allocation " + name);
+        }
         if (deferred)
             return;
 
-        const auto* allocation = it->second.managedAllocation;
-        const auto parameter = it->second.managedAllocationParameter;
-        if (parameter)
-            currentFunctionFreedManagedParams_.push_back(*parameter);
+        if (managed->parameter)
+            currentFunctionFreedManagedParams_.push_back(*managed->parameter);
 
         for (auto& [name, symbol] : env) {
             (void)name;
-            if (symbol.managedAllocation == allocation &&
-                symbol.managedAllocationParameter == parameter)
+            if (symbol.managedAllocation == managed->allocation &&
+                symbol.managedAllocationParameter == managed->parameter)
                 symbol.managedAllocationFreed = true;
         }
     }
@@ -515,12 +509,12 @@ namespace nexus {
                 if (bi->params.size() != c->args.size())
                     throw std::runtime_error("wrong argument count for builtin " + c->callee);
                 for (size_t i = 0; i < c->args.size(); ++i) {
+                    auto actual = expr(c->args[i].get(), env);
                     if ((c->callee == "mem_read" || c->callee == "mem_set") && i == 0)
                         checkManagedAllocationUse(c->args[i].get(), env, c->callee);
                     else if (c->callee == "mem_copy" && i < 2)
                         checkManagedAllocationUse(c->args[i].get(), env, c->callee);
 
-                    auto actual = expr(c->args[i].get(), env);
                     if (!sameType(actual, bi->params[i]))
                         throw std::runtime_error("argument " + std::to_string(i + 1) +
                                                  " of builtin '" + c->callee + "' expects '" +
