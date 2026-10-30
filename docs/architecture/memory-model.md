@@ -32,9 +32,19 @@ The runtime now bounds `mem_read`, `mem_set`, and `mem_copy` to live
 `mem_alloc` blocks and keeps the registry locked for the duration of each
 operation. These checks protect only these managed-memory helpers; external
 pointers passed through FFI remain outside the registry and require separate
-validation. The analyzer still does not prove unique mutable access or prevent
-use-after-free through arbitrary pointer aliases. Pointer-containing values
-crossing opaque external APIs still require manual review.
+validation.
+
+The semantic analyzer also performs a narrow managed-allocation lifetime check.
+It tracks a direct `mem_alloc` result through local variable aliases, marks all
+known aliases after a direct `mem_free`, rejects a second direct free, and
+merges freed state across branches when the allocation identity is unchanged.
+It checks direct arguments to `mem_read`, `mem_set`, and `mem_copy`. This is
+not a general pointer/ownership analysis: pointer arithmetic, aggregates,
+function wrappers, opaque external calls, deferred cleanup, and loop-carried
+rebindings are not covered. A control-flow join that changes allocation
+identity drops the static fact rather than guessing. The analyzer still does
+not prove unique mutable access, and pointer-containing values crossing opaque
+external APIs require manual review.
 
 ## Current limitations
 
