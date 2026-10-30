@@ -116,6 +116,7 @@ namespace nexus {
 
         diagnostics_.clear();
         currentFunctionReturnType_ = Type::void_();
+        scopeDepth_ = 0;
         funcs_.clear();
         structs_.clear();
         enums_.clear();
@@ -239,7 +240,7 @@ namespace nexus {
                     report("duplicate parameter: " + a.name, a.span.valid ? a.span : f.span);
                     continue;
                 }
-                env[a.name] = {a.type, true};
+                env[a.name] = {a.type, true, 1, std::nullopt};
             }
             if (f.body) {
                 currentFunctionReturnType_ = f.ret;
