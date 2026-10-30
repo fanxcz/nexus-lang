@@ -197,10 +197,21 @@ namespace nexus::native {
                 case TokenKind::Percent: {
                     // Use the same checked failure path as the LLVM backend.
                     const std::string nonzero = out_.label("division.nonzero");
+                    const std::string noOverflow = out_.label("division.nooverflow");
                     out_.testRcxRcx();
                     out_.jcc(J_NE, nonzero);
                     out_.jmp("__nx_divzero");
                     out_.def(nonzero);
+                    // x86 idiv traps for INT64_MIN / -1 (including remainder).
+                    // Check the pair explicitly so the native backend reports the
+                    // same controlled runtime error as the LLVM backend.
+                    out_.movR11Imm64(0x8000000000000000ULL);
+                    out_.cmpRaxR11();
+                    out_.jcc(J_NE, noOverflow);
+                    out_.cmpRcxImm8(0xFF); // divisor == -1
+                    out_.jcc(J_NE, noOverflow);
+                    out_.jmp("__nx_divoverflow");
+                    out_.def(noOverflow);
                     out_.cqo();
                     out_.idivRcx();
                     if (b->op == TokenKind::Percent)
