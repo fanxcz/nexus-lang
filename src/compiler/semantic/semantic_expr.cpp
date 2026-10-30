@@ -11,6 +11,84 @@
 
 namespace nexus {
 
+    std::optional<Type> SemanticAnalyzer::provenanceType(
+        const Expr* e, const std::unordered_map<std::string, Symbol>& env) const {
+        if (!e)
+            return std::nullopt;
+
+        if (dynamic_cast<const IntExpr*>(e))
+            return Type::i64();
+        if (dynamic_cast<const FloatExpr*>(e))
+            return Type::f64();
+        if (dynamic_cast<const BoolExpr*>(e))
+            return Type::boolean();
+        if (dynamic_cast<const StringExpr*>(e))
+            return Type::string();
+        if (const auto* variable = dynamic_cast<const VarExpr*>(e)) {
+            const auto it = env.find(variable->name);
+            return it == env.end() ? std::nullopt : std::optional<Type>(it->second.type);
+        }
+        if (const auto* object = dynamic_cast<const StructInitExpr*>(e))
+            return Type::named(object->typeName);
+        if (const auto* variant = dynamic_cast<const EnumVariantExpr*>(e))
+            return Type::enumerated(variant->enumName);
+        if (const auto* array = dynamic_cast<const ArrayExpr*>(e)) {
+            if (array->elements.empty())
+                return std::nullopt;
+            const auto element = provenanceType(array->elements.front().get(), env);
+            return element ? std::optional<Type>(Type::array(*element, array->elements.size()))
+                           : std::nullopt;
+        }
+        if (const auto* unary = dynamic_cast<const UnaryExpr*>(e)) {
+            const auto inner = provenanceType(unary->rhs.get(), env);
+            if (!inner)
+                return std::nullopt;
+            if (unary->op == TokenKind::Ampersand)
+                return Type::ptr(*inner);
+            if (unary->op == TokenKind::Star &&
+                inner->kind == TypeKind::Pointer && inner->pointee)
+                return *inner->pointee;
+            return inner;
+        }
+        if (const auto* member = dynamic_cast<const MemberExpr*>(e)) {
+            const auto objectType = provenanceType(member->object.get(), env);
+            if (!objectType || objectType->kind != TypeKind::Struct)
+                return std::nullopt;
+            const auto declaration = structs_.find(objectType->name);
+            if (declaration == structs_.end())
+                return std::nullopt;
+            const auto* field = fieldOf(*declaration->second, member->member);
+            return field ? std::optional<Type>(field->type) : std::nullopt;
+        }
+        if (const auto* index = dynamic_cast<const IndexExpr*>(e)) {
+            const auto objectType = provenanceType(index->object.get(), env);
+            if (!objectType || objectType->kind != TypeKind::Array || !objectType->element)
+                return std::nullopt;
+            return *objectType->element;
+        }
+        if (const auto* call = dynamic_cast<const CallExpr*>(e)) {
+            if (const auto builtin = builtinSignature(call->callee))
+                return builtin->ret;
+            const auto function = funcs_.find(call->callee);
+            return function == funcs_.end() ? std::nullopt
+                                            : std::optional<Type>(function->second->ret);
+        }
+        if (const auto* attempt = dynamic_cast<const TryExpr*>(e)) {
+            const auto inner = provenanceType(attempt->expr.get(), env);
+            if (!inner || inner->kind != TypeKind::Enum)
+                return std::nullopt;
+            const auto declaration = enums_.find(inner->name);
+            if (declaration == enums_.end())
+                return std::nullopt;
+            for (const auto& variant : declaration->second->variants) {
+                if ((variant.name == "Some" || variant.name == "Ok") && variant.payload)
+                    return *variant.payload;
+            }
+            return std::nullopt;
+        }
+        return std::nullopt;
+    }
+
     std::optional<BorrowOrigin> SemanticAnalyzer::pointerOrigin(
         const Expr* e, const std::unordered_map<std::string, Symbol>& env) const {
         if (!e)
@@ -52,19 +130,41 @@ namespace nexus {
         };
 
         if (const auto* array = dynamic_cast<const ArrayExpr*>(e)) {
-            for (const auto& element : array->elements)
-                merge(pointerOrigin(element.get(), env));
+            if (!array->elements.empty()) {
+                const auto elementType = provenanceType(array->elements.front().get(), env);
+                if (elementType && typeMayContainPointer(*elementType)) {
+                    for (const auto& element : array->elements)
+                        merge(pointerOrigin(element.get(), env));
+                }
+            }
         } else if (const auto* object = dynamic_cast<const StructInitExpr*>(e)) {
-            for (const auto& [name, value] : object->fields) {
-                (void)name;
-                merge(pointerOrigin(value.get(), env));
+            const auto declaration = structs_.find(object->typeName);
+            if (declaration != structs_.end()) {
+                for (const auto& [name, value] : object->fields) {
+                    const auto* field = fieldOf(*declaration->second, name);
+                    if (field && typeMayContainPointer(field->type))
+                        merge(pointerOrigin(value.get(), env));
+                }
             }
         } else if (const auto* variant = dynamic_cast<const EnumVariantExpr*>(e)) {
-            merge(pointerOrigin(variant->payload.get(), env));
+            const auto declaration = enums_.find(variant->enumName);
+            if (declaration != enums_.end()) {
+                for (const auto& item : declaration->second->variants) {
+                    if (item.name == variant->variant && item.payload &&
+                        typeMayContainPointer(*item.payload)) {
+                        merge(pointerOrigin(variant->payload.get(), env));
+                        break;
+                    }
+                }
+            }
         } else if (const auto* member = dynamic_cast<const MemberExpr*>(e)) {
-            merge(pointerOrigin(member->object.get(), env));
+            const auto memberType = provenanceType(member, env);
+            if (memberType && typeMayContainPointer(*memberType))
+                merge(pointerOrigin(member->object.get(), env));
         } else if (const auto* index = dynamic_cast<const IndexExpr*>(e)) {
-            merge(pointerOrigin(index->object.get(), env));
+            const auto elementType = provenanceType(index, env);
+            if (elementType && typeMayContainPointer(*elementType))
+                merge(pointerOrigin(index->object.get(), env));
         }
 
         return result;
