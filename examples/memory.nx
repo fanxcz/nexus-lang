@@ -8,8 +8,7 @@ fn main() {
         return
     }
 
+    defer mem_free(address)
     mem_set(address, 65, size)
-    print("allocated 64 bytes")
-    mem_free(address)
-    print("memory released")
+    print("allocated and initialized 64 bytes")
 }
