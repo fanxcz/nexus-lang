@@ -66,5 +66,40 @@ if(escape_rc EQUAL 0 OR
   message(FATAL_ERROR "A nested pointer escape was not rejected:\n${escape_combined}")
 endif()
 
+# Pointer provenance must survive aggregate construction and reject local escapes.
+set(AGGREGATE_SOURCE "${TEST_DIR}/aggregate-escape.nx")
+file(WRITE "${AGGREGATE_SOURCE}"
+  "struct PointerBox { value: *i64 }\n"
+  "fn leak_box() -> PointerBox {\n"
+  "  let mut local = 3\n"
+  "  return PointerBox { value: &local }\n"
+  "}\n"
+  "fn main() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${AGGREGATE_SOURCE}"
+  RESULT_VARIABLE aggregate_rc OUTPUT_VARIABLE aggregate_out ERROR_VARIABLE aggregate_err)
+set(aggregate_combined "${aggregate_out}\n${aggregate_err}")
+if(aggregate_rc EQUAL 0 OR
+   NOT aggregate_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "Returning an aggregate with a local pointer was not rejected:\n${aggregate_combined}")
+endif()
+
+set(MEMBER_SOURCE "${TEST_DIR}/member-escape.nx")
+file(WRITE "${MEMBER_SOURCE}"
+  "struct PointerBox { value: *i64 }\n"
+  "fn main() {\n"
+  "  let mut outer = 0\n"
+  "  let mut box = PointerBox { value: &outer }\n"
+  "  { let mut inner = 1; box.value = &inner }\n"
+  "}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${MEMBER_SOURCE}"
+  RESULT_VARIABLE member_rc OUTPUT_VARIABLE member_out ERROR_VARIABLE member_err)
+set(member_combined "${member_out}\n${member_err}")
+if(member_rc EQUAL 0 OR
+   NOT member_combined MATCHES "cannot store pointer to shorter-lived local 'inner' in 'box'")
+  message(FATAL_ERROR "A pointer escape through a struct field was not rejected:\n${member_combined}")
+endif()
+
 file(REMOVE_RECURSE "${TEST_DIR}")
 message(STATUS "NEXUS pointer lifetime checks: PASS")
