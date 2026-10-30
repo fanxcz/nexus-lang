@@ -13,6 +13,11 @@ namespace nexus {
         std::string binding;
     };
 
+    struct ManagedAllocationState {
+        const Expr* allocation = nullptr;
+        bool freed = false;
+    };
+
     struct Symbol {
         Type type{};
         bool mut = false;
@@ -20,6 +25,9 @@ namespace nexus {
         // Tracks the shortest-lived lexical storage reachable through this value.
         // This is deliberately conservative for aggregates and is not a full borrow checker.
         std::optional<BorrowOrigin> borrowedFrom;
+        // The syntactic mem_alloc site shared by direct local aliases, when known.
+        const Expr* managedAllocation = nullptr;
+        bool managedAllocationFreed = false;
     };
 
     class SemanticAnalyzer {
@@ -40,6 +48,7 @@ namespace nexus {
         long long discardCounter_ = 0;
         Type currentFunctionReturnType_ = Type::void_();
         std::size_t scopeDepth_ = 0;
+        bool analyzingDeferredCall_ = false;
 
     public:
         void analyze(Program& p);
@@ -51,6 +60,18 @@ namespace nexus {
 
         std::optional<BorrowOrigin> pointerOrigin(
             const Expr* e, const std::unordered_map<std::string, Symbol>& env) const;
+
+        std::optional<ManagedAllocationState> managedAllocationOrigin(
+            const Expr* e, const std::unordered_map<std::string, Symbol>& env,
+            bool trackAllocationSite) const;
+
+        void checkManagedAllocationUse(
+            const Expr* e, const std::unordered_map<std::string, Symbol>& env,
+            const std::string& operation) const;
+
+        void releaseManagedAllocation(const Expr* e,
+                                      std::unordered_map<std::string, Symbol>& env,
+                                      bool deferred) const;
 
         std::optional<Type> provenanceType(
             const Expr* e, const std::unordered_map<std::string, Symbol>& env) const;
