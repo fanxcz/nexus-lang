@@ -195,5 +195,44 @@ if(member_rc EQUAL 0 OR
   message(FATAL_ERROR "A pointer escape through a struct field was not rejected:\n${member_combined}")
 endif()
 
+# A returned pointer is tied to the argument that supplied it, even through
+# aliases, multiple forward-declared helpers, and a returned aggregate.
+set(FORWARD_CALL_SOURCE "${TEST_DIR}/forward-call-escape.nx")
+file(WRITE "${FORWARD_CALL_SOURCE}"
+  "fn leak_forward() -> *i64 {\n"
+  "  let mut local = 11\n"
+  "  return relay(&local)\n"
+  "}\n"
+  "fn relay(pointer: *i64) -> *i64 { return identity(pointer) }\n"
+  "fn identity(pointer: *i64) -> *i64 { let alias = pointer; return alias }\n"
+  "fn main() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${FORWARD_CALL_SOURCE}"
+  RESULT_VARIABLE forward_call_rc OUTPUT_VARIABLE forward_call_out ERROR_VARIABLE forward_call_err)
+set(forward_call_combined "${forward_call_out}\n${forward_call_err}")
+if(forward_call_rc EQUAL 0 OR
+   NOT forward_call_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "A local borrow escaped through pointer-returning helper calls:\n${forward_call_combined}")
+endif()
+
+set(AGGREGATE_CALL_SOURCE "${TEST_DIR}/aggregate-call-escape.nx")
+file(WRITE "${AGGREGATE_CALL_SOURCE}"
+  "struct PointerBox { value: *i64 }\n"
+  "fn make_box(pointer: *i64) -> PointerBox { return PointerBox { value: pointer } }\n"
+  "fn leak_box() -> *i64 {\n"
+  "  let mut local = 12\n"
+  "  let box = make_box(&local)\n"
+  "  return box.value\n"
+  "}\n"
+  "fn main() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${AGGREGATE_CALL_SOURCE}"
+  RESULT_VARIABLE aggregate_call_rc OUTPUT_VARIABLE aggregate_call_out ERROR_VARIABLE aggregate_call_err)
+set(aggregate_call_combined "${aggregate_call_out}\n${aggregate_call_err}")
+if(aggregate_call_rc EQUAL 0 OR
+   NOT aggregate_call_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "A local borrow escaped through a returned aggregate:\n${aggregate_call_combined}")
+endif()
+
 file(REMOVE_RECURSE "${TEST_DIR}")
 message(STATUS "NEXUS pointer lifetime checks: PASS")
