@@ -135,8 +135,11 @@ namespace nexus {
                 }
                 return origin;
             }
-            if (paramCount == 0 && returnsFresh && trackAllocationSite)
-                return ManagedAllocationState{e, std::nullopt, false};
+            if (paramCount == 0 && returnsFresh && trackAllocationSite) {
+                const bool freed = returnedManagedFreshFreed_.contains(call->callee) &&
+                                   returnedManagedFreshFreed_.at(call->callee);
+                return ManagedAllocationState{e, std::nullopt, freed};
+            }
         }
         return std::nullopt;
     }
