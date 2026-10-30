@@ -45,5 +45,7 @@ int64_t nexus_random_i64(int64_t min, int64_t max) {
     return nexus_i64_add_unsigned_offset(min, offset);
 }
 int64_t nexus_time_ms() {
-    return int64_t(now_seconds() * 1000.0);
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::steady_clock::now().time_since_epoch())
+        .count();
 }
