@@ -234,5 +234,34 @@ if(aggregate_call_rc EQUAL 0 OR
   message(FATAL_ERROR "A local borrow escaped through a returned aggregate:\n${aggregate_call_combined}")
 endif()
 
+# Returning an address of a value parameter is still a stack escape.
+set(PARAMETER_ADDRESS_SOURCE "${TEST_DIR}/parameter-address-escape.nx")
+file(WRITE "${PARAMETER_ADDRESS_SOURCE}"
+  "fn leak_parameter(value: i64) -> *i64 { return &value }\n"
+  "fn main() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${PARAMETER_ADDRESS_SOURCE}"
+  RESULT_VARIABLE parameter_address_rc OUTPUT_VARIABLE parameter_address_out ERROR_VARIABLE parameter_address_err)
+set(parameter_address_combined "${parameter_address_out}\n${parameter_address_err}")
+if(parameter_address_rc EQUAL 0 OR
+   NOT parameter_address_combined MATCHES "cannot return a pointer to local storage 'value'")
+  message(FATAL_ERROR "Taking the address of a value parameter escaped the function:\n${parameter_address_combined}")
+endif()
+
+# An opaque external pointer is not a local borrow. Passing it through a
+# forwarding function must remain valid.
+set(SAFE_CALL_SOURCE "${TEST_DIR}/safe-forward-call.nx")
+file(WRITE "${SAFE_CALL_SOURCE}"
+  "extern \"C\" fn external_pointer() -> *i64\n"
+  "fn identity(pointer: *i64) -> *i64 { return pointer }\n"
+  "fn safe_forward() -> *i64 { return identity(external_pointer()) }\n"
+  "fn main() {}\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${SAFE_CALL_SOURCE}"
+  RESULT_VARIABLE safe_call_rc OUTPUT_VARIABLE safe_call_out ERROR_VARIABLE safe_call_err)
+if(NOT safe_call_rc EQUAL 0)
+  message(FATAL_ERROR "A pointer with opaque external provenance was rejected:\n${safe_call_out}\n${safe_call_err}")
+endif()
+
 file(REMOVE_RECURSE "${TEST_DIR}")
 message(STATUS "NEXUS pointer lifetime checks: PASS")
