@@ -43,6 +43,21 @@ namespace nexus {
         return contains(contains, type);
     }
 
+    void SemanticAnalyzer::mergeBorrowState(
+        std::unordered_map<std::string, Symbol>& destination,
+        const std::unordered_map<std::string, Symbol>& branch) const {
+        for (auto& [name, target] : destination) {
+            if (!typeMayContainPointer(target.type))
+                continue;
+            const auto source = branch.find(name);
+            if (source == branch.end() || !source->second.borrowedFrom)
+                continue;
+            if (!target.borrowedFrom ||
+                source->second.borrowedFrom->scopeDepth > target.borrowedFrom->scopeDepth)
+                target.borrowedFrom = source->second.borrowedFrom;
+        }
+    }
+
     void SemanticAnalyzer::block(Block& b,
                                  std::unordered_map<std::string, Symbol>& env,
                                  Type ret,
@@ -58,6 +73,7 @@ namespace nexus {
                 if (auto* nested = dynamic_cast<Block*>(s.get())) {
                     auto localEnv = env;
                     block(*nested, localEnv, ret, inLoop);
+                    mergeBorrowState(env, localEnv);
                 } else if (auto* l = dynamic_cast<LetStmt*>(s.get())) {
                     // `_` is a discard binding: each occurrence gets a fresh hidden
                     // name so repeated `let _ = f()` never collides and `_` stays
@@ -205,9 +221,11 @@ namespace nexus {
                     }
                     auto a = env;
                     block(*ifs->thenBlock, a, ret, inLoop);
+                    mergeBorrowState(env, a);
                     if (ifs->elseBlock) {
                         auto c = env;
                         block(*ifs->elseBlock, c, ret, inLoop);
+                        mergeBorrowState(env, c);
                     }
                 } else if (auto* w = dynamic_cast<WhileStmt*>(s.get())) {
                     {
@@ -218,6 +236,7 @@ namespace nexus {
                     }
                     auto a = env;
                     block(*w->body, a, ret, true);
+                    mergeBorrowState(env, a);
                 } else if (auto* f = dynamic_cast<ForStmt*>(s.get())) {
                     Type varType;
                     if (f->rangeEnd) {
@@ -249,6 +268,7 @@ namespace nexus {
                             ? pointerOrigin(f->collection.get(), env)
                             : std::nullopt};
                     block(*f->body, local, ret, true);
+                    mergeBorrowState(env, local);
                 } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
 
                     auto vt = expr(mm->value.get(), env);
@@ -373,6 +393,7 @@ namespace nexus {
                         }
 
                         block(*arm.body, local, ret, inLoop);
+                        mergeBorrowState(env, local);
                     }
                     // Exhaustiveness is only provable for finite domains:
                     // bool (two values) and enums (one value per variant).
