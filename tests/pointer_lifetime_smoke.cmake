@@ -86,6 +86,24 @@ if(branch_rc EQUAL 0 OR
   message(FATAL_ERROR "A branch-local borrow was lost during flow merging:\n${branch_combined}")
 endif()
 
+# Mutually exclusive if branches must not leak state into each other.
+set(BRANCH_VALID_SOURCE "${TEST_DIR}/branch-valid.nx")
+file(WRITE "${BRANCH_VALID_SOURCE}"
+  "extern \"C\" fn external_pointer() -> *i64\\n"
+  "fn conditional_return() -> *i64 {\\n"
+  "  let mut local = 6\\n"
+  "  let mut pointer = external_pointer()\\n"
+  "  if true { pointer = &local } else { return pointer }\\n"
+  "  return external_pointer()\\n"
+  "}\\n"
+  "fn main() {}\\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${BRANCH_VALID_SOURCE}"
+  RESULT_VARIABLE branch_valid_rc OUTPUT_VARIABLE branch_valid_out ERROR_VARIABLE branch_valid_err)
+if(NOT branch_valid_rc EQUAL 0)
+  message(FATAL_ERROR "Mutually exclusive branch state was merged incorrectly:\\n${branch_valid_out}\\n${branch_valid_err}")
+endif()
+
 # Pointer provenance must survive aggregate construction and reject local escapes.
 set(AGGREGATE_SOURCE "${TEST_DIR}/aggregate-escape.nx")
 file(WRITE "${AGGREGATE_SOURCE}"
