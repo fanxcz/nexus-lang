@@ -124,7 +124,15 @@ namespace nexus {
                 const auto index = params->second.front();
                 if (index >= call->args.size())
                     return std::nullopt;
-                return managedAllocationOrigin(call->args[index].get(), env, trackAllocationSite);
+                auto origin =
+                    managedAllocationOrigin(call->args[index].get(), env, trackAllocationSite);
+                const auto freed = freedManagedParams_.find(call->callee);
+                if (origin && freed != freedManagedParams_.end() &&
+                    std::find(freed->second.begin(), freed->second.end(), index) !=
+                        freed->second.end()) {
+                    origin->freed = true;
+                }
+                return origin;
             }
             if (paramCount == 0 && returnsFresh && trackAllocationSite)
                 return ManagedAllocationState{e, std::nullopt, false};
