@@ -101,7 +101,7 @@ execute_process(
   COMMAND "${NEXUS_BIN}" check "${BRANCH_VALID_SOURCE}"
   RESULT_VARIABLE branch_valid_rc OUTPUT_VARIABLE branch_valid_out ERROR_VARIABLE branch_valid_err)
 if(NOT branch_valid_rc EQUAL 0)
-  message(FATAL_ERROR "Mutually exclusive branch state was merged incorrectly:\\n${branch_valid_out}\\n${branch_valid_err}")
+  message(FATAL_ERROR "Mutually exclusive branch state was merged incorrectly:\n${branch_valid_out}\n${branch_valid_err}")
 endif()
 
 # Pointer provenance must survive aggregate construction and reject local escapes.
