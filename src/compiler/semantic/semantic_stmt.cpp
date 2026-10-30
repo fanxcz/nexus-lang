@@ -153,8 +153,8 @@ namespace nexus {
                         if (it != env.end() && origin) {
                             if (origin->scopeDepth > it->second.scopeDepth)
                                 throw std::runtime_error(
-                                    "cannot store pointer to shorter-lived local '" + origin->binding +
-                                    "' in '" + root->name + "'");
+                                    "cannot store pointer to shorter-lived local '" +
+                                    origin->binding + "' in '" + root->name + "'");
                             if (!it->second.borrowedFrom ||
                                 origin->scopeDepth > it->second.borrowedFrom->scopeDepth)
                                 it->second.borrowedFrom = origin;
@@ -189,8 +189,8 @@ namespace nexus {
                         if (it != env.end() && origin) {
                             if (origin->scopeDepth > it->second.scopeDepth)
                                 throw std::runtime_error(
-                                    "cannot store pointer to shorter-lived local '" + origin->binding +
-                                    "' in '" + root->name + "'");
+                                    "cannot store pointer to shorter-lived local '" +
+                                    origin->binding + "' in '" + root->name + "'");
                             if (!it->second.borrowedFrom ||
                                 origin->scopeDepth > it->second.borrowedFrom->scopeDepth)
                                 it->second.borrowedFrom = origin;
