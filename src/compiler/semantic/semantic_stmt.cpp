@@ -211,6 +211,11 @@ namespace nexus {
                                                  "' but got '" + describeType(t) + "'");
                     const auto origin = typeMayContainPointer(t) ? pointerOrigin(r->expr.get(), env)
                                                                  : std::nullopt;
+                    if (origin && origin->scopeDepth == 0) {
+                        const auto parameter = currentFunctionParameterIndices_.find(origin->binding);
+                        if (parameter != currentFunctionParameterIndices_.end())
+                            currentFunctionReturnBorrowParams_.push_back(parameter->second);
+                    }
                     if (origin && origin->scopeDepth > 0)
                         throw std::runtime_error("cannot return a pointer to local storage '" +
                                                  origin->binding + "'");
