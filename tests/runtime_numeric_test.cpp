@@ -2,9 +2,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <limits>
+#include <thread>
 
 extern "C" int64_t nexus_to_i64(double value);
 extern "C" int64_t nexus_random_i64(int64_t minimum, int64_t maximum);
+extern "C" int64_t nexus_time_ms();
 
 namespace {
 bool expect(bool condition, const char* label) {
@@ -34,6 +36,12 @@ int main() {
     ok &= expect(nexus_to_i64(-1.0e300) == min, "large negative value saturates");
     ok &= expect(nexus_to_i64(-std::ldexp(1.0, 63)) == min, "i64 minimum boundary");
     ok &= expect(nexus_to_i64(std::ldexp(1.0, 63)) == max, "i64 upper exclusive boundary");
+
+    const auto timeBeforeSleep = nexus_time_ms();
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    const auto timeAfterSleep = nexus_time_ms();
+    ok &= expect(timeAfterSleep >= timeBeforeSleep, "monotonic time never moves backwards");
+    ok &= expect(timeAfterSleep - timeBeforeSleep >= 10, "time_ms advances during sleep");
 
     for (int i = 0; i < 2000; ++i) {
         const auto one = nexus_random_i64(7, 7);
