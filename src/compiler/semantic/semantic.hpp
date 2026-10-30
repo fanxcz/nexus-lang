@@ -1,14 +1,25 @@
 #pragma once
 #include "ast/ast.hpp"
 
+#include <cstddef>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 namespace nexus {
 
+    struct BorrowOrigin {
+        std::size_t scopeDepth = 0;
+        std::string binding;
+    };
+
     struct Symbol {
         Type type{};
         bool mut = false;
+        std::size_t scopeDepth = 0;
+        // Tracks the shortest-lived lexical storage reachable through this value.
+        // This is deliberately conservative for aggregates and is not a full borrow checker.
+        std::optional<BorrowOrigin> borrowedFrom;
     };
 
     class SemanticAnalyzer {
@@ -23,6 +34,7 @@ namespace nexus {
 
         long long discardCounter_ = 0;
         Type currentFunctionReturnType_ = Type::void_();
+        std::size_t scopeDepth_ = 0;
 
     public:
         void analyze(Program& p);
@@ -31,6 +43,9 @@ namespace nexus {
         Type expr(Expr* e, std::unordered_map<std::string, Symbol>& env);
 
         Type exprImpl(Expr* e, std::unordered_map<std::string, Symbol>& env);
+
+        std::optional<BorrowOrigin> pointerOrigin(
+            const Expr* e, const std::unordered_map<std::string, Symbol>& env) const;
 
         void block(Block& b, std::unordered_map<std::string, Symbol>& env, Type ret, bool inLoop);
 
