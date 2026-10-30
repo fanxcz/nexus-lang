@@ -28,10 +28,13 @@ argument mentioned in a returned expression may be treated as an origin even
 when a particular runtime path does not return it. External/FFI and builtin
 calls remain opaque, and their returned pointers have no inferred lifetime.
 
-The analyzer still does not track writes through already-dereferenced raw
-pointers, prove unique mutable access, or prevent use-after-free of integer
-allocation handles. Pointer-containing values crossing opaque external APIs
-still require manual review.
+The runtime now bounds `mem_read`, `mem_set`, and `mem_copy` to live
+`mem_alloc` blocks and keeps the registry locked for the duration of each
+operation. These checks protect only these managed-memory helpers; external
+pointers passed through FFI remain outside the registry and require separate
+validation. The analyzer still does not prove unique mutable access or prevent
+use-after-free through arbitrary pointer aliases. Pointer-containing values
+crossing opaque external APIs still require manual review.
 
 ## Current limitations
 
