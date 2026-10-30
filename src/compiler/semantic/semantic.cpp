@@ -133,6 +133,7 @@ namespace nexus {
         currentFunctionReturnManagedFresh_ = false;
         currentFunctionReturnManagedFreshFreed_ = false;
         currentFunctionReturnManagedUnknown_ = false;
+        analyzingDeferredCall_ = false;
         funcs_.clear();
         structs_.clear();
         enums_.clear();
