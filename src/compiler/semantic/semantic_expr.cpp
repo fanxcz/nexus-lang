@@ -156,6 +156,13 @@ namespace nexus {
                                  " in " + operation);
     }
 
+    void SemanticAnalyzer::recordManagedAllocationUse(
+        const Expr* e, const std::unordered_map<std::string, Symbol>& env) {
+        const auto managed = managedAllocationOrigin(e, env, true);
+        if (managed && managed->parameter)
+            currentFunctionUsedManagedParams_.push_back(*managed->parameter);
+    }
+
     void SemanticAnalyzer::releaseManagedAllocation(
         const Expr* e, std::unordered_map<std::string, Symbol>& env, bool deferred) {
         const auto managed = managedAllocationOrigin(e, env, true);
@@ -522,10 +529,13 @@ namespace nexus {
                     throw std::runtime_error("wrong argument count for builtin " + c->callee);
                 for (size_t i = 0; i < c->args.size(); ++i) {
                     auto actual = expr(c->args[i].get(), env);
-                    if ((c->callee == "mem_read" || c->callee == "mem_set") && i == 0)
+                    const bool memoryAddressArgument =
+                        ((c->callee == "mem_read" || c->callee == "mem_set") && i == 0) ||
+                        (c->callee == "mem_copy" && i < 2);
+                    if (!analyzingDeferredCall_ && memoryAddressArgument) {
                         checkManagedAllocationUse(c->args[i].get(), env, c->callee);
-                    else if (c->callee == "mem_copy" && i < 2)
-                        checkManagedAllocationUse(c->args[i].get(), env, c->callee);
+                        recordManagedAllocationUse(c->args[i].get(), env);
+                    }
 
                     if (!sameType(actual, bi->params[i]))
                         throw std::runtime_error("argument " + std::to_string(i + 1) +
@@ -551,11 +561,22 @@ namespace nexus {
                                              "' expects '" + describeType(f->params[i].type) +
                                              "' but got '" + describeType(actual) + "'");
             }
-            const auto freed = freedManagedParams_.find(c->callee);
-            if (!analyzingDeferredCall_ && freed != freedManagedParams_.end()) {
-                for (const auto index : freed->second) {
-                    if (index < c->args.size())
-                        releaseManagedAllocation(c->args[index].get(), env, false);
+            if (!analyzingDeferredCall_) {
+                const auto used = usedManagedParams_.find(c->callee);
+                if (used != usedManagedParams_.end()) {
+                    for (const auto index : used->second) {
+                        if (index < c->args.size()) {
+                            checkManagedAllocationUse(c->args[index].get(), env, c->callee);
+                            recordManagedAllocationUse(c->args[index].get(), env);
+                        }
+                    }
+                }
+                const auto freed = freedManagedParams_.find(c->callee);
+                if (freed != freedManagedParams_.end()) {
+                    for (const auto index : freed->second) {
+                        if (index < c->args.size())
+                            releaseManagedAllocation(c->args[index].get(), env, false);
+                    }
                 }
             }
             return f->ret;
