@@ -86,6 +86,8 @@ namespace nexus {
         SourcePos start{};
         SourcePos end{}; // Exclusive end position.
         bool valid = false;
+        // Canonical source path; empty for in-memory snippets such as the REPL.
+        std::string sourcePath;
     };
 
     struct Expr {

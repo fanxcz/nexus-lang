@@ -17,8 +17,7 @@ namespace nexus {
         } catch (const std::exception& error) {
             const std::string message = error.what();
             if (e && e->span.valid && message.rfind(" at ") == std::string::npos) {
-                throw std::runtime_error(message + " at " + std::to_string(e->span.start.line) +
-                                         ":" + std::to_string(e->span.start.column));
+                throw std::runtime_error(message + sourceLocation(e->span));
             }
             throw;
         }

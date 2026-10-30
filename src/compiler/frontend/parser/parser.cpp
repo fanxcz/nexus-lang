@@ -51,7 +51,12 @@ namespace nexus {
                     continue;
                 }
                 if (accept(TokenKind::KwExtern)) {
-                    expect(TokenKind::String);
+                    const Token abi = expect(TokenKind::String);
+                    if (abi.text != "C")
+                        throw std::runtime_error("unsupported extern ABI '" + abi.text +
+                                                 "'; only extern \"C\" is supported at " +
+                                                 std::to_string(abi.pos.line) + ":" +
+                                                 std::to_string(abi.pos.column));
                     auto declaration = parseFunction(true);
                     declaration.span = spanForTokens(declarationStart, i_);
                     p.functions.push_back(std::move(declaration));

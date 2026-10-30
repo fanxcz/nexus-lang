@@ -229,8 +229,16 @@ namespace nexus {
 
     Expr::Ptr Parser::parseUnaryImpl() {
         RecursionGuard guard(recursionDepth_);
-        if (accept(TokenKind::Minus))
+        if (accept(TokenKind::Minus)) {
+            // The positive magnitude of INT64_MIN is one larger than INT64_MAX,
+            // so recognize it before parsePrimary() attempts std::stoll().
+            if (cur().kind == TokenKind::Integer &&
+                removeNumericSeparators(cur().text) == "9223372036854775808") {
+                ++i_;
+                return std::make_unique<IntExpr>(std::numeric_limits<long long>::min());
+            }
             return std::make_unique<UnaryExpr>(TokenKind::Minus, parseUnary());
+        }
         if (accept(TokenKind::Bang))
             return std::make_unique<UnaryExpr>(TokenKind::Bang, parseUnary());
         if (accept(TokenKind::Ampersand))

@@ -132,6 +132,16 @@ int main() {
         }
     }
 
+    for (const std::string source : {
+             "fn main(){ let value = -9223372036854775808 }",
+             "fn main(){ let value = -9_223_372_036_854_775_808 }"}) {
+        try {
+            (void)nexus::Parser(nexus::Lexer(source).tokenize()).parseProgram();
+        } catch (const std::exception& error) {
+            std::cerr << "valid INT64_MIN literal was rejected: " << error.what() << "\\n";
+            return 19;
+        }
+    }
     if (!rejects("fn main(){ print(9223372036854775808) }")) {
         std::cerr << "out-of-range integer literal was accepted\n";
         return 1;

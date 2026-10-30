@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 namespace nexus {
@@ -10,7 +11,8 @@ namespace nexus {
     class Parser {
 
     public:
-        explicit Parser(std::vector<Token> t) : tokens_(std::move(t)) {}
+        explicit Parser(std::vector<Token> t, std::string sourcePath = {})
+            : tokens_(std::move(t)), sourcePath_(std::move(sourcePath)) {}
         Program parseProgram();
 
     private:
@@ -35,6 +37,7 @@ namespace nexus {
         };
 
         std::vector<Token> tokens_;
+        std::string sourcePath_;
         std::vector<std::string> recoveredErrors_;
         size_t i_ = 0;
         std::size_t recursionDepth_ = 0;

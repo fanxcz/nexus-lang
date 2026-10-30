@@ -57,6 +57,7 @@ namespace nexus {
         span.start = tokens_[first].pos;
         span.end = positionAfter(tokens_[last]);
         span.valid = true;
+        span.sourcePath = sourcePath_;
         return span;
     }
     Type Parser::parseType() {

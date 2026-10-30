@@ -55,6 +55,22 @@ namespace nexus::native {
             return false;
         }
         for (const auto& f : program.functions) {
+            if (f.name != "main")
+                continue;
+            if (!f.params.empty()) {
+                reason = "main function of the builtin native v0 backend must not take parameters";
+                return false;
+            }
+            const auto resultKind = fns.at("main").ret;
+            if (resultKind != detail::Kind::Void && resultKind != detail::Kind::I64 &&
+                resultKind != detail::Kind::Bool) {
+                reason = "main function of the builtin native v0 backend must return void, i64, "
+                         "or bool";
+                return false;
+            }
+            break;
+        }
+        for (const auto& f : program.functions) {
             std::map<std::string, detail::Kind> env;
             for (std::size_t i = 0; i < f.params.size(); ++i)
                 env[f.params[i].name] = fns[f.name].params[i];

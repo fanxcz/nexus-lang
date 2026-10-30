@@ -57,8 +57,9 @@ namespace nexus {
 
             const auto src = readFile(canon);
             gDiagnosticText = src;
+            gDiagnosticSources[canon.generic_string()] = src;
 
-            auto prog = Parser(Lexer(src).tokenize()).parseProgram();
+            auto prog = Parser(Lexer(src).tokenize(), canon.generic_string()).parseProgram();
 
             Program all;
 

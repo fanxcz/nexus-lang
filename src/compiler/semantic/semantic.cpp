@@ -123,8 +123,7 @@ namespace nexus {
         const auto located = [](const std::string& message, const SourceSpan& span) {
             if (!span.valid || message.rfind(" at ") != std::string::npos)
                 return message;
-            return message + " at " + std::to_string(span.start.line) + ":" +
-                   std::to_string(span.start.column);
+            return message + sourceLocation(span);
         };
         const auto report = [&](const std::string& message, const SourceSpan& span) {
             diagnostics_.push_back(located(message, span));
@@ -173,9 +172,12 @@ namespace nexus {
             }
             funcs_[f.name] = &f;
         }
-        std::function<void(const Type&)> validateType;
+        std::function<void(const Type&, bool)> validateType;
 
-        validateType = [&](const Type& t) {
+        validateType = [&](const Type& t, bool allowVoid) {
+            if (t.kind == TypeKind::Void && !allowVoid)
+                throw std::runtime_error("'void' is only valid as a function return type");
+
             if (t.kind == TypeKind::Struct && !structs_.contains(t.name))
                 throw std::runtime_error("unknown type: " + t.name);
 
@@ -183,16 +185,17 @@ namespace nexus {
                 throw std::runtime_error("unknown enum: " + t.name);
 
             if (t.kind == TypeKind::Pointer && t.pointee) {
-                validateType(*t.pointee);
+                validateType(*t.pointee, false);
             }
             if (t.kind == TypeKind::Array && t.element) {
-                validateType(*t.element);
+                validateType(*t.element, false);
             }
         };
 
-        const auto validateTypeAt = [&](const Type& type, const SourceSpan& span) {
+        const auto validateTypeAt = [&](const Type& type, const SourceSpan& span,
+                                        bool allowVoid) {
             try {
-                validateType(type);
+                validateType(type, allowVoid);
             } catch (const std::exception& error) {
                 report(error.what(), span);
             }
@@ -203,7 +206,7 @@ namespace nexus {
                 if (!variant.payload)
                     continue;
                 normalize(*variant.payload);
-                validateTypeAt(*variant.payload, variant.span.valid ? variant.span : e.span);
+                validateTypeAt(*variant.payload, variant.span.valid ? variant.span : e.span, false);
                 const auto kind = variant.payload->kind;
                 if (kind != TypeKind::I64 && kind != TypeKind::F64 &&
                     kind != TypeKind::Bool && kind != TypeKind::String &&
@@ -218,16 +221,16 @@ namespace nexus {
         for (auto& s : p.structs)
             for (auto& field : s.fields) {
                 normalize(field.type);
-                validateTypeAt(field.type, field.span.valid ? field.span : s.span);
+                validateTypeAt(field.type, field.span.valid ? field.span : s.span, false);
             }
 
         for (auto& f : p.functions) {
             for (auto& a : f.params) {
                 normalize(a.type);
-                validateTypeAt(a.type, a.span.valid ? a.span : f.span);
+                validateTypeAt(a.type, a.span.valid ? a.span : f.span, false);
             }
             normalize(f.ret);
-            validateTypeAt(f.ret, f.span);
+            validateTypeAt(f.ret, f.span, true);
             if (f.external)
                 continue;
             std::unordered_map<std::string, Symbol> env;
@@ -244,8 +247,7 @@ namespace nexus {
                 if (f.ret.kind != TypeKind::Void && !blockAlwaysReturns(*f.body)) {
                     std::string message = "function may exit without returning a value: " + f.name;
                     if (f.span.valid)
-                        message += " at " + std::to_string(f.span.start.line) + ":" +
-                                   std::to_string(f.span.start.column);
+                        message += sourceLocation(f.span);
                     diagnostics_.push_back(std::move(message));
                 }
             }

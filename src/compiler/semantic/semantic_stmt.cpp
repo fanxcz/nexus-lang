@@ -29,6 +29,8 @@ namespace nexus {
                     if (env.contains(l->name))
                         throw std::runtime_error("duplicate variable: " + l->name);
                     auto t = expr(l->init.get(), env);
+                    if (containsVoidType(t))
+                        throw std::runtime_error("cannot bind a value of type 'void'");
                     normalize(l->type);
                     if (l->type.kind != TypeKind::Unknown && !sameType(l->type, t))
                         throw std::runtime_error("cannot initialize '" + l->name + "': expected '" +
@@ -62,7 +64,7 @@ namespace nexus {
                     auto t = expr(ma->object.get(), env);
                     if (t.kind != TypeKind::Struct)
                         throw std::runtime_error("member assignment requires struct");
-                    if (auto* ov = dynamic_cast<VarExpr*>(ma->object.get())) {
+                    if (const auto* ov = lvalueRootVariable(ma->object.get())) {
                         auto it = env.find(ov->name);
                         if (it != env.end() && !it->second.mut)
                             throw std::runtime_error(
@@ -81,7 +83,7 @@ namespace nexus {
                                                  "' but got '" + describeType(actual) + "'");
                 } else if (auto* ia = dynamic_cast<IndexAssignStmt*>(s.get())) {
                     auto ot = expr(ia->object.get(), env);
-                    if (auto* ov = dynamic_cast<VarExpr*>(ia->object.get())) {
+                    if (const auto* ov = lvalueRootVariable(ia->object.get())) {
                         auto it = env.find(ov->name);
                         if (it != env.end() && !it->second.mut)
                             throw std::runtime_error(
@@ -322,8 +324,7 @@ namespace nexus {
             } catch (const std::exception& error) {
                 std::string diagnostic = error.what();
                 if (diagnostic.rfind(" at ") == std::string::npos && s && s->span.valid)
-                    diagnostic += " at " + std::to_string(s->span.start.line) + ":" +
-                                  std::to_string(s->span.start.column);
+                    diagnostic += sourceLocation(s->span);
                 diagnostics_.push_back(std::move(diagnostic));
             }
         }

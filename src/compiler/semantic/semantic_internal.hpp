@@ -12,6 +12,27 @@ namespace nexus {
     // Shared semantic helpers. They are inline so the analyzer can be split
     // across several translation units without a single definition file.
 
+    inline std::string sourceLocation(const SourceSpan& span) {
+        if (!span.valid)
+            return {};
+        std::string location = " at ";
+        if (!span.sourcePath.empty())
+            location += span.sourcePath + ":";
+        location += std::to_string(span.start.line) + ":" +
+                    std::to_string(span.start.column);
+        return location;
+    }
+
+    inline bool containsVoidType(const Type& type) {
+        if (type.kind == TypeKind::Void)
+            return true;
+        if (type.kind == TypeKind::Pointer)
+            return type.pointee && containsVoidType(*type.pointee);
+        if (type.kind == TypeKind::Array)
+            return type.element && containsVoidType(*type.element);
+        return false;
+    }
+
     // Returns the root variable that owns an assignable storage location.
     // Taking an address yields a mutable pointer in the current type system, so
     // the root binding must itself be mutable. The type system does not yet have

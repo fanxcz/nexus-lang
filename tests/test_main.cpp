@@ -9,9 +9,8 @@
 #include <stdexcept>
 #include <string>
 
-static nexus::Program parse(const char* source) {
-
-    return nexus::Parser(nexus::Lexer(source).tokenize()).parseProgram();
+static nexus::Program parse(const char* source, const std::string& sourcePath = {}) {
+    return nexus::Parser(nexus::Lexer(source).tokenize(), sourcePath).parseProgram();
 }
 
 int main() {
@@ -64,7 +63,85 @@ int main() {
         }
         {
 
-            auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }");
+                    {
+            const char* invalidNestedAssignments[] = {
+                "struct Inner { value: i64 } struct Outer { inner: Inner } "
+                "fn main(){ let outer = Outer{inner: Inner{value: 10}}; outer.inner.value = 11 }",
+                "struct Data { values: [i64; 3] } "
+                "fn main(){ let data = Data{values: [1, 2, 3]}; data.values[0] = 99 }"
+            };
+            for (const auto* source : invalidNestedAssignments) {
+                bool rejected = false;
+                try {
+                    auto p = parse(source);
+                    nexus::SemanticAnalyzer().analyze(p);
+                } catch (const std::exception& error) {
+                    rejected = std::string(error.what()).find("immutable variable") !=
+                               std::string::npos;
+                }
+                if (!rejected)
+                    return 55;
+            }
+            auto mutableNested = parse(
+                "struct Inner { value: i64 } struct Outer { inner: Inner } "
+                "fn main(){ let mut outer = Outer{inner: Inner{value: 10}}; "
+                "outer.inner.value = 11 }");
+            nexus::SemanticAnalyzer().analyze(mutableNested);
+        }
+        {
+            const char* invalidVoidSources[] = {
+                "fn main(){ let result = print(\"not a value\") }",
+                "fn consume(value: void) {} fn main() {}",
+                "struct Bad { value: void } fn main() {}",
+                "fn bad() -> *void {} fn main() {}",
+                "fn bad() -> [void; 1] {} fn main() {}",
+                "enum Bad { Empty(void) } fn main() {}",
+            };
+            for (const auto* source : invalidVoidSources) {
+                bool rejected = false;
+                try {
+                    auto p = parse(source);
+                    nexus::SemanticAnalyzer().analyze(p);
+                } catch (const std::exception& error) {
+                    rejected = std::string(error.what()).find("void") != std::string::npos;
+                }
+                if (!rejected) {
+                    std::cerr << "invalid void value/type was accepted: " << source << "\\n";
+                    return 56;
+                }
+            }
+            auto validVoid = parse("fn helper() -> void { return } fn main(){ helper() }");
+            nexus::SemanticAnalyzer().analyze(validVoid);
+        }
+        {
+            bool sourcePathPreserved = false;
+            try {
+                auto p = parse("fn main(){ let result: i64 = \"bad\" }",
+                               "/virtual/modules/library.nx");
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& error) {
+                sourcePathPreserved =
+                    std::string(error.what()).find("/virtual/modules/library.nx:") !=
+                    std::string::npos;
+            }
+            if (!sourcePathPreserved)
+                return 57;
+        }
+        {
+            bool rejectedAbi = false;
+            try {
+                auto p = parse("extern \"stdcall\" fn puts(value: string); fn main() {}");
+                (void)p;
+            } catch (const std::exception& error) {
+                rejectedAbi = std::string(error.what()).find("unsupported extern ABI") !=
+                              std::string::npos;
+            }
+            if (!rejectedAbi)
+                return 58;
+            auto cAbi = parse("extern \"C\" fn puts(value: string); fn main() {}");
+            nexus::SemanticAnalyzer().analyze(cAbi);
+        }
+auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }");
 
             nexus::SemanticAnalyzer().analyze(p);
         }
@@ -527,7 +604,23 @@ int main() {
                 return 9;
         }
         {
-            // Builtin native backend: non-subset programs rejected precisely.
+                    {
+            // The native entry stub calls main without arguments and forwards RAX/EAX
+            // to the operating-system exit API, so validate its signature.
+            auto withArguments = parse("fn main(value: i64) {}");
+            nexus::SemanticAnalyzer().analyze(withArguments);
+            std::string entryReason;
+            if (nexus::native::supports(withArguments, entryReason) ||
+                entryReason.find("must not take parameters") == std::string::npos)
+                return 59;
+
+            auto stringResult = parse("fn main() -> string { return \"bad\" }");
+            nexus::SemanticAnalyzer().analyze(stringResult);
+            if (nexus::native::supports(stringResult, entryReason) ||
+                entryReason.find("must return") == std::string::npos)
+                return 60;
+        }
+// Builtin native backend: non-subset programs rejected precisely.
             auto p = parse("struct P { x: i64 } fn main(){ let v = P { x: 1 }; print(v.x) }");
             nexus::SemanticAnalyzer().analyze(p);
             std::string reason;

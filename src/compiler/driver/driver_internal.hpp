@@ -103,6 +103,8 @@ namespace nexus {
         inline fs::path gExecutable;
         inline fs::path gDiagnosticSource;
         inline std::string gDiagnosticText;
+        // Imported modules are analyzed together, so retain individual source text.
+        inline std::unordered_map<std::string, std::string> gDiagnosticSources;
         inline constexpr std::size_t kReplHistoryLimit = 500;
 
         // One parsed `key = value` entry of a project or package manifest.
