@@ -47,6 +47,9 @@ namespace nexus {
         std::optional<BorrowOrigin> pointerOrigin(
             const Expr* e, const std::unordered_map<std::string, Symbol>& env) const;
 
+        std::optional<Type> provenanceType(
+            const Expr* e, const std::unordered_map<std::string, Symbol>& env) const;
+
         bool typeMayContainPointer(const Type& type) const;
 
         void block(Block& b, std::unordered_map<std::string, Symbol>& env, Type ret, bool inLoop);
