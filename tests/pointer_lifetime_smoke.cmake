@@ -122,6 +122,61 @@ if(aggregate_rc EQUAL 0 OR
   message(FATAL_ERROR "Returning an aggregate with a local pointer was not rejected:\n${aggregate_combined}")
 endif()
 
+# Reading a pointer back out of an aggregate must retain its origin.
+set(FIELD_SOURCE "${TEST_DIR}/field-escape.nx")
+file(WRITE "${FIELD_SOURCE}"
+  "struct PointerBox { value: *i64 }\\n"
+  "fn leak_field() -> *i64 {\\n"
+  "  let mut local = 8\\n"
+  "  let pointer_box = PointerBox { value: &local }\\n"
+  "  return pointer_box.value\\n"
+  "}\\n"
+  "fn main() {}\\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${FIELD_SOURCE}"
+  RESULT_VARIABLE field_rc OUTPUT_VARIABLE field_out ERROR_VARIABLE field_err)
+set(field_combined "${field_out}\\n${field_err}")
+if(field_rc EQUAL 0 OR
+   NOT field_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "A pointer escape through a struct field was not rejected:\\n${field_combined}")
+endif()
+
+# Array element extraction must preserve pointer provenance as well.
+set(ARRAY_SOURCE "${TEST_DIR}/array-escape.nx")
+file(WRITE "${ARRAY_SOURCE}"
+  "fn leak_array() -> *i64 {\\n"
+  "  let mut local = 9\\n"
+  "  let pointers = [&local]\\n"
+  "  return pointers[0]\\n"
+  "}\\n"
+  "fn main() {}\\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${ARRAY_SOURCE}"
+  RESULT_VARIABLE array_rc OUTPUT_VARIABLE array_out ERROR_VARIABLE array_err)
+set(array_combined "${array_out}\\n${array_err}")
+if(array_rc EQUAL 0 OR
+   NOT array_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "A pointer escape through an array element was not rejected:\\n${array_combined}")
+endif()
+
+# Enum payload extraction must preserve pointer provenance too.
+set(ENUM_SOURCE "${TEST_DIR}/enum-escape.nx")
+file(WRITE "${ENUM_SOURCE}"
+  "enum MaybePointer { Some(*i64), None }\\n"
+  "fn leak_enum() -> MaybePointer {\\n"
+  "  let mut local = 10\\n"
+  "  return MaybePointer::Some(&local)\\n"
+  "}\\n"
+  "fn main() {}\\n")
+execute_process(
+  COMMAND "${NEXUS_BIN}" check "${ENUM_SOURCE}"
+  RESULT_VARIABLE enum_rc OUTPUT_VARIABLE enum_out ERROR_VARIABLE enum_err)
+set(enum_combined "${enum_out}\\n${enum_err}")
+if(enum_rc EQUAL 0 OR
+   NOT enum_combined MATCHES "cannot return a pointer to local storage 'local'")
+  message(FATAL_ERROR "A pointer escape through an enum payload was not rejected:\\n${enum_combined}")
+endif()
+
 set(MEMBER_SOURCE "${TEST_DIR}/member-escape.nx")
 file(WRITE "${MEMBER_SOURCE}"
   "struct PointerBox { value: *i64 }\n"
