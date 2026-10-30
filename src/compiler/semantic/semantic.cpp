@@ -123,6 +123,7 @@ namespace nexus {
         currentFunctionReturnBorrowParams_.clear();
         returnedManagedParams_.clear();
         returnedManagedFresh_.clear();
+        returnedManagedFreshFreed_.clear();
         returnedManagedUnknown_.clear();
         freedManagedParams_.clear();
         currentFunctionReturnManagedParams_.clear();
@@ -310,6 +311,7 @@ namespace nexus {
                 currentFunctionReturnManagedParams_.clear();
                 currentFunctionFreedManagedParams_.clear();
                 currentFunctionReturnManagedFresh_ = false;
+                currentFunctionReturnManagedFreshFreed_ = false;
                 currentFunctionReturnManagedUnknown_ = false;
                 for (std::size_t index = 0; index < f.params.size(); ++index) {
                     const auto& parameter = f.params[index];
@@ -346,6 +348,11 @@ namespace nexus {
                     returnedManagedFresh_[f.name] = true;
                     changed = true;
                 }
+                if (currentFunctionReturnManagedFreshFreed_ &&
+                    !returnedManagedFreshFreed_[f.name]) {
+                    returnedManagedFreshFreed_[f.name] = true;
+                    changed = true;
+                }
             }
             if (!changed)
                 break;
@@ -366,6 +373,7 @@ namespace nexus {
                 currentFunctionReturnManagedParams_.clear();
                 currentFunctionFreedManagedParams_.clear();
                 currentFunctionReturnManagedFresh_ = false;
+                currentFunctionReturnManagedFreshFreed_ = false;
                 currentFunctionReturnManagedUnknown_ = false;
                 for (std::size_t index = 0; index < f.params.size(); ++index) {
                     const auto& parameter = f.params[index];
@@ -407,6 +415,7 @@ namespace nexus {
             currentFunctionReturnManagedParams_.clear();
             currentFunctionFreedManagedParams_.clear();
             currentFunctionReturnManagedFresh_ = false;
+            currentFunctionReturnManagedFreshFreed_ = false;
             currentFunctionReturnManagedUnknown_ = false;
             for (std::size_t index = 0; index < f.params.size(); ++index) {
                 auto& a = f.params[index];
