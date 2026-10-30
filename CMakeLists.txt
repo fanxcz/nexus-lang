@@ -380,6 +380,11 @@ if (NEXUS_BUILD_TESTS)
           -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
           -DTEST_NATIVE_BACKEND=${NEXUS_NATIVE_DIVISION_TEST}
           -P ${CMAKE_SOURCE_DIR}/tests/division_zero_smoke.cmake)
+  add_test(NAME nexus_pointer_lifetime_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
+          -P ${CMAKE_SOURCE_DIR}/tests/pointer_lifetime_smoke.cmake)
   add_test(NAME nexus_doctor_json_smoke
       COMMAND ${CMAKE_COMMAND}
           -DNEXUS_BIN=$<TARGET_FILE:nexus>
