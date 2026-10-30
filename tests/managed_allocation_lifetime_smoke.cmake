@@ -143,6 +143,29 @@ fn main() {
 }
 ]=] "fail" "use after mem_free of managed allocation 'stale' in mem_read")
 
+check_source(memory_read_through_helper_after_free [=[
+fn read_inner(pointer: i64) {
+    let value = mem_read(pointer)
+    print(value)
+}
+fn read_wrapper(pointer: i64) { read_inner(pointer) }
+fn main() {
+    let address = mem_alloc(8)
+    mem_free(address)
+    read_wrapper(address)
+}
+]=] "fail" "use after mem_free of managed allocation 'address' in read_wrapper")
+
+check_source(memory_copy_source_through_helper_after_free [=[
+fn copy_bytes(destination: i64, source: i64) { mem_copy(destination, source, 8) }
+fn main() {
+    let destination = mem_alloc(8)
+    let source = mem_alloc(8)
+    mem_free(source)
+    copy_bytes(destination, source)
+}
+]=] "fail" "use after mem_free of managed allocation 'source' in copy_bytes")
+
 check_source(wrapper_double_free [=[
 fn release(pointer: i64) { mem_free(pointer) }
 fn main() {
