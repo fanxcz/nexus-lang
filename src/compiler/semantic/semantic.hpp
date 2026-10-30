@@ -30,6 +30,11 @@ namespace nexus {
 
         std::unordered_map<std::string, EnumDecl*> enums_;
 
+        // Parameter indices whose pointer-bearing values may flow into a function result.
+        std::unordered_map<std::string, std::vector<std::size_t>> returnedBorrowParams_;
+        std::unordered_map<std::string, std::size_t> currentFunctionParameterIndices_;
+        std::vector<std::size_t> currentFunctionReturnBorrowParams_;
+
         std::vector<std::string> diagnostics_;
 
         long long discardCounter_ = 0;
