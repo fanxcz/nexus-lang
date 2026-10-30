@@ -14,10 +14,19 @@ fn main() {
         print("Allocation failed")
         return
     }
+
+    defer mem_free(buffer)
     mem_set(buffer, 0, 32)
-    mem_free(buffer)
+    print("buffer initialized")
 }
 ```
+
+Register `defer mem_free(handle)` immediately after a successful allocation.
+The deferred call captures the handle at registration time and releases it when
+the lexical block exits, including on `return`, `break` or `continue`. This
+avoids missing an explicit free on an ordinary control-flow exit. Deferred
+cleanup currently requires the LLVM backend; it does not run after process
+abort or other abrupt termination.
 
 The pointer-like values are represented as integers at the language/runtime boundary. The runtime validates every positive-length `mem_read`, `mem_set` and `mem_copy` range against a live allocation returned by `mem_alloc`; a range must fit entirely inside one allocation. Invalid addresses, negative lengths and out-of-bounds ranges terminate with a runtime diagnostic. Zero-length writes/copies are no-ops, and `mem_read(0)` preserves the null-to-zero convention. Prefer ordinary language values unless low-level memory access is specifically required.
 
