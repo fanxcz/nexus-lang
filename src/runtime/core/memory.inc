@@ -116,10 +116,12 @@
         }
         return false;
     }
+#ifdef NEXUS_RUNTIME_TESTING
     static bool nx_managed_range_is_valid(int64_t address, int64_t bytes) {
         std::lock_guard<std::mutex> lock(gNxManagedMutex);
         return nx_managed_range_is_valid_locked(address, bytes);
     }
+#endif
     static void nx_managed_free(void* pointer) {
         if (!nx_managed_try_free(pointer)) {
             std::fputs("Nexus runtime error: invalid or already freed allocation\n", stderr);
