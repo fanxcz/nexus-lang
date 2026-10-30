@@ -55,9 +55,12 @@ void nexus_bounds_check(int64_t index, int64_t size) {
     }
 }
 int64_t nexus_division_check(int64_t dividend, int64_t divisor) {
-    (void)dividend;
     if (divisor == 0) {
         fprintf(stderr, "NEXUS runtime error: division by zero\n");
+        exit(1);
+    }
+    if (dividend == INT64_MIN && divisor == -1) {
+        fprintf(stderr, "NEXUS runtime error: signed integer division overflow\n");
         exit(1);
     }
     return divisor;
