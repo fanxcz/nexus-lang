@@ -11,7 +11,7 @@ The collector runs per owning thread. It scans that thread's active stack and a 
 - Treat runtime objects as main-thread-owned unless a specific API documents thread safety.
 - Use `defer` for calls returning `void`; the LLVM backend executes deferred calls in LIFO order on normal scope exit, `return`, `break`, and `continue`. Its current built-in x86-64 backend rejects `defer`, and process aborts do not run language cleanup.
 
-## Initial lexical-region checks
+## Lexical-region and function-result checks
 
 The semantic analyzer tracks the lexical origin of direct pointer borrows and
 simple aliases. It rejects two known escape patterns: returning a pointer to
@@ -20,12 +20,18 @@ whose scope outlives that block. Pointer provenance is also carried conservative
 through array, struct and enum initializers and through direct field/element
 updates.
 
-This is an incremental check, not a complete borrow checker. In particular, it
-does not yet infer lifetime relationships for pointers returned by function or
-FFI calls, track writes through already-dereferenced raw pointers, prove unique
-mutable access, or prevent use-after-free of integer allocation handles.
-Pointer-containing values crossing opaque external APIs still require manual
-review.
+This is an incremental check, not a complete borrow checker. For NEXUS
+functions, it conservatively follows pointer-bearing return values back to
+pointer-bearing parameters, including aliases, nested helper calls and returned
+aggregates. The summary is intentionally an over-approximation: a pointer
+argument mentioned in a returned expression may be treated as an origin even
+when a particular runtime path does not return it. External/FFI and builtin
+calls remain opaque, and their returned pointers have no inferred lifetime.
+
+The analyzer still does not track writes through already-dereferenced raw
+pointers, prove unique mutable access, or prevent use-after-free of integer
+allocation handles. Pointer-containing values crossing opaque external APIs
+still require manual review.
 
 ## Current limitations
 
