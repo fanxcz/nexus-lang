@@ -3,6 +3,7 @@
 #include "builtins.hpp"
 #include "semantic/semantic_internal.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
