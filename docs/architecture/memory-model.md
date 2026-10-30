@@ -6,7 +6,7 @@ The collector runs per owning thread. It scans that thread's active stack and a 
 
 ## Practical guidance
 
-- Keep ownership of raw allocations explicit and call `mem_free` when finished; never use a handle after it has been freed.
+- Keep ownership of raw allocations explicit and call `mem_free` when finished; never use a handle after it has been freed. The managed C++ runtime rejects unknown and repeated frees, but it cannot make later dereferences of a stale integer handle safe.
 - Avoid using pointers after the object or backing allocation has been released.
 - Treat runtime objects as main-thread-owned unless a specific API documents thread safety.
 - Use `defer` for calls returning `void`; the LLVM backend executes deferred calls in LIFO order on normal scope exit, `return`, `break`, and `continue`. Its current built-in x86-64 backend rejects `defer`, and process aborts do not run language cleanup.
