@@ -126,8 +126,10 @@ namespace nexus {
         returnedManagedFreshFreed_.clear();
         returnedManagedUnknown_.clear();
         freedManagedParams_.clear();
+        usedManagedParams_.clear();
         currentFunctionReturnManagedParams_.clear();
         currentFunctionFreedManagedParams_.clear();
+        currentFunctionUsedManagedParams_.clear();
         currentFunctionReturnManagedFresh_ = false;
         currentFunctionReturnManagedFreshFreed_ = false;
         currentFunctionReturnManagedUnknown_ = false;
@@ -260,6 +262,7 @@ namespace nexus {
                 std::unordered_map<std::string, Symbol> env;
                 currentFunctionParameterIndices_.clear();
                 currentFunctionReturnBorrowParams_.clear();
+                currentFunctionUsedManagedParams_.clear();
                 for (std::size_t index = 0; index < f.params.size(); ++index) {
                     const auto& parameter = f.params[index];
                     currentFunctionParameterIndices_[parameter.name] = index;
@@ -311,6 +314,7 @@ namespace nexus {
                 currentFunctionParameterIndices_.clear();
                 currentFunctionReturnManagedParams_.clear();
                 currentFunctionFreedManagedParams_.clear();
+                currentFunctionUsedManagedParams_.clear();
                 currentFunctionReturnManagedFresh_ = false;
                 currentFunctionReturnManagedFreshFreed_ = false;
                 currentFunctionReturnManagedUnknown_ = false;
@@ -345,6 +349,7 @@ namespace nexus {
                 appendUnique(returnedManagedParams_[f.name],
                              currentFunctionReturnManagedParams_);
                 appendUnique(freedManagedParams_[f.name], currentFunctionFreedManagedParams_);
+                appendUnique(usedManagedParams_[f.name], currentFunctionUsedManagedParams_);
                 if (currentFunctionReturnManagedFresh_ && !returnedManagedFresh_[f.name]) {
                     returnedManagedFresh_[f.name] = true;
                     changed = true;
@@ -373,6 +378,7 @@ namespace nexus {
                 currentFunctionParameterIndices_.clear();
                 currentFunctionReturnManagedParams_.clear();
                 currentFunctionFreedManagedParams_.clear();
+                currentFunctionUsedManagedParams_.clear();
                 currentFunctionReturnManagedFresh_ = false;
                 currentFunctionReturnManagedFreshFreed_ = false;
                 currentFunctionReturnManagedUnknown_ = false;
@@ -415,6 +421,7 @@ namespace nexus {
             currentFunctionReturnBorrowParams_.clear();
             currentFunctionReturnManagedParams_.clear();
             currentFunctionFreedManagedParams_.clear();
+            currentFunctionUsedManagedParams_.clear();
             currentFunctionReturnManagedFresh_ = false;
             currentFunctionReturnManagedFreshFreed_ = false;
             currentFunctionReturnManagedUnknown_ = false;
