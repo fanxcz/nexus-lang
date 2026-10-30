@@ -1,4 +1,4 @@
-# Check direct mem_alloc handles and local aliases for obvious use-after-free.
+# Check managed allocation lifetime through direct aliases and user-function wrappers.
 if(NOT DEFINED NEXUS_BIN OR NOT DEFINED TEST_BINARY_DIR)
   message(FATAL_ERROR "NEXUS_BIN and TEST_BINARY_DIR are required")
 endif()
