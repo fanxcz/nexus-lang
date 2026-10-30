@@ -52,18 +52,30 @@ namespace nexus {
                     columnSeparator == std::string_view::npos || columnSeparator == 0
                         ? std::string_view::npos
                         : location.rfind(':', columnSeparator - 1);
+                std::size_t columnEnd = columnSeparator == std::string_view::npos
+                                            ? std::string_view::npos
+                                            : columnSeparator + 1;
+                while (columnEnd != std::string_view::npos && columnEnd < location.size() &&
+                       location[columnEnd] >= '0' && location[columnEnd] <= '9') {
+                    ++columnEnd;
+                }
+                const auto columnText =
+                    columnSeparator == std::string_view::npos
+                        ? std::string_view{}
+                        : location.substr(columnSeparator + 1,
+                                          columnEnd - columnSeparator - 1);
                 bool parsed = false;
 
                 if (lineSeparator != std::string_view::npos &&
                     parseNumber(location.substr(lineSeparator + 1,
                                                 columnSeparator - lineSeparator - 1), line) &&
-                    parseNumber(location.substr(columnSeparator + 1), column)) {
+                    parseNumber(columnText, column)) {
                     sourcePath.assign(location.substr(0, lineSeparator));
                     parsed = !sourcePath.empty();
                 } else if (columnSeparator != std::string_view::npos &&
                            location.find(':') == columnSeparator &&
                            parseNumber(location.substr(0, columnSeparator), line) &&
-                           parseNumber(location.substr(columnSeparator + 1), column) &&
+                           parseNumber(columnText, column) &&
                            !gDiagnosticSource.empty()) {
                     sourcePath = gDiagnosticSource.generic_string();
                     parsed = true;
