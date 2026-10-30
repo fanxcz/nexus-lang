@@ -13,6 +13,11 @@ namespace nexus {
                                  std::unordered_map<std::string, Symbol>& env,
                                  Type ret,
                                  bool inLoop) {
+        struct ScopeDepthGuard {
+            std::size_t& depth;
+            explicit ScopeDepthGuard(std::size_t& value) : depth(value) { ++depth; }
+            ~ScopeDepthGuard() { --depth; }
+        } scopeDepthGuard(scopeDepth_);
 
         for (auto& s : b.statements) {
             try {
@@ -37,7 +42,7 @@ namespace nexus {
                                                  describeType(l->type) + "' but got '" +
                                                  describeType(t) + "'");
                     l->type = t;
-                    env[l->name] = {t, l->mut};
+                    env[l->name] = {t, l->mut, scopeDepth_, pointerOrigin(l->init.get(), env)};
                 } else if (auto* a = dynamic_cast<AssignStmt*>(s.get())) {
                     auto it = env.find(a->name);
                     if (it == env.end())
@@ -49,6 +54,11 @@ namespace nexus {
                         throw std::runtime_error("cannot assign to '" + a->name + "': expected '" +
                                                  describeType(it->second.type) + "' but got '" +
                                                  describeType(actual) + "'");
+                    const auto origin = pointerOrigin(a->value.get(), env);
+                    if (origin && origin->scopeDepth > it->second.scopeDepth)
+                        throw std::runtime_error("cannot store pointer to shorter-lived local '" +
+                                                 origin->binding + "' in '" + a->name + "'");
+                    it->second.borrowedFrom = origin;
                 } else if (auto* da = dynamic_cast<DerefAssignStmt*>(s.get())) {
                     const auto pointerType = expr(da->target.get(), env);
                     if (pointerType.kind != TypeKind::Pointer || !pointerType.pointee)
@@ -81,6 +91,18 @@ namespace nexus {
                         throw std::runtime_error("cannot assign field '" + ma->member +
                                                  "': expected '" + describeType(f->type) +
                                                  "' but got '" + describeType(actual) + "'");
+                    if (const auto* root = lvalueRootVariable(ma->object.get())) {
+                        auto it = env.find(root->name);
+                        const auto origin = pointerOrigin(ma->value.get(), env);
+                        if (it != env.end() && origin) {
+                            if (origin->scopeDepth > it->second.scopeDepth)
+                                throw std::runtime_error("cannot store pointer to shorter-lived local '" +
+                                                         origin->binding + "' in '" + root->name + "'");
+                            if (!it->second.borrowedFrom ||
+                                origin->scopeDepth > it->second.borrowedFrom->scopeDepth)
+                                it->second.borrowedFrom = origin;
+                        }
+                    }
                 } else if (auto* ia = dynamic_cast<IndexAssignStmt*>(s.get())) {
                     auto ot = expr(ia->object.get(), env);
                     if (const auto* ov = lvalueRootVariable(ia->object.get())) {
@@ -102,6 +124,18 @@ namespace nexus {
                         throw std::runtime_error("array element assignment expects '" +
                                                  describeType(*ot.element) + "' but got '" +
                                                  describeType(actual) + "'");
+                    if (const auto* root = lvalueRootVariable(ia->object.get())) {
+                        auto it = env.find(root->name);
+                        const auto origin = pointerOrigin(ia->value.get(), env);
+                        if (it != env.end() && origin) {
+                            if (origin->scopeDepth > it->second.scopeDepth)
+                                throw std::runtime_error("cannot store pointer to shorter-lived local '" +
+                                                         origin->binding + "' in '" + root->name + "'");
+                            if (!it->second.borrowedFrom ||
+                                origin->scopeDepth > it->second.borrowedFrom->scopeDepth)
+                                it->second.borrowedFrom = origin;
+                        }
+                    }
                 } else if (auto* e = dynamic_cast<ExprStmt*>(s.get()))
                     expr(e->expr.get(), env);
                 else if (auto* d = dynamic_cast<DeferStmt*>(s.get())) {
@@ -115,6 +149,10 @@ namespace nexus {
                     if (!sameType(t, ret))
                         throw std::runtime_error("return expects '" + describeType(ret) +
                                                  "' but got '" + describeType(t) + "'");
+                    const auto origin = pointerOrigin(r->expr.get(), env);
+                    if (origin && origin->scopeDepth > 0)
+                        throw std::runtime_error("cannot return a pointer to local storage '" +
+                                                 origin->binding + "'");
                 } else if (auto* ifs = dynamic_cast<IfStmt*>(s.get())) {
                     {
                         auto actual = expr(ifs->cond.get(), env);
