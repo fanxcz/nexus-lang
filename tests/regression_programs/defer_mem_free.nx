@@ -1,0 +1,11 @@
+fn allocate_then_return() -> i64 {
+    let address = mem_alloc(8)
+    defer mem_free(address)
+    mem_set(address, 42, 8)
+    return address
+}
+
+fn main() {
+    let released = allocate_then_return()
+    print(mem_read(released))
+}
