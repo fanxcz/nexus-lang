@@ -9,6 +9,9 @@ void nexus_runtime_test_collect() {
 int nexus_runtime_test_try_free(void* pointer) {
     return nx_managed_try_free(pointer) ? 1 : 0;
 }
+int nexus_runtime_test_range_valid(int64_t address, int64_t bytes) {
+    return nx_managed_range_is_valid(address, bytes) ? 1 : 0;
+}
 #endif
 
 void* nexus_alloc(size_t n) {
