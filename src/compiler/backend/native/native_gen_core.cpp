@@ -38,6 +38,7 @@ namespace nexus::native {
             genInput();
             genOom();
             genDivZero();
+            genDivOverflow();
             genPrintI64();
             genPrintBool();
             genEntry();
