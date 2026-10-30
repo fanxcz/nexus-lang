@@ -105,6 +105,53 @@ fn main() {
 }
 ]=] "fail" "use after mem_free of managed allocation 'old_alias' in mem_read")
 
+check_source(function_wrapper_chain [=[
+fn make_handle() -> i64 { return allocate_inner() }
+fn allocate_inner() -> i64 { return mem_alloc(8) }
+fn free_handle(pointer: i64) { release_inner(pointer) }
+fn release_inner(pointer: i64) { mem_free(pointer) }
+fn pass_handle(pointer: i64) -> i64 { return identity_inner(pointer) }
+fn identity_inner(pointer: i64) -> i64 { return pointer }
+fn main() {
+    let address = make_handle()
+    let alias = pass_handle(address)
+    free_handle(alias)
+    print(mem_read(address))
+}
+]=] "fail" "use after mem_free of managed allocation 'address' in mem_read")
+
+check_source(returned_handle_freed_by_wrapper [=[
+fn free_and_return(pointer: i64) -> i64 {
+    mem_free(pointer)
+    return pointer
+}
+fn main() {
+    let stale = free_and_return(mem_alloc(8))
+    print(mem_read(stale))
+}
+]=] "fail" "use after mem_free of managed allocation 'stale' in mem_read")
+
+check_source(wrapper_double_free [=[
+fn release(pointer: i64) { mem_free(pointer) }
+fn main() {
+    let address = mem_alloc(8)
+    release(address)
+    mem_free(address)
+}
+]=] "fail" "double free of managed allocation 'address'")
+
+check_source(mixed_return_is_not_assumed_owned [=[
+fn maybe_handle(flag: bool, pointer: i64) -> i64 {
+    if flag { return pointer } else { return 7 }
+}
+fn main() {
+    let address = mem_alloc(8)
+    let maybe = maybe_handle(true, address)
+    mem_free(maybe)
+    print(mem_read(address))
+}
+]=] "pass" "")
+
 # Integers not derived from a local mem_alloc remain outside this narrow analysis.
 check_source(untracked_integer [=[
 fn main() {
