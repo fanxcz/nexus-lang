@@ -40,7 +40,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_fetch_installer_smoke` | The installer downloader rejects HTML error pages and checksum mismatches and accepts a verified PE image |
 | `nexus_paint_smoke` | Paint template compile/run smoke checks |
 | `nexus_defer_try_propagation_smoke` | Verifies `?` error returns execute all deferred cleanups in reverse order |
-| `nexus_managed_allocation_lifetime_smoke` | Checks managed-handle aliases, return/free wrapper chains, double frees, branch merges and conservative unknown returns |
+| `nexus_managed_allocation_lifetime_smoke` | Checks aliases, returned/freed handles, memory use/free effects through helper chains, double frees, branch merges and conservative unknown returns |
 | `nexus_diagnostics_smoke` | Error/diagnostic formatting |
 | `nexus_lsp_smoke` | Actual LSP initialize, document-change, completion, definition, formatting and shutdown messages |
 | `nexus_frontend_fuzz_smoke` | Runs 5,000 deterministic generated inputs through the lexer and parser to catch crashes and hangs; malformed input is an expected outcome |
