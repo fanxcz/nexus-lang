@@ -1,7 +1,7 @@
 static void nexus_mem_range_error(const char* operation, int64_t address, int64_t bytes) {
     std::fprintf(stderr,
                  "Nexus runtime error: %s range is outside a live mem_alloc block "
-                 "(address=%lld, bytes=%lld)\\n",
+                 "(address=%lld, bytes=%lld)\n",
                  operation,
                  static_cast<long long>(address),
                  static_cast<long long>(bytes));
