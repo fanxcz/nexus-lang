@@ -326,16 +326,20 @@ types, so assigning an array copies its elements.
 ### 6.5 Pointer types
 
 A pointer stores the address of a value. Take an address with `&` and read the
-pointee with `*`:
+pointee with `*`. The current type system requires the addressed binding to be
+mutable:
 
 ```nx
-let value = 7
+let mut value = 7
 let pointer = &value
 print(*pointer)
 ```
 
 The type of `pointer` is `*i64`. Address-of works for variables, struct fields,
-and array elements. A pointer type is written with `*` before the element type:
+and array elements. A pointer type is written with `*` before the element type.
+The semantic analyzer tracks the lexical origin of direct pointer bindings and
+aliases. It rejects returning a pointer to local storage and assigning a pointer
+from a shorter-lived nested block into a longer-lived variable.
 
 ```nx
 let pointer: *i64 = &value
