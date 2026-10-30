@@ -38,12 +38,12 @@ The semantic analyzer also performs a narrow managed-allocation lifetime check.
 It tracks a direct `mem_alloc` result through local aliases and known user
 functions. Fixed-point summaries follow a single managed `i64` return origin
 through identity/forwarding wrappers, identify functions that return a fresh
-allocation, and propagate direct `mem_free` effects on arguments through
-wrapper chains, including the case where a function returns a fresh
+allocation, propagate direct `mem_free` effects, and record which parameters
+are read or written by `mem_read`, `mem_set`, and `mem_copy`. These effects
+flow through helper chains, including the case where a function returns a fresh
 handle that it already freed internally. Known aliases are marked after
 release, double frees are diagnosed, and freed state is merged conservatively
-across branches. Direct `mem_read`, `mem_set`, and `mem_copy` arguments are
-checked after their expressions are analyzed.
+across branches. Uses are checked before release effects at each call boundary.
 
 This remains a deliberately small analysis, not a general pointer/ownership
 system. Mixed-origin return paths, aggregate handles, pointer arithmetic,
