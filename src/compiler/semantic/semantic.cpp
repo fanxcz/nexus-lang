@@ -256,7 +256,7 @@ namespace nexus {
                                             ? std::optional<BorrowOrigin>(
                                                   BorrowOrigin{0, parameter.name})
                                             : std::nullopt;
-                    env[parameter.name] = {parameter.type, true, 1, origin};
+                    env[parameter.name] = {parameter.type, true, 1, origin, nullptr, false};
                 }
 
                 auto savedDiagnostics = std::move(diagnostics_);
@@ -306,7 +306,7 @@ namespace nexus {
                                         ? std::optional<BorrowOrigin>(
                                               BorrowOrigin{0, a.name})
                                         : std::nullopt;
-                env[a.name] = {a.type, true, 1, origin};
+                env[a.name] = {a.type, true, 1, origin, nullptr, false};
             }
             if (f.body) {
                 currentFunctionReturnType_ = f.ret;
