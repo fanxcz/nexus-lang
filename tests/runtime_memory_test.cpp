@@ -37,18 +37,18 @@ int main() {
 
     char* freedProbe = nexus_str_concat("freed ", "probe");
     if (!freedProbe) {
-        std::fprintf(stderr, "runtime allocation probe failed\\n");
+        std::fprintf(stderr, "runtime allocation probe failed\n");
         return 3;
     }
     nexus_free(freedProbe);
     if (nexus_runtime_test_try_free(freedProbe) != 0) {
-        std::fprintf(stderr, "runtime accepted a double free\\n");
+        std::fprintf(stderr, "runtime accepted a double free\n");
         return 4;
     }
 
     int stackValue = 0;
     if (nexus_runtime_test_try_free(&stackValue) != 0) {
-        std::fprintf(stderr, "runtime accepted a non-managed pointer free\\n");
+        std::fprintf(stderr, "runtime accepted a non-managed pointer free\n");
         return 5;
     }
 
