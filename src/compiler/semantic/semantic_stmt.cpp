@@ -106,7 +106,8 @@ namespace nexus {
                     l->type = t;
                     Symbol symbol{t, l->mut, scopeDepth_,
                                   typeMayContainPointer(t) ? pointerOrigin(l->init.get(), env)
-                                                           : std::nullopt};
+                                                           : std::nullopt,
+                                  nullptr, false};
                     if (const auto managed = managedAllocationOrigin(l->init.get(), env, !inLoop)) {
                         symbol.managedAllocation = managed->allocation;
                         symbol.managedAllocationFreed = managed->freed;
@@ -305,7 +306,9 @@ namespace nexus {
                         varType, false, scopeDepth_ + 1,
                         typeMayContainPointer(varType)
                             ? pointerOrigin(f->collection.get(), env)
-                            : std::nullopt};
+                            : std::nullopt,
+                        nullptr,
+                        false};
                     block(*f->body, local, ret, true);
                     mergeBorrowState(env, local);
                 } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
@@ -378,7 +381,9 @@ namespace nexus {
                                 bindType, false, scopeDepth_ + 1,
                                 typeMayContainPointer(bindType)
                                     ? pointerOrigin(mm->value.get(), env)
-                                    : std::nullopt};
+                                    : std::nullopt,
+                                nullptr,
+                                false};
                         }
 
                         if (arm.rangeEnd) {
