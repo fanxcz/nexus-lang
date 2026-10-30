@@ -52,6 +52,9 @@ namespace nexus {
 
         bool typeMayContainPointer(const Type& type) const;
 
+        void mergeBorrowState(std::unordered_map<std::string, Symbol>& destination,
+                              const std::unordered_map<std::string, Symbol>& branch) const;
+
         void block(Block& b, std::unordered_map<std::string, Symbol>& env, Type ret, bool inLoop);
 
         const StructDecl& getStruct(const std::string& n) const;
