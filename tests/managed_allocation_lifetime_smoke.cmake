@@ -68,12 +68,20 @@ fn main() {
 }
 ]=] "fail" "use after mem_free of managed allocation 'address' in mem_read")
 
+check_source(set_after_free [=[
+fn main() {
+    let address = mem_alloc(8)
+    mem_free(address)
+    mem_set(address, 0, 8)
+}
+]=] "fail" "use after mem_free of managed allocation 'address' in mem_set")
+
 check_source(copy_source_after_free [=[
 fn main() {
     let address = mem_alloc(16)
     let alias = address
     mem_free(address)
-    mem_copy(alias, 0, 8)
+    mem_copy(0, alias, 8)
 }
 ]=] "fail" "use after mem_free of managed allocation 'alias' in mem_copy")
 
