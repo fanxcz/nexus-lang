@@ -131,6 +131,18 @@ fn main() {
 }
 ]=] "fail" "use after mem_free of managed allocation 'stale' in mem_read")
 
+check_source(fresh_handle_returned_after_internal_free [=[
+fn make_stale() -> i64 {
+    let pointer = mem_alloc(8)
+    mem_free(pointer)
+    return pointer
+}
+fn main() {
+    let stale = make_stale()
+    print(mem_read(stale))
+}
+]=] "fail" "use after mem_free of managed allocation 'stale' in mem_read")
+
 check_source(wrapper_double_free [=[
 fn release(pointer: i64) { mem_free(pointer) }
 fn main() {
