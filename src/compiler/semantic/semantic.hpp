@@ -49,11 +49,13 @@ namespace nexus {
         // and direct parameter effects; opaque external functions remain unknown.
         std::unordered_map<std::string, std::vector<std::size_t>> returnedManagedParams_;
         std::unordered_map<std::string, bool> returnedManagedFresh_;
+        std::unordered_map<std::string, bool> returnedManagedFreshFreed_;
         std::unordered_map<std::string, bool> returnedManagedUnknown_;
         std::unordered_map<std::string, std::vector<std::size_t>> freedManagedParams_;
         std::vector<std::size_t> currentFunctionReturnManagedParams_;
         std::vector<std::size_t> currentFunctionFreedManagedParams_;
         bool currentFunctionReturnManagedFresh_ = false;
+        bool currentFunctionReturnManagedFreshFreed_ = false;
         bool currentFunctionReturnManagedUnknown_ = false;
 
         std::vector<std::string> diagnostics_;
