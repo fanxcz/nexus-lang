@@ -1082,6 +1082,16 @@ animation, easing curves and other game/simulation calculations. The built-in
 native backend has a narrower supported language subset; use the LLVM backend for
 these floating-point operations.
 
+### 14.11 time
+
+```nx
+time_ms() -> i64
+```
+
+Returns a monotonic time counter in milliseconds. Its epoch is unspecified, so
+use differences between calls to measure durations; do not treat it as calendar
+time.
+
 ------------------------------------------------------------------------
 
 ## 15. Runtime functions
