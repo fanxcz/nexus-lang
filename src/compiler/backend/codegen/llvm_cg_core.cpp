@@ -24,10 +24,16 @@ namespace nexus {
     }
     std::string CG::llvmType(const Type& t) {
         switch (t.kind) {
-        case TypeKind::I64:
-            return "i64";
-        case TypeKind::F64:
-            return "double";
+        case TypeKind::I8: return "i8";
+        case TypeKind::I16: return "i16";
+        case TypeKind::I32: return "i32";
+        case TypeKind::I64: return "i64";
+        case TypeKind::U8: return "i8";
+        case TypeKind::U16: return "i16";
+        case TypeKind::U32: return "i32";
+        case TypeKind::U64: return "i64";
+        case TypeKind::F32: return "float";
+        case TypeKind::F64: return "double";
         case TypeKind::Bool:
             return "i1";
         case TypeKind::String:
@@ -42,6 +48,10 @@ namespace nexus {
             return "{ i64, i64 }";
         case TypeKind::Array:
             return "[" + std::to_string(t.arraySize) + " x " + llvmType(*t.element) + "]";
+        case TypeKind::Slice:
+        case TypeKind::MutableSlice:
+            // Slices are non-owning views: element pointer plus element count.
+            return "{ ptr, i64 }";
         default:
             return "i64";
         }

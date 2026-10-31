@@ -29,13 +29,16 @@ namespace nexus {
             emitModule(t.str());
         }
         emitModule("declare void @nexus_print_i64(i64)");
+        emitModule("declare void @nexus_print_u64(i64)");
         emitModule("declare void @nexus_print_f64(double)");
         emitModule("declare void @nexus_print_bool(i1)");
         emitModule("declare void @nexus_print_str(ptr)");
         emitModule("declare ptr @nexus_str_concat(ptr, ptr)");
         emitModule("declare i1 @nexus_str_equal(ptr, ptr)");
         emitModule("declare void @nexus_bounds_check(i64, i64)");
+        emitModule("declare void @nexus_slice_bounds_check(i64, i64, i64)");
         emitModule("declare i64 @nexus_division_check(i64, i64)");
+        emitModule("declare i64 @nexus_division_check_typed(i64, i64, i64, i1)");
         emitModule("declare ptr @nexus_input(ptr)");
         emitModule("declare i64 @nexus_input_i64(ptr)");
         emitModule("declare double @nexus_input_f64(ptr)");

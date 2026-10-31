@@ -119,7 +119,8 @@ namespace nexus::native {
 
         void Generator::genExpr(const Expr* e) {
             if (const auto* x = dynamic_cast<const IntExpr*>(e)) {
-                out_.movRaxImm64(static_cast<std::uint64_t>(x->value));
+                const auto bits = x->negative ? (std::uint64_t{0} - x->value) : x->value;
+                out_.movRaxImm64(bits);
                 return;
             }
             if (const auto* x = dynamic_cast<const BoolExpr*>(e)) {

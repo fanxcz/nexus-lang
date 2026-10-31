@@ -1,0 +1,5 @@
+fn main() {
+    let mut values: [i64; 2] = [1, 2];
+    let mut view: mut[]i64 = mut values[0..1];
+    view[1] = 3;
+}

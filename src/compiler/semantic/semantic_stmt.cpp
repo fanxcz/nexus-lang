@@ -15,6 +15,11 @@ namespace nexus {
         const auto contains = [&](const auto& self, const Type& candidate) -> bool {
             if (candidate.kind == TypeKind::Pointer)
                 return true;
+            // A slice is a non-owning view into another value's storage. Treat it
+            // as pointer-bearing so the existing borrow-origin analysis also
+            // protects slice bindings and function results.
+            if (candidate.kind == TypeKind::Slice || candidate.kind == TypeKind::MutableSlice)
+                return true;
             if (candidate.kind == TypeKind::Array)
                 return candidate.element && self(self, *candidate.element);
             if (candidate.kind == TypeKind::Struct) {
@@ -99,10 +104,19 @@ namespace nexus {
                                   std::to_string(++discardCounter_);
                     if (env.contains(l->name))
                         throw std::runtime_error("duplicate variable: " + l->name);
+                    normalize(l->type);
+                    if (l->type.kind != TypeKind::Unknown) {
+                        if (auto* array = dynamic_cast<ArrayExpr*>(l->init.get());
+                            array && l->type.kind == TypeKind::Array && l->type.element) {
+                            for (auto& item : array->elements)
+                                applyNumericLiteralType(item.get(), *l->type.element);
+                        } else {
+                            applyNumericLiteralType(l->init.get(), l->type);
+                        }
+                    }
                     auto t = expr(l->init.get(), env);
                     if (containsVoidType(t))
                         throw std::runtime_error("cannot bind a value of type 'void'");
-                    normalize(l->type);
                     if (l->type.kind != TypeKind::Unknown && !sameType(l->type, t))
                         throw std::runtime_error("cannot initialize '" + l->name + "': expected '" +
                                                  describeType(l->type) + "' but got '" +
@@ -112,18 +126,31 @@ namespace nexus {
                                   typeMayContainPointer(t) ? pointerOrigin(l->init.get(), env)
                                                            : std::nullopt,
                                   nullptr, std::nullopt, false};
+                    symbol.mutableBorrow = t.kind == TypeKind::MutableSlice;
+                    if (symbol.mutableBorrow && !symbol.borrowedFrom)
+                        throw std::runtime_error("mutable slice must borrow named mutable storage");
                     if (const auto managed = managedAllocationOrigin(l->init.get(), env, !inLoop)) {
                         symbol.managedAllocation = managed->allocation;
                         symbol.managedAllocationParameter = managed->parameter;
                         symbol.managedAllocationFreed = managed->freed;
                     }
                     env[l->name] = std::move(symbol);
+                    if (typeContainsSlice(t) && t.kind != TypeKind::Slice &&
+                        t.kind != TypeKind::MutableSlice) {
+                        diagnostics_.push_back(
+                            "nested slice values are not yet supported by code generation" +
+                            sourceLocation(l->span));
+                    }
                 } else if (auto* a = dynamic_cast<AssignStmt*>(s.get())) {
                     auto it = env.find(a->name);
                     if (it == env.end())
                         throw std::runtime_error("unknown variable: " + a->name);
                     if (!it->second.mut)
                         throw std::runtime_error("cannot assign to immutable variable: " + a->name);
+                    if (it->second.type.kind == TypeKind::MutableSlice)
+                        throw std::runtime_error(
+                            "mutable slice bindings cannot be reassigned; create a new borrow in a new scope");
+                    applyNumericLiteralType(a->value.get(), it->second.type);
                     auto actual = expr(a->value.get(), env);
                     if (!sameType(actual, it->second.type))
                         throw std::runtime_error("cannot assign to '" + a->name + "': expected '" +
@@ -147,6 +174,7 @@ namespace nexus {
                         throw std::runtime_error("dereference assignment requires a typed pointer");
                     validateCompoundAssign(da->op, *pointerType.pointee);
                     validateCompoundAssignDivisor(da->op, da->value.get());
+                    applyNumericLiteralType(da->value.get(), *pointerType.pointee);
                     const auto actual = expr(da->value.get(), env);
                     if (!sameType(actual, *pointerType.pointee))
                         throw std::runtime_error("pointer assignment expects '" +
@@ -168,6 +196,7 @@ namespace nexus {
                         throw std::runtime_error("unknown field: " + ma->member);
                     validateCompoundAssign(ma->op, f->type);
                     validateCompoundAssignDivisor(ma->op, ma->value.get());
+                    applyNumericLiteralType(ma->value.get(), f->type);
                     auto actual = expr(ma->value.get(), env);
                     if (!sameType(actual, f->type))
                         throw std::runtime_error("cannot assign field '" + ma->member +
@@ -196,19 +225,24 @@ namespace nexus {
                             throw std::runtime_error(
                                 "cannot modify array through immutable variable: " + ov->name);
                     }
-                    if (ot.kind != TypeKind::Array || !ot.element)
-                        throw std::runtime_error("index assignment requires an array");
+                    const bool mutableSlice = ot.kind == TypeKind::MutableSlice;
+                    if ((!mutableSlice && ot.kind != TypeKind::Array) || !ot.element)
+                        throw std::runtime_error(
+                            "index assignment requires a mutable array or mutable slice");
                     if (expr(ia->index.get(), env).kind != TypeKind::I64)
                         throw std::runtime_error("array index must be i64");
-                    if (constantIndexOutOfBounds(ia->index.get(), ot.arraySize))
+                    if (ot.kind == TypeKind::Array &&
+                        constantIndexOutOfBounds(ia->index.get(), ot.arraySize))
                         throw std::runtime_error("array index is out of bounds");
                     validateCompoundAssign(ia->op, *ot.element);
                     validateCompoundAssignDivisor(ia->op, ia->value.get());
+                    applyNumericLiteralType(ia->value.get(), *ot.element);
                     auto actual = expr(ia->value.get(), env);
                     if (!sameType(actual, *ot.element))
                         throw std::runtime_error("array element assignment expects '" +
                                                  describeType(*ot.element) + "' but got '" +
                                                  describeType(actual) + "'");
+                    if (!mutableSlice) {
                     if (const auto* root = lvalueRootVariable(ia->object.get())) {
                         auto it = env.find(root->name);
                         const auto origin = typeMayContainPointer(*ot.element)
@@ -223,6 +257,7 @@ namespace nexus {
                                 origin->scopeDepth > it->second.borrowedFrom->scopeDepth)
                                 it->second.borrowedFrom = origin;
                         }
+                    }
                     }
                 } else if (auto* e = dynamic_cast<ExprStmt*>(s.get()))
                     expr(e->expr.get(), env);
@@ -241,7 +276,11 @@ namespace nexus {
                     if (deferredType.kind != TypeKind::Void)
                         throw std::runtime_error("defer requires a call returning void");
                 } else if (auto* r = dynamic_cast<ReturnStmt*>(s.get())) {
+                    if (r->expr)
+                        applyNumericLiteralType(r->expr.get(), ret);
                     auto t = r->expr ? expr(r->expr.get(), env) : Type::void_();
+                    if (t.kind == TypeKind::MutableSlice)
+                        throw std::runtime_error("returning a mutable slice is not supported; pass it to a function instead");
                     if (!sameType(t, ret))
                         throw std::runtime_error("return expects '" + describeType(ret) +
                                                  "' but got '" + describeType(t) + "'");
@@ -335,9 +374,9 @@ namespace nexus {
                 } else if (auto* mm = dynamic_cast<MatchStmt*>(s.get())) {
 
                     auto vt = expr(mm->value.get(), env);
-                    if (vt.kind != TypeKind::I64 && vt.kind != TypeKind::Bool &&
+                    if (!isIntegerType(vt.kind) && vt.kind != TypeKind::Bool &&
                         vt.kind != TypeKind::Enum)
-                        throw std::runtime_error("match supports i64, bool, or enum values");
+                        throw std::runtime_error("match supports integer, bool, or enum values");
                     bool sawCatchAll = false;
                     std::unordered_map<std::string, bool> seenPatterns;
                     std::set<std::string> coveredEnumVariants;
@@ -409,9 +448,11 @@ namespace nexus {
                         }
 
                         if (arm.rangeEnd) {
-                            if (vt.kind != TypeKind::I64)
+                            if (!isIntegerType(vt.kind))
                                 throw std::runtime_error(
-                                    "range patterns require an i64 value");
+                                    "range patterns require an integer value");
+                            applyNumericLiteralType(arm.pattern.get(), vt);
+                            applyNumericLiteralType(arm.rangeEnd.get(), vt);
                             auto startType = expr(arm.pattern.get(), env);
                             auto endType = expr(arm.rangeEnd.get(), env);
                             if (!sameType(startType, vt) || !sameType(endType, vt))
@@ -427,6 +468,8 @@ namespace nexus {
                                 }
                             }
                         } else if (!arm.wildcard && arm.binding.empty()) {
+                            if (isNumericType(vt.kind))
+                                applyNumericLiteralType(arm.pattern.get(), vt);
                             auto pt = expr(arm.pattern.get(), env);
                             if (!sameType(pt, vt))
                                 throw std::runtime_error("match pattern type mismatch");
@@ -435,8 +478,9 @@ namespace nexus {
                             std::string display;
                             if (const auto* integer =
                                     dynamic_cast<const IntExpr*>(arm.pattern.get())) {
-                                key = "i64:" + std::to_string(integer->value);
-                                display = std::to_string(integer->value);
+                                const auto magnitude = std::to_string(integer->value);
+                                display = integer->negative ? "-" + magnitude : magnitude;
+                                key = describeType(vt) + ":" + display;
                             } else if (const auto* boolean =
                                            dynamic_cast<const BoolExpr*>(arm.pattern.get())) {
                                 key = std::string("bool:") + (boolean->value ? "true" : "false");

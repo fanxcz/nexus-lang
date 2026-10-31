@@ -18,6 +18,218 @@ int main() {
     try {
 
         {
+            auto p = parse("fn inspect(values: []i32) -> []i32 { return values } fn main() {}");
+            if (p.functions.size() != 2 || p.functions[0].params.size() != 1 ||
+                p.functions[0].params[0].type.kind != nexus::TypeKind::Slice ||
+                !p.functions[0].params[0].type.element ||
+                p.functions[0].params[0].type.element->kind != nexus::TypeKind::I32 ||
+                p.functions[0].ret.kind != nexus::TypeKind::Slice ||
+                !nexus::sameType(p.functions[0].params[0].type,
+                                 nexus::Type::slice(nexus::Type::i32()))) {
+                std::cerr << "slice type parsing or equality failed\n";
+                return 74;
+            }
+            auto nested = parse("fn nested(value: [][]u16) {} fn main() {}");
+            if (nested.functions[0].params[0].type.kind != nexus::TypeKind::Slice ||
+                !nested.functions[0].params[0].type.element ||
+                nested.functions[0].params[0].type.element->kind != nexus::TypeKind::Slice) {
+                std::cerr << "nested slice type parsing failed\n";
+                return 75;
+            }
+            bool sliceSignaturesAccepted = true;
+            try {
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& error) {
+                sliceSignaturesAccepted = false;
+                std::cerr << "slice function signatures failed semantic validation: "
+                          << error.what() << "\n";
+            }
+            if (!sliceSignaturesAccepted) {
+                std::cerr << "direct slice parameters and return types should be supported\n";
+                return 76;
+            }
+        }
+
+        {
+            auto p = parse("fn main(){ let values = [10, 20, 30, 40]; "
+                           "let middle = values[1 + 0..3 - 0]; }");
+            if (p.functions.size() != 1 || !p.functions[0].body ||
+                p.functions[0].body->statements.size() != 2) {
+                std::cerr << "slice expression did not parse into the function body\n";
+                return 77;
+            }
+            const auto* binding =
+                dynamic_cast<const nexus::LetStmt*>(p.functions[0].body->statements[1].get());
+            const auto* slice = binding ? dynamic_cast<const nexus::SliceExpr*>(binding->init.get())
+                                        : nullptr;
+            if (!slice || !dynamic_cast<const nexus::VarExpr*>(slice->object.get()) ||
+                !dynamic_cast<const nexus::BinaryExpr*>(slice->start.get()) ||
+                !dynamic_cast<const nexus::BinaryExpr*>(slice->end.get()) ||
+                !slice->span.valid || !slice->object->span.valid ||
+                !slice->start->span.valid || !slice->end->span.valid) {
+                std::cerr << "slice expression AST shape or source spans are incorrect\n";
+                return 78;
+            }
+
+            auto chained = parse(
+                "fn main(){ let values = [10, 20, 30, 40]; let item = values[1..3][0]; }");
+            const auto* chainedBinding = dynamic_cast<const nexus::LetStmt*>(
+                chained.functions[0].body->statements[1].get());
+            const auto* index = chainedBinding
+                                    ? dynamic_cast<const nexus::IndexExpr*>(
+                                          chainedBinding->init.get())
+                                    : nullptr;
+            if (!index || !dynamic_cast<const nexus::SliceExpr*>(index->object.get())) {
+                std::cerr << "postfix indexing after slicing did not parse\n";
+                return 79;
+            }
+
+            const char* malformedSlices[] = {
+                "fn main(){ let values = [1, 2]; let bad = values[..2]; }",
+                "fn main(){ let values = [1, 2]; let bad = values[1..]; }",
+                "fn main(){ let values = [1, 2]; let bad = values[1..2; }",
+            };
+            for (const auto* source : malformedSlices) {
+                bool rejected = false;
+                try {
+                    (void)parse(source);
+                } catch (const std::exception&) {
+                    rejected = true;
+                }
+                if (!rejected) {
+                    std::cerr << "malformed slice expression was accepted: " << source << "\n";
+                    return 80;
+                }
+            }
+
+            bool sliceExpressionAccepted = true;
+            try {
+                nexus::SemanticAnalyzer().analyze(p);
+            } catch (const std::exception& error) {
+                sliceExpressionAccepted = false;
+                std::cerr << "slice expression failed semantic validation: " << error.what()
+                          << "\n";
+            }
+            if (!sliceExpressionAccepted) {
+                std::cerr << "slice expression should pass semantic validation\n";
+                return 81;
+            }
+        }
+
+        {
+            const auto analyzeError = [](const char* source) {
+                try {
+                    auto program = parse(source);
+                    nexus::SemanticAnalyzer().analyze(program);
+                } catch (const std::exception& error) {
+                    return std::string(error.what());
+                }
+                return std::string{};
+            };
+
+            const auto valid = analyzeError(
+                "fn main(){ let values = [10, 20, 30, 40]; "
+                "let middle = values[1 + 0..3 - 0]; let item = middle[0]; "
+                "let nested = values[1..4][0..2]; let empty = values[4..4]; }");
+            if (!valid.empty() ||
+                valid.find("slice start bound") != std::string::npos ||
+                valid.find("slice end bound") != std::string::npos ||
+                valid.find("indexing requires") != std::string::npos) {
+                std::cerr << "valid slice expressions failed semantic type checking: " << valid
+                          << "\n";
+                return 82;
+            }
+
+            const auto dynamicBounds = analyzeError(
+                "fn main(){ let values = [10,20,30,40]; let start: i64 = 1; "
+                "let end: i64 = 3; let view = values[start..end]; }");
+            if (!dynamicBounds.empty() ||
+                dynamicBounds.find("slice start bound") != std::string::npos ||
+                dynamicBounds.find("slice end bound") != std::string::npos) {
+                std::cerr << "well-typed dynamic bounds were rejected: " << dynamicBounds << "\n";
+                return 87;
+            }
+
+            const struct {
+                const char* source;
+                const char* expected;
+                const char* label;
+            } invalidRanges[] = {
+                {"fn main(){ let values = [1,2]; let s = values[-1..2]; }",
+                 "slice start bound is out of bounds", "negative start"},
+                {"fn main(){ let values = [1,2]; let s = values[0..3]; }",
+                 "slice end bound is out of bounds", "end beyond array"},
+                {"fn main(){ let values = [1,2]; let s = values[2..1]; }",
+                 "slice start bound exceeds end bound", "reversed range"},
+                {"fn main(){ let values = [1,2]; let s = values[1.0..2]; }",
+                 "slice start bound must be i64", "non-integer start"},
+                {"fn main(){ let value = 7; let s = value[0..1]; }",
+                 "slice expression requires an array or slice", "non-array source"},
+                {"fn make() -> [i64; 2] { return [1,2]; } "
+                 "fn main(){ let s = make()[0..1]; }",
+                 "slice source must be a named array or slice binding", "temporary source"},
+            };
+            for (const auto& test : invalidRanges) {
+                const auto error = analyzeError(test.source);
+                if (error.find(test.expected) == std::string::npos) {
+                    std::cerr << "slice semantic test failed (" << test.label << "): " << error
+                              << "\n";
+                    return 83;
+                }
+            }
+
+            const auto localEscape = analyzeError(
+                "fn escape() -> []i64 { let values = [10, 20]; return values[0..2]; }");
+            if (localEscape.find("cannot return a pointer to local storage 'values'") ==
+                std::string::npos) {
+                std::cerr << "slice of local array escaped its lexical lifetime: " << localEscape
+                          << "\n";
+                return 84;
+            }
+
+            const auto aliasedLocalEscape = analyzeError(
+                "fn escape() -> []i64 { let values = [10, 20]; "
+                "let view = values[0..2]; return view; }");
+            if (aliasedLocalEscape.find("cannot return a pointer to local storage 'values'") ==
+                std::string::npos) {
+                std::cerr << "slice alias lost the origin of its local array: "
+                          << aliasedLocalEscape << "\n";
+                return 86;
+            }
+
+            const auto parameterBorrow = analyzeError(
+                "fn passthrough(values: []i32) -> []i32 { return values; } fn main() {}");
+            if (parameterBorrow.find("cannot return a pointer to local storage") !=
+                std::string::npos) {
+                std::cerr << "slice borrowed from a parameter was incorrectly treated as local: "
+                          << parameterBorrow << "\n";
+                return 85;
+            }
+
+            const auto lenChecks = analyzeError(
+                "fn main(){ let values = [10,20,30]; let view = values[1..3]; "
+                "let count: i64 = len(view); let total: i64 = len(values); "
+                "let text: string = \"hello\"; let chars: i64 = len(text); }");
+            if (!lenChecks.empty()) {
+                std::cerr << "len should accept arrays and slices: " << lenChecks << "\n";
+                return 88;
+            }
+            const auto invalidLen = analyzeError("fn main(){ let count = len(42); }");
+            if (invalidLen.find("len expects a string, array, or slice") == std::string::npos) {
+                std::cerr << "len accepted a non-array value: " << invalidLen << "\n";
+                return 89;
+            }
+            const auto mutableSliceWrite = analyzeError(
+                "fn main(){ let mut values = [1,2,3]; let mut view = values[0..2]; view[0] = 9; }");
+            if (mutableSliceWrite.find("index assignment requires a mutable array or mutable slice") ==
+                std::string::npos) {
+                std::cerr << "slice write should remain unsupported until mutable-slice rules exist: "
+                          << mutableSliceWrite << "\n";
+                return 90;
+            }
+        }
+
+        {
 
             auto p = parse("fn main(){ let mut x: i64 = 2 + 3; x = x + 1; print(x) }");
 

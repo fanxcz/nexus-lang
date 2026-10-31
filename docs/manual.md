@@ -179,14 +179,17 @@ written explicitly; local variables may be inferred from their initializer.
 
 | Type | Meaning |
 |------|---------|
-| `i64` | signed 64-bit integer |
-| `f64` | 64-bit floating point number |
+| `i8`, `i16`, `i32`, `i64` | signed 8-, 16-, 32- and 64-bit integers |
+| `u8`, `u16`, `u32`, `u64` | unsigned 8-, 16-, 32- and 64-bit integers |
+| `f32`, `f64` | IEEE-754 32- and 64-bit floating-point numbers |
 | `bool` | boolean value |
 | `string` | text |
 | `void` | no value |
 
 `int`, `isize`, and `usize` are accepted as aliases for `i64`. `float` is an
 alias for `f64`.
+
+Numeric literals default to `i64` / `f64`, but can adopt an expected numeric type when representable, including the full `u64` range. Different numeric variables do not implicitly convert; signed and unsigned operations use the declared type's width and ordering.
 
 Type annotations are part of a function declaration:
 
@@ -1253,7 +1256,7 @@ function     := "fn" IDENT "(" params ")" ("->" type)? block
 function_signature := IDENT "(" params ")" ("->" type)?
 params       := (param ("," param)*)?
 param        := IDENT ":" type
-type         := "i64" | "f64" | "bool" | "string" | "void"
+type         := "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64" | "f32" | "f64" | "bool" | "string" | "void"
               | "*" type
               | "[" type ";" INTEGER "]"
               | IDENT
@@ -1463,7 +1466,7 @@ suite or by a documented example in this manual.
 
 | Feature | Notes |
 |---------|-------|
-| Primitive types | `i64`, `f64`, `bool`, `string`, `void` |
+| Primitive types | `i8`/`i16`/`i32`/`i64`, `u8`/`u16`/`u32`/`u64`, `f32`/`f64`, `bool`, `string`, `void` |
 | Structs | named fields, nesting, field assignment |
 | Enums | named variants, equality, `match`, function parameters and results |
 | Arrays | fixed size, indexing, assignment, runtime bounds checks |
@@ -1494,7 +1497,7 @@ that documentation and examples do not imply support that does not exist.
 | Lambdas and closures | not implemented |
 | Function overloading | not implemented; function names must be unique |
 | Generic `Option<T>` / `Result<T, E>` | not implemented; use concrete payload enums |
-| Enum payloads | implemented for one scalar payload (`i64`, `f64`, `bool`, `string`, pointer) on the LLVM path; generic/nested payloads are unsupported |
+| Enum payloads | implemented for one scalar payload (fixed-width integer, `f32`, `f64`, `bool`, `string`, pointer) on the LLVM path; generic/nested payloads are unsupported |
 | `match` exhaustiveness checking | implemented for `bool` and enums; `i64` values still fall through |
 | Iterators and lazy sequences | not implemented |
 | Macros, attributes, `#[...]` | not implemented |

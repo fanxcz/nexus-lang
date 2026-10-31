@@ -61,7 +61,18 @@ namespace nexus {
                 if (!expression)
                     return false;
                 if (const auto* literal = dynamic_cast<const IntExpr*>(expression)) {
-                    result = literal->value;
+                    if (literal->literalType.kind != TypeKind::I64)
+                        return false;
+                    if (literal->negative) {
+                        if (literal->value != (std::uint64_t{1} << 63))
+                            return false;
+                        result = std::numeric_limits<long long>::min();
+                        return true;
+                    }
+                    if (literal->value > static_cast<std::uint64_t>(
+                                             std::numeric_limits<long long>::max()))
+                        return false;
+                    result = static_cast<long long>(literal->value);
                     return true;
                 }
                 if (const auto* literal = dynamic_cast<const FloatExpr*>(expression)) {

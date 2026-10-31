@@ -1,0 +1,6 @@
+fn main() {
+    let values = [7, 8];
+    let view = values[0..1];
+    let value = view[1];
+    print(value);
+}

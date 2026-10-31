@@ -1,0 +1,33 @@
+fn pass(values: []i64) -> []i64 {
+    return values;
+}
+
+fn forward(values: []i64) -> []i64 {
+    return pass(values);
+}
+
+fn sum(values: []i64) -> i64 {
+    let mut total: i64 = 0;
+    for i in 0..len(values) {
+        total += values[i];
+    }
+    return total;
+}
+
+fn main() {
+    let values = [5, 10, 20, 30];
+    let middle = values[1..3];
+    let alias = forward(middle);
+    print(len(values));
+    print(len(alias));
+    print(alias[0]);
+    print(alias[1]);
+    print(sum(alias));
+
+    let nested = values[1..4][1..2];
+    print(len(nested));
+    print(nested[0]);
+
+    let text = "abc";
+    print(len(text));
+}

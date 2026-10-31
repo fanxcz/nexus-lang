@@ -1,5 +1,5 @@
 site_name: NEXUS Programming Language
-site_description: NEXUS is an open-source programming language for native desktop applications, command-line utilities, and developer tools.
+site_description: NEXUS is an open-source statically checked language for native applications, developer tools, and experimental 2D/3D game development.
 site_author: fanxcz
 site_url: https://fanxcz.github.io/nexus-lang/
 repo_url: https://github.com/fanxcz/nexus-lang
@@ -130,6 +130,7 @@ nav:
       - Memory: runtime/memory.md
       - Graphics 2D: runtime/graphics-2d.md
       - Graphics 3D: runtime/graphics-3d.md
+      - Voxel game development status: runtime/voxel-roadmap.md
       - Audio: runtime/audio.md
       - Input: runtime/input.md
       - ECS: runtime/ecs.md

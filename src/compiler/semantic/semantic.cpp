@@ -110,7 +110,8 @@ namespace nexus {
         }
         if (type.kind == TypeKind::Pointer && type.pointee)
             normalize(*type.pointee);
-        if (type.kind == TypeKind::Array && type.element)
+        if ((type.kind == TypeKind::Array || type.kind == TypeKind::Slice ||
+             type.kind == TypeKind::MutableSlice) && type.element)
             normalize(*type.element);
     }
     void SemanticAnalyzer::analyze(Program& p) {
@@ -205,7 +206,8 @@ namespace nexus {
             if (t.kind == TypeKind::Pointer && t.pointee) {
                 validateType(*t.pointee, false);
             }
-            if (t.kind == TypeKind::Array && t.element) {
+            if ((t.kind == TypeKind::Array || t.kind == TypeKind::Slice ||
+                 t.kind == TypeKind::MutableSlice) && t.element) {
                 validateType(*t.element, false);
             }
         };
@@ -226,10 +228,9 @@ namespace nexus {
                 normalize(*variant.payload);
                 validateTypeAt(*variant.payload, variant.span.valid ? variant.span : e.span, false);
                 const auto kind = variant.payload->kind;
-                if (kind != TypeKind::I64 && kind != TypeKind::F64 &&
-                    kind != TypeKind::Bool && kind != TypeKind::String &&
-                    kind != TypeKind::Pointer) {
-                    report("enum payloads currently support i64, f64, bool, string, or pointer types; got '" +
+                if (!isNumericType(kind) && kind != TypeKind::Bool &&
+                    kind != TypeKind::String && kind != TypeKind::Pointer) {
+                    report("enum payloads currently support numeric, bool, string, or pointer types; got '" +
                                describeType(*variant.payload) + "'",
                            variant.span.valid ? variant.span : e.span);
                 }
@@ -240,6 +241,9 @@ namespace nexus {
             for (auto& field : s.fields) {
                 normalize(field.type);
                 validateTypeAt(field.type, field.span.valid ? field.span : s.span, false);
+                if (typeContainsSlice(field.type))
+                    report("struct fields containing slices are not supported by code generation",
+                           field.span.valid ? field.span : s.span);
             }
 
         // Normalize every signature before deriving interprocedural borrow summaries.
@@ -453,6 +457,21 @@ namespace nexus {
                     if (f.span.valid)
                         message += sourceLocation(f.span);
                     diagnostics_.push_back(std::move(message));
+                }
+            }
+            if (typeContainsSlice(f.ret) && f.ret.kind != TypeKind::Slice &&
+                f.ret.kind != TypeKind::MutableSlice) {
+                diagnostics_.push_back(
+                    "nested slice return types are not yet supported: " + f.name +
+                    sourceLocation(f.span));
+            }
+            for (const auto& parameter : f.params) {
+                if (typeContainsSlice(parameter.type) &&
+                    parameter.type.kind != TypeKind::Slice &&
+                    parameter.type.kind != TypeKind::MutableSlice) {
+                    diagnostics_.push_back(
+                        "nested slice parameter types are not yet supported: " + f.name +
+                        sourceLocation(parameter.span.valid ? parameter.span : f.span));
                 }
             }
         }

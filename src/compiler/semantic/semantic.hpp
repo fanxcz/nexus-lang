@@ -30,6 +30,8 @@ namespace nexus {
         const Expr* managedAllocation = nullptr;
         std::optional<std::size_t> managedAllocationParameter;
         bool managedAllocationFreed = false;
+        // A mutable slice is an exclusive lexical borrow of its source binding.
+        bool mutableBorrow = false;
     };
 
     class SemanticAnalyzer {

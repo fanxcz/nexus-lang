@@ -18,7 +18,7 @@ Functions can call other functions and can be recursive. Function names are uniq
 
 ## Parameters and return values
 
-Parameters use `name: type` syntax. Supported scalar types include `i64`, `f64`, `bool` and `string`; types can also be user-defined structs/enums, fixed arrays and pointers.
+Parameters use `name: type` syntax. Supported scalar types include `i8`/`i16`/`i32`/`i64`, `u8`/`u16`/`u32`/`u64`, `f32`/`f64`, `bool` and `string`; types can also be user-defined structs/enums, fixed arrays and pointers.
 
 ```nx
 fn area(width: f64, height: f64) -> f64 {

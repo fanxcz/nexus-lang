@@ -6,10 +6,10 @@ namespace nexus {
 
     Type CG::typeOf(const Expr* e) {
 
-        if (dynamic_cast<const IntExpr*>(e))
-            return Type::i64();
-        if (dynamic_cast<const FloatExpr*>(e))
-            return Type::f64();
+        if (const auto* literal = dynamic_cast<const IntExpr*>(e))
+            return literal->literalType;
+        if (const auto* literal = dynamic_cast<const FloatExpr*>(e))
+            return literal->literalType;
         if (dynamic_cast<const BoolExpr*>(e))
             return Type::boolean();
         if (dynamic_cast<const StringExpr*>(e))
@@ -39,12 +39,25 @@ namespace nexus {
         }
         if (auto* ix = dynamic_cast<const IndexExpr*>(e)) {
             auto t = typeOf(ix->object.get());
-            if (t.kind != TypeKind::Array || !t.element)
-                throw std::runtime_error("index on non-array");
+            if ((t.kind != TypeKind::Array && t.kind != TypeKind::Slice &&
+                 t.kind != TypeKind::MutableSlice) || !t.element)
+                throw std::runtime_error("index on non-array or slice");
             return *t.element;
+        }
+        if (auto* slice = dynamic_cast<const SliceExpr*>(e)) {
+            auto t = typeOf(slice->object.get());
+            if ((t.kind != TypeKind::Array && t.kind != TypeKind::Slice &&
+                 t.kind != TypeKind::MutableSlice) || !t.element)
+                throw std::runtime_error("slice on non-array or slice");
+            return Type::slice(*t.element);
         }
         if (auto* u = dynamic_cast<const UnaryExpr*>(e)) {
             auto t = typeOf(u->rhs.get());
+            if (u->op == TokenKind::KwMut) {
+                if (t.kind != TypeKind::Slice || !t.element)
+                    throw std::runtime_error("mutable slice qualifier requires a slice expression");
+                return Type::mutableSlice(*t.element);
+            }
             if (u->op == TokenKind::Ampersand)
                 return Type::ptr(t);
             if (u->op == TokenKind::Star)
@@ -70,6 +83,8 @@ namespace nexus {
         if (auto* c = dynamic_cast<const CallExpr*>(e)) {
             if (c->callee == "print")
                 return Type::void_();
+            if (c->callee == "len")
+                return Type::i64();
             if (auto bi = builtinSignature(c->callee))
                 return bi->ret;
             return functions.at(c->callee)->ret;
@@ -117,15 +132,31 @@ namespace nexus {
         }
         if (auto* ix = dynamic_cast<const IndexExpr*>(e)) {
             auto ot = typeOf(ix->object.get());
-            if (ot.kind != TypeKind::Array || !ot.element)
-                throw std::runtime_error("index address requires array");
-            auto base = addressOf(ix->object.get());
+            if (!ot.element || (ot.kind != TypeKind::Array && ot.kind != TypeKind::Slice &&
+                 ot.kind != TypeKind::MutableSlice))
+                throw std::runtime_error("index address requires array or slice");
             auto idx = expr(ix->index.get());
-            emit("call void @nexus_bounds_check(i64 " + idx + ", i64 " +
-                 std::to_string(ot.arraySize) + ")");
+            std::string base;
+            std::string length;
+            if (ot.kind == TypeKind::Array) {
+                base = addressOf(ix->object.get());
+                length = std::to_string(ot.arraySize);
+                emit("call void @nexus_bounds_check(i64 " + idx + ", i64 " + length + ")");
+                auto r = next();
+                emit(r + " = getelementptr inbounds " + llvmType(ot) + ", ptr " + base +
+                     ", i64 0, i64 " + idx);
+                return r;
+            }
+
+            const auto sliceValue = expr(ix->object.get());
+            base = next();
+            emit(base + " = extractvalue { ptr, i64 } " + sliceValue + ", 0");
+            length = next();
+            emit(length + " = extractvalue { ptr, i64 } " + sliceValue + ", 1");
+            emit("call void @nexus_bounds_check(i64 " + idx + ", i64 " + length + ")");
             auto r = next();
-            emit(r + " = getelementptr inbounds " + llvmType(ot) + ", ptr " + base +
-                 ", i64 0, i64 " + idx);
+            emit(r + " = getelementptr inbounds " + llvmType(*ot.element) + ", ptr " + base +
+                 ", i64 " + idx);
             return r;
         }
         throw std::runtime_error("address-of requires a variable, field, or array element");
@@ -139,13 +170,18 @@ namespace nexus {
     }
     std::string CG::expr(const Expr* e) {
 
-        if (auto* x = dynamic_cast<const IntExpr*>(e))
-            return std::to_string(x->value);
+        if (auto* x = dynamic_cast<const IntExpr*>(e)) {
+            const auto magnitude = std::to_string(x->value);
+            return x->negative ? "-" + magnitude : magnitude;
+        }
 
         if (auto* x = dynamic_cast<const FloatExpr*>(e)) {
             std::ostringstream o;
             o.setf(std::ios::scientific);
-            o << std::setprecision(17) << x->value;
+            o << std::setprecision(x->literalType.kind == TypeKind::F32 ? 9 : 17)
+              << (x->literalType.kind == TypeKind::F32
+                      ? static_cast<double>(static_cast<float>(x->value))
+                      : x->value);
             return o.str();
         }
         if (auto* x = dynamic_cast<const BoolExpr*>(e))
@@ -192,11 +228,23 @@ namespace nexus {
             const auto payload = next();
             emit(payload + " = extractvalue { i64, i64 } " + inner + ", 1");
             const auto payloadType = *success->payload;
-            if (payloadType.kind == TypeKind::I64)
+            if (payloadType.kind == TypeKind::I64 || payloadType.kind == TypeKind::U64)
                 return payload;
+            if (isIntegerType(payloadType.kind)) {
+                const auto value = next();
+                emit(value + " = trunc i64 " + payload + " to " + llvmType(payloadType));
+                return value;
+            }
             if (payloadType.kind == TypeKind::Bool) {
                 const auto value = next();
                 emit(value + " = trunc i64 " + payload + " to i1");
+                return value;
+            }
+            if (payloadType.kind == TypeKind::F32) {
+                const auto bits = next();
+                emit(bits + " = trunc i64 " + payload + " to i32");
+                const auto value = next();
+                emit(value + " = bitcast i32 " + bits + " to float");
                 return value;
             }
             if (payloadType.kind == TypeKind::F64) {
@@ -222,15 +270,26 @@ namespace nexus {
             if (variant && variant->payload && x->payload) {
                 const auto payloadType = *variant->payload;
                 const auto val = expr(x->payload.get());
-                if (payloadType.kind == TypeKind::I64)
+                if (payloadType.kind == TypeKind::I64 || payloadType.kind == TypeKind::U64)
                     payloadI64 = val;
-                else if (payloadType.kind == TypeKind::Bool) {
+                else if (isIntegerType(payloadType.kind)) {
+                    auto c = next();
+                    const auto extension = isSignedIntegerType(payloadType.kind) ? "sext" : "zext";
+                    emit(c + " = " + extension + " " + llvmType(payloadType) + " " + val + " to i64");
+                    payloadI64 = c;
+                } else if (payloadType.kind == TypeKind::Bool) {
                     auto c = next();
                     emit(c + " = zext i1 " + val + " to i64");
                     payloadI64 = c;
                 } else if (payloadType.kind == TypeKind::String || payloadType.kind == TypeKind::Pointer) {
                     auto c = next();
                     emit(c + " = ptrtoint ptr " + val + " to i64");
+                    payloadI64 = c;
+                } else if (payloadType.kind == TypeKind::F32) {
+                    auto bits = next();
+                    emit(bits + " = bitcast float " + val + " to i32");
+                    auto c = next();
+                    emit(c + " = zext i32 " + bits + " to i64");
                     payloadI64 = c;
                 } else if (payloadType.kind == TypeKind::F64) {
                     auto c = next();
@@ -267,6 +326,50 @@ namespace nexus {
             }
             return cur;
         }
+        if (auto* slice = dynamic_cast<const SliceExpr*>(e)) {
+            const auto objectType = typeOf(slice->object.get());
+            if (!objectType.element ||
+                (objectType.kind != TypeKind::Array && objectType.kind != TypeKind::Slice &&
+                 objectType.kind != TypeKind::MutableSlice))
+                throw std::runtime_error("slice lowering requires an array or slice source");
+
+            std::string dataPointer;
+            std::string sourceLength;
+            if (objectType.kind == TypeKind::Array) {
+                const auto arrayAddress = addressOf(slice->object.get());
+                dataPointer = next();
+                emit(dataPointer + " = getelementptr inbounds " + llvmType(objectType) +
+                     ", ptr " + arrayAddress + ", i64 0, i64 0");
+                sourceLength = std::to_string(objectType.arraySize);
+            } else {
+                const auto sourceValue = expr(slice->object.get());
+                dataPointer = next();
+                emit(dataPointer + " = extractvalue { ptr, i64 } " + sourceValue + ", 0");
+                sourceLength = next();
+                emit(sourceLength + " = extractvalue { ptr, i64 } " + sourceValue + ", 1");
+            }
+
+            const auto start = expr(slice->start.get());
+            const auto end = expr(slice->end.get());
+            emit("call void @nexus_slice_bounds_check(i64 " + start + ", i64 " + end +
+                 ", i64 " + sourceLength + ")");
+
+            const auto offsetPointer = next();
+            emit(offsetPointer + " = getelementptr inbounds " + llvmType(*objectType.element) +
+                 ", ptr " + dataPointer + ", i64 " + start);
+            const auto sliceLength = next();
+            emit(sliceLength + " = sub i64 " + end + ", " + start);
+
+            std::string value = "undef";
+            auto withPointer = next();
+            emit(withPointer + " = insertvalue { ptr, i64 } " + value + ", ptr " +
+                 offsetPointer + ", 0");
+            auto withLength = next();
+            emit(withLength + " = insertvalue { ptr, i64 } " + withPointer + ", i64 " +
+                 sliceLength + ", 1");
+            return withLength;
+        }
+
         if (auto* m = dynamic_cast<const MemberExpr*>(e))
             return memberLoad(m);
 
@@ -291,14 +394,19 @@ namespace nexus {
         if (auto* u = dynamic_cast<const UnaryExpr*>(e)) {
             auto a = expr(u->rhs.get());
             auto t = typeOf(u->rhs.get());
+            if (u->op == TokenKind::KwMut)
+                return a;
             if (u->op == TokenKind::Ampersand)
                 return addressOf(u->rhs.get());
             auto r = next();
             if (u->op == TokenKind::Minus) {
-                if (t.kind == TypeKind::I64)
-                    emit(r + " = sub i64 0, " + a);
+                const auto irType = llvmType(t);
+                if (isSignedIntegerType(t.kind))
+                    emit(r + " = sub " + irType + " 0, " + a);
+                else if (isFloatType(t.kind))
+                    emit(r + " = fneg " + irType + " " + a);
                 else
-                    emit(r + " = fneg double " + a);
+                    throw std::runtime_error("unary minus requires signed numeric type");
                 return r;
             }
             if (u->op == TokenKind::Bang) {
@@ -358,49 +466,37 @@ namespace nexus {
                 }
                 throw std::runtime_error("unsupported string operator");
             }
-            // Allocate any auxiliary integer result before the final result.
-            // LLVM textual IR requires numbered SSA values to appear in order.
-            std::string auxiliary;
-            if (t.kind == TypeKind::I64 &&
-                (b->op == TokenKind::Slash || b->op == TokenKind::Percent ||
-                 b->op == TokenKind::ShiftLeft || b->op == TokenKind::ShiftRight))
-                auxiliary = next();
+            const bool integer = isIntegerType(t.kind);
+            const bool floating = isFloatType(t.kind);
+            const std::string irType = llvmType(t);
+            const bool needsDivisionCheck = integer &&
+                (b->op == TokenKind::Slash || b->op == TokenKind::Percent);
+            const bool needsShiftMask = integer &&
+                (b->op == TokenKind::ShiftLeft || b->op == TokenKind::ShiftRight);
+            std::string wideL, wideR, checkedR, divisorValue, shiftAmount;
+            if (needsDivisionCheck) {
+                wideL = next();
+                wideR = next();
+                checkedR = next();
+                divisorValue = next();
+            } else if (needsShiftMask) {
+                shiftAmount = next();
+            }
             auto r = next();
 
-            if (t.kind == TypeKind::F64) {
+            if (floating) {
                 switch (b->op) {
-                case TokenKind::Plus:
-                    emit(r + " = fadd double " + l + ", " + rv);
-                    break;
-                case TokenKind::Minus:
-                    emit(r + " = fsub double " + l + ", " + rv);
-                    break;
-                case TokenKind::Star:
-                    emit(r + " = fmul double " + l + ", " + rv);
-                    break;
-                case TokenKind::Slash:
-                    emit(r + " = fdiv double " + l + ", " + rv);
-                    break;
-                case TokenKind::EqualEqual:
-                    emit(r + " = fcmp oeq double " + l + ", " + rv);
-                    break;
-                case TokenKind::BangEqual:
-                    emit(r + " = fcmp one double " + l + ", " + rv);
-                    break;
-                case TokenKind::Less:
-                    emit(r + " = fcmp olt double " + l + ", " + rv);
-                    break;
-                case TokenKind::LessEqual:
-                    emit(r + " = fcmp ole double " + l + ", " + rv);
-                    break;
-                case TokenKind::Greater:
-                    emit(r + " = fcmp ogt double " + l + ", " + rv);
-                    break;
-                case TokenKind::GreaterEqual:
-                    emit(r + " = fcmp oge double " + l + ", " + rv);
-                    break;
-                default:
-                    throw std::runtime_error("unsupported float operator");
+                case TokenKind::Plus: emit(r + " = fadd " + irType + " " + l + ", " + rv); break;
+                case TokenKind::Minus: emit(r + " = fsub " + irType + " " + l + ", " + rv); break;
+                case TokenKind::Star: emit(r + " = fmul " + irType + " " + l + ", " + rv); break;
+                case TokenKind::Slash: emit(r + " = fdiv " + irType + " " + l + ", " + rv); break;
+                case TokenKind::EqualEqual: emit(r + " = fcmp oeq " + irType + " " + l + ", " + rv); break;
+                case TokenKind::BangEqual: emit(r + " = fcmp one " + irType + " " + l + ", " + rv); break;
+                case TokenKind::Less: emit(r + " = fcmp olt " + irType + " " + l + ", " + rv); break;
+                case TokenKind::LessEqual: emit(r + " = fcmp ole " + irType + " " + l + ", " + rv); break;
+                case TokenKind::Greater: emit(r + " = fcmp ogt " + irType + " " + l + ", " + rv); break;
+                case TokenKind::GreaterEqual: emit(r + " = fcmp oge " + irType + " " + l + ", " + rv); break;
+                default: throw std::runtime_error("unsupported float operator");
                 }
                 return r;
             }
@@ -417,80 +513,101 @@ namespace nexus {
                     throw std::runtime_error("unsupported bool operator");
                 return r;
             }
+            if (!integer)
+                throw std::runtime_error("unsupported numeric type in codegen");
+
+            const bool isSigned = isSignedIntegerType(t.kind);
+            const unsigned bits = integerBitWidth(t.kind);
+            const std::string compare = isSigned ? "s" : "u";
+            if (needsDivisionCheck) {
+                const std::string extend = isSigned ? "sext" : "zext";
+                if (bits == 64) {
+                    emit(wideL + " = add i64 " + l + ", 0");
+                    emit(wideR + " = add i64 " + rv + ", 0");
+                } else {
+                    emit(wideL + " = " + extend + " " + irType + " " + l + " to i64");
+                    emit(wideR + " = " + extend + " " + irType + " " + rv + " to i64");
+                }
+                emit(checkedR + " = call i64 @nexus_division_check_typed(i64 " + wideL +
+                     ", i64 " + wideR + ", i64 " + std::to_string(bits) +
+                     ", i1 " + (isSigned ? "true" : "false") + ")");
+                if (bits == 64)
+                    emit(divisorValue + " = add i64 " + checkedR + ", 0");
+                else
+                    emit(divisorValue + " = trunc i64 " + checkedR + " to " + irType);
+            } else if (needsShiftMask) {
+                emit(shiftAmount + " = and " + irType + " " + rv + ", " +
+                     std::to_string(bits - 1));
+            }
+
             switch (b->op) {
-            case TokenKind::Plus:
-                emit(r + " = add i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Minus:
-                emit(r + " = sub i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Star:
-                emit(r + " = mul i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Slash: {
-                emit(auxiliary + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
-                emit(r + " = sdiv i64 " + l + ", " + auxiliary);
-                break;
-            }
-            case TokenKind::Percent: {
-                emit(auxiliary + " = call i64 @nexus_division_check(i64 " + l + ", i64 " + rv + ")");
-                emit(r + " = srem i64 " + l + ", " + auxiliary);
-                break;
-            }
-            case TokenKind::Ampersand:
-                emit(r + " = and i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Pipe:
-                emit(r + " = or i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Caret:
-                emit(r + " = xor i64 " + l + ", " + rv);
-                break;
-            case TokenKind::ShiftLeft: {
-                // Match the builtin x86-64 backend: only the low six bits of an
-                // i64 shift count are significant. LLVM otherwise treats counts
-                // >= 64 as poison, causing backend-dependent program behavior.
-                emit(auxiliary + " = and i64 " + rv + ", 63");
-                emit(r + " = shl i64 " + l + ", " + auxiliary);
-                break;
-            }
-            case TokenKind::ShiftRight: {
-                emit(auxiliary + " = and i64 " + rv + ", 63");
-                emit(r + " = ashr i64 " + l + ", " + auxiliary);
-                break;
-            }
-            case TokenKind::EqualEqual:
-                emit(r + " = icmp eq i64 " + l + ", " + rv);
-                break;
-            case TokenKind::BangEqual:
-                emit(r + " = icmp ne i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Less:
-                emit(r + " = icmp slt i64 " + l + ", " + rv);
-                break;
-            case TokenKind::LessEqual:
-                emit(r + " = icmp sle i64 " + l + ", " + rv);
-                break;
-            case TokenKind::Greater:
-                emit(r + " = icmp sgt i64 " + l + ", " + rv);
-                break;
-            case TokenKind::GreaterEqual:
-                emit(r + " = icmp sge i64 " + l + ", " + rv);
-                break;
-            default:
-                throw std::runtime_error("unsupported integer operator");
+            case TokenKind::Plus: emit(r + " = add " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Minus: emit(r + " = sub " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Star: emit(r + " = mul " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Slash: emit(r + " = " + (isSigned ? "sdiv " : "udiv ") + irType + " " + l + ", " + divisorValue); break;
+            case TokenKind::Percent: emit(r + " = " + (isSigned ? "srem " : "urem ") + irType + " " + l + ", " + divisorValue); break;
+            case TokenKind::Ampersand: emit(r + " = and " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Pipe: emit(r + " = or " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Caret: emit(r + " = xor " + irType + " " + l + ", " + rv); break;
+            case TokenKind::ShiftLeft: emit(r + " = shl " + irType + " " + l + ", " + shiftAmount); break;
+            case TokenKind::ShiftRight: emit(r + " = " + (isSigned ? "ashr " : "lshr ") + irType + " " + l + ", " + shiftAmount); break;
+            case TokenKind::EqualEqual: emit(r + " = icmp eq " + irType + " " + l + ", " + rv); break;
+            case TokenKind::BangEqual: emit(r + " = icmp ne " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Less: emit(r + " = icmp " + compare + "lt " + irType + " " + l + ", " + rv); break;
+            case TokenKind::LessEqual: emit(r + " = icmp " + compare + "le " + irType + " " + l + ", " + rv); break;
+            case TokenKind::Greater: emit(r + " = icmp " + compare + "gt " + irType + " " + l + ", " + rv); break;
+            case TokenKind::GreaterEqual: emit(r + " = icmp " + compare + "ge " + irType + " " + l + ", " + rv); break;
+            default: throw std::runtime_error("unsupported integer operator");
             }
             return r;
         }
         if (auto* c = dynamic_cast<const CallExpr*>(e)) {
             auto it = functions.find(c->callee);
+            if (c->callee == "len") {
+                if (c->args.size() != 1)
+                    throw std::runtime_error("len expects exactly one argument");
+                const auto argumentType = typeOf(c->args[0].get());
+                if (argumentType.kind == TypeKind::String) {
+                    const auto value = expr(c->args[0].get());
+                    const auto length = next();
+                    emit(length + " = call i64 @nexus_string_len(ptr " + value + ")");
+                    return length;
+                }
+                if (argumentType.kind == TypeKind::Array) {
+                    (void)expr(c->args[0].get());
+                    return std::to_string(argumentType.arraySize);
+                }
+                if (argumentType.kind != TypeKind::Slice &&
+                    argumentType.kind != TypeKind::MutableSlice)
+                    throw std::runtime_error("len expects an array or slice");
+                const auto value = expr(c->args[0].get());
+                const auto length = next();
+                emit(length + " = extractvalue { ptr, i64 } " + value + ", 1");
+                return length;
+            }
             if (c->callee == "print") {
                 auto av = expr(c->args[0].get());
                 auto t = typeOf(c->args[0].get());
-                if (t.kind == TypeKind::I64)
-                    emit("call void @nexus_print_i64(i64 " + av + ")");
-                else if (t.kind == TypeKind::F64)
-                    emit("call void @nexus_print_f64(double " + av + ")");
+                if (isIntegerType(t.kind)) {
+                    const auto bits = integerBitWidth(t.kind);
+                    std::string value = av;
+                    if (bits < 64) {
+                        value = next();
+                        emit(value + " = " + (isSignedIntegerType(t.kind) ? "sext " : "zext ") +
+                             llvmType(t) + " " + av + " to i64");
+                    }
+                    if (t.kind == TypeKind::U64)
+                        emit("call void @nexus_print_u64(i64 " + value + ")");
+                    else
+                        emit("call void @nexus_print_i64(i64 " + value + ")");
+                } else if (isFloatType(t.kind)) {
+                    std::string value = av;
+                    if (t.kind == TypeKind::F32) {
+                        value = next();
+                        emit(value + " = fpext float " + av + " to double");
+                    }
+                    emit("call void @nexus_print_f64(double " + value + ")");
+                }
                 else if (t.kind == TypeKind::Bool)
                     emit("call void @nexus_print_bool(i1 " + av + ")");
                 else if (t.kind == TypeKind::String)
@@ -546,10 +663,25 @@ namespace nexus {
                 throw std::runtime_error("defer print expects one argument");
             const auto value = expr(c->args[0].get());
             const auto type = typeOf(c->args[0].get());
-            if (type.kind == TypeKind::I64)
-                return "call void @nexus_print_i64(i64 " + value + ")";
-            if (type.kind == TypeKind::F64)
-                return "call void @nexus_print_f64(double " + value + ")";
+            if (isIntegerType(type.kind)) {
+                const auto bits = integerBitWidth(type.kind);
+                if (bits == 64) {
+                    if (type.kind == TypeKind::U64)
+                        return "call void @nexus_print_u64(i64 " + value + ")";
+                    return "call void @nexus_print_i64(i64 " + value + ")";
+                }
+                const auto wide = next();
+                emit(wide + " = " + (isSignedIntegerType(type.kind) ? "sext " : "zext ") +
+                     llvmType(type) + " " + value + " to i64");
+                return "call void @nexus_print_i64(i64 " + wide + ")";
+            }
+            if (isFloatType(type.kind)) {
+                if (type.kind == TypeKind::F64)
+                    return "call void @nexus_print_f64(double " + value + ")";
+                const auto wide = next();
+                emit(wide + " = fpext float " + value + " to double");
+                return "call void @nexus_print_f64(double " + wide + ")";
+            }
             if (type.kind == TypeKind::Bool)
                 return "call void @nexus_print_bool(i1 " + value + ")";
             if (type.kind == TypeKind::String)
@@ -602,7 +734,7 @@ namespace nexus {
         // Used by compound assignment, where the left operand is a loaded value
         // rather than an expression tree.
     std::string CG::compoundValue(TokenKind op, const Type& type, const std::string& lhs,
-                              const std::string& rhs) {
+                                  const std::string& rhs) {
         if (type.kind == TypeKind::String) {
             if (op != TokenKind::Plus)
                 throw std::runtime_error("unsupported compound assignment for string");
@@ -610,73 +742,59 @@ namespace nexus {
             emit(r + " = call ptr @nexus_str_concat(ptr " + lhs + ", ptr " + rhs + ")");
             return r;
         }
-        if (type.kind == TypeKind::F64) {
+        const std::string irType = llvmType(type);
+        if (isFloatType(type.kind)) {
             auto r = next();
             switch (op) {
-            case TokenKind::Plus:
-                emit(r + " = fadd double " + lhs + ", " + rhs);
-                return r;
-            case TokenKind::Minus:
-                emit(r + " = fsub double " + lhs + ", " + rhs);
-                return r;
-            case TokenKind::Star:
-                emit(r + " = fmul double " + lhs + ", " + rhs);
-                return r;
-            case TokenKind::Slash:
-                emit(r + " = fdiv double " + lhs + ", " + rhs);
-                return r;
-            default:
-                throw std::runtime_error("unsupported compound assignment for f64");
+            case TokenKind::Plus: emit(r + " = fadd " + irType + " " + lhs + ", " + rhs); return r;
+            case TokenKind::Minus: emit(r + " = fsub " + irType + " " + lhs + ", " + rhs); return r;
+            case TokenKind::Star: emit(r + " = fmul " + irType + " " + lhs + ", " + rhs); return r;
+            case TokenKind::Slash: emit(r + " = fdiv " + irType + " " + lhs + ", " + rhs); return r;
+            default: throw std::runtime_error("unsupported compound assignment for float");
             }
         }
-        // As in binary expressions, reserve the auxiliary SSA value before
-        // the instruction that consumes it, preserving valid LLVM numeric IDs.
-        const bool needsAuxiliary = op == TokenKind::Slash || op == TokenKind::Percent ||
-                                    op == TokenKind::ShiftLeft || op == TokenKind::ShiftRight;
-        const auto auxiliary = needsAuxiliary ? next() : std::string{};
+        if (!isIntegerType(type.kind))
+            throw std::runtime_error("unsupported compound assignment type");
+
+        const unsigned bits = integerBitWidth(type.kind);
+        const bool isSigned = isSignedIntegerType(type.kind);
+        const bool needsDivisionCheck = op == TokenKind::Slash || op == TokenKind::Percent;
+        const bool needsShiftMask = op == TokenKind::ShiftLeft || op == TokenKind::ShiftRight;
+        std::string wideL, wideR, checkedR, divisorValue, shiftAmount;
+        if (needsDivisionCheck) {
+            wideL = next(); wideR = next(); checkedR = next(); divisorValue = next();
+            const std::string extend = isSigned ? "sext" : "zext";
+            if (bits == 64) {
+                emit(wideL + " = add i64 " + lhs + ", 0");
+                emit(wideR + " = add i64 " + rhs + ", 0");
+            } else {
+                emit(wideL + " = " + extend + " " + irType + " " + lhs + " to i64");
+                emit(wideR + " = " + extend + " " + irType + " " + rhs + " to i64");
+            }
+            emit(checkedR + " = call i64 @nexus_division_check_typed(i64 " + wideL +
+                 ", i64 " + wideR + ", i64 " + std::to_string(bits) +
+                 ", i1 " + (isSigned ? "true" : "false") + ")");
+            if (bits == 64) emit(divisorValue + " = add i64 " + checkedR + ", 0");
+            else emit(divisorValue + " = trunc i64 " + checkedR + " to " + irType);
+        } else if (needsShiftMask) {
+            shiftAmount = next();
+            emit(shiftAmount + " = and " + irType + " " + rhs + ", " + std::to_string(bits - 1));
+        }
         auto r = next();
         switch (op) {
-        case TokenKind::Plus:
-            emit(r + " = add i64 " + lhs + ", " + rhs);
-            return r;
-        case TokenKind::Minus:
-            emit(r + " = sub i64 " + lhs + ", " + rhs);
-            return r;
-        case TokenKind::Star:
-            emit(r + " = mul i64 " + lhs + ", " + rhs);
-            return r;
-        case TokenKind::Slash: {
-            emit(auxiliary + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = sdiv i64 " + lhs + ", " + auxiliary);
-            return r;
-        }
-        case TokenKind::Percent: {
-            emit(auxiliary + " = call i64 @nexus_division_check(i64 " + lhs + ", i64 " + rhs + ")");
-            emit(r + " = srem i64 " + lhs + ", " + auxiliary);
-            return r;
-        }
-        case TokenKind::Ampersand:
-            emit(r + " = and i64 " + lhs + ", " + rhs);
-            return r;
-        case TokenKind::Pipe:
-            emit(r + " = or i64 " + lhs + ", " + rhs);
-            return r;
-        case TokenKind::Caret:
-            emit(r + " = xor i64 " + lhs + ", " + rhs);
-            return r;
-        case TokenKind::ShiftLeft: {
-            emit(auxiliary + " = and i64 " + rhs + ", 63");
-            emit(r + " = shl i64 " + lhs + ", " + auxiliary);
-            return r;
-        }
-        case TokenKind::ShiftRight: {
-            emit(auxiliary + " = and i64 " + rhs + ", 63");
-            emit(r + " = ashr i64 " + lhs + ", " + auxiliary);
-            return r;
-        }
-        default:
-            throw std::runtime_error("unsupported compound assignment operator");
+        case TokenKind::Plus: emit(r + " = add " + irType + " " + lhs + ", " + rhs); return r;
+        case TokenKind::Minus: emit(r + " = sub " + irType + " " + lhs + ", " + rhs); return r;
+        case TokenKind::Star: emit(r + " = mul " + irType + " " + lhs + ", " + rhs); return r;
+        case TokenKind::Slash: emit(r + " = " + (isSigned ? "sdiv " : "udiv ") + irType + " " + lhs + ", " + divisorValue); return r;
+        case TokenKind::Percent: emit(r + " = " + (isSigned ? "srem " : "urem ") + irType + " " + lhs + ", " + divisorValue); return r;
+        case TokenKind::Ampersand: emit(r + " = and " + irType + " " + lhs + ", " + rhs); return r;
+        case TokenKind::Pipe: emit(r + " = or " + irType + " " + lhs + ", " + rhs); return r;
+        case TokenKind::Caret: emit(r + " = xor " + irType + " " + lhs + ", " + rhs); return r;
+        case TokenKind::ShiftLeft: emit(r + " = shl " + irType + " " + lhs + ", " + shiftAmount); return r;
+        case TokenKind::ShiftRight: emit(r + " = " + (isSigned ? "ashr " : "lshr ") + irType + " " + lhs + ", " + shiftAmount); return r;
+        default: throw std::runtime_error("unsupported compound assignment operator");
         }
     }
+
 
 } // namespace nexus

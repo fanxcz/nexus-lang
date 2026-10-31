@@ -17,10 +17,10 @@ namespace nexus {
         if (!e)
             return std::nullopt;
 
-        if (dynamic_cast<const IntExpr*>(e))
-            return Type::i64();
-        if (dynamic_cast<const FloatExpr*>(e))
-            return Type::f64();
+        if (const auto* literal = dynamic_cast<const IntExpr*>(e))
+            return literal->literalType;
+        if (const auto* literal = dynamic_cast<const FloatExpr*>(e))
+            return literal->literalType;
         if (dynamic_cast<const BoolExpr*>(e))
             return Type::boolean();
         if (dynamic_cast<const StringExpr*>(e))
@@ -46,6 +46,8 @@ namespace nexus {
                 return std::nullopt;
             if (unary->op == TokenKind::Ampersand)
                 return Type::ptr(*inner);
+            if (unary->op == TokenKind::KwMut && inner->kind == TypeKind::Slice && inner->element)
+                return Type::mutableSlice(*inner->element);
             if (unary->op == TokenKind::Star &&
                 inner->kind == TypeKind::Pointer && inner->pointee)
                 return *inner->pointee;
@@ -63,9 +65,43 @@ namespace nexus {
         }
         if (const auto* index = dynamic_cast<const IndexExpr*>(e)) {
             const auto objectType = provenanceType(index->object.get(), env);
-            if (!objectType || objectType->kind != TypeKind::Array || !objectType->element)
+            if (!objectType ||
+                (objectType->kind != TypeKind::Array && objectType->kind != TypeKind::Slice &&
+                 objectType->kind != TypeKind::MutableSlice) ||
+                !objectType->element)
                 return std::nullopt;
             return *objectType->element;
+        }
+        if (const auto* slice = dynamic_cast<const SliceExpr*>(e)) {
+            const auto objectType = provenanceType(slice->object.get(), env);
+            if (!objectType ||
+                (objectType->kind != TypeKind::Array && objectType->kind != TypeKind::Slice &&
+                 objectType->kind != TypeKind::MutableSlice) ||
+                !objectType->element)
+                return std::nullopt;
+            return Type::slice(*objectType->element);
+        }
+        if (const auto* binary = dynamic_cast<const BinaryExpr*>(e)) {
+            switch (binary->op) {
+            case TokenKind::EqualEqual:
+            case TokenKind::BangEqual:
+            case TokenKind::Less:
+            case TokenKind::LessEqual:
+            case TokenKind::Greater:
+            case TokenKind::GreaterEqual:
+            case TokenKind::AndAnd:
+            case TokenKind::OrOr:
+                return Type::boolean();
+            default:
+                break;
+            }
+            const auto left = provenanceType(binary->lhs.get(), env);
+            if (left && isNumericType(left->kind))
+                return left;
+            const auto right = provenanceType(binary->rhs.get(), env);
+            if (right && isNumericType(right->kind))
+                return right;
+            return std::nullopt;
         }
         if (const auto* call = dynamic_cast<const CallExpr*>(e)) {
             if (const auto builtin = builtinSignature(call->callee))
@@ -197,7 +233,30 @@ namespace nexus {
             return it == env.end() ? std::nullopt : it->second.borrowedFrom;
         }
 
+        if (const auto* slice = dynamic_cast<const SliceExpr*>(e)) {
+            const auto* root = lvalueRootVariable(slice->object.get());
+            if (!root)
+                return std::nullopt;
+            const auto it = env.find(root->name);
+            if (it == env.end())
+                return std::nullopt;
+
+            // Slicing an existing slice preserves its original owner rather than
+            // replacing it with the local alias used to name the view.
+            if ((it->second.type.kind == TypeKind::Slice ||
+                 it->second.type.kind == TypeKind::MutableSlice) && it->second.borrowedFrom)
+                return it->second.borrowedFrom;
+
+            // Parameters are represented as depth-zero borrow origins. A local
+            // array instead owns its storage at the binding's lexical depth.
+            if (currentFunctionParameterIndices_.contains(root->name))
+                return BorrowOrigin{0, root->name};
+            return BorrowOrigin{it->second.scopeDepth, root->name};
+        }
+
         if (const auto* unary = dynamic_cast<const UnaryExpr*>(e)) {
+            if (unary->op == TokenKind::KwMut)
+                return pointerOrigin(unary->rhs.get(), env);
             if (unary->op == TokenKind::Ampersand) {
                 const auto* root = lvalueRootVariable(unary->rhs.get());
                 if (!root)
@@ -290,10 +349,18 @@ namespace nexus {
 
     Type SemanticAnalyzer::exprImpl(Expr* e, std::unordered_map<std::string, Symbol>& env) {
 
-        if (dynamic_cast<IntExpr*>(e))
-            return Type::i64();
-        if (dynamic_cast<FloatExpr*>(e))
-            return Type::f64();
+        if (auto* literal = dynamic_cast<IntExpr*>(e)) {
+            if (!applyNumericLiteralType(literal, literal->literalType))
+                throw std::runtime_error("integer literal is out of range for '" +
+                                         describeType(literal->literalType) + "'");
+            return literal->literalType;
+        }
+        if (auto* literal = dynamic_cast<FloatExpr*>(e)) {
+            if (!applyNumericLiteralType(literal, literal->literalType))
+                throw std::runtime_error("floating-point literal is out of range for '" +
+                                         describeType(literal->literalType) + "'");
+            return literal->literalType;
+        }
         if (dynamic_cast<BoolExpr*>(e))
             return Type::boolean();
         if (dynamic_cast<StringExpr*>(e))
@@ -305,6 +372,14 @@ namespace nexus {
             auto it = env.find(v->name);
             if (it == env.end())
                 throw std::runtime_error("unknown variable: " + v->name);
+            for (const auto& [borrowName, borrowed] : env) {
+                if (borrowName != v->name && borrowed.mutableBorrow && borrowed.borrowedFrom &&
+                    borrowed.borrowedFrom->binding == v->name) {
+                    throw std::runtime_error("cannot access '" + v->name +
+                                             "' while mutable slice '" + borrowName +
+                                             "' is active");
+                }
+            }
             return it->second.type;
         }
         if (auto* ev = dynamic_cast<EnumVariantExpr*>(e)) {
@@ -326,6 +401,7 @@ namespace nexus {
                     throw std::runtime_error("enum variant '" + qualifiedName +
                                              "' requires a payload of type '" +
                                              describeType(*selected->payload) + "'");
+                applyNumericLiteralType(ev->payload.get(), *selected->payload);
                 const auto actual = expr(ev->payload.get(), env);
                 if (!sameType(actual, *selected->payload))
                     throw std::runtime_error("enum variant '" + qualifiedName +
@@ -383,20 +459,83 @@ namespace nexus {
             }
             return Type::array(t, a->elements.size());
         }
+        if (auto* slice = dynamic_cast<SliceExpr*>(e)) {
+            if (!lvalueRootVariable(slice->object.get()))
+                throw std::runtime_error(
+                    "slice source must be a named array or slice binding, not a temporary");
+            const auto objectType = expr(slice->object.get(), env);
+            if ((objectType.kind != TypeKind::Array && objectType.kind != TypeKind::Slice &&
+                 objectType.kind != TypeKind::MutableSlice) ||
+                !objectType.element)
+                throw std::runtime_error("slice expression requires an array or slice");
+            if (objectType.kind == TypeKind::MutableSlice)
+                throw std::runtime_error(
+                    "reborrowing a mutable slice is not supported; slice its original array only when no borrow is active");
+
+            const auto startType = expr(slice->start.get(), env);
+            if (startType.kind != TypeKind::I64)
+                throw std::runtime_error("slice start bound must be i64");
+            const auto endType = expr(slice->end.get(), env);
+            if (endType.kind != TypeKind::I64)
+                throw std::runtime_error("slice end bound must be i64");
+
+            const auto start = constantIntegerValue(slice->start.get());
+            const auto end = constantIntegerValue(slice->end.get());
+            if (start && *start < 0)
+                throw std::runtime_error("slice start bound is out of bounds");
+            if (end && *end < 0)
+                throw std::runtime_error("slice end bound is out of bounds");
+            if (start && end && *start > *end)
+                throw std::runtime_error("slice start bound exceeds end bound");
+
+            if (objectType.kind == TypeKind::Array) {
+                const auto arraySize = objectType.arraySize;
+                if (start && static_cast<unsigned long long>(*start) > arraySize)
+                    throw std::runtime_error("slice start bound is out of bounds");
+                if (end && static_cast<unsigned long long>(*end) > arraySize)
+                    throw std::runtime_error("slice end bound is out of bounds");
+            }
+
+            return Type::slice(*objectType.element);
+        }
         if (auto* ix = dynamic_cast<IndexExpr*>(e)) {
             auto ot = expr(ix->object.get(), env);
-            if (ot.kind != TypeKind::Array || !ot.element)
-                throw std::runtime_error("indexing requires an array");
+            if ((ot.kind != TypeKind::Array && ot.kind != TypeKind::Slice &&
+                 ot.kind != TypeKind::MutableSlice) || !ot.element)
+                throw std::runtime_error("indexing requires an array or slice");
             if (expr(ix->index.get(), env).kind != TypeKind::I64)
-                throw std::runtime_error("array index must be i64");
-            if (constantIndexOutOfBounds(ix->index.get(), ot.arraySize))
+                throw std::runtime_error("array or slice index must be i64");
+            if (ot.kind == TypeKind::Array && constantIndexOutOfBounds(ix->index.get(), ot.arraySize))
                 throw std::runtime_error("array index is out of bounds");
             return *ot.element;
         }
         if (auto* u = dynamic_cast<UnaryExpr*>(e)) {
             auto t = expr(u->rhs.get(), env);
-            if (u->op == TokenKind::Minus && (t.kind != TypeKind::I64 && t.kind != TypeKind::F64))
-                throw std::runtime_error("unary '-' requires number");
+            if (u->op == TokenKind::KwMut) {
+                const auto* slice = dynamic_cast<const SliceExpr*>(u->rhs.get());
+                if (!slice)
+                    throw std::runtime_error("mutable borrow requires an array slice expression: mut values[start..end]");
+                const auto* root = lvalueRootVariable(slice->object.get());
+                if (!root)
+                    throw std::runtime_error("mutable slice source must be a named mutable array");
+                const auto owner = env.find(root->name);
+                if (owner == env.end() || !owner->second.mut)
+                    throw std::runtime_error("mutable slice requires an array declared with 'let mut'");
+                if (owner->second.type.kind != TypeKind::Array)
+                    throw std::runtime_error("mutable reborrowing an existing slice is not supported yet");
+                for (const auto& [borrowName, borrowed] : env) {
+                    if ((borrowed.type.kind == TypeKind::Slice ||
+                         borrowed.type.kind == TypeKind::MutableSlice) && borrowed.borrowedFrom &&
+                        borrowed.borrowedFrom->binding == root->name) {
+                        throw std::runtime_error("cannot create mutable slice while slice '" +
+                                                 borrowName + "' already borrows '" + root->name + "'");
+                    }
+                }
+                return Type::mutableSlice(*t.element);
+            }
+            if (u->op == TokenKind::Minus &&
+                (!isSignedIntegerType(t.kind) && !isFloatType(t.kind)))
+                throw std::runtime_error("unary '-' requires a signed number");
             if (u->op == TokenKind::Bang && t.kind != TypeKind::Bool)
                 throw std::runtime_error("'!' requires bool");
             if (u->op == TokenKind::Ampersand) {
@@ -420,7 +559,19 @@ namespace nexus {
         }
         if (auto* b = dynamic_cast<BinaryExpr*>(e)) {
 
-            auto l = expr(b->lhs.get(), env), r = expr(b->rhs.get(), env);
+            // Use a known non-literal operand type to contextualize a large
+            // literal before evaluating it. In particular, u64 literals above
+            // INT64_MAX cannot first be materialized as the default i64 type.
+            const auto leftHint = provenanceType(b->lhs.get(), env);
+            const auto rightHint = provenanceType(b->rhs.get(), env);
+            bool contextualized = false;
+            if (leftHint && isNumericType(leftHint->kind))
+                contextualized = applyNumericLiteralType(b->rhs.get(), *leftHint);
+            if (!contextualized && rightHint && isNumericType(rightHint->kind))
+                contextualized = applyNumericLiteralType(b->lhs.get(), *rightHint);
+
+            auto l = expr(b->lhs.get(), env);
+            auto r = expr(b->rhs.get(), env);
 
             // Smart string concatenation: "text " + 42 becomes "text " + str_i64(42).
             if (b->op == TokenKind::Plus && !sameType(l, r)) {
@@ -450,6 +601,12 @@ namespace nexus {
                 }
             }
 
+            if (!sameType(l, r)) {
+                if (isNumericType(l.kind) && applyNumericLiteralType(b->rhs.get(), l))
+                    r = expr(b->rhs.get(), env);
+                else if (isNumericType(r.kind) && applyNumericLiteralType(b->lhs.get(), r))
+                    l = expr(b->lhs.get(), env);
+            }
             if (!sameType(l, r))
                 throw std::runtime_error("binary operands have different types: left is '" +
                                          describeType(l) + "', right is '" + describeType(r) + "'");
@@ -457,8 +614,7 @@ namespace nexus {
             switch (b->op) {
 
             case TokenKind::Plus:
-                if (l.kind == TypeKind::String || l.kind == TypeKind::I64 ||
-                    l.kind == TypeKind::F64)
+                if (l.kind == TypeKind::String || isNumericType(l.kind))
                     return l;
                 throw std::runtime_error("operator + requires numbers or strings");
 
@@ -466,11 +622,13 @@ namespace nexus {
             case TokenKind::Star:
             case TokenKind::Slash:
             case TokenKind::Percent:
-                if (l.kind != TypeKind::I64 && l.kind != TypeKind::F64)
+                if (!isNumericType(l.kind))
                     throw std::runtime_error("arithmetic requires numeric types");
+                if (b->op == TokenKind::Percent && isFloatType(l.kind))
+                    throw std::runtime_error("operator '%' requires integer operands");
                 // Reject a literal zero divisor at compile time; otherwise the
                 // program dies with a hardware exception instead of a diagnostic.
-                if (l.kind == TypeKind::I64 &&
+                if (isIntegerType(l.kind) &&
                     (b->op == TokenKind::Slash || b->op == TokenKind::Percent)) {
                     if (const auto divisor = constantIntegerValue(b->rhs.get());
                         divisor && *divisor == 0)
@@ -480,8 +638,8 @@ namespace nexus {
 
             case TokenKind::EqualEqual:
             case TokenKind::BangEqual:
-                if (l.kind == TypeKind::String || l.kind == TypeKind::I64 ||
-                    l.kind == TypeKind::F64 || l.kind == TypeKind::Bool || l.kind == TypeKind::Enum)
+                if (l.kind == TypeKind::String || isNumericType(l.kind) ||
+                    l.kind == TypeKind::Bool || l.kind == TypeKind::Enum)
                     return Type::boolean();
                 throw std::runtime_error("equality is unsupported for this type");
 
@@ -491,7 +649,7 @@ namespace nexus {
             case TokenKind::GreaterEqual:
                 if (l.kind == TypeKind::String)
                     throw std::runtime_error("string ordering is not supported; use == or !=");
-                if (l.kind == TypeKind::I64 || l.kind == TypeKind::F64)
+                if (isNumericType(l.kind))
                     return Type::boolean();
                 throw std::runtime_error("comparison requires numeric types");
 
@@ -506,20 +664,31 @@ namespace nexus {
             case TokenKind::Caret:
             case TokenKind::ShiftLeft:
             case TokenKind::ShiftRight:
-                if (l.kind != TypeKind::I64)
-                    throw std::runtime_error("bitwise operators require i64 operands");
-                return Type::i64();
+                if (!isIntegerType(l.kind))
+                    throw std::runtime_error("bitwise operators require integer operands");
+                return l;
 
             default:
                 break;
             }
         }
         if (auto* c = dynamic_cast<CallExpr*>(e)) {
+            if (c->callee == "len") {
+                if (c->args.size() != 1)
+                    throw std::runtime_error("len expects exactly one argument");
+                const auto argumentType = expr(c->args[0].get(), env);
+                if (argumentType.kind != TypeKind::Array &&
+                    argumentType.kind != TypeKind::Slice &&
+                    argumentType.kind != TypeKind::MutableSlice &&
+                    argumentType.kind != TypeKind::String)
+                    throw std::runtime_error("len expects a string, array, or slice");
+                return Type::i64();
+            }
             if (c->callee == "print") {
                 if (c->args.size() != 1)
                     throw std::runtime_error("print expects one argument");
                 auto t = expr(c->args[0].get(), env);
-                if (t.kind != TypeKind::I64 && t.kind != TypeKind::F64 &&
+                if (!isNumericType(t.kind) &&
                     t.kind != TypeKind::Bool && t.kind != TypeKind::String)
                     throw std::runtime_error("print: unsupported type");
                 return Type::void_();
@@ -528,6 +697,9 @@ namespace nexus {
                 if (bi->params.size() != c->args.size())
                     throw std::runtime_error("wrong argument count for builtin " + c->callee);
                 for (size_t i = 0; i < c->args.size(); ++i) {
+                    if (!applyNumericLiteralType(c->args[i].get(), bi->params[i])) {
+                        // Non-literal values retain strict, exact type matching.
+                    }
                     auto actual = expr(c->args[i].get(), env);
                     const bool memoryAddressArgument =
                         ((c->callee == "mem_read" || c->callee == "mem_set") && i == 0) ||
@@ -554,7 +726,41 @@ namespace nexus {
             if (f->params.size() != c->args.size())
                 throw std::runtime_error("wrong argument count for " + c->callee);
             for (size_t i = 0; i < c->args.size(); ++i) {
+                applyNumericLiteralType(c->args[i].get(), f->params[i].type);
                 auto actual = expr(c->args[i].get(), env);
+                const bool currentMutableSlice =
+                    f->params[i].type.kind == TypeKind::MutableSlice;
+                const bool currentReadOnlySlice = f->params[i].type.kind == TypeKind::Slice;
+                if (currentMutableSlice) {
+                    const auto* mutableBorrow = dynamic_cast<const UnaryExpr*>(c->args[i].get());
+                    const auto* slice = mutableBorrow && mutableBorrow->op == TokenKind::KwMut
+                                            ? dynamic_cast<const SliceExpr*>(mutableBorrow->rhs.get())
+                                            : nullptr;
+                    if (!slice || !lvalueRootVariable(slice->object.get()))
+                        throw std::runtime_error("argument '" + f->params[i].name +
+                                                 "' requires an explicit mutable slice: mut array[start..end]");
+                }
+                if (currentMutableSlice || currentReadOnlySlice) {
+                    const auto currentOrigin = pointerOrigin(c->args[i].get(), env);
+                    if (currentOrigin) {
+                        for (std::size_t previous = 0; previous < i; ++previous) {
+                            const auto previousKind = f->params[previous].type.kind;
+                            if (previousKind != TypeKind::Slice &&
+                                previousKind != TypeKind::MutableSlice)
+                                continue;
+                            if (!currentMutableSlice &&
+                                previousKind != TypeKind::MutableSlice)
+                                continue;
+                            const auto previousOrigin = pointerOrigin(c->args[previous].get(), env);
+                            if (previousOrigin &&
+                                previousOrigin->binding == currentOrigin->binding) {
+                                throw std::runtime_error(
+                                    "conflicting shared and mutable slices of '" +
+                                    currentOrigin->binding + "' passed to one call");
+                            }
+                        }
+                    }
+                }
                 if (!sameType(actual, f->params[i].type))
                     throw std::runtime_error("argument " + std::to_string(i + 1) + " ('" +
                                              f->params[i].name + "') of '" + c->callee +
@@ -610,6 +816,7 @@ namespace nexus {
             }
             for (auto& [name, x] : si->fields) {
                 auto* f = fieldOf(s, name);
+                applyNumericLiteralType(x.get(), f->type);
                 auto actual = expr(x.get(), env);
                 if (!sameType(actual, f->type))
                     throw std::runtime_error("field '" + name + "' of '" + si->typeName +

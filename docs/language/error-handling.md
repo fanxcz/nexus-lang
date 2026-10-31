@@ -48,7 +48,7 @@ fn main() {
 }
 ```
 
-The current runtime representation supports `i64`, `f64`, `bool`, `string`, and pointer payloads. Struct, array, nested enum, and void payloads are rejected. This is not a generic algebraic data type implementation; use concrete enum declarations with a single supported payload type.
+The current LLVM enum representation supports fixed-width integer, `f32`, `f64`, `bool`, `string`, and pointer payloads. Struct, array, nested enum, and void payloads are rejected. This is not a generic algebraic data type implementation; use concrete enum declarations with a single supported payload type.
 
 ## Safe helpers for concrete Option and Result enums
 

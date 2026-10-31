@@ -616,6 +616,32 @@ if (NEXUS_BUILD_TESTS)
     set_tests_properties(nexus_enum_payloads_smoke PROPERTIES
         ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
         TIMEOUT 45)
+    add_test(NAME nexus_fixed_width_types_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/fixed_width_types_smoke.cmake)
+    set_tests_properties(nexus_fixed_width_types_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 60)
+    add_test(NAME nexus_slice_llvm_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/slice_llvm_smoke.cmake)
+    set_tests_properties(nexus_slice_llvm_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 60)
+    add_test(NAME nexus_mutable_slice_smoke
+        COMMAND ${CMAKE_COMMAND}
+            -DNEXUS_BIN=$<TARGET_FILE:nexus>
+            -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
+            -P ${CMAKE_SOURCE_DIR}/tests/mutable_slice_smoke.cmake)
+    set_tests_properties(nexus_mutable_slice_smoke PROPERTIES
+        ENVIRONMENT "NEXUS_CXX=${NEXUS_SELFHOST_CXX}"
+        TIMEOUT 60)
     add_test(NAME nexus_stdlib_error_helpers_smoke
         COMMAND ${CMAKE_COMMAND}
             -DNEXUS_BIN=$<TARGET_FILE:nexus>

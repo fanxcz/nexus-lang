@@ -228,10 +228,16 @@ namespace nexus {
                     const auto describeIndexedType = [&](const auto& self,
                                                          const Type& type) -> std::string {
                         switch (type.kind) {
-                        case TypeKind::I64:
-                            return "i64";
-                        case TypeKind::F64:
-                            return "f64";
+                        case TypeKind::I8: return "i8";
+                        case TypeKind::I16: return "i16";
+                        case TypeKind::I32: return "i32";
+                        case TypeKind::I64: return "i64";
+                        case TypeKind::U8: return "u8";
+                        case TypeKind::U16: return "u16";
+                        case TypeKind::U32: return "u32";
+                        case TypeKind::U64: return "u64";
+                        case TypeKind::F32: return "f32";
+                        case TypeKind::F64: return "f64";
                         case TypeKind::Bool:
                             return "bool";
                         case TypeKind::String:
@@ -248,6 +254,11 @@ namespace nexus {
                             return type.element ? "[" + self(self, *type.element) + "; " +
                                                       std::to_string(type.arraySize) + "]"
                                                 : "[unknown]";
+                        case TypeKind::Slice:
+                            return type.element ? "[]" + self(self, *type.element) : "[]unknown";
+                        case TypeKind::MutableSlice:
+                            return type.element ? "mut []" + self(self, *type.element)
+                                                : "mut []unknown";
                         case TypeKind::Unknown:
                             return "inferred";
                         }
@@ -882,10 +893,16 @@ namespace nexus {
 
                 const auto describeType = [&](const auto& self, const Type& type) -> std::string {
                     switch (type.kind) {
-                    case TypeKind::I64:
-                        return "i64";
-                    case TypeKind::F64:
-                        return "f64";
+                    case TypeKind::I8: return "i8";
+                    case TypeKind::I16: return "i16";
+                    case TypeKind::I32: return "i32";
+                    case TypeKind::I64: return "i64";
+                    case TypeKind::U8: return "u8";
+                    case TypeKind::U16: return "u16";
+                    case TypeKind::U32: return "u32";
+                    case TypeKind::U64: return "u64";
+                    case TypeKind::F32: return "f32";
+                    case TypeKind::F64: return "f64";
                     case TypeKind::Bool:
                         return "bool";
                     case TypeKind::String:
@@ -904,6 +921,11 @@ namespace nexus {
                         return type.element ? "[" + self(self, *type.element) + "; " +
                                                   std::to_string(type.arraySize) + "]"
                                             : "[unknown]";
+                    case TypeKind::Slice:
+                        return type.element ? "[]" + self(self, *type.element) : "[]unknown";
+                    case TypeKind::MutableSlice:
+                        return type.element ? "mut []" + self(self, *type.element)
+                                            : "mut []unknown";
                     }
                     return "unknown";
                 };
@@ -1286,10 +1308,16 @@ namespace nexus {
                                 const auto describeType = [&](const auto& self,
                                                               const Type& type) -> std::string {
                                     switch (type.kind) {
-                                    case TypeKind::I64:
-                                        return "i64";
-                                    case TypeKind::F64:
-                                        return "f64";
+                                    case TypeKind::I8: return "i8";
+                                    case TypeKind::I16: return "i16";
+                                    case TypeKind::I32: return "i32";
+                                    case TypeKind::I64: return "i64";
+                                    case TypeKind::U8: return "u8";
+                                    case TypeKind::U16: return "u16";
+                                    case TypeKind::U32: return "u32";
+                                    case TypeKind::U64: return "u64";
+                                    case TypeKind::F32: return "f32";
+                                    case TypeKind::F64: return "f64";
                                     case TypeKind::Bool:
                                         return "bool";
                                     case TypeKind::String:
@@ -1308,6 +1336,12 @@ namespace nexus {
                                                    ? "[" + self(self, *type.element) + "; " +
                                                          std::to_string(type.arraySize) + "]"
                                                    : "[unknown]";
+                                    case TypeKind::Slice:
+                                        return type.element ? "[]" + self(self, *type.element)
+                                                            : "[]unknown";
+                                    case TypeKind::MutableSlice:
+                                        return type.element ? "mut []" + self(self, *type.element)
+                                                            : "mut []unknown";
                                     case TypeKind::Unknown:
                                         return "inferred";
                                     }
@@ -1398,10 +1432,16 @@ namespace nexus {
                                 const auto describeWorkspaceHoverType =
                                     [&](const auto& self, const Type& type) -> std::string {
                                     switch (type.kind) {
-                                    case TypeKind::I64:
-                                        return "i64";
-                                    case TypeKind::F64:
-                                        return "f64";
+                                    case TypeKind::I8: return "i8";
+                                    case TypeKind::I16: return "i16";
+                                    case TypeKind::I32: return "i32";
+                                    case TypeKind::I64: return "i64";
+                                    case TypeKind::U8: return "u8";
+                                    case TypeKind::U16: return "u16";
+                                    case TypeKind::U32: return "u32";
+                                    case TypeKind::U64: return "u64";
+                                    case TypeKind::F32: return "f32";
+                                    case TypeKind::F64: return "f64";
                                     case TypeKind::Bool:
                                         return "bool";
                                     case TypeKind::String:
@@ -1420,6 +1460,12 @@ namespace nexus {
                                                    ? "[" + self(self, *type.element) + "; " +
                                                          std::to_string(type.arraySize) + "]"
                                                    : "[unknown]";
+                                    case TypeKind::Slice:
+                                        return type.element ? "[]" + self(self, *type.element)
+                                                            : "[]unknown";
+                                    case TypeKind::MutableSlice:
+                                        return type.element ? "mut []" + self(self, *type.element)
+                                                            : "mut []unknown";
                                     case TypeKind::Unknown:
                                         return "inferred";
                                     }

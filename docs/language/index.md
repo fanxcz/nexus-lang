@@ -85,8 +85,8 @@ fn main() {
 
 Generic type parameters, traits, closures, methods/impl blocks, async/await,
 attributes, variadic FFI, slices, and general-purpose function types are not
-implemented. Enum variants can carry one scalar payload (i64, f64, bool,
-string, or pointer); generic/nested payloads are unsupported. The ? operator
+implemented. Enum variants can carry one scalar payload (fixed-width integer,
+f32, f64, bool, string, or pointer); generic/nested payloads are unsupported. The ? operator
 works for concrete matching Some(T)/None and Ok(T)/Err enums on the LLVM
 backend when the enclosing function returns that same enum type. Generic
 Option<T> and Result<T, E> and cross-enum error conversion are not implemented.

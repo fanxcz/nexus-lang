@@ -113,15 +113,31 @@ namespace nexus {
         }
         if (auto* a = dynamic_cast<const IndexAssignStmt*>(s)) {
             Type ot = typeOf(a->object.get());
-            if (ot.kind != TypeKind::Array || !ot.element)
-                throw std::runtime_error("index assignment requires array");
+            if ((ot.kind != TypeKind::Array && ot.kind != TypeKind::MutableSlice) ||
+                !ot.element)
+                throw std::runtime_error("index assignment requires a mutable array or mutable slice");
             auto idx = expr(a->index.get());
-            emit("call void @nexus_bounds_check(i64 " + idx + ", i64 " +
-                 std::to_string(ot.arraySize) + ")");
-            auto base = addressOf(a->object.get());
-            auto addr = next();
-            emit(addr + " = getelementptr inbounds " + llvmType(ot) + ", ptr " + base +
-                 ", i64 0, i64 " + idx);
+            std::string base;
+            std::string address;
+            if (ot.kind == TypeKind::Array) {
+                base = addressOf(a->object.get());
+                emit("call void @nexus_bounds_check(i64 " + idx + ", i64 " +
+                     std::to_string(ot.arraySize) + ")");
+                address = next();
+                emit(address + " = getelementptr inbounds " + llvmType(ot) + ", ptr " + base +
+                     ", i64 0, i64 " + idx);
+            } else {
+                const auto sliceValue = expr(a->object.get());
+                base = next();
+                emit(base + " = extractvalue { ptr, i64 } " + sliceValue + ", 0");
+                const auto length = next();
+                emit(length + " = extractvalue { ptr, i64 } " + sliceValue + ", 1");
+                emit("call void @nexus_bounds_check(i64 " + idx + ", i64 " + length + ")");
+                address = next();
+                emit(address + " = getelementptr inbounds " + llvmType(*ot.element) +
+                     ", ptr " + base + ", i64 " + idx);
+            }
+            auto addr = address;
             if (a->op == TokenKind::Equal) {
                 auto v = expr(a->value.get());
                 emit("store " + llvmType(*ot.element) + " " + v + ", ptr " + addr);
@@ -405,6 +421,18 @@ namespace nexus {
                                         auto c = next();
                                         emit(c + " = trunc i64 " + p + " to i1");
                                         bindValue = c;
+                                    } else if (isIntegerType(bindType.kind) &&
+                                               bindType.kind != TypeKind::I64 &&
+                                               bindType.kind != TypeKind::U64) {
+                                        auto c = next();
+                                        emit(c + " = trunc i64 " + p + " to " + llvmType(bindType));
+                                        bindValue = c;
+                                    } else if (bindType.kind == TypeKind::F32) {
+                                        auto bits = next();
+                                        emit(bits + " = trunc i64 " + p + " to i32");
+                                        auto c = next();
+                                        emit(c + " = bitcast i32 " + bits + " to float");
+                                        bindValue = c;
                                     } else if (bindType.kind == TypeKind::F64) {
                                         auto c = next();
                                         emit(c + " = bitcast i64 " + p + " to double");
@@ -441,8 +469,12 @@ namespace nexus {
                         auto upper = expr(arm.rangeEnd.get());
                         auto lowerOk = next();
                         auto upperOk = next();
-                        emit(lowerOk + " = icmp sge i64 " + valueTag + ", " + pat);
-                        emit(upperOk + " = icmp sle i64 " + valueTag + ", " + upper);
+                        const std::string irType = llvmType(vt);
+                        const std::string order = isSignedIntegerType(vt.kind) ? "s" : "u";
+                        emit(lowerOk + " = icmp " + order + "ge " + irType + " " + valueTag +
+                             ", " + pat);
+                        emit(upperOk + " = icmp " + order + "le " + irType + " " + valueTag +
+                             ", " + upper);
                         auto cmp = next();
                         emit(cmp + " = and i1 " + lowerOk + ", " + upperOk);
                         emit("br i1 " + cmp + ", label %" + matched + ", label %" +
@@ -451,8 +483,10 @@ namespace nexus {
                         auto cmp = next();
                         if (vt.kind == TypeKind::Bool)
                             emit(cmp + " = icmp eq i1 " + value + ", " + pat);
-                        else
+                        else if (vt.kind == TypeKind::Enum)
                             emit(cmp + " = icmp eq i64 " + valueTag + ", " + pat);
+                        else
+                            emit(cmp + " = icmp eq " + llvmType(vt) + " " + valueTag + ", " + pat);
                         emit("br i1 " + cmp + ", label %" + matched + ", label %" +
                              tests[k]);
                     }

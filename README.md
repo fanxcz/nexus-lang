@@ -2,7 +2,7 @@
 
 ![NEXUS N mark](docs/assets/images/nexus-n-2026.svg)
 
-**NEXUS is an open-source programming language for native desktop applications, command-line utilities, and developer tools.** Its compiler is written in C++20. It includes a built-in x86-64 native backend for a documented subset of the language and an LLVM-based compilation path for broader support. Graphics and games are supported use cases, not the project's only purpose.
+**NEXUS is an open-source, statically checked language for native applications, developer tools, and game prototypes.** Its compiler is written in C++20 and combines a built-in x86-64 backend for a documented subset with an LLVM-based path for broader language support. The current development tree includes fixed-width numeric types and checked read-only/mutable slices. Graphics support includes SDL-based 2D helpers and an experimental compatibility-OpenGL 3D path; a production voxel engine is still roadmap work.
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
@@ -19,7 +19,11 @@
 
 NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
 
-Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Games remain a supported area for graphics and runtime experimentation.
+Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Game development is an active direction. The repository has SDL-backed 2D helpers and an experimental compatibility-OpenGL 3D path; it does not yet provide production chunk meshing, GPU mesh batching, modern shader management, job scheduling, terrain noise, or compressed chunk persistence. See the [3D and voxel development status](docs/runtime/voxel-roadmap.md).
+
+## Unreleased compiler improvements
+
+The current development tree adds fixed-width `i8`/`i16`/`i32`, `u8`/`u16`/`u32`/`u64`, `f32`, and executable LLVM slices. Read-only `[]T` views support checked indexing and function parameters/returns; explicit exclusive `mut []T` views allow checked indexed mutation while enforcing conservative lexical borrowing rules. Programs using these features select LLVM with `--backend auto`; the native x86-64 backend intentionally rejects slice and wider numeric types. See the [type reference](docs/language/types.md) and [voxel-game roadmap](docs/runtime/voxel-roadmap.md).
 
 ## What's new in 2.2.0
 

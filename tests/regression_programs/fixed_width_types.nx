@@ -1,0 +1,133 @@
+// Regression coverage for fixed-width integer and floating-point types.
+struct NumericRecord {
+    signed: i16
+    unsigned: u32
+    precise: f32
+    wide: u64
+}
+
+enum NumericValue {
+    Small(i16),
+    Real(f32),
+    Wide(u64)
+}
+
+fn add_i8(left: i8, right: i8) -> i8 {
+    return left + right
+}
+
+fn half_u32(value: u32) -> u32 {
+    return value / 2
+}
+
+fn scale_f32(value: f32) -> f32 {
+    return value * 2.0
+}
+
+fn sum_pair(values: [i16; 2]) -> i16 {
+    return values[0] + values[1]
+}
+
+fn main() {
+    let min_i8: i8 = -128
+    let max_i8: i8 = 127
+    let min_i16: i16 = -32768
+    let max_i16: i16 = 32767
+    let min_i32: i32 = -2147483648
+    let max_i32: i32 = 2147483647
+    let signed_i64: i64 = -9223372036854775808
+
+    let max_u8: u8 = 255
+    let max_u16: u16 = 65535
+    let max_u32: u32 = 4294967295
+    let max_u64: u64 = 18446744073709551615
+
+    let precise_f32: f32 = 1.25
+    let precise_f64: f64 = 2.5
+
+    print(min_i8)
+    print(max_i8)
+    print(min_i16)
+    print(max_i16)
+    print(min_i32)
+    print(max_i32)
+    print(signed_i64)
+    print(max_u8)
+    print(max_u16)
+    print(max_u32)
+    print(max_u64)
+    print(precise_f32 + 2.25)
+    print(precise_f64 * 2.0)
+
+    print(add_i8(10, 20))
+    print(half_u32(4000000000))
+    print(scale_f32(1.75))
+    print(max_u64 > 9223372036854775808)
+
+    let nested_wide = max_u64 + 9223372036854775808
+    print(nested_wide == 9223372036854775807)
+    let mut signed_compound: i16 = -7
+    signed_compound /= 2
+    print(signed_compound)
+    let mut unsigned_compound: u32 = 4000000000
+    unsigned_compound /= 4
+    print(unsigned_compound)
+    let signed_shift: i8 = -8
+    let unsigned_shift: u8 = 128
+    print(signed_shift >> 1)
+    print(unsigned_shift >> 1)
+    let bits: u16 = 255
+    print(bits & 15)
+
+    let record = NumericRecord {
+        signed: -1234,
+        unsigned: 4000000000,
+        precise: 1.5,
+        wide: 18446744073709551615
+    }
+    print(record.signed)
+    print(record.unsigned)
+    print(record.precise)
+    print(record.wide)
+
+    let values: [i16; 2] = [-12, 34]
+    print(values[0])
+    print(values[1])
+    let floats: [f32; 2] = [0.5, 1.25]
+    print(floats[0] + floats[1])
+    print(sum_pair([10, 20]))
+
+    let small = NumericValue::Small(-321)
+    match small {
+        NumericValue::Small(value) => { print(value) }
+        _ => { print(0) }
+    }
+    let real = NumericValue::Real(1.5)
+    match real {
+        NumericValue::Real(value) => { print(value) }
+        _ => { print(0.0) }
+    }
+    let wide = NumericValue::Wide(18446744073709551615)
+    match wide {
+        NumericValue::Wide(value) => { print(value) }
+        _ => { print(0) }
+    }
+
+    let signed_match: i16 = -1
+    match signed_match {
+        -2..0 => { print("signed narrow range") }
+        _ => { print("signed range failed") }
+    }
+    let unsigned_match: u64 = 18446744073709551615
+    match unsigned_match {
+        18446744073709551614..18446744073709551615 => {
+            print("unsigned wide range")
+        }
+        _ => { print("unsigned range failed") }
+    }
+    let narrow_match: u8 = 255
+    match narrow_match {
+        255 => { print("narrow integer pattern") }
+        _ => { print("narrow pattern failed") }
+    }
+}

@@ -20,7 +20,7 @@ This example demonstrates the declaration/call shape only. It will link and run 
 
 ## Current type limits
 
-The parser's type system supports `i64`, `f64`, `bool`, `string`, `void`, pointers written as `*T`, fixed arrays, and user-defined structs/enums. It does not define C-width aliases such as `i8`, `u8`, `i32`, or `usize` as distinct ABI types, and it does not provide a standard C-string type.
+The parser's type system supports fixed-width scalars (`i8`/`i16`/`i32`/`i64`, `u8`/`u16`/`u32`/`u64`, `f32`/`f64`), `bool`, `string`, `void`, pointers written as `*T`, fixed arrays, and user-defined structs/enums. Integer aliases `int`, `isize` and `usize` remain aliases of `i64`, not target-sized C ABI types. Distinct scalar widths do not by themselves make a declaration a complete or automatically verified C binding: struct layout, pointer lifetime and string representation remain the caller's responsibility. The language still does not provide a standard C-string type.
 
 Do not assume the in-memory layout of a NEXUS struct is automatically compatible with an arbitrary C struct. The language currently lacks `#[repr(C)]` and compile-time layout assertions.
 

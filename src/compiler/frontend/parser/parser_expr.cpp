@@ -56,7 +56,7 @@ namespace nexus {
         if (cur().kind == TokenKind::Integer) {
             const Token literal = expect(TokenKind::Integer);
             try {
-                return std::make_unique<IntExpr>(std::stoll(removeNumericSeparators(literal.text)));
+                return std::make_unique<IntExpr>(std::stoull(removeNumericSeparators(literal.text)));
             } catch (const std::exception&) {
                 throw std::runtime_error("integer literal out of range at " +
                                          std::to_string(literal.pos.line) + ":" +
@@ -206,9 +206,19 @@ namespace nexus {
             }
             if (accept(TokenKind::LBracket)) {
                 GroupGuard group(groupingDepth_);
-                auto idx = parseExpr();
-                expect(TokenKind::RBracket);
-                e = std::make_unique<IndexExpr>(std::move(e), std::move(idx));
+                auto first = parseExpr();
+                if (accept(TokenKind::Range)) {
+                    // Slice ranges are half-open: `values[start..end]`.
+                    // Both bounds are required in this parser-only increment;
+                    // open-ended forms will be considered with slice semantics.
+                    auto last = parseExpr();
+                    expect(TokenKind::RBracket);
+                    e = std::make_unique<SliceExpr>(std::move(e), std::move(first),
+                                                    std::move(last));
+                } else {
+                    expect(TokenKind::RBracket);
+                    e = std::make_unique<IndexExpr>(std::move(e), std::move(first));
+                }
                 continue;
             }
             if (accept(TokenKind::Question)) {
@@ -235,7 +245,7 @@ namespace nexus {
             if (cur().kind == TokenKind::Integer &&
                 removeNumericSeparators(cur().text) == "9223372036854775808") {
                 ++i_;
-                return std::make_unique<IntExpr>(std::numeric_limits<long long>::min());
+                return std::make_unique<IntExpr>(std::uint64_t{1} << 63, true);
             }
             return std::make_unique<UnaryExpr>(TokenKind::Minus, parseUnary());
         }
@@ -243,6 +253,8 @@ namespace nexus {
             return std::make_unique<UnaryExpr>(TokenKind::Bang, parseUnary());
         if (accept(TokenKind::Ampersand))
             return std::make_unique<UnaryExpr>(TokenKind::Ampersand, parseUnary());
+        if (accept(TokenKind::KwMut))
+            return std::make_unique<UnaryExpr>(TokenKind::KwMut, parseUnary());
         if (accept(TokenKind::Star))
             return std::make_unique<UnaryExpr>(TokenKind::Star, parseUnary());
         return parsePostfix(parsePrimary());

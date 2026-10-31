@@ -30,6 +30,9 @@ static char* nexus_strdup(const char* src) {
 void nexus_print_i64(int64_t x) {
     printf("%lld\n", (long long)x);
 }
+void nexus_print_u64(uint64_t x) {
+    printf("%llu\n", (unsigned long long)x);
+}
 void nexus_print_f64(double x) {
     printf("%.15g\n", x);
 }
@@ -54,6 +57,14 @@ void nexus_bounds_check(int64_t index, int64_t size) {
         exit(1);
     }
 }
+void nexus_slice_bounds_check(int64_t start, int64_t end, int64_t length) {
+    if (start < 0 || end < start || end > length) {
+        fprintf(stderr,
+                "Nexus runtime error: invalid slice range [%lld..%lld] for length %lld\n",
+                (long long)start, (long long)end, (long long)length);
+        exit(1);
+    }
+}
 int64_t nexus_division_check(int64_t dividend, int64_t divisor) {
     if (divisor == 0) {
         fprintf(stderr, "NEXUS runtime error: division by zero\n");
@@ -62,6 +73,21 @@ int64_t nexus_division_check(int64_t dividend, int64_t divisor) {
     if (dividend == INT64_MIN && divisor == -1) {
         fprintf(stderr, "NEXUS runtime error: signed integer division overflow\n");
         exit(1);
+    }
+    return divisor;
+}
+int64_t nexus_division_check_typed(
+    int64_t dividend, int64_t divisor, int64_t bits, bool is_signed) {
+    if (divisor == 0) {
+        fprintf(stderr, "NEXUS runtime error: division by zero\n");
+        exit(1);
+    }
+    if (is_signed && bits >= 2 && bits <= 64) {
+        const int64_t minimum = bits == 64 ? INT64_MIN : -(INT64_C(1) << (bits - 1));
+        if (dividend == minimum && divisor == -1) {
+            fprintf(stderr, "NEXUS runtime error: signed integer division overflow\n");
+            exit(1);
+        }
     }
     return divisor;
 }

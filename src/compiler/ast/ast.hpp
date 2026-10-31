@@ -1,6 +1,7 @@
 #pragma once
 #include "lexer/token.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -8,7 +9,50 @@
 
 namespace nexus {
 
-    enum class TypeKind { I64, F64, Bool, String, Void, Pointer, Struct, Enum, Array, Unknown };
+    enum class TypeKind {
+        I8, I16, I32, I64,
+        U8, U16, U32, U64,
+        F32, F64,
+        Bool, String, Void, Pointer, Struct, Enum, Array, Slice, MutableSlice, Unknown
+    };
+
+    inline bool isIntegerType(TypeKind kind) {
+        switch (kind) {
+        case TypeKind::I8: case TypeKind::I16: case TypeKind::I32: case TypeKind::I64:
+        case TypeKind::U8: case TypeKind::U16: case TypeKind::U32: case TypeKind::U64:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    inline bool isSignedIntegerType(TypeKind kind) {
+        return kind == TypeKind::I8 || kind == TypeKind::I16 ||
+               kind == TypeKind::I32 || kind == TypeKind::I64;
+    }
+
+    inline bool isUnsignedIntegerType(TypeKind kind) {
+        return kind == TypeKind::U8 || kind == TypeKind::U16 ||
+               kind == TypeKind::U32 || kind == TypeKind::U64;
+    }
+
+    inline bool isFloatType(TypeKind kind) {
+        return kind == TypeKind::F32 || kind == TypeKind::F64;
+    }
+
+    inline bool isNumericType(TypeKind kind) {
+        return isIntegerType(kind) || isFloatType(kind);
+    }
+
+    inline unsigned integerBitWidth(TypeKind kind) {
+        switch (kind) {
+        case TypeKind::I8: case TypeKind::U8: return 8;
+        case TypeKind::I16: case TypeKind::U16: return 16;
+        case TypeKind::I32: case TypeKind::U32: return 32;
+        case TypeKind::I64: case TypeKind::U64: return 64;
+        default: return 0;
+        }
+    }
 
     struct Type {
 
@@ -22,12 +66,16 @@ namespace nexus {
 
         std::size_t arraySize = 0;
 
-        static Type i64() {
-            return {TypeKind::I64, {}, {}, {}, 0};
-        }
-        static Type f64() {
-            return {TypeKind::F64, {}, {}, {}, 0};
-        }
+        static Type i8() { return {TypeKind::I8, {}, {}, {}, 0}; }
+        static Type i16() { return {TypeKind::I16, {}, {}, {}, 0}; }
+        static Type i32() { return {TypeKind::I32, {}, {}, {}, 0}; }
+        static Type i64() { return {TypeKind::I64, {}, {}, {}, 0}; }
+        static Type u8() { return {TypeKind::U8, {}, {}, {}, 0}; }
+        static Type u16() { return {TypeKind::U16, {}, {}, {}, 0}; }
+        static Type u32() { return {TypeKind::U32, {}, {}, {}, 0}; }
+        static Type u64() { return {TypeKind::U64, {}, {}, {}, 0}; }
+        static Type f32() { return {TypeKind::F32, {}, {}, {}, 0}; }
+        static Type f64() { return {TypeKind::F64, {}, {}, {}, 0}; }
         static Type boolean() {
             return {TypeKind::Bool, {}, {}, {}, 0};
         }
@@ -55,6 +103,18 @@ namespace nexus {
             x.name = std::move(n);
             return x;
         }
+        static Type slice(Type t) {
+            Type x;
+            x.kind = TypeKind::Slice;
+            x.element = std::make_shared<Type>(std::move(t));
+            return x;
+        }
+        static Type mutableSlice(Type t) {
+            Type x;
+            x.kind = TypeKind::MutableSlice;
+            x.element = std::make_shared<Type>(std::move(t));
+            return x;
+        }
         static Type array(Type t, std::size_t n) {
             Type x;
             x.kind = TypeKind::Array;
@@ -79,6 +139,9 @@ namespace nexus {
             return a.arraySize == b.arraySize && a.element && b.element &&
                    sameType(*a.element, *b.element);
 
+        if (a.kind == TypeKind::Slice || a.kind == TypeKind::MutableSlice)
+            return a.element && b.element && sameType(*a.element, *b.element);
+
         return true;
     }
 
@@ -97,12 +160,22 @@ namespace nexus {
     };
 
     struct IntExpr : Expr {
-        long long value;
-        explicit IntExpr(long long v) : value(v) {}
+        // Store the magnitude unsigned so u64 literals can use the full range.
+        // Negative literals are represented by `negative` only for the signed
+        // minimum-value case, which cannot be parsed as a positive i64 first.
+        std::uint64_t value;
+        bool negative = false;
+        // True when this literal is the magnitude operand of a contextual unary '-'.
+        // It may be one larger than the positive maximum of the signed target type.
+        bool negativeMagnitude = false;
+        Type literalType = Type::i64();
+        explicit IntExpr(std::uint64_t v, bool isNegative = false)
+            : value(v), negative(isNegative) {}
     };
 
     struct FloatExpr : Expr {
         double value;
+        Type literalType = Type::f64();
         explicit FloatExpr(double v) : value(v) {}
     };
 
@@ -140,6 +213,15 @@ namespace nexus {
     struct IndexExpr : Expr {
         Expr::Ptr object, index;
         IndexExpr(Expr::Ptr o, Expr::Ptr i) : object(std::move(o)), index(std::move(i)) {}
+    };
+
+    // A bounded slice expression, e.g. `values[start..end]`. The upper
+    // bound is exclusive, matching NEXUS's existing half-open for-ranges.
+    // Lowered to a non-owning { pointer, length } pair by the LLVM backend.
+    struct SliceExpr : Expr {
+        Expr::Ptr object, start, end;
+        SliceExpr(Expr::Ptr o, Expr::Ptr s, Expr::Ptr e)
+            : object(std::move(o)), start(std::move(s)), end(std::move(e)) {}
     };
 
     struct UnaryExpr : Expr {

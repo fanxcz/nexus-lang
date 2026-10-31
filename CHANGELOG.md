@@ -11,6 +11,29 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Added
 
+- Added explicit exclusive mutable slices using `mut []T` and `mut array[start..end]`.
+  Mutable slices support indexed writes (including compound assignment), function
+  parameters and `len` on the LLVM backend. The semantic analyzer rejects immutable
+  owners, overlapping active borrows, accesses to an owner while it is borrowed,
+  shared/mutable borrow conflicts, and returning a mutable slice. Native codegen
+  continues to reject slice types and automatic backend selection uses LLVM.
+
+- Fixed-width numeric scalar types: signed `i8`/`i16`/`i32`, unsigned
+  `u8`/`u16`/`u32`/`u64`, and `f32`, alongside the existing `i64`/`f64`.
+  LLVM lowering preserves integer width and signedness for arithmetic,
+  comparisons, division, shifts, struct/array fields, and scalar enum payloads.
+  Numeric literals adopt an expected numeric type when representable; ordinary
+  variable-to-variable conversions remain explicit. The built-in native backend
+  continues to reject these types and `--backend auto` uses LLVM for them.
+
+- Added executable slice support on the LLVM backend. `[]T` values use a
+  `{ ptr, i64 }` representation, support half-open slicing of named arrays and
+  existing slices, dynamic bounds checks, indexed reads, polymorphic `len` for
+  strings/arrays/slices, and by-value function parameters/returns. Borrow-origin
+  analysis rejects returning a view
+  into a local array; slices remain unsupported by the native backend and in
+  struct fields or arrays of slices.
+
 - `nexus.toml` now accepts arrays, including multi-line and nested arrays with
   comments and trailing commas, and repeated `[[array-of-tables]]` headers.
   Project and package commands share one parser, so both accept and reject the
@@ -28,6 +51,7 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Fixed
 
+- `nexus_gfx_audio_available()` now reports whether an audio device is open, not merely whether the SDL shared library can be loaded. Headless systems no longer report audio as available before a device exists.
 - Passing a directory as a source file now reports `cannot open <path>: is a
   directory` on every platform. POSIX hosts previously leaked libstdc++'s
   internal `basic_filebuf::underflow` message because opening a directory

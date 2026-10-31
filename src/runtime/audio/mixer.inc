@@ -175,7 +175,9 @@ void nexus_gfx_sound_unload(int64_t id) {
     gSounds.erase(id);
 }
 int64_t nexus_gfx_audio_available() {
-    return (gAudioDevice != 0 || load_sdl()) ? 1 : 0;
+    // Availability means an audio device is actually open, not just that the
+    // SDL shared library can be loaded. This keeps headless hosts accurate.
+    return gAudioDevice != 0 ? 1 : 0;
 }
 const char* nexus_gfx_audio_error() {
     return gAudioError.empty() ? "" : gAudioError.c_str();

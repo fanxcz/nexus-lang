@@ -53,6 +53,9 @@ int64_t nexus_to_i64(double x) {
 void nexus_print_i64(int64_t x) {
     std::printf("%lld\n", (long long)x);
 }
+void nexus_print_u64(uint64_t x) {
+    std::printf("%llu\n", static_cast<unsigned long long>(x));
+}
 void nexus_print_f64(double x) {
     std::printf("%.15g\n", x);
 }

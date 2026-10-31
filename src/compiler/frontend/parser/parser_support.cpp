@@ -66,7 +66,16 @@ namespace nexus {
         if (accept(TokenKind::Star))
             return Type::ptr(parseType());
 
+        if (accept(TokenKind::KwMut)) {
+            auto inner = parseType();
+            if (inner.kind != TypeKind::Slice || !inner.element)
+                throw std::runtime_error("'mut' type qualifier currently applies only to []T slices");
+            return Type::mutableSlice(*inner.element);
+        }
+
         if (accept(TokenKind::LBracket)) {
+            if (accept(TokenKind::RBracket))
+                return Type::slice(parseType());
             auto elem = parseType();
             expect(TokenKind::Semicolon);
             const Token lengthToken = expect(TokenKind::Integer);
@@ -87,8 +96,16 @@ namespace nexus {
         }
         auto t = expectIdentifier();
 
+        if (t == "i8") return Type::i8();
+        if (t == "i16") return Type::i16();
+        if (t == "i32") return Type::i32();
         if (t == "i64" || t == "int" || t == "isize" || t == "usize")
             return Type::i64();
+        if (t == "u8") return Type::u8();
+        if (t == "u16") return Type::u16();
+        if (t == "u32") return Type::u32();
+        if (t == "u64") return Type::u64();
+        if (t == "f32") return Type::f32();
         if (t == "f64" || t == "float")
             return Type::f64();
         if (t == "bool")

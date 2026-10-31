@@ -265,16 +265,23 @@ namespace nexus::native {
                 return;
             }
             if (const auto* l = dynamic_cast<const LetStmt*>(s)) {
-                const Kind t = checkExpr(l->init.get(), env, fns, reason);
-                if (!reason.empty())
-                    return;
-                if (t != Kind::I64 && t != Kind::Bool && t != Kind::Str) {
+                Kind declared = Kind::Void;
+                if (!kindOfType(l->type, declared) || declared == Kind::Void) {
                     reason = "variable '" + l->name +
-                             "' has a type outside the builtin native v0 subset (only i64, bool, "
-                             "and string locals are supported)";
+                             "' has a declared type outside the builtin native v0 subset "
+                             "(only i64, bool, and string locals are supported; use --backend llvm)";
                     return;
                 }
-                env[l->name] = t;
+                const Kind actual = checkExpr(l->init.get(), env, fns, reason);
+                if (!reason.empty())
+                    return;
+                if (actual != declared) {
+                    reason = "initializer for variable '" + l->name +
+                             "' has a type outside the builtin native v0 subset or does not "
+                             "match its declared native type";
+                    return;
+                }
+                env[l->name] = declared;
                 return;
             }
             if (const auto* a = dynamic_cast<const AssignStmt*>(s)) {

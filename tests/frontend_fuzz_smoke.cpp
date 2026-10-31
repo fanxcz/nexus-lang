@@ -142,9 +142,17 @@ int main() {
             return 19;
         }
     }
-    if (!rejects("fn main(){ print(9223372036854775808) }")) {
-        std::cerr << "out-of-range integer literal was accepted\n";
-        return 1;
+    // 2^63 is a valid token/parser integer now because an expected u64 type
+    // may contextualize it later. The semantic phase rejects it when left at
+    // its default i64 type; that negative case is covered by the compiler smoke test.
+    try {
+        (void)nexus::Parser(
+            nexus::Lexer("fn main(){ print(9223372036854775808) }").tokenize())
+            .parseProgram();
+    } catch (const std::exception& error) {
+        std::cerr << "u64-capable integer literal was rejected by the parser: "
+                  << error.what() << "\n";
+        return 20;
     }
     if (!rejects("fn main(value: [i64;999999999999999999999999999999999]) {}")) {
         std::cerr << "out-of-range array length was accepted\n";

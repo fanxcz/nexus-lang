@@ -7,7 +7,7 @@ hide:
 
 # NEXUS — native programming, clear and practical
 
-A compiled, statically checked language for native desktop applications, command-line utilities, and developer tools. Start with a tiny program, use the standard library and UI helpers, then package a native application. Graphics and games remain supported use cases.
+A compiled, statically checked language for native applications, developer tools, and game prototypes. The compiler now includes fixed-width numeric types and checked slices; SDL-based 2D helpers and an experimental compatibility-OpenGL 3D path provide a starting point for graphics projects.
 
 [Start learning](getting-started/index.md){ .md-button .md-button--primary }
 [Download NEXUS](downloads.md){ .md-button }
@@ -66,11 +66,11 @@ The compiler checks source code before building. Run `nexus doctor` if the compi
 
     [Application development](applications.md)
 
--   :material-gamepad-variant-outline: **2D graphics and games**
+-   :material-gamepad-variant-outline: **Game development**
 
-    Explore tilemaps, collision helpers, sprites, animation, camera and audio wrappers.
+    Explore tilemaps, collision helpers, sprites, animation, cameras, and the experimental 3D API.
 
-    [2D runtime libraries](runtime/game2d.md)
+    [Game development status](runtime/voxel-roadmap.md)
 
 -   :material-download-box-outline: **Downloads**
 
@@ -133,10 +133,12 @@ when you need to control which toolchain builds the executable.
 
 ## What is implemented today
 
-- **Compiler:** C++20 front end, semantic checks, LLVM/Clang compilation path, and a built-in x86-64 backend for a documented subset.
-- **Runtime:** console/file helpers, UTF-8 strings, SDL-backed 2D drawing, optional 3D/audio, and immediate-mode UI widgets.
+- **Compiler:** C++20 front end, fixed-width integer/floating-point types, checked read-only and mutable slices, LLVM/Clang compilation path, and a built-in x86-64 backend for a documented subset.
+- **Runtime:** console/file helpers, UTF-8 strings, SDL-backed 2D drawing, experimental compatibility-OpenGL 3D, optional audio, and immediate-mode UI widgets.
 - **Developer tools:** project templates, formatter/linter, diagnostics, language server, REPL, test suite and portable Windows packaging.
 - **Application and graphics libraries:** typed math helpers, UI layout/controls, file/network/database utilities, and modular tilemap/sprite/camera/audio helpers.
+
+For voxel-game development, the compiler now has useful language foundations, but NEXUS does not yet ship a production voxel engine. Chunk meshing/batching, GPU buffer management, modern shader support, job scheduling, procedural noise, and compressed chunk persistence remain roadmap work. See the [3D and voxel development status](runtime/voxel-roadmap.md).
 
 NEXUS is actively developed. The built-in native backend supports a documented subset of the language; broader programs may need LLVM/Clang. The UI module is immediate-mode rather than a full widget framework, and the 2D physics helpers are not a rigid-body engine. The [language overview](language/overview.md) and [platform support matrix](development/platform-support.md) describe current limits.
 
