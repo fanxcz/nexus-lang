@@ -1,4 +1,8 @@
 
+static constexpr size_t kCanvasMaxPixels = 16u * 1024u * 1024u;
+static constexpr size_t kCanvasUndoMemoryLimit = 32u * 1024u * 1024u;
+static constexpr size_t kCanvasUndoMaxSnapshots = 32u;
+
 static uint8_t canvas_u8(double v) {
 
     return uint8_t(std::clamp(v, 0.0, 1.0) * 255.0 + 0.5);
@@ -152,13 +156,24 @@ static void canvas_blit_texture(CanvasData& c) {
     glTexImage2D(GL_TEXTURE_2D, 0, 4, c.w, c.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, c.pixels.data());
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+static void canvas_push_snapshot(std::vector<CanvasSnapshot>& history,
+                                  const CanvasData& canvas) {
+    if (canvas.pixels.empty() || canvas.pixels.size() > kCanvasUndoMemoryLimit) {
+        history.clear();
+        return;
+    }
+
+    history.push_back(CanvasSnapshot{canvas.pixels});
+    size_t bytes = history.size() * canvas.pixels.size();
+    while (!history.empty() &&
+           (history.size() > kCanvasUndoMaxSnapshots || bytes > kCanvasUndoMemoryLimit)) {
+        bytes -= history.front().pixels.size();
+        history.erase(history.begin());
+    }
+}
+
 static void canvas_checkpoint_internal(CanvasData& c) {
-
-    c.undo.push_back(CanvasSnapshot{c.pixels});
-
-    if (c.undo.size() > 32)
-        c.undo.erase(c.undo.begin());
-
+    canvas_push_snapshot(c.undo, c);
     c.redo.clear();
 }
 static bool canvas_save_bmp_impl(const CanvasData& c, const char* path) {
@@ -239,10 +254,15 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
     const uint16_t bits = rd16v(28);
     const uint32_t comp = rd32v(30);
 
-    if (w <= 0 || hs == 0 || (bits != 24 && bits != 32) || comp != 0 || offset >= b.size())
+    if (w <= 0 || w > 8192 || hs == 0 ||
+        hs == std::numeric_limits<int32_t>::min() ||
+        (bits != 24 && bits != 32) || comp != 0 || offset < 54 || offset >= b.size())
         return false;
 
     const int h = hs < 0 ? -hs : hs;
+    if (h <= 0 || h > 8192 ||
+        uint64_t(w) * uint64_t(h) > static_cast<uint64_t>(kCanvasMaxPixels))
+        return false;
     const size_t pxBytes = size_t(bits / 8);
     const size_t rowStride = ((size_t(w) * pxBytes + 3u) / 4u) * 4u;
 
@@ -271,13 +291,21 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
 }
 int64_t nexus_gfx_canvas_create(int64_t w, int64_t h, double r, double g, double b, double a) {
 
-    if (!gGraphics || w <= 0 || h <= 0 || w > 8192 || h > 8192)
+    if (!gGraphics || w <= 0 || h <= 0 || w > 8192 || h > 8192 ||
+        uint64_t(w) * uint64_t(h) > static_cast<uint64_t>(kCanvasMaxPixels)) {
+        gGraphicsError = "canvas dimensions must be positive, at most 8192 per side and 16 megapixels total";
         return 0;
+    }
 
     CanvasData c;
     c.w = int(w);
     c.h = int(h);
-    c.pixels.resize(size_t(c.w) * size_t(c.h) * 4u);
+    try {
+        c.pixels.resize(size_t(c.w) * size_t(c.h) * 4u);
+    } catch (const std::exception&) {
+        gGraphicsError = "canvas pixel buffer allocation failed";
+        return 0;
+    }
 
     const uint8_t R = canvas_u8(r), G = canvas_u8(g), B = canvas_u8(b), A = canvas_u8(a);
 
