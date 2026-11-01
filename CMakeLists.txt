@@ -30,36 +30,7 @@ endif()
 
 option(NEXUS_BUILD_TESTS "Build Nexus tests" ON)
 
-# ============================================================================
-# Find dependencies
-# ============================================================================
-# SDL2 - try vcpkg first, then pkg-config, then system paths
-find_package(PkgConfig QUIET)
-if (PKG_CONFIG_FOUND)
-  pkg_check_modules(SDL2 QUIET sdl2)
-  pkg_check_modules(SDL2_IMAGE QUIET SDL2_image)
-  pkg_check_modules(SDL2_MIXER QUIET SDL2_mixer)
-  pkg_check_modules(SDL2_TTF QUIET SDL2_ttf)
-endif()
-
-# If not found via pkg-config, try find_package (works with vcpkg)
-if (NOT SDL2_FOUND)
-  find_package(SDL2 QUIET)
-  find_package(SDL2_image QUIET)
-  find_package(SDL2_mixer QUIET)
-  find_package(SDL2_ttf QUIET)
-endif()
-
-if (NOT SDL2_FOUND)
-  message(WARNING "SDL2 not found! Graphics runtime will not work.")
-  message(WARNING "Install SDL2 development libraries:")
-  message(WARNING "  Ubuntu/Debian: sudo apt-get install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev")
-  message(WARNING "  Arch: sudo pacman -S sdl2 sdl2_image sdl2_mixer sdl2_ttf")
-  message(WARNING "  Fedora: sudo dnf install SDL2-devel SDL2_image-devel SDL2_mixer-devel SDL2_ttf-devel")
-  message(WARNING "  Windows (vcpkg): vcpkg install sdl2 sdl2-image sdl2-mixer sdl2-ttf --triplet x64-windows")
-  message(WARNING "  Windows (choco): choco install sdl2")
-  message(WARNING "  macOS: brew install sdl2 sdl2_image sdl2_mixer sdl2_ttf")
-endif()
+include(cmake/NexusDependencies.cmake)
 
 # ============================================================================
 # Compiler flags
@@ -74,92 +45,7 @@ else()
   )
 endif()
 
-# ============================================================================
-# Sources
-# ============================================================================
-set(NEXUS_DRIVER_SOURCES
-    src/compiler/driver/driver.cpp
-    src/compiler/driver/cli/usage.cpp
-    src/compiler/driver/commands/doctor.cpp
-    src/compiler/driver/commands/export.cpp
-    src/compiler/driver/commands/format.cpp
-    src/compiler/driver/commands/info.cpp
-    src/compiler/driver/commands/quality.cpp
-    src/compiler/driver/lsp/server.cpp
-    src/compiler/driver/lsp/protocol.cpp
-    src/compiler/driver/lsp/text.cpp
-    src/compiler/driver/lsp/uri.cpp
-    src/compiler/driver/lsp/diagnostics.cpp
-    src/compiler/driver/package/command.cpp
-    src/compiler/driver/package/lockfile.cpp
-    src/compiler/driver/package/metadata.cpp
-    src/compiler/driver/package/vendor.cpp
-    src/compiler/driver/project/config.cpp
-    src/compiler/driver/project/modules.cpp
-    src/compiler/driver/project/templates.cpp
-    src/compiler/driver/repl/command.cpp
-    src/compiler/driver/repl/input.cpp
-    src/compiler/driver/repl/repl_classify.cpp
-    src/compiler/driver/repl/repl_history.cpp
-    src/compiler/driver/support/diagnostics.cpp
-    src/compiler/driver/support/manifest.cpp
-    src/compiler/driver/support/process.cpp
-    src/compiler/driver/support/text.cpp
-    src/compiler/driver/support/toml.cpp
-    src/compiler/driver/toolchain/compile.cpp
-    src/compiler/driver/toolchain/exec.cpp
-    src/compiler/driver/toolchain/paths.cpp
-    src/compiler/driver/toolchain/runtime.cpp
-)
-
-set(NEXUS_CODEGEN_SOURCES
-    src/compiler/backend/codegen/llvm_ir.cpp
-    src/compiler/backend/codegen/llvm_cg_core.cpp
-    src/compiler/backend/codegen/llvm_cg_expr.cpp
-    src/compiler/backend/codegen/llvm_cg_stmt.cpp
-    src/compiler/backend/codegen/llvm_cg_program.cpp
-)
-
-set(NEXUS_NATIVE_SOURCES
-    src/compiler/backend/native/native.cpp
-    src/compiler/backend/native/native_subset.cpp
-    src/compiler/backend/native/native_gen_core.cpp
-    src/compiler/backend/native/native_gen_stmt.cpp
-    src/compiler/backend/native/native_gen_runtime.cpp
-    src/compiler/backend/native/target.cpp
-    src/compiler/backend/native/pe_elf.cpp
-)
-
-set(NEXUS_LEXER_SOURCES
-    src/compiler/frontend/lexer/lexer.cpp
-    src/compiler/frontend/lexer/lexer_token.cpp
-    src/compiler/frontend/lexer/lexer_literal.cpp
-    src/compiler/frontend/lexer/lexer_scan.cpp
-)
-
-set(NEXUS_PARSER_SOURCES
-    src/compiler/frontend/parser/parser.cpp
-    src/compiler/frontend/parser/parser_support.cpp
-    src/compiler/frontend/parser/parser_stmt.cpp
-    src/compiler/frontend/parser/parser_expr.cpp
-)
-
-set(NEXUS_SEMANTIC_SOURCES
-    src/compiler/semantic/semantic.cpp
-    src/compiler/semantic/semantic_expr.cpp
-    src/compiler/semantic/semantic_stmt.cpp
-)
-
-set(NEXUS_SOURCES
-    src/cli/main.cpp
-    src/compiler/format/formatter.cpp
-    ${NEXUS_LEXER_SOURCES}
-    ${NEXUS_PARSER_SOURCES}
-    ${NEXUS_SEMANTIC_SOURCES}
-    ${NEXUS_CODEGEN_SOURCES}
-    ${NEXUS_NATIVE_SOURCES}
-    ${NEXUS_DRIVER_SOURCES}
-)
+include(cmake/NexusSources.cmake)
 
 add_executable(nexus ${NEXUS_SOURCES})
 # The official Windows portable package must run without an installed
