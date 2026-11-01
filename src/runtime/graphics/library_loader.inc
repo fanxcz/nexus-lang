@@ -177,6 +177,10 @@
         LOAD_REQUIRED_SDL(SDL_ShowCursor);
         LOAD_OPTIONAL_SDL(SDL_StartTextInput);
         LOAD_OPTIONAL_SDL(SDL_StopTextInput);
+        LOAD_OPTIONAL_SDL(SDL_GetClipboardText);
+        LOAD_OPTIONAL_SDL(SDL_SetClipboardText);
+        LOAD_OPTIONAL_SDL(SDL_HasClipboardText);
+        LOAD_OPTIONAL_SDL(SDL_free);
 
         LOAD_REQUIRED_SDL(SDL_GetPerformanceCounter);
         LOAD_REQUIRED_SDL(SDL_GetPerformanceFrequency);
