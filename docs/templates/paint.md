@@ -14,7 +14,7 @@ nexus run
 
 ## Current features
 
-The source implements pencil/brush, eraser, straight line, rectangle and fill tools; an on-screen color palette; adjustable brush size; undo/redo checkpoints; BMP save and load; fullscreen toggle; and a drawing canvas of 1024×720 pixels. The exact UI controls are defined by the checked-in `examples/nexus_paint.nx`; do not rely on keyboard shortcut lists copied from older drafts.
+The source implements pencil/brush, eraser, straight line, rectangle and fill tools; an on-screen color palette; adjustable brush size; undo/redo checkpoints (including the New canvas action); BMP save and load with visible error reporting; fullscreen toggle; and a drawing canvas of 1024×720 pixels. The exact UI controls are defined by the checked-in `examples/nexus_paint.nx`; do not rely on keyboard shortcut lists copied from older drafts.
 
 The app writes `nexus_paint.bmp` relative to its working directory. Choose a writable working folder if you plan to save drawings.
 
