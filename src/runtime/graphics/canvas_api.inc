@@ -223,6 +223,11 @@ bool nexus_gfx_canvas_import_image(int64_t id, const char* path) {
         gGraphicsError = "image dimensions must be between 1 and 8192 pixels";
         return false;
     }
+    if (uint64_t(source->w) * uint64_t(source->h) > UINT64_C(16777216)) {
+        SDL_FreeSurface(source);
+        gGraphicsError = "image import is limited to 16 megapixels to bound temporary memory";
+        return false;
+    }
 
     SDL_Surface* converted =
         SDL_ConvertSurfaceFormat(source, SDL_PIXELFORMAT_ABGR8888, 0);
