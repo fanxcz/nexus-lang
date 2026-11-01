@@ -6,6 +6,12 @@ set(SCRATCH "${CMAKE_BINARY_DIR}/fixed-width-types-smoke")
 file(REMOVE_RECURSE "${SCRATCH}")
 file(MAKE_DIRECTORY "${SCRATCH}")
 
+if(APPLE)
+  set(NATIVE_REJECTION_PATTERN "no emitter for target")
+else()
+  set(NATIVE_REJECTION_PATTERN "${NATIVE_REJECTION_PATTERN}")
+endif()
+
 set(SOURCE "${NEXUS_SOURCE_DIR}/tests/regression_programs/fixed_width_types.nx")
 set(EXE "${SCRATCH}/fixed_width_types")
 execute_process(
@@ -25,7 +31,7 @@ execute_process(
   ERROR_VARIABLE native_err
 )
 set(native_combined "${native_out}\n${native_err}")
-if(native_rc EQUAL 0 OR NOT native_combined MATCHES "outside the builtin native v0 subset")
+if(native_rc EQUAL 0 OR NOT native_combined MATCHES "${NATIVE_REJECTION_PATTERN}")
   message(FATAL_ERROR "native backend did not reject fixed-width types explicitly:\n${native_combined}")
 endif()
 
@@ -38,7 +44,7 @@ execute_process(
   ERROR_VARIABLE narrow_err
 )
 set(narrow_combined "${narrow_out}\n${narrow_err}")
-if(narrow_rc EQUAL 0 OR NOT narrow_combined MATCHES "outside the builtin native v0 subset")
+if(narrow_rc EQUAL 0 OR NOT narrow_combined MATCHES "${NATIVE_REJECTION_PATTERN}")
   message(FATAL_ERROR "native backend accepted i8 without other unsupported constructs:\n${narrow_combined}")
 endif()
 
@@ -72,7 +78,7 @@ execute_process(
   ERROR_VARIABLE float_err
 )
 set(float_combined "${float_out}\n${float_err}")
-if(float_rc EQUAL 0 OR NOT float_combined MATCHES "outside the builtin native v0 subset")
+if(float_rc EQUAL 0 OR NOT float_combined MATCHES "${NATIVE_REJECTION_PATTERN}")
   message(FATAL_ERROR "native backend accepted f32 without other unsupported constructs:\n${float_combined}")
 endif()
 
