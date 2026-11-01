@@ -49,6 +49,21 @@ The LSP transport and reusable helpers live in `src/compiler/driver/lsp/`. Proto
 
 The LSP currently offers diagnostics, completion, signature help, hover, definition, references, rename, formatting, document/workspace symbols and quick fixes within documented limitations. Rename preparation is exposed through `textDocument/prepareRename`. Workspace navigation is based on the server's lexical indexes and should not be confused with a complete compiler-backed symbol database.
 
+## Build system
+
+The compiler-selection settings are kept in `cmake/NexusOptions.cmake` and are
+included before the root `project()` call. This ordering is important: CMake
+must initialize platform-specific compiler and linker rules using the selected
+toolchain. Dependency discovery, source lists, executable targets, install
+rules and CTest registration are still owned by the root `CMakeLists.txt`;
+the small module is a first separation of responsibilities, not a claim that
+the whole build configuration has already been decomposed.
+
+The project keeps CMake 3.20 as its declared minimum and C++20 as its language
+standard. Compiler overrides remain available through
+`NEXUS_C_COMPILER` and `NEXUS_CXX_COMPILER`, with the existing Windows Clang
+discovery behavior retained in the pre-project module.
+
 ## Runtime and standard library
 
 The native runtime lives in `src/runtime/`. Its topic-specific implementation files are intentionally assembled through `runtime.cpp` into one translation unit so shared state and resource ownership remain coherent. Do not split these files into independent object files without first designing and testing the shared-state boundary.
