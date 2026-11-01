@@ -50,12 +50,25 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   client launch contract. CI runs the checks alongside the existing Studio
   source/path-security checks.
 
+- Added `scene_apply(scene)` to restore a saved scene snapshot into the live ECS
+  registry. It returns the number of recreated entities, returns `-1` for an
+  invalid snapshot, and explicitly invalidates previous ECS entity handles.
+  The NEXUS Editor example uses this operation when loading a saved scene.
+
 ### Changed
 
 - Moved pre-`project()` compiler selection into `cmake/NexusOptions.cmake`.
   The root CMake entry point still owns dependencies, targets, installation
   and CTest registration; this keeps the sensitive compiler-initialization
   order intact while starting a smaller, reviewable build-system separation.
+
+- Split the build entry point into `NexusOptions`, `NexusDependencies`,
+  `NexusSources`, `NexusTargets`, `NexusInstall` and `NexusTests` modules.
+  Compiler selection remains before `project()`; dependency detection and
+  target/install/test setup follow platform initialization.
+- The NEXUS Studio desktop packaging matrix now also runs on pull requests
+  that change Studio sources or the workflow, building Windows, Linux and macOS
+  packages and uploading the generated artifacts for inspection.
 
 - Refreshed the documentation landing page and shared site styling, added an
   ecosystem integration map, and clarified which Studio, Paint, backend and
@@ -79,6 +92,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   instead of leaving a stale success status, and reports a failed final save at shutdown.
   The project template is kept byte-for-byte synchronized with the standalone example and
   the Paint smoke test enforces that contract.
+
+- NEXUS Editor no longer destroys its active scene handle when loading a file.
+  It applies a successfully loaded snapshot to the live ECS registry, keeps the
+  new snapshot handle active, and reports save/load/apply failures in the UI.
 
 - Cross-platform native-backend smoke tests now distinguish unsupported language features
   on Windows/Linux from the target-level absence of a built-in native emitter on macOS.
