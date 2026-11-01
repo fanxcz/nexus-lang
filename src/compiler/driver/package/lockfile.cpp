@@ -111,21 +111,75 @@ namespace nexus {
 
                 Dependency dependency{name, value, {}, {}};
                 const fs::path local(value);
-                if (!local.is_absolute()) {
-                    const fs::path dependencyRoot = (cfg.root / local).lexically_normal();
-                    const fs::path rel = dependencyRoot.lexically_relative(cfg.root);
+                const fs::path normalizedLocal = local.lexically_normal();
+                if (!local.is_absolute() && normalizedLocal.begin() != normalizedLocal.end() &&
+                    *normalizedLocal.begin() == "vendor") {
+                    const fs::path dependencyRoot = (cfg.root / normalizedLocal).lexically_normal();
                     std::error_code ec;
-                    if (!rel.empty() && *rel.begin() == "vendor" &&
-                        fs::is_regular_file(dependencyRoot / "nexus.toml", ec)) {
-                        try {
-                            const auto dep = loadProject(dependencyRoot);
-                            if (!dep.version.empty())
-                                dependency.version = dep.version;
-                            dependency.source = rel.generic_string();
-                            dependency.integrity = packageTreeSha256(dependencyRoot);
-                        } catch (const std::exception& error) {
+                    const auto dependencyStatus = fs::symlink_status(dependencyRoot, ec);
+                    if (ec == std::errc::no_such_file_or_directory ||
+                        (!ec && dependencyStatus.type() == fs::file_type::not_found)) {
+                        ec.clear();
+                    } else if (ec) {
+                        throw std::runtime_error("cannot inspect local dependency '" + name +
+                                                 "': " + ec.message());
+                    } else if (fs::is_symlink(dependencyStatus)) {
+                        throw std::runtime_error("cannot lock local dependency '" + name +
+                                                 "': package directory must not be a symlink");
+                    } else if (fs::is_directory(dependencyStatus)) {
+                        const fs::path manifestPath = dependencyRoot / "nexus.toml";
+                        const auto manifestStatus = fs::symlink_status(manifestPath, ec);
+                        if (ec == std::errc::no_such_file_or_directory ||
+                            (!ec && manifestStatus.type() == fs::file_type::not_found)) {
+                            ec.clear();
+                        } else if (ec) {
+                            throw std::runtime_error("cannot inspect local package manifest '" +
+                                                     name + "': " + ec.message());
+                        } else if (fs::is_symlink(manifestStatus)) {
                             throw std::runtime_error("cannot lock local dependency '" + name +
-                                                     "': " + error.what());
+                                                     "': package manifest must not be a symlink");
+                        } else if (fs::is_regular_file(manifestStatus)) {
+                            try {
+                                const fs::path canonicalRoot = fs::weakly_canonical(cfg.root, ec);
+                                if (ec)
+                                    throw std::runtime_error("cannot resolve project root: " +
+                                                             ec.message());
+                                const fs::path canonicalVendor =
+                                    fs::weakly_canonical(canonicalRoot / "vendor", ec);
+                                if (ec)
+                                    throw std::runtime_error("cannot resolve vendor directory: " +
+                                                             ec.message());
+                                const fs::path vendorRelative =
+                                    canonicalVendor.lexically_relative(canonicalRoot);
+                                if (vendorRelative != fs::path("vendor"))
+                                    throw std::runtime_error(
+                                        "vendor directory resolves outside the project");
+                                const fs::path canonicalDependency =
+                                    fs::weakly_canonical(dependencyRoot, ec);
+                                if (ec)
+                                    throw std::runtime_error("cannot resolve package directory: " +
+                                                             ec.message());
+                                const fs::path insideVendor =
+                                    canonicalDependency.lexically_relative(canonicalVendor);
+                                if (insideVendor.empty() || *insideVendor.begin() == ".." ||
+                                    *insideVendor.begin() == ".") {
+                                    throw std::runtime_error(
+                                        "local package path escapes vendor/");
+                                }
+
+                                const auto dep = loadProject(canonicalDependency);
+                                if (dep.name != name)
+                                    throw std::runtime_error(
+                                        "package manifest name does not match dependency key '" +
+                                        name + "'");
+                                if (!dep.version.empty())
+                                    dependency.version = dep.version;
+                                dependency.source = rel.generic_string();
+                                dependency.integrity = packageTreeSha256(canonicalDependency);
+                            } catch (const std::exception& error) {
+                                throw std::runtime_error("cannot lock local dependency '" + name +
+                                                         "': " + error.what());
+                            }
                         }
                     }
                 }
