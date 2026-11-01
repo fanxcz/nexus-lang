@@ -298,12 +298,12 @@ class NexusLspClient extends EventEmitter {
     }
     this.ready = false;
     this._failPending(new Error('NEXUS language server stopped'));
-    if (child.stdin && child.stdin.writable) child.stdin.end();
 
-    // Do not start a second language server while the previous process is still
-    // shutting down (for example, when the user opens a different project).
+    // Attach the close listener before ending stdin so a fast child exit cannot
+    // race past the waiter and leave a stale process reference behind.
+    let waitForClose = null;
     if (child.exitCode === null && child.signalCode === null) {
-      await new Promise(resolve => {
+      waitForClose = new Promise(resolve => {
         let finished = false;
         let killTimer;
         let graceTimer;
@@ -325,6 +325,9 @@ class NexusLspClient extends EventEmitter {
         killTimer.unref?.();
       });
     }
+
+    if (child.stdin && child.stdin.writable) child.stdin.end();
+    if (waitForClose) await waitForClose;
     if (this.child === child) this.child = null;
   }
 }
