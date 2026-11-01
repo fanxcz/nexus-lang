@@ -2,12 +2,25 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { spawn, spawnSync } = require('node:child_process');
+const { pathToFileURL } = require('node:url');
 const { isInside, assertInsideProject } = require('./path-guard.cjs');
+const { NexusLspClient } = require('./lsp-client.cjs');
 
 let win;
 let projectRoot = null;
 let activeProcess = null;
 let selectedCompiler = null;
+const languageServer = new NexusLspClient();
+
+languageServer.on('diagnostics', params => {
+  if (win && !win.isDestroyed()) win.webContents.send('lsp:diagnostics', params);
+});
+languageServer.on('stderr', data => {
+  if (win && !win.isDestroyed()) sendOutput(win.webContents, 'stderr', '[LSP] ' + data);
+});
+languageServer.on('error', error => {
+  if (win && !win.isDestroyed()) sendOutput(win.webContents, 'error', '[LSP] ' + error.message);
+});
 
 async function assertProjectPath(target) {
   return assertInsideProject(projectRoot, target);
@@ -171,6 +184,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('project:open', async () => {
     const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
     if (result.canceled || !result.filePaths[0]) return null;
+    await languageServer.stop();
     projectRoot = result.filePaths[0];
     return { root: projectRoot, tree: await readTree(projectRoot) };
   });
@@ -207,6 +221,44 @@ app.whenReady().then(async () => {
     await fs.writeFile(target, '', { flag: 'wx' });
     return true;
   });
+  async function languageServerUri(rel) {
+    if (!projectRoot) throw new Error('Сначала открой папку проекта.');
+    const target = await assertProjectPath(path.resolve(projectRoot, String(rel)));
+    if (path.extname(target).toLowerCase() !== '.nx') {
+      throw new Error('Language services are available only for .nx files.');
+    }
+    return pathToFileURL(await fs.realpath(target)).href;
+  }
+
+  ipcMain.handle('lsp:start', async () => {
+    if (!projectRoot) throw new Error('Сначала открой папку проекта.');
+    const compiler = await detectCompiler();
+    if (!compiler) throw new Error('Компилятор NEXUS не найден. Выбери его через «Компилятор…».');
+    await languageServer.start(compiler, projectRoot);
+    return { ready: true };
+  });
+  ipcMain.handle('lsp:open', async (_event, rel, text, version = 1) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
+    languageServer.openDocument(uri, String(text), Number(version) || 1);
+    return { uri };
+  });
+  ipcMain.handle('lsp:change', async (_event, rel, text, version) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) return false;
+    return languageServer.changeDocument(uri, String(text), Number(version) || 1);
+  });
+  ipcMain.handle('lsp:save', async (_event, rel) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) return false;
+    return languageServer.saveDocument(uri);
+  });
+  ipcMain.handle('lsp:close', async (_event, rel) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) return false;
+    return languageServer.closeDocument(uri);
+  });
+
   ipcMain.handle('terminal:run', async (event, command) => {
     if (!projectRoot) throw new Error('Сначала открой папку проекта.');
     const shell = process.platform === 'win32' ? (process.env.ComSpec || 'cmd.exe') : '/bin/sh';
@@ -248,4 +300,8 @@ app.whenReady().then(async () => {
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('window-all-closed', () => {
+  void languageServer.stop().finally(() => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+});
