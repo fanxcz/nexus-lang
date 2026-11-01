@@ -34,7 +34,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_doctor_json_smoke` | Parse the doctor response and validate required JSON field types |
 | `nexus_vscode_extension_smoke` | Validate VS Code extension metadata, grammar, and snippets |
 | `nexus_backend_explain_smoke` | Backend-selection explanation |
-| `nexus_project_smoke` | Project creation/build workflow, formatter check mode, and VS Code settings |
+| `nexus_project_smoke` | Project creation/build workflow, formatter check mode, VS Code settings, and package-manager traversal/symlink rejection |
 | `nexus_project_paths_smoke` | Create, format, lint, build and run a project whose directory and artifact names contain spaces |
 | `nexus_corrupt_inputs_smoke` | Malformed `nexus.toml` manifests, control bytes in sources, missing entry files and directory arguments fail with actionable diagnostics |
 | `nexus_manifest_smoke` | Manifest TOML subset accepted by both project and package commands: arrays, `[[array-of-tables]]`, and rejected duplicates or unterminated arrays |
