@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <string>
 
 extern "C" {
@@ -27,7 +28,7 @@ int main() {
     const int64_t snapshot = nexus_scene_create();
     const int64_t first = nexus_ecs_create();
     const int64_t second = nexus_ecs_create();
-    nexus_ecs_set_position(first, 12.5, 24.5);
+    nexus_ecs_set_position(first, 12.1234567, 24.5);
     nexus_ecs_set_position(second, 90.0, 120.0);
     nexus_scene_add(snapshot, first);
     nexus_scene_add(snapshot, second);
@@ -35,6 +36,21 @@ int main() {
     if (!nexus_scene_save(snapshot, path.c_str())) {
         std::fprintf(stderr, "scene snapshot save failed\n");
         return 1;
+    }
+
+    {
+        std::ifstream serialized(path);
+        std::string magic;
+        int version = 0;
+        int count = 0;
+        float savedX = 0.0f;
+        if (!(serialized >> magic >> version >> count >> savedX) ||
+            magic != "NEXUS_SCENE" || version != 1 || count != 2 ||
+            savedX != static_cast<float>(12.1234567)) {
+            std::fprintf(stderr, "scene snapshot did not preserve float round-trip precision\\n");
+            std::filesystem::remove(path);
+            return 12;
+        }
     }
 
     const auto missingDirectory = std::filesystem::temp_directory_path() /
