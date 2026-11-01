@@ -349,6 +349,47 @@ static char* nexus_ui_text_field_impl(double x,
                 gUiTextFieldAnchor = 0;
                 gUiTextFieldCaret = value.size();
             }
+            if (controlDown && nexus_ui_key_pressed(6)) {
+                nexus_ui_key_consume(6);
+                const size_t begin = std::min(gUiTextFieldCaret, gUiTextFieldAnchor);
+                const size_t end = std::max(gUiTextFieldCaret, gUiTextFieldAnchor);
+                if (end > begin) {
+                    const std::string selected = value.substr(begin, end - begin);
+                    (void)nexus_gfx_clipboard_set(selected.c_str());
+                }
+            }
+            if (controlDown && nexus_ui_key_pressed(27)) {
+                nexus_ui_key_consume(27);
+                const size_t begin = std::min(gUiTextFieldCaret, gUiTextFieldAnchor);
+                const size_t end = std::max(gUiTextFieldCaret, gUiTextFieldAnchor);
+                if (end > begin) {
+                    const std::string selected = value.substr(begin, end - begin);
+                    if (nexus_gfx_clipboard_set(selected.c_str()) &&
+                        nexus_ui_text_delete_selection(
+                            value, gUiTextFieldCaret, gUiTextFieldAnchor)) {
+                        valueChanged = true;
+                    }
+                }
+            }
+            if (controlDown && nexus_ui_key_pressed(25)) {
+                nexus_ui_key_consume(25);
+                char* clipboard = nexus_gfx_clipboard_get();
+                if (clipboard) {
+                    std::string pasteText;
+                    pasteText.reserve(std::strlen(clipboard));
+                    for (const unsigned char ch : std::string(clipboard)) {
+                        if (ch == '\r' || ch == '\n' || ch == '\t')
+                            pasteText.push_back(' ');
+                        else if (ch >= 0x20u && ch != 0x7fu)
+                            pasteText.push_back(static_cast<char>(ch));
+                    }
+                    if (nexus_ui_text_insert(
+                            value, gUiTextFieldCaret, gUiTextFieldAnchor, pasteText, limit)) {
+                        valueChanged = true;
+                    }
+                    nexus_free(clipboard);
+                }
+            }
             if (nexus_ui_key_pressed(80)) {
                 nexus_ui_key_consume(80);
                 if (!shiftDown && gUiTextFieldCaret != gUiTextFieldAnchor) {
