@@ -16,7 +16,7 @@ fn main() {
     print("")
 
     let ok = gfx_init(1280, 720, "NEXUS Ultimate Showcase")
-    if !ok {
+    if ! ok {
         print("Graphics backend unavailable: " + gfx_error())
         return
     }
