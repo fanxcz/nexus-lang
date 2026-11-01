@@ -14,6 +14,7 @@ The runtime offers immediate drawing widgets. They render into the current frame
 - `ui_progress(x, y, width, height, value, r, g, b, a)` draws a progress bar.
 - `ui_text_field(x, y, width, height, current, placeholder, max_bytes)` returns the current or edited UTF-8 string.
 - `ui_text_field_id(x, y, width, height, current, placeholder, max_bytes, widget_id)` adds a stable positive widget ID so focus and caret survive rectangle movement.
+- `ui_text_field_id(x, y, width, height, current, placeholder, max_bytes, widget_id)` adds a stable positive widget ID so focus and caret survive rectangle movement.
 
 Call widgets after event polling and between `gfx_begin()` and `gfx_end()`. Keep values in your own variables:
 
