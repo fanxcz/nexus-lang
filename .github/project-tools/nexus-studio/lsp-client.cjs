@@ -62,12 +62,17 @@ class JsonRpcStreamDecoder {
       if (this.buffer.length < frameEnd) break;
 
       const body = this.buffer.subarray(bodyStart, frameEnd);
+      let text;
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(body);
+      } catch (error) {
+        throw new Error('JSON-RPC body is not valid UTF-8: ' + error.message);
+      }
       let message;
       try {
-        const text = new TextDecoder('utf-8', { fatal: true }).decode(body);
         message = JSON.parse(text);
       } catch (error) {
-        throw new Error('JSON-RPC body is not valid UTF-8 JSON: ' + error.message);
+        throw new Error('JSON-RPC body is not valid JSON: ' + error.message);
       }
       if (!message || typeof message !== 'object' || Array.isArray(message)) {
         throw new Error('JSON-RPC body must be an object');
