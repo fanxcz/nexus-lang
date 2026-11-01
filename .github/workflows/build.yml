@@ -22,6 +22,13 @@ jobs:
       - name: Audit tracked repository files
         run: python scripts/audit_repository.py
 
+      - name: Check NEXUS Studio source and path security
+        run: npm run check --prefix .github/project-tools/nexus-studio
+
+      - name: Test VS Code extension manifest, grammar and snippets
+        run: npm test --prefix .github/project-tools/vscode-extension
+
+
 
       - name: Install Linux toolchain
         if: runner.os == 'Linux'
