@@ -8,6 +8,20 @@ if(NOT NEXUS_PAINT_SOURCE STREQUAL NEXUS_PAINT_TEMPLATE)
   message(FATAL_ERROR "NEXUS Paint app source and project template have drifted apart.")
 endif()
 
+foreach(feature IN ITEMS
+    "paint_composite("
+    "gfx_canvas_blit("
+    "gfx_canvas_import_image("
+    "gfx_canvas_save_png("
+    "ADD LAYER"
+    "LAYER 3"
+    "HIDE 1")
+  string(FIND "${NEXUS_PAINT_SOURCE}" "${feature}" feature_position)
+  if(feature_position EQUAL -1)
+    message(FATAL_ERROR "NEXUS Paint is missing required feature marker: ${feature}")
+  endif()
+endforeach()
+
 set(PAINT_DIR "${CMAKE_BINARY_DIR}/paint-smoke")
 file(REMOVE_RECURSE "${PAINT_DIR}")
 
