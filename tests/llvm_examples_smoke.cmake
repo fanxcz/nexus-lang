@@ -8,7 +8,7 @@ set(SCRATCH "${CMAKE_BINARY_DIR}/llvm-example-smoke")
 file(REMOVE_RECURSE "${SCRATCH}")
 file(MAKE_DIRECTORY "${SCRATCH}")
 
-foreach(EXAMPLE IN ITEMS "ui_playground.nx" "game2d_starter.nx" "nexus_editor.nx" "nexus_focus.nx" "nexus_showcase.nx")
+foreach(EXAMPLE IN ITEMS "ui_playground.nx" "game2d_starter.nx" "nexus_editor.nx" "nexus_focus.nx" "nexus_showcase.nx" "task_manager.nx")
   set(SOURCE "${NEXUS_SOURCE_DIR}/examples/${EXAMPLE}")
   get_filename_component(NAME "${EXAMPLE}" NAME_WE)
   set(EXE "${SCRATCH}/${NAME}")
