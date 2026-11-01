@@ -232,6 +232,7 @@ fn main() {
 
         let button_y = 16.0
         if ui_button(18.0, button_y, 82.0, 40.0, "NEW") {
+            gfx_canvas_checkpoint(canvas)
             gfx_canvas_clear(canvas, 1.0, 1.0, 1.0, 1.0)
             status = "New canvas"
         }
@@ -262,7 +263,12 @@ fn main() {
             if gfx_canvas_redo(canvas) { status = "Redo" }
         }
         if ui_button(786.0, button_y, 88.0, 40.0, "SAVE") {
-            if gfx_canvas_save_bmp(canvas, "nexus_paint.bmp") { status = "Saved" }
+            if gfx_canvas_save_bmp(canvas, "nexus_paint.bmp") {
+                status = "Saved"
+            } else {
+                status = "Save failed"
+                print("NEXUS Paint: could not save nexus_paint.bmp: " + gfx_error())
+            }
         }
         if ui_button(882.0, button_y, 88.0, 40.0, "OPEN") {
             let loaded = gfx_canvas_load_bmp("nexus_paint.bmp")
@@ -270,6 +276,9 @@ fn main() {
                 gfx_canvas_destroy(canvas)
                 canvas = loaded
                 status = "Loaded"
+            } else {
+                status = "Open failed"
+                print("NEXUS Paint: could not load nexus_paint.bmp: " + gfx_error())
             }
         }
 
@@ -328,7 +337,9 @@ fn main() {
         gfx_end()
     }
 
-    gfx_canvas_save_bmp(canvas, "nexus_paint.bmp")
+    if !gfx_canvas_save_bmp(canvas, "nexus_paint.bmp") {
+        print("NEXUS Paint: final save failed: " + gfx_error())
+    }
     gfx_canvas_destroy(canvas)
     gfx_shutdown()
 }
