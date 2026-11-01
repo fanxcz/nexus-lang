@@ -42,7 +42,7 @@ int main() {
     std::filesystem::remove_all(missingDirectory);
     const auto unwritablePath = (missingDirectory / "scene.nxs").string();
     if (nexus_scene_save(snapshot, unwritablePath.c_str())) {
-        std::fprintf(stderr, "scene snapshot save unexpectedly succeeded for a missing directory\\n");
+        std::fprintf(stderr, "scene snapshot save unexpectedly succeeded for a missing directory\n");
         std::filesystem::remove(path);
         return 10;
     }
@@ -65,11 +65,11 @@ int main() {
         std::filesystem::remove(invalidPath, error);
         return loadedInvalid == 0 && nexus_ecs_count() == before && !error;
     };
-    if (!expectRejected("truncated", "NEXUS_SCENE 1\\n1\\n1 2 3\\n") ||
-        !expectRejected("nonfinite", "NEXUS_SCENE 1\\n1\\nnan 0 0 0 1 1 1 1 1 1 0\\n") ||
-        !expectRejected("trailing", "NEXUS_SCENE 1\\n0\\nextra data\\n") ||
-        !expectRejected("oversized", "NEXUS_SCENE 1\\n100001\\n")) {
-        std::fprintf(stderr, "malformed scene snapshots were not rejected safely\\n");
+    if (!expectRejected("truncated", "NEXUS_SCENE 1\n1\n1 2 3\n") ||
+        !expectRejected("nonfinite", "NEXUS_SCENE 1\n1\nnan 0 0 0 1 1 1 1 1 1 0\n") ||
+        !expectRejected("trailing", "NEXUS_SCENE 1\n0\nextra data\n") ||
+        !expectRejected("oversized", "NEXUS_SCENE 1\n100001\n")) {
+        std::fprintf(stderr, "malformed scene snapshots were not rejected safely\n");
         std::filesystem::remove(path);
         return 11;
     }
