@@ -24,7 +24,14 @@ fn main() {
 }
 ```
 
-The wrappers do not currently expose environment enumeration, process spawning, current-directory changes or platform-specific OS handles. Use the built-in `env(name)` to read one environment variable. Platform argument handling is covered by the runtime CTest suite.
+The module also exposes a per-user application configuration directory:
+
+- `config_dir(app_name: string) -> string` creates and returns the app's configuration directory. It returns an empty string on failure.
+- `config_error() -> string` returns the reason from the most recent `config_dir` call on the current thread; it is empty after success.
+
+The platform base is `APPDATA` (falling back to `LOCALAPPDATA`) on Windows, `~/Library/Application Support` on macOS, and an absolute `XDG_CONFIG_HOME` or `~/.config` on Linux. The application name must be a single path component of at most 128 bytes; path separators, control characters and platform-invalid filename characters are rejected. The directory is created if needed. The runtime test covers successful creation, invalid names, path traversal and a base path that is a regular file.
+
+The wrappers do not currently expose environment enumeration, process spawning, current-directory changes or platform-specific OS handles. Use the built-in `env(name)` to read one environment variable.
 
 ## Capturing command output
 
