@@ -48,7 +48,7 @@ int main() {
         if (!(serialized >> magic >> version >> count >> savedX) ||
             magic != "NEXUS_SCENE" || version != 1 || count != 2 ||
             savedX != static_cast<float>(12.1234567)) {
-            std::fprintf(stderr, "scene snapshot did not preserve float round-trip precision\\n");
+            std::fprintf(stderr, "scene snapshot did not preserve float round-trip precision\n");
             std::filesystem::remove(path);
             return 12;
         }
