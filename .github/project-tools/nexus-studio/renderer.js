@@ -449,19 +449,27 @@
     return enqueueDocumentOperation(() => closeDocumentNow(rel));
   }
 
-  async function saveCurrent() {
+  async function saveCurrentNow() {
     if (!currentPath || !editor) {
       appendOutput('Open or create a file before saving.', 'error');
       return false;
     }
+    const filePath = currentPath;
+    const content = editor.getValue();
     try {
-      await api.saveFile(currentPath, editor.getValue());
+      await api.saveFile(filePath, content);
       await pendingLanguageSync.catch(() => {});
-      if (currentUri && languageServerReady) {
-        await api.saveLanguageDocument(currentPath);
+      if (currentUri && currentPath === filePath && languageServerReady) {
+        await api.saveLanguageDocument(filePath);
       }
-      markDirty(false);
-      setStatus('Saved ' + currentPath);
+      const saved = documents.get(filePath);
+      if (saved) {
+        saved.content = content;
+        saved.dirty = false;
+      }
+      if (currentPath === filePath) markDirty(false);
+      else renderTabs();
+      setStatus('Saved ' + filePath);
       await refreshTree();
       return true;
     } catch (error) {
@@ -469,8 +477,12 @@
       return false;
     }
   }
-  async function newFile() {
-    if (!root) { await openProject(); if (!root) return; }
+
+  function saveCurrent() {
+    return enqueueDocumentOperation(() => saveCurrentNow());
+  }
+  async function newFileNow() {
+    if (!root) { await openProjectNow(); if (!root) return; }
     const rel = prompt('File path relative to the project folder:', 'main.nx');
     if (!rel) return;
     if (rel.startsWith('/') || rel.split(/[\\/]/).includes('..') || /^[A-Za-z]:/.test(rel)) {
@@ -480,8 +492,12 @@
     try {
       await api.newFile(rel);
       await refreshTree();
-      await openFile(rel);
+      await openFileNow(rel);
     } catch (error) { appendOutput('Create file failed: ' + error.message, 'error'); }
+  }
+
+  function newFile() {
+    return enqueueDocumentOperation(() => newFileNow());
   }
   async function chooseCompiler() {
     try {
