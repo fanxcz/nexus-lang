@@ -1,5 +1,6 @@
 #include "driver/lsp/protocol.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <iostream>
