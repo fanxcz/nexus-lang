@@ -14,12 +14,14 @@ nexus run
 
 ## Current features
 
-The source implements pencil/brush, eraser, straight line, rectangle and fill tools; an on-screen color palette; adjustable brush size; undo/redo checkpoints (including the New canvas action); BMP save and load with visible error reporting; fullscreen toggle; and a drawing canvas of 1024×720 pixels. The exact UI controls are defined by the checked-in `examples/nexus_paint.nx`; do not rely on keyboard shortcut lists copied from older drafts.
+The source implements pencil/brush, eraser, straight line, rectangle and fill tools; an on-screen color palette; adjustable brush size; fullscreen toggle; and a 1024×720 CPU-side drawing canvas. A base canvas can be combined with up to three transparent raster layers. Each layer has its own undo/redo history, can be selected independently, and can be hidden or shown; file export flattens the visible layers in source-over order.
 
-The app writes `nexus_paint.bmp` relative to its working directory. Choose a writable working folder if you plan to save drawings.
+The import path field accepts image paths relative to the application's working directory. BMP import is available through SDL2; other formats such as PNG/JPEG require the optional SDL2_image runtime. BMP export is implemented by NEXUS. PNG export is enabled only when the installed SDL2_image library provides `IMG_SavePNG` and the SDL surface-format API; otherwise Paint reports the missing capability rather than producing a fake PNG.
+
+The app writes `nexus_paint.bmp` and, when PNG support is available, `nexus_paint.png` relative to its working directory. Choose a writable working folder if you plan to save drawings. The exact UI controls are defined by the checked-in `examples/nexus_paint.nx`.
 
 ## Packaging
 
 The repository CI also builds a Windows x64 NEXUS Paint executable and portable ZIP. The ZIP is the recommended standalone download because it keeps the runtime DLLs and editable `.nx` source beside the executable. See the [Downloads page](../downloads.md) when GitHub Pages is enabled.
 
-The canvas currently saves BMP. PNG export, layers, selections, vector paths and arbitrary image formats are not included in the current source.
+Selections, vector paths, and nondestructive adjustment layers are not included. Layers are raster canvases with per-layer history; exported images are flattened.
