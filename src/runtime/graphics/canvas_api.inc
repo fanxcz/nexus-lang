@@ -177,7 +177,16 @@ void nexus_gfx_canvas_draw(int64_t id, double x, double y, double w, double h, d
 }
 bool nexus_gfx_canvas_save_bmp(int64_t id, const char* path) {
     auto it = gCanvases.find(id);
-    return it != gCanvases.end() && canvas_save_bmp_impl(it->second, path);
+    if (it == gCanvases.end() || !path || !*path) {
+        gGraphicsError = "BMP export requires a live canvas and a file path";
+        return false;
+    }
+    if (!canvas_save_bmp_impl(it->second, path)) {
+        gGraphicsError = std::string("could not write BMP file: ") + path;
+        return false;
+    }
+    gGraphicsError.clear();
+    return true;
 }
 
 bool nexus_gfx_canvas_blit(int64_t destinationId, int64_t sourceId) {
@@ -325,11 +334,15 @@ bool nexus_gfx_canvas_save_png(int64_t id, const char* path) {
 }
 
 int64_t nexus_gfx_canvas_load_bmp(const char* path) {
-    if (!gGraphics)
+    if (!gGraphics || !path || !*path) {
+        gGraphicsError = "BMP import requires initialized graphics and a file path";
         return 0;
+    }
     CanvasData c;
-    if (!canvas_load_bmp_impl(path, c))
+    if (!canvas_load_bmp_impl(path, c)) {
+        gGraphicsError = "could not load BMP (expected an uncompressed 24-bit or 32-bit image up to 16 megapixels)";
         return 0;
+    }
     if (gSoftware2D) {
         c.software = SDL_CreateTexture(
             gRenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, c.w, c.h);
@@ -345,6 +358,7 @@ int64_t nexus_gfx_canvas_load_bmp(const char* path) {
     }
     const int64_t id = gNextCanvas++;
     gCanvases[id] = std::move(c);
+    gGraphicsError.clear();
     return id;
 }
 void nexus_gfx_canvas_checkpoint(int64_t id) {
@@ -357,7 +371,7 @@ bool nexus_gfx_canvas_undo(int64_t id) {
     if (it == gCanvases.end() || it->second.undo.empty())
         return false;
     CanvasData& c = it->second;
-    c.redo.push_back(CanvasSnapshot{c.pixels});
+    canvas_push_snapshot(c.redo, c);
     c.pixels = std::move(c.undo.back().pixels);
     c.undo.pop_back();
     return true;
@@ -367,7 +381,7 @@ bool nexus_gfx_canvas_redo(int64_t id) {
     if (it == gCanvases.end() || it->second.redo.empty())
         return false;
     CanvasData& c = it->second;
-    c.undo.push_back(CanvasSnapshot{c.pixels});
+    canvas_push_snapshot(c.undo, c);
     c.pixels = std::move(c.redo.back().pixels);
     c.redo.pop_back();
     return true;
