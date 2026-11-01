@@ -24,6 +24,7 @@ bool nexus_scene_save(int64_t scene, const char* path) {
     std::ofstream f(path, std::ios::out | std::ios::trunc);
     if (!f)
         return false;
+    f << std::setprecision(std::numeric_limits<float>::max_digits10);
     f << "NEXUS_SCENE 1\n" << sit->second.entities.size() << "\n";
     for (const auto& e : sit->second.entities) {
         f << e.x << ' ' << e.y << ' ' << e.vx << ' ' << e.vy << ' ' << e.w << ' ' << e.h << ' '
