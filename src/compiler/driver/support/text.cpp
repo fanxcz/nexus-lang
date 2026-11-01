@@ -116,7 +116,11 @@ namespace nexus {
                                              ec.message());
                 if (fs::is_symlink(status)) {
                     it.disable_recursion_pending();
-                    continue;
+                    if (excluded.contains(it->path().filename().string()))
+                        continue;
+                    throw std::runtime_error(
+                        "package contains a symbolic link: " +
+                        it->path().lexically_relative(root).generic_string());
                 }
                 if (fs::is_directory(status) && excluded.contains(it->path().filename().string())) {
                     it.disable_recursion_pending();
