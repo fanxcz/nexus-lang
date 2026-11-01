@@ -156,7 +156,6 @@
     static std::string gUiTextFieldOriginal;
     static bool gUiTextFieldAdvancePending = false;
     static int64_t gUiTextFieldReverseTarget = 0;
-    static int64_t gUiTextFieldFirstInFrame = 0;
     static int64_t gUiTextFieldPreviousInFrame = 0;
     static int64_t gUiTextFieldLastInFrame = 0;
     static int64_t gUiTextFieldLastPreviousFrame = 0;
