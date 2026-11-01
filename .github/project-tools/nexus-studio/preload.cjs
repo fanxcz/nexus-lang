@@ -24,5 +24,7 @@ contextBridge.exposeInMainWorld('nexusStudio', {
   saveLanguageDocument: filePath => ipcRenderer.invoke('lsp:save', filePath),
   closeLanguageDocument: filePath => ipcRenderer.invoke('lsp:close', filePath),
   onDiagnostics: callback =>
-    ipcRenderer.on('lsp:diagnostics', (_event, diagnostics) => callback(diagnostics))
+    ipcRenderer.on('lsp:diagnostics', (_event, diagnostics) => callback(diagnostics)),
+  onLanguageServerExit: callback =>
+    ipcRenderer.on('lsp:exit', (_event, status) => callback(status))
 });
