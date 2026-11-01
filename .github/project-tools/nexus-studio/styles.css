@@ -338,3 +338,9 @@ button:disabled {
     transition: none !important;
   }
 }
+
+
+.diagnostic-status { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 660px) {
+  .diagnostic-status { max-width: 110px; }
+}
