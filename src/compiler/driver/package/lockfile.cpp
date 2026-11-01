@@ -114,7 +114,7 @@ namespace nexus {
                 const fs::path normalizedLocal = local.lexically_normal();
                 auto firstDeclaredComponent = local.begin();
                 while (firstDeclaredComponent != local.end() &&
-                       (*firstDeclaredComponent == "." || firstDeclaredComponent->empty())) {
+                       (*firstDeclaredComponent == "." || (*firstDeclaredComponent).empty())) {
                     ++firstDeclaredComponent;
                 }
                 const bool declaredFromVendor =
