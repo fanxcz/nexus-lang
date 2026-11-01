@@ -27,11 +27,12 @@ This experimental path compiles and launches the bundled editor example. It can 
 
 ## NEXUS Studio
 
-The Electron desktop application can start the separately installed compiler with the `lsp`
-argument for the active project. It sends the active `.nx` editor buffer to the server and
-shows published compiler diagnostics as editor annotations. The language server process is
-stopped when the Studio window closes and restarted when the selected project or compiler
-changes.
+The Electron desktop application supports multiple open document tabs and keeps
+independent unsaved buffers while switching between files. It can start the separately
+installed compiler with the `lsp` argument for the active project, send the active `.nx`
+editor buffer to the server, and show published compiler diagnostics as editor annotations.
+The language server process is stopped when the Studio window closes and restarted when the
+selected project or compiler changes.
 
 Studio currently consumes diagnostics only. Completion, hover, definition/reference navigation,
 multi-tab editing and debugging are not yet integrated into its UI; use the VS Code extension
