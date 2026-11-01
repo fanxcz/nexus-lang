@@ -84,7 +84,7 @@ The standard library lives separately in `stdlib/` and is imported by NEXUS prog
 
 The VS Code extension has an independent version from the compiler. The extension launches the installed or configured compiler with the `lsp` argument; it does not bundle the compiler binary.
 
-NEXUS Paint is an application example written in NEXUS, not a separate cross-platform GUI framework. Its available drawing and image I/O features depend on the graphics runtime and the installed SDL support.
+The scene snapshot API can now explicitly apply a loaded snapshot to the live ECS registry; that operation replaces the existing entity set and invalidates prior entity handles. This boundary is covered by a runtime CTest. NEXUS Paint is an application example written in NEXUS, not a separate cross-platform GUI framework. Its available drawing and image I/O features depend on the graphics runtime and the installed SDL support.
 
 ## Distribution and release boundaries
 
