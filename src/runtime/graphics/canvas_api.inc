@@ -181,6 +181,7 @@ bool nexus_gfx_canvas_save_bmp(int64_t id, const char* path) {
 }
 
 bool nexus_gfx_canvas_blit(int64_t destinationId, int64_t sourceId) {
+    gGraphicsError.clear();
     auto destination = gCanvases.find(destinationId);
     auto source = gCanvases.find(sourceId);
     if (destination == gCanvases.end() || source == gCanvases.end() ||
@@ -196,6 +197,7 @@ bool nexus_gfx_canvas_blit(int64_t destinationId, int64_t sourceId) {
 }
 
 bool nexus_gfx_canvas_import_image(int64_t id, const char* path) {
+    gGraphicsError.clear();
     auto canvas = gCanvases.find(id);
     if (canvas == gCanvases.end() || !path || !*path) {
         gGraphicsError = "canvas image import requires a live canvas and a file path";
@@ -264,6 +266,7 @@ bool nexus_gfx_canvas_import_image(int64_t id, const char* path) {
 }
 
 bool nexus_gfx_canvas_save_png(int64_t id, const char* path) {
+    gGraphicsError.clear();
     auto it = gCanvases.find(id);
     if (it == gCanvases.end() || !path || !*path) {
         gGraphicsError = "PNG export requires a live canvas and a file path";
