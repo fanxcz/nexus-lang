@@ -5,7 +5,7 @@ fn main() {
         return
     }
 
-    let scene = scene_create()
+    let mut scene = scene_create()
     let e1 = ecs_create()
     let e2 = ecs_create()
     ecs_set_position(e1, 420.0, 320.0)
@@ -18,17 +18,41 @@ fn main() {
     scene_add(scene, e2)
 
     let mut running = true
+    let mut status = "Ready"
     while running && !gfx_should_close() {
         gfx_poll()
         if gfx_key_down("ESC") { running = false }
-        if ui_button(20.0, 20.0, 120.0, 42.0, "SAVE") { scene_save(scene, "scenes/editor_scene.nxs"); gfx_sound_tone(880.0, 60, 0.08) }
-        if ui_button(150.0, 20.0, 120.0, 42.0, "LOAD") { let loaded = scene_load("scenes/editor_scene.nxs"); scene_destroy(scene); let _keep = loaded }
+        if ui_button(20.0, 20.0, 120.0, 42.0, "SAVE") {
+            if scene_save(scene, "scenes/editor_scene.nxs") {
+                status = "Scene saved"
+                gfx_sound_tone(880.0, 60, 0.08)
+            } else {
+                status = "Save failed"
+            }
+        }
+        if ui_button(150.0, 20.0, 120.0, 42.0, "LOAD") {
+            let loaded = scene_load("scenes/editor_scene.nxs")
+            if loaded == 0 {
+                status = "Load failed"
+            } else {
+                let applied = scene_apply(loaded)
+                if applied >= 0 {
+                    scene_destroy(scene)
+                    scene = loaded
+                    status = "Loaded " + str_i64(applied) + " entities"
+                } else {
+                    scene_destroy(loaded)
+                    status = "Scene apply failed"
+                }
+            }
+        }
         if ui_button(280.0, 20.0, 150.0, 42.0, "ADD BOX") {
             let e = ecs_create()
             ecs_set_position(e, 760.0, 260.0)
             ecs_set_size(e, 110.0, 80.0)
             ecs_set_color(e, 0.25, 1.0, 0.45, 1.0)
             scene_add(scene, e)
+            status = "Entity added"
         }
 
         gfx_begin()
@@ -64,7 +88,7 @@ fn main() {
         ui_panel(1100.0, 270.0, 260.0, 140.0, 0.08, 0.1, 0.16, 1.0)
         ui_label(1120.0, 300.0, "Scene save/load is native", 1.25)
         ui_label(1120.0, 335.0, "ECS objects render live", 1.25)
-        ui_label(1120.0, 370.0, "NEXUS 1.0", 1.25)
+        ui_label(1120.0, 370.0, status, 1.25)
 
         gfx_end()
     }
