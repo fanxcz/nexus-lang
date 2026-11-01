@@ -236,6 +236,18 @@ test('stopping the child rejects outstanding requests', async () => {
   await assert.rejects(pending, /exited/);
 });
 
+test('stop observes a child that closes immediately after stdin is ended', async () => {
+  const child = new FakeChild();
+  child.stdin.end = () => {
+    child.exitCode = 0;
+    child.emit('close', 0, null);
+  };
+  const client = new NexusLspClient({ spawnProcess: () => child });
+  client.child = child;
+  await client.stop();
+  assert.equal(client.child, null);
+});
+
 test('decoder constructor rejects invalid limits', () => {
   assert.throws(() => new JsonRpcStreamDecoder(0), /positive safe integer/);
   assert.throws(() => new JsonRpcStreamDecoder(Number.MAX_SAFE_INTEGER + 1), /positive safe integer/);
