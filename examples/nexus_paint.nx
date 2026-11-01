@@ -522,25 +522,14 @@ fn main() {
         }
         if layer3 != 0 {
             if layer3_visible {
-                if ui_button(info_x, canvas_y + 744.0, 112.0, 14.0, "HIDE 3") {
+                if ui_button(info_x, canvas_y + 732.0, 112.0, 26.0, "HIDE 3") {
                     layer3_visible = false
                     status = "Layer 3 hidden"
                 }
             } else {
-                if ui_button(info_x, canvas_y + 744.0, 112.0, 14.0, "SHOW 3") {
+                if ui_button(info_x, canvas_y + 732.0, 112.0, 26.0, "SHOW 3") {
                     layer3_visible = true
                     status = "Layer 3 visible"
-                }
-            }
-        }
-        if layer3 != 0 {
-            if layer3_visible {
-                if ui_button(info_x + 120.0, canvas_y + 744.0, 120.0, 14.0, "L3 ON") {
-                    layer3_visible = false
-                }
-            } else {
-                if ui_button(info_x + 120.0, canvas_y + 744.0, 120.0, 14.0, "L3 OFF") {
-                    layer3_visible = true
                 }
             }
         }
