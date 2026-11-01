@@ -60,6 +60,7 @@
         if (gIMG && !IMG_Load) {
             IMG_Load = reinterpret_cast<PFN_IMG_Load>(load_symbol(gIMG, "IMG_Load"));
             IMG_GetError = reinterpret_cast<PFN_IMG_GetError>(load_symbol(gIMG, "IMG_GetError"));
+            IMG_SavePNG = reinterpret_cast<PFN_IMG_SavePNG>(load_symbol(gIMG, "IMG_SavePNG"));
         }
         if (!gTTF)
             gTTF = load_optional(ttfNames, sizeof(ttfNames) / sizeof(ttfNames[0]));
@@ -182,6 +183,9 @@
 
         LOAD_OPTIONAL_SDL(SDL_LoadBMP);
         LOAD_OPTIONAL_SDL(SDL_ConvertSurfaceFormat);
+        LOAD_OPTIONAL_SDL(SDL_CreateRGBSurfaceWithFormat);
+        LOAD_OPTIONAL_SDL(SDL_LockSurface);
+        LOAD_OPTIONAL_SDL(SDL_UnlockSurface);
         LOAD_OPTIONAL_SDL(SDL_FreeSurface);
 
         LOAD_OPTIONAL_SDL(SDL_OpenAudioDevice);
