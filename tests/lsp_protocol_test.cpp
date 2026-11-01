@@ -62,6 +62,10 @@ int main() {
     if (escapedOutput != "line\\n\\t\\\"\\\\")
         return fail("JSON output escaping is incorrect");
 
+    const std::string controls = std::string("a") + char(1) + '\b' + '\f' + char(11);
+    if (jsonEscape(controls) != "a\\u0001\\b\\f\\u000b")
+        return fail("JSON output did not escape all C0 control characters");
+
     std::puts("NEXUS LSP protocol tests: PASS");
     return 0;
 }
