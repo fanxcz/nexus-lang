@@ -40,7 +40,31 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   same files. Arrays are validated structurally; scalar fields still read only
   scalar values.
 
+- The LSP now advertises and implements `textDocument/prepareRename`.
+  The request returns a UTF-16 identifier range and placeholder only when the
+  cursor resolves to a renameable symbol. Regression coverage includes invalid
+  cursor positions and an astral Unicode character before the selected token.
+
+- Added dependency-free Node.js contract tests for the VS Code extension's
+  language registration, grammar, language configuration, snippets and LSP
+  client launch contract. CI runs the checks alongside the existing Studio
+  source/path-security checks.
+
 ### Changed
+
+- Moved pre-`project()` compiler selection into `cmake/NexusOptions.cmake`.
+  The root CMake entry point still owns dependencies, targets, installation
+  and CTest registration; this keeps the sensitive compiler-initialization
+  order intact while starting a smaller, reviewable build-system separation.
+
+- Refreshed the documentation landing page and shared site styling, added an
+  ecosystem integration map, and clarified which Studio, Paint, backend and
+  distribution capabilities are currently implemented or constrained.
+
+- Improved Studio's narrow-window layout, keyboard focus visibility and
+  accessible status/output announcements. The child-process slot remains
+  occupied until the process close event, preventing overlapping build/terminal
+  processes during shutdown.
 
 - Version numbers now come from one place: `scripts/nexus_version.py` reads the
   compiler version from `CMakeLists.txt` and the extension version from
