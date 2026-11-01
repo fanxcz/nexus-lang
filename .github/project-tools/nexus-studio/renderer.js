@@ -13,6 +13,7 @@
   let languageServerPromise = null;
   let languageServerGeneration = 0;
   let pendingLanguageSync = Promise.resolve();
+  let documentOperationQueue = Promise.resolve();
   let suppressEditorChange = false;
   const documents = new Map();
   const welcome = $('welcome');
@@ -279,7 +280,13 @@
       else renderTree(items, treeEl);
     } catch (error) { appendOutput(error.message, 'error'); }
   }
-  async function openProject() {
+  function enqueueDocumentOperation(operation) {
+    const result = documentOperationQueue.catch(() => {}).then(operation);
+    documentOperationQueue = result.catch(() => {});
+    return result;
+  }
+
+  async function openProjectNow() {
     const hasUnsavedDocuments = Array.from(documents.values()).some(item => item.dirty);
     if (hasUnsavedDocuments &&
         !confirm('Discard unsaved changes in all open documents and open another project?')) return;
@@ -311,7 +318,12 @@
       void ensureLanguageServer();
     } catch (error) { appendOutput('Open folder failed: ' + error.message, 'error'); }
   }
-  async function switchDocument(rel) {
+
+  function openProject() {
+    return enqueueDocumentOperation(() => openProjectNow());
+  }
+
+  async function switchDocumentNow(rel) {
     const next = documents.get(rel);
     if (!next) return false;
     if (currentPath === rel && editor) return true;
@@ -361,6 +373,10 @@
     return true;
   }
 
+  function switchDocument(rel) {
+    return enqueueDocumentOperation(() => switchDocumentNow(rel));
+  }
+
   async function openFile(rel) {
     try {
       if (!documents.has(rel)) {
@@ -386,7 +402,7 @@
     }
   }
 
-  async function closeDocument(rel) {
+  async function closeDocumentNow(rel) {
     const item = documents.get(rel);
     if (!item) return false;
     if (item.dirty && !confirm('Discard unsaved changes in ' + rel + '?')) return false;
@@ -402,7 +418,7 @@
       lspVersion = 0;
       if (documents.size) {
         const nextPath = Array.from(documents.keys()).pop();
-        await switchDocument(nextPath);
+        await switchDocumentNow(nextPath);
       } else {
         clearDiagnostics();
         if (editor) {
@@ -424,6 +440,11 @@
     }
     return true;
   }
+
+  function closeDocument(rel) {
+    return enqueueDocumentOperation(() => closeDocumentNow(rel));
+  }
+
   async function saveCurrent() {
     if (!currentPath || !editor) {
       appendOutput('Open or create a file before saving.', 'error');
