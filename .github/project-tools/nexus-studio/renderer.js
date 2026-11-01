@@ -6,6 +6,11 @@
   let dirty = false;
   let editor = null;
   let compilerPath = null;
+  let currentUri = null;
+  let lspVersion = 0;
+  let languageServerReady = false;
+  let languageServerPromise = null;
+  let suppressEditorChange = false;
   const welcome = $('welcome');
   const editorWrap = $('editorWrap');
   const output = $('terminalOutput');
@@ -42,7 +47,17 @@
       wrap: false,
       highlightActiveLine: true
     });
-    editor.session.on('change', () => { if (currentPath) markDirty(true); });
+    editor.session.on('change', () => {
+      if (!currentPath || suppressEditorChange) return;
+      markDirty(true);
+      if (currentUri && languageServerReady) {
+        lspVersion += 1;
+        const version = lspVersion;
+        api.changeLanguageDocument(currentPath, editor.getValue(), version).catch(error => {
+          appendOutput('Language sync failed: ' + error.message, 'error');
+        });
+      }
+    });
     editor.commands.addCommand({
       name: 'save',
       bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
@@ -82,6 +97,59 @@
       container.appendChild(row);
     }
   }
+  async function ensureLanguageServer() {
+    if (languageServerReady) return true;
+    if (!root) return false;
+    if (!languageServerPromise) {
+      languageServerPromise = api.startLanguageServer()
+        .then(() => {
+          languageServerReady = true;
+          appendOutput('NEXUS language services ready.', 'system');
+          return true;
+        })
+        .catch(error => {
+          languageServerReady = false;
+          appendOutput('Language services unavailable: ' + error.message, 'error');
+          return false;
+        })
+        .finally(() => { languageServerPromise = null; });
+    }
+    return languageServerPromise;
+  }
+
+  function clearDiagnostics() {
+    if (editor) editor.session.setAnnotations([]);
+    $('diagnosticStatus').textContent = 'No diagnostics';
+    $('diagnosticStatus').title = 'NEXUS language diagnostics';
+  }
+
+  api.onDiagnostics(params => {
+    if (!editor || !currentUri || params.uri !== currentUri) return;
+    const diagnostics = Array.isArray(params.diagnostics) ? params.diagnostics : [];
+    const annotations = diagnostics.map(diagnostic => {
+      const start = diagnostic.range && diagnostic.range.start
+        ? diagnostic.range.start : { line: 0, character: 0 };
+      const severity = Number(diagnostic.severity) || 1;
+      const type = severity === 1 ? 'error' :
+        severity === 2 ? 'warning' : severity === 3 ? 'info' : 'info';
+      const source = diagnostic.source ? '[' + diagnostic.source + '] ' : '';
+      return {
+        row: Math.max(0, Number(start.line) || 0),
+        column: Math.max(0, Number(start.character) || 0),
+        text: source + String(diagnostic.message || 'Language diagnostic'),
+        type
+      };
+    });
+    editor.session.setAnnotations(annotations);
+    const errors = diagnostics.filter(item => item.severity === 1).length;
+    const warnings = diagnostics.filter(item => item.severity === 2).length;
+    $('diagnosticStatus').textContent =
+      errors + ' errors · ' + warnings + ' warnings';
+    $('diagnosticStatus').title = diagnostics.length
+      ? diagnostics.map(item => item.message).join('\n')
+      : 'No language diagnostics';
+  });
+
   async function refreshTree() {
     if (!root) { appendOutput('Open a project folder first.', 'error'); return; }
     try {
@@ -98,6 +166,10 @@
       if (!project) return;
       root = project.root;
       currentPath = '';
+      currentUri = null;
+      lspVersion = 0;
+      languageServerReady = false;
+      clearDiagnostics();
       $('projectName').textContent = root.split(/[\\/]/).filter(Boolean).pop() || root;
       $('statusProject').textContent = root;
       treeEl.replaceChildren();
@@ -108,16 +180,24 @@
       markDirty(false);
       setStatus('Project opened');
       appendOutput('Opened: ' + root, 'system');
+      void ensureLanguageServer();
     } catch (error) { appendOutput('Open folder failed: ' + error.message, 'error'); }
   }
   async function openFile(rel) {
     if (dirty && !confirm('Discard unsaved changes?')) return false;
     try {
+      if (currentUri && currentPath) {
+        await api.closeLanguageDocument(currentPath).catch(() => {});
+      }
+      currentUri = null;
+      clearDiagnostics();
       const content = await api.readFile(rel);
       ensureEditor();
-      if (!editor) return;
+      if (!editor) return false;
       currentPath = rel;
+      suppressEditorChange = true;
       editor.setValue(content, -1);
+      suppressEditorChange = false;
       editor.session.setMode(rel.toLowerCase().endsWith('.nx') ? 'ace/mode/nexus' : 'ace/mode/text');
       welcome.classList.add('hidden');
       editorWrap.classList.remove('hidden');
@@ -126,6 +206,18 @@
       $('statusLang').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS' : 'TEXT';
       markDirty(false);
       await refreshTree();
+      if (rel.toLowerCase().endsWith('.nx') && await ensureLanguageServer()) {
+        try {
+          const opened = await api.openLanguageDocument(rel, content, 1);
+          currentUri = opened.uri;
+          lspVersion = 1;
+          $('diagnosticStatus').textContent = 'Checking…';
+        } catch (error) {
+          appendOutput('Could not open language document: ' + error.message, 'error');
+        }
+      } else {
+        clearDiagnostics();
+      }
       setStatus('Opened ' + rel);
       return true;
     } catch (error) {
@@ -140,6 +232,9 @@
     }
     try {
       await api.saveFile(currentPath, editor.getValue());
+      if (currentUri && languageServerReady) {
+        await api.saveLanguageDocument(currentPath);
+      }
       markDirty(false);
       setStatus('Saved ' + currentPath);
       await refreshTree();
@@ -309,6 +404,7 @@
       $('statusProject').textContent = root;
       treeEl.replaceChildren();
       renderTree(project.tree || [], treeEl);
+      void ensureLanguageServer();
     }
   }).catch(() => {});
 })();
