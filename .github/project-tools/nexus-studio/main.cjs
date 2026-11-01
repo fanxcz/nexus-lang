@@ -2,8 +2,9 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { spawn, spawnSync } = require('node:child_process');
-const { pathToFileURL, fileURLToPath } = require('node:url');
+const { pathToFileURL } = require('node:url');
 const { isInside, assertInsideProject } = require('./path-guard.cjs');
+const { toProjectLocation } = require('./lsp-location.cjs');
 const { NexusLspClient } = require('./lsp-client.cjs');
 
 let win;
@@ -305,24 +306,8 @@ app.whenReady().then(async () => {
     const locations = Array.isArray(result) ? result : (result ? [result] : []);
     const safeLocations = [];
     for (const location of locations) {
-      const targetUri = location && (location.uri || location.targetUri);
-      if (typeof targetUri !== 'string' || !targetUri.startsWith('file:')) continue;
-      try {
-        const realTarget = await fs.realpath(fileURLToPath(targetUri));
-        const checkedTarget = await assertProjectPath(realTarget);
-        if (path.extname(checkedTarget).toLowerCase() !== '.nx') continue;
-        const range = location.range || location.targetSelectionRange || location.targetRange;
-        if (!range || !range.start ||
-            !Number.isSafeInteger(range.start.line) || !Number.isSafeInteger(range.start.character)) {
-          continue;
-        }
-        safeLocations.push({
-          path: path.relative(projectRoot, checkedTarget).split(path.sep).join('/'),
-          range
-        });
-      } catch {
-        // Ignore malformed, missing, or out-of-project definition targets.
-      }
+      const safeLocation = await toProjectLocation(location, projectRoot);
+      if (safeLocation) safeLocations.push(safeLocation);
     }
     return safeLocations;
   });
