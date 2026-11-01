@@ -234,6 +234,18 @@ namespace nexus {
                                     T::void_(),
                                     "nexus_gfx_canvas_draw"};
 
+        if (name == "gfx_canvas_blit")
+            return BuiltinSignature{
+                name, {T::i64(), T::i64()}, T::boolean(), "nexus_gfx_canvas_blit"};
+
+        if (name == "gfx_canvas_import_image")
+            return BuiltinSignature{
+                name, {T::i64(), T::string()}, T::boolean(), "nexus_gfx_canvas_import_image"};
+
+        if (name == "gfx_canvas_save_png")
+            return BuiltinSignature{
+                name, {T::i64(), T::string()}, T::boolean(), "nexus_gfx_canvas_save_png"};
+
         if (name == "gfx_canvas_save_bmp")
             return BuiltinSignature{
                 name, {T::i64(), T::string()}, T::boolean(), "nexus_gfx_canvas_save_bmp"};
