@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <exception>
 #include <fstream>
 #include <limits>
 #include <memory>
@@ -23,6 +24,7 @@
 #include <string_view>
 #include <thread>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #if defined(_WIN32)
 #include <winternl.h>
