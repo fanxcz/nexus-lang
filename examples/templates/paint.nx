@@ -63,12 +63,12 @@ fn palette_b(index: i64) -> f64 {
 }
 
 fn paint_composite(base: i64,
-                      layer1: i64,
-                      layer2: i64,
-                      layer3: i64,
-                      layer1_visible: bool,
-                      layer2_visible: bool,
-                      layer3_visible: bool) -> i64 {
+layer1: i64,
+layer2: i64,
+layer3: i64,
+layer1_visible: bool,
+layer2_visible: bool,
+layer3_visible: bool) -> i64 {
     let width = gfx_canvas_width(base)
     let height = gfx_canvas_height(base)
     if width <= 0 || height <= 0 {
@@ -79,24 +79,24 @@ fn paint_composite(base: i64,
     if result == 0 {
         return 0
     }
-    if !gfx_canvas_blit(result, base) {
+    if ! gfx_canvas_blit(result, base) {
         gfx_canvas_destroy(result)
         return 0
     }
     if layer1 != 0 && layer1_visible {
-        if !gfx_canvas_blit(result, layer1) {
+        if ! gfx_canvas_blit(result, layer1) {
             gfx_canvas_destroy(result)
             return 0
         }
     }
     if layer2 != 0 && layer2_visible {
-        if !gfx_canvas_blit(result, layer2) {
+        if ! gfx_canvas_blit(result, layer2) {
             gfx_canvas_destroy(result)
             return 0
         }
     }
     if layer3 != 0 && layer3_visible {
-        if !gfx_canvas_blit(result, layer3) {
+        if ! gfx_canvas_blit(result, layer3) {
             gfx_canvas_destroy(result)
             return 0
         }
@@ -348,8 +348,8 @@ fn main() {
         }
         if ui_button(786.0, button_y, 88.0, 40.0, "SAVE BMP") {
             let flattened = paint_composite(
-                canvas, layer1, layer2, layer3,
-                layer1_visible, layer2_visible, layer3_visible
+            canvas, layer1, layer2, layer3,
+            layer1_visible, layer2_visible, layer3_visible
             )
             if flattened != 0 {
                 if gfx_canvas_save_bmp(flattened, "nexus_paint.bmp") {
@@ -373,12 +373,12 @@ fn main() {
         }
 
         image_path = ui_text_field(
-            980.0, button_y, 230.0, 40.0, image_path, "image file path", 160
+        980.0, button_y, 230.0, 40.0, image_path, "image file path", 160
         )
         if ui_button(1220.0, button_y, 92.0, 40.0, "SAVE PNG") {
             let flattened = paint_composite(
-                canvas, layer1, layer2, layer3,
-                layer1_visible, layer2_visible, layer3_visible
+            canvas, layer1, layer2, layer3,
+            layer1_visible, layer2_visible, layer3_visible
             )
             if flattened != 0 {
                 if gfx_canvas_save_png(flattened, "nexus_paint.png") {
@@ -542,11 +542,11 @@ fn main() {
     }
 
     let final_composite = paint_composite(
-        canvas, layer1, layer2, layer3,
-        layer1_visible, layer2_visible, layer3_visible
+    canvas, layer1, layer2, layer3,
+    layer1_visible, layer2_visible, layer3_visible
     )
     if final_composite != 0 {
-        if !gfx_canvas_save_bmp(final_composite, "nexus_paint.bmp") {
+        if ! gfx_canvas_save_bmp(final_composite, "nexus_paint.bmp") {
             print("NEXUS Paint: final composite save failed: " + gfx_error())
         }
         gfx_canvas_destroy(final_composite)
