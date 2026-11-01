@@ -111,7 +111,7 @@ fn ui2d_text_field(rect: UIRect, value: string, placeholder: string, max_bytes: 
 // Stable positive IDs preserve focus and caret state if an immediate-mode field
 // moves or resizes. IDs must be unique among fields rendered during the frame.
 fn ui2d_text_field_id(rect: UIRect, value: string, placeholder: string,
-                      max_bytes: i64, widget_id: i64) -> string {
+max_bytes: i64, widget_id: i64) -> string {
     if rect.width <= 0.0 || rect.height <= 0.0 { return value }
     return ui_text_field_id(rect.x, rect.y, rect.width, rect.height,
     value, placeholder, max_bytes, widget_id)
