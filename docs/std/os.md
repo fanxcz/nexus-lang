@@ -33,6 +33,30 @@ The platform base is `APPDATA` (falling back to `LOCALAPPDATA`) on Windows, `~/L
 
 The wrappers do not currently expose environment enumeration, process spawning, current-directory changes or platform-specific OS handles. Use the built-in `env(name)` to read one environment variable.
 
+## Application configuration directory
+
+Use `config_dir` to create a per-user directory for application settings or small
+configuration files. It returns an empty string on failure; `config_error` returns the
+failure description for the current thread.
+
+```nx
+import std.os
+
+fn main() {
+    let directory = config_dir("My NEXUS App")
+    if directory == "" {
+        print("Could not prepare settings directory: " + config_error())
+        return
+    }
+    print("Settings directory: " + directory)
+}
+```
+
+The application name is one path component (maximum 128 bytes). It cannot contain
+path separators, control characters, or reserved filename characters. This prevents
+the app-name argument from selecting a parent or unrelated directory. The API creates
+the directory if necessary; it does not create a settings file for the application.
+
 ## Capturing command output
 
 The built-in `capture_output(command: string) -> string` runs a shell command and returns everything it writes to stdout as a string (empty string on failure). It complements `system()`, which only returns the exit code:
