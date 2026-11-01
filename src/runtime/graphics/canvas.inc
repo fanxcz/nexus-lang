@@ -20,6 +20,8 @@ static void canvas_put(CanvasData& c, int x, int y, uint8_t r, uint8_t g, uint8_
     c.pixels[i + 3] = a;
 }
 
+static void canvas_checkpoint_internal(CanvasData& c);
+
 static void canvas_blend_pixel(uint8_t* destination, const uint8_t* source) {
     if (!destination || !source)
         return;
