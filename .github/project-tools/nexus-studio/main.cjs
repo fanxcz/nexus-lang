@@ -264,6 +264,30 @@ app.whenReady().then(async () => {
     if (!languageServer.ready) return false;
     return languageServer.closeDocument(uri);
   });
+  async function requestPositionedLanguageFeature(rel, method, position) {
+    if (!['textDocument/completion', 'textDocument/hover', 'textDocument/signatureHelp'].includes(method)) {
+      throw new Error('This language-server request is not available in NEXUS Studio.');
+    }
+    if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
+    const line = Number(position && position.line);
+    const character = Number(position && position.character);
+    if (!Number.isSafeInteger(line) || line < 0 || line > 1000000 ||
+        !Number.isSafeInteger(character) || character < 0 || character > 1000000) {
+      throw new Error('A valid LSP cursor position is required.');
+    }
+    const uri = await languageServerUri(rel);
+    return languageServer.request(method, {
+      textDocument: { uri },
+      position: { line, character }
+    });
+  }
+  ipcMain.handle('lsp:completion', async (_event, rel, position) =>
+    requestPositionedLanguageFeature(rel, 'textDocument/completion', position));
+  ipcMain.handle('lsp:hover', async (_event, rel, position) =>
+    requestPositionedLanguageFeature(rel, 'textDocument/hover', position));
+  ipcMain.handle('lsp:signatureHelp', async (_event, rel, position) =>
+    requestPositionedLanguageFeature(rel, 'textDocument/signatureHelp', position));
+
   ipcMain.handle('lsp:definition', async (_event, rel, position) => {
     const uri = await languageServerUri(rel);
     if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
