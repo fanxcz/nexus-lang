@@ -59,6 +59,7 @@
         gLastKey = -1;
         gLastMouseButton = 0;
         std::fill(gKeyPressed.begin(), gKeyPressed.end(), uint8_t(0));
+        gUiTextFieldConsumedKeys.fill(0);
         gMouseClickedButtons.fill(0);
         gTextInputThisFrame.clear();
         // Text fields are invoked in source order after event polling. Keep the
