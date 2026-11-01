@@ -43,6 +43,9 @@ int main() {
 
     if (nexus_runtime_test_ui_key_consumption(43) != 1 ||
         nexus_runtime_test_ui_key_consumption(80) != 1 ||
+        nexus_runtime_test_ui_key_consumption(6) != 1 ||
+        nexus_runtime_test_ui_key_consumption(25) != 1 ||
+        nexus_runtime_test_ui_key_consumption(27) != 1 ||
         nexus_runtime_test_ui_key_consumption(512) != -1) {
         std::fprintf(stderr, "runtime UI test failed: a keyboard edge was not consumed exactly once\n");
         ok = false;
