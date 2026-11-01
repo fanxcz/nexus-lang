@@ -67,6 +67,16 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   buffers and dirty state. Switching documents serializes tab operations, preserves
   unsaved text, and confirms before closing a modified tab or replacing the project.
 
+- Added source-over alpha compositing for CPU canvases, contain-fit image import
+  through SDL_image with BMP fallback, and optional PNG export through
+  `IMG_SavePNG`. Canvas creation/import are capped at 16 megapixels; BMP file
+  reads are bounded, and each canvas keeps at most 32 MiB of undo snapshots.
+- NEXUS Paint now supports a base canvas plus three transparent raster layers,
+  independent per-layer undo/redo, layer visibility, image import, and flattened
+  BMP export with optional PNG export. Runtime CTests cover pixel compositing,
+  image fitting, and the undo memory budget; the Paint smoke test checks the
+  layered editor and keeps the project template byte-identical to the app.
+
 - Added `scene_apply(scene)` to restore a saved scene snapshot into the live ECS
   registry. It returns the number of recreated entities, returns `-1` for an
   invalid snapshot, and explicitly invalidates previous ECS entity handles.
