@@ -14,7 +14,6 @@ The runtime offers immediate drawing widgets. They render into the current frame
 - `ui_progress(x, y, width, height, value, r, g, b, a)` draws a progress bar.
 - `ui_text_field(x, y, width, height, current, placeholder, max_bytes)` returns the current or edited UTF-8 string.
 - `ui_text_field_id(x, y, width, height, current, placeholder, max_bytes, widget_id)` adds a stable positive widget ID so focus and caret survive rectangle movement.
-- `ui_text_field_id(x, y, width, height, current, placeholder, max_bytes, widget_id)` adds a stable positive widget ID so focus and caret survive rectangle movement.
 
 Call widgets after event polling and between `gfx_begin()` and `gfx_end()`. Keep values in your own variables:
 
@@ -43,5 +42,16 @@ fn main() {
 ```
 
 For `ui_text_field`, click to focus and type UTF-8 text. Left/Right move by Unicode code point; Home/End move to the boundaries; Shift+arrows select; Ctrl+A selects all; Backspace and Delete remove text; typing replaces the selection. Escape restores the value that was present when focus began. Tab and Shift+Tab move through editable text fields in source order and wrap at the ends. `max_bytes` is limited to 1–8192; a non-positive value makes the field read-only. The legacy control uses its rectangle as identity; use `ui_text_field_id` with a unique positive ID if the field can move or resize between frames.
+
+## Clipboard
+
+- `gfx_clipboard_get() -> string` reads text from the system clipboard.
+- `gfx_clipboard_set(text: string) -> bool` writes text to the system clipboard.
+
+Both functions require an initialized graphics backend and SDL2 clipboard support. A read
+returns an empty string when the clipboard is empty or when the operation fails; inspect
+`gfx_error()` to distinguish an error. A write returns `false` on failure and records the
+reason in `gfx_error()`. Clipboard symbols are loaded optionally, so a missing capability
+does not prevent graphics initialization.
 
 For complex user interfaces, draw using the 2D primitives and implement layout/application state explicitly.
