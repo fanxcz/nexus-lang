@@ -116,3 +116,7 @@ fn ui2d_text_field_id(rect: UIRect, value: string, placeholder: string,
     return ui_text_field_id(rect.x, rect.y, rect.width, rect.height,
     value, placeholder, max_bytes, widget_id)
 }
+
+// Desktop clipboard access requires an initialized graphics backend.
+fn ui2d_clipboard_get() -> string { return gfx_clipboard_get() }
+fn ui2d_clipboard_set(text: string) -> bool { return gfx_clipboard_set(text) }
