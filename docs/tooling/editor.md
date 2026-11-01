@@ -35,8 +35,8 @@ The language server process is stopped when the Studio window closes and restart
 selected project or compiler changes.
 
 Studio currently consumes diagnostics only. Completion, hover, definition/reference navigation,
-multi-tab editing and debugging are not yet integrated into its UI; use the VS Code extension
-for the broader language-client workflow.
+and debugging are not yet integrated into its UI; use the VS Code extension for the broader
+language-client workflow.
 
 ## Language server
 
