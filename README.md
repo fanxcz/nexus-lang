@@ -16,6 +16,13 @@
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
 ## Project focus
+## Architecture and developer setup
+
+The current compiler, backends, runtime, language services, applications and
+distribution boundaries are mapped in the
+[ecosystem architecture guide](docs/architecture/ecosystem.md). For build-system
+module responsibilities, see the [CMake integration guide](docs/build/cmake.md).
+
 
 NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
 
