@@ -15,5 +15,14 @@ contextBridge.exposeInMainWorld('nexusStudio', {
   buildFile: filePath => ipcRenderer.invoke('compiler:build', filePath),
   runFile: filePath => ipcRenderer.invoke('compiler:run', filePath),
   platform: () => ipcRenderer.invoke('app:platform'),
-  onTerminalData: callback => ipcRenderer.on('terminal:data', (_event, data) => callback(data))
+  onTerminalData: callback => ipcRenderer.on('terminal:data', (_event, data) => callback(data)),
+  startLanguageServer: () => ipcRenderer.invoke('lsp:start'),
+  openLanguageDocument: (filePath, content, version) =>
+    ipcRenderer.invoke('lsp:open', filePath, content, version),
+  changeLanguageDocument: (filePath, content, version) =>
+    ipcRenderer.invoke('lsp:change', filePath, content, version),
+  saveLanguageDocument: filePath => ipcRenderer.invoke('lsp:save', filePath),
+  closeLanguageDocument: filePath => ipcRenderer.invoke('lsp:close', filePath),
+  onDiagnostics: callback =>
+    ipcRenderer.on('lsp:diagnostics', (_event, diagnostics) => callback(diagnostics))
 });
