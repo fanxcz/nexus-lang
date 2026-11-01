@@ -88,6 +88,12 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Fixed
 
+- Scene snapshot IO validates finite numeric fields, rejects truncated, oversized and
+  trailing records, preserves float round-trip precision, and reports failed writes.
+  Scene application builds a replacement entity map before swapping it into the live ECS,
+  so allocation failures do not leave a partially cleared world. Regression tests cover
+  malformed snapshots and save failures.
+
 - NEXUS Paint now checkpoints the canvas before **New**, reports failed BMP save/load operations
   instead of leaving a stale success status, and reports a failed final save at shutdown.
   The project template is kept byte-for-byte synchronized with the standalone example and
