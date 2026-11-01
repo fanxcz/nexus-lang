@@ -85,7 +85,6 @@ int main() {
     // Imported alpha is composited instead of overwriting the destination.
     const std::array<uint8_t, 4> white{255, 255, 255, 255};
     const std::array<uint8_t, 4> halfGreen{0, 255, 0, 128};
-    std::array<uint8_t, 4> whiteDestination{};
     std::array<uint8_t, 4> greenResult{};
     ok &= nexus_runtime_test_canvas_import_rgba(
               1, 1, white.data(), halfGreen.data(), 1, 1, 4, greenResult.data()) != 0;
@@ -112,7 +111,7 @@ int main() {
     ok &= nexus_runtime_test_canvas_import_rgba(
               0, 4, destination.data(), source.data(), 2, 1, 8, imported.data()) == 0;
     ok &= nexus_runtime_test_canvas_blit_rgba(
-              2, 1, destinationRow.data(), sourceRow.data(), blitResult.data()) != 0;
+              0, 1, destinationRow.data(), sourceRow.data(), blitResult.data()) == 0;
 
     return ok ? 0 : 1;
 }
