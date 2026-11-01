@@ -42,10 +42,7 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 - The LSP JSON-RPC string decoder now handles all standard JSON string escapes, BMP Unicode `\\uXXXX` escapes and UTF-16 surrogate pairs, converting escaped Unicode to UTF-8. A dedicated CTest covers valid and invalid escape sequences, JSON-RPC ids, positions, and watched-file capability detection.
 
-- LSP JSON-RPC string decoding now handles the standard JSON escapes and UTF-16
-  surrogate pairs, converting escaped Unicode to UTF-8. A focused protocol unit test
-  covers string escaping, numeric/string request IDs, numeric fields, watched-file
-  capability detection and malformed surrogate/hex escape rejection.
+- The LSP protocol field reader now skips quoted JSON values when resolving keys, preventing embedded `\"uri\"`/`\"line\"` text from being mistaken for protocol fields. Unit tests cover these decoy cases as well as escaped Unicode and watched-file capability parsing.
 
 - The LSP now advertises and implements `textDocument/prepareRename`.
   The request returns a UTF-16 identifier range and placeholder only when the
@@ -64,10 +61,11 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Changed
 
-- Moved pre-`project()` compiler selection into `cmake/NexusOptions.cmake`.
-  The root CMake entry point still owns dependencies, targets, installation
-  and CTest registration; this keeps the sensitive compiler-initialization
-  order intact while starting a smaller, reviewable build-system separation.
+- Moved pre-`project()` compiler selection into `cmake/NexusOptions.cmake`,
+  then split dependency discovery, source groups, compiler targets, installation
+  and CTest registrations into `NexusDependencies`, `NexusSources`,
+  `NexusTargets`, `NexusInstall` and `NexusTests`. The root CMake file now
+  orchestrates the modules while retaining CMake 3.20 and C++20.
 
 - Split the build entry point into `NexusOptions`, `NexusDependencies`,
   `NexusSources`, `NexusTargets`, `NexusInstall` and `NexusTests` modules.
@@ -102,10 +100,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   malformed snapshots and save failures.
 
 - The Windows-only Task Manager now accepts only plain executable-name tokens for
-  `tasklist`, `taskkill` and `start` calls, and enforces the unsigned 32-bit PID
-  range. A CTest extracts and executes the actual validators against shell metacharacters,
-  paths, malformed PIDs and boundary values. NEXUS Showcase also exits cleanly when graphics
-  initialization fails.
+  `tasklist`, `taskkill` and `start` calls, and enforces the full unsigned 32-bit PID
+  range (1 through 4,294,967,295). A CTest extracts and executes the actual validators
+  against shell metacharacters, paths, malformed PIDs and numeric boundary values.
+  NEXUS Showcase also exits cleanly when graphics initialization fails.
 
 - NEXUS Paint now checkpoints the canvas before **New**, reports failed BMP save/load operations
   instead of leaving a stale success status, and reports a failed final save at shutdown.
