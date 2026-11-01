@@ -99,9 +99,20 @@ red: f64, green: f64, blue: f64, alpha: f64) {
 
 
 // Editable UTF-8 text. max_bytes is a UTF-8 byte limit (1..8192); non-positive
-// limits make the field read-only. Click to focus; Enter or Tab commits/blurs.
+// limits make the field read-only. Click to focus, use arrows/Home/End and
+// Shift+arrows to edit, Escape to restore the value from focus time, and Tab
+// or Shift+Tab to move through editable fields in source order.
 fn ui2d_text_field(rect: UIRect, value: string, placeholder: string, max_bytes: i64) -> string {
     if rect.width <= 0.0 || rect.height <= 0.0 { return value }
     return ui_text_field(rect.x, rect.y, rect.width, rect.height,
     value, placeholder, max_bytes)
+}
+
+// Stable positive IDs preserve focus and caret state if an immediate-mode field
+// moves or resizes. IDs must be unique among fields rendered during the frame.
+fn ui2d_text_field_id(rect: UIRect, value: string, placeholder: string,
+                      max_bytes: i64, widget_id: i64) -> string {
+    if rect.width <= 0.0 || rect.height <= 0.0 { return value }
+    return ui_text_field_id(rect.x, rect.y, rect.width, rect.height,
+    value, placeholder, max_bytes, widget_id)
 }
