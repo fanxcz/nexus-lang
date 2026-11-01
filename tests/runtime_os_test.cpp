@@ -62,6 +62,15 @@ int main() {
     ok &= expect(takeString(nexus_os_config_error()).empty(),
                  "successful config_dir call left a stale error");
 
+    const std::string boundaryName(128, 'x');
+    const std::string boundaryPath = takeString(nexus_os_config_dir(boundaryName.c_str()));
+    ok &= expect(boundaryPath == (fs::path(expected).parent_path() / boundaryName).string(),
+                 "config_dir rejected the maximum allowed 128-byte application name");
+    ok &= expect(fs::is_directory(boundaryPath),
+                 "config_dir did not create the maximum-length application directory");
+    ok &= expect(takeString(nexus_os_config_error()).empty(),
+                 "successful boundary-length name left an error");
+
     const char* invalidNames[] = {
         "", ".", "..", "../escape", "folder/name", "folder\\name", "bad:name", "bad|name"
     };
@@ -78,6 +87,11 @@ int main() {
             ok = false;
         }
     }
+
+    ok &= expect(takeString(nexus_os_config_dir(nullptr)).empty(),
+                 "config_dir accepted a null application name");
+    ok &= expect(!takeString(nexus_os_config_error()).empty(),
+                 "null application name did not report an error");
 
     const std::string longName(129, 'x');
     ok &= expect(takeString(nexus_os_config_dir(longName.c_str())).empty(),
@@ -103,6 +117,10 @@ int main() {
                  "config_dir accepted a file as the config base");
     ok &= expect(!takeString(nexus_os_config_error()).empty(),
                  "config base failure did not report an error");
+    ok &= expect(!takeString(nexus_os_config_dir("NEXUS")).empty(),
+                 "config_dir did not recover after a filesystem error");
+    ok &= expect(takeString(nexus_os_config_error()).empty(),
+                 "successful retry did not clear the previous failure");
 
     setConfigBase(rootText);
     fs::remove_all(root, ec);
