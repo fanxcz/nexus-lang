@@ -35,8 +35,9 @@ Keep checkbox, slider and text-field results in your own mutable variables. The
 API is immediate-mode: widgets draw every frame and process current input.
 
 `ui2d_text_field` is a single-line UTF-8 editor. Click to focus; use Left/Right,
-Home/End, Shift+arrows and Ctrl+A to move or select text. Backspace/Delete remove
-text, and typing replaces the current selection. Escape restores the value from
+Home/End, Shift+arrows and Ctrl+A to move or select text. Ctrl+C copies the selection,
+Ctrl+X cuts only after a successful clipboard write, and Ctrl+V pastes one line of
+clipboard text. Backspace/Delete remove text, and typing replaces the current selection. Escape restores the value from
 when focus began. Tab and Shift+Tab move through editable text fields in source
 order and wrap at the ends. `max_bytes` is clamped to 1–8192; a non-positive
 limit makes the field read-only.
