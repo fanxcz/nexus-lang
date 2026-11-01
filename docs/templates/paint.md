@@ -18,7 +18,7 @@ The source implements pencil/brush, eraser, straight line, rectangle and fill to
 
 The import path field accepts image paths relative to the application's working directory. BMP import is available through SDL2; other formats such as PNG/JPEG require the optional SDL2_image runtime. BMP export is implemented by NEXUS. PNG export is enabled only when the installed SDL2_image library provides `IMG_SavePNG` and the SDL surface-format API; otherwise Paint reports the missing capability rather than producing a fake PNG.
 
-The app writes `nexus_paint.bmp` and, when PNG support is available, `nexus_paint.png` relative to its working directory. Choose a writable working folder if you plan to save drawings. The exact UI controls are defined by the checked-in `examples/nexus_paint.nx`.
+The canvas runtime caps an image import at 16 megapixels and maintains at most 32 MiB of undo snapshots per canvas; available history depth therefore depends on canvas size. The app writes `nexus_paint.bmp` and, when PNG support is available, `nexus_paint.png` relative to its working directory. Choose a writable working folder if you plan to save drawings. The exact UI controls are defined by the checked-in `examples/nexus_paint.nx`.
 
 ## Packaging
 
