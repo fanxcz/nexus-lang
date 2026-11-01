@@ -16,6 +16,7 @@
 #include <ctime>
 #include <exception>
 #include <fstream>
+#include <iomanip>
 #include <limits>
 #include <memory>
 #include <mutex>
