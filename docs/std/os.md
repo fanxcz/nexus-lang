@@ -30,6 +30,10 @@ The wrappers do not currently expose environment enumeration, process spawning, 
 
 The built-in `capture_output(command: string) -> string` runs a shell command and returns everything it writes to stdout as a string (empty string on failure). It complements `system()`, which only returns the exit code:
 
+Both built-ins execute a command through the host command interpreter (`std::system` / `popen` on POSIX and the corresponding Windows CRT process helpers). They are **not** argument-array process APIs and do not escape or quote interpolated values for you. Never concatenate arbitrary file paths, process names, URLs, user input or untrusted project data into a shell command. Prefer a fixed command; validate every dynamic argument against a narrow allow-list and use platform-specific argument escaping only when unavoidable. Commands execute with the permissions of the current user and are not sandboxed.
+
+For a safer application boundary, keep external command execution out of untrusted input paths. The `examples/task_manager.nx` sample restricts process/program tokens to ASCII letters, digits, dot, dash and underscore, and requires a non-zero decimal PID before composing its fixed Windows commands. This validation is specific to that sample, not a general shell-escaping API.
+
 ```nx
 fn main() {
     let listing = capture_output("tasklist /FO CSV /NH")
