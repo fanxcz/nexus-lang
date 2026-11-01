@@ -117,6 +117,53 @@ static bool canvas_import_pixels(CanvasData& destination,
     }
     return true;
 }
+static bool canvas_clip_line(double& x1,
+                                double& y1,
+                                double& x2,
+                                double& y2,
+                                int width,
+                                int height,
+                                double margin) {
+    if (width <= 0 || height <= 0)
+        return false;
+
+    const double originalX = x1;
+    const double originalY = y1;
+    const double dx = x2 - x1;
+    const double dy = y2 - y1;
+    double first = 0.0;
+    double last = 1.0;
+
+    const auto clip = [&](double p, double q) {
+        if (p == 0.0)
+            return q >= 0.0;
+        const double ratio = q / p;
+        if (p < 0.0) {
+            if (ratio > last)
+                return false;
+            first = std::max(first, ratio);
+        } else {
+            if (ratio < first)
+                return false;
+            last = std::min(last, ratio);
+        }
+        return true;
+    };
+
+    if (!clip(-dx, x1 + margin) ||
+        !clip(dx, double(width - 1) + margin - x1) ||
+        !clip(-dy, y1 + margin) ||
+        !clip(dy, double(height - 1) + margin - y1) ||
+        first > last)
+        return false;
+
+    x1 = originalX + first * dx;
+    y1 = originalY + first * dy;
+    x2 = originalX + last * dx;
+    y2 = originalY + last * dy;
+    return true;
+}
+
 static void canvas_circle(
     CanvasData& c, int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
