@@ -6,6 +6,10 @@ on:
     paths:
       - '.github/project-tools/nexus-studio/**'
       - '.github/workflows/nexus-studio.yml'
+  pull_request:
+    paths:
+      - '.github/project-tools/nexus-studio/**'
+      - '.github/workflows/nexus-studio.yml'
 
 permissions:
   contents: read
