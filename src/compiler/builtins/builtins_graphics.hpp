@@ -18,6 +18,13 @@ namespace nexus {
         if (name == "gfx_error")
             return BuiltinSignature{name, {}, T::string(), "nexus_gfx_error"};
 
+        if (name == "gfx_clipboard_get")
+            return BuiltinSignature{name, {}, T::string(), "nexus_gfx_clipboard_get"};
+
+        if (name == "gfx_clipboard_set")
+            return BuiltinSignature{
+                name, {T::string()}, T::boolean(), "nexus_gfx_clipboard_set"};
+
         if (name == "gfx_shutdown")
             return BuiltinSignature{name, {}, T::void_(), "nexus_gfx_shutdown"};
 
