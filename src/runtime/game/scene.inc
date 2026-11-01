@@ -47,6 +47,20 @@ int64_t nexus_scene_load(const char* path) {
     }
     return sid;
 }
+// Replace the live ECS registry with the entities stored in a scene snapshot.
+// Existing entity handles become invalid; texture handles remain owned by the runtime.
+int64_t nexus_scene_apply(int64_t scene) {
+    const auto snapshot = gScenes.find(scene);
+    if (snapshot == gScenes.end())
+        return -1;
+
+    gEntities.clear();
+    for (const auto& entity : snapshot->second.entities) {
+        const int64_t id = gNextEntity++;
+        gEntities.emplace(id, entity);
+    }
+    return static_cast<int64_t>(snapshot->second.entities.size());
+}
 void nexus_scene_destroy(int64_t id) {
     gScenes.erase(id);
 }
