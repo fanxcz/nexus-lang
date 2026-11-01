@@ -33,3 +33,9 @@ Artifacts are written to release/. GitHub Actions builds native packages on Wind
 
 ## Security
 The renderer uses context isolation and a limited preload API. File operations are restricted to the opened project folder. Terminal commands run with the current user's permissions; execute only commands you trust.
+
+## Current boundaries
+
+NEXUS Studio is currently a single-active-document editor. It does not yet embed the NEXUS language server, provide multi-tab editing, or include a debugger. For diagnostics, semantic completion and navigation, use the separately installed NEXUS compiler through the VS Code extension.
+
+The integrated terminal executes commands with the current user's permissions. Only run commands and project code that you trust. File reads and writes made through Studio's project API are confined to the opened project folder; shell commands are intentionally not sandboxed.
