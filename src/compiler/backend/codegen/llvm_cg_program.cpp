@@ -75,12 +75,18 @@ namespace nexus {
         emitModule("declare void @nexus_mem_copy(i64,i64,i64)");
         emitModule("declare ptr @nexus_http_get(ptr)");
         emitModule("declare ptr @nexus_json_get(ptr, ptr)");
+        emitModule("declare i1 @nexus_json_valid(ptr)");
+        emitModule("declare ptr @nexus_json_type(ptr, ptr)");
+        emitModule("declare i64 @nexus_json_array_len(ptr, ptr)");
+        emitModule("declare ptr @nexus_json_array_get(ptr, ptr, i64)");
         emitModule("declare i64 @nexus_sqlite_open(ptr)");
         emitModule("declare i64 @nexus_sqlite_exec(i64, ptr)");
         emitModule("declare void @nexus_sqlite_close(i64)");
         emitModule("declare ptr @nexus_sha256(ptr)");
         emitModule("declare i64 @nexus_os_args_count()");
         emitModule("declare ptr @nexus_os_args_get(i64)");
+        emitModule("declare ptr @nexus_os_config_dir(ptr)");
+        emitModule("declare ptr @nexus_os_config_error()");
         emitModule("declare i64 @nexus_string_len(ptr)");
         emitModule("declare i64 @nexus_string_byte_at(ptr, i64)");
         emitModule("declare i64 @nexus_string_char_count(ptr)");
@@ -126,6 +132,8 @@ namespace nexus {
         emitModule("declare i1 @nexus_gfx_init(i64, i64, ptr)");
 
         emitModule("declare ptr @nexus_gfx_error()");
+        emitModule("declare ptr @nexus_gfx_clipboard_get()");
+        emitModule("declare i1 @nexus_gfx_clipboard_set(ptr)");
 
         emitModule("declare void @nexus_gfx_shutdown()");
 
@@ -273,6 +281,9 @@ namespace nexus {
 
         emitModule(
             "declare void @nexus_gfx_canvas_draw(i64,double,double,double,double,double)");
+        emitModule("declare i1 @nexus_gfx_canvas_blit(i64,i64)");
+        emitModule("declare i1 @nexus_gfx_canvas_import_image(i64,ptr)");
+        emitModule("declare i1 @nexus_gfx_canvas_save_png(i64,ptr)");
 
         emitModule("declare i1 @nexus_gfx_canvas_save_bmp(i64,ptr)");
 
@@ -343,6 +354,7 @@ namespace nexus {
 
         emitModule("declare i1 @nexus_ui_button(double,double,double,double,ptr)");
         emitModule("declare ptr @nexus_ui_text_field(double,double,double,double,ptr,ptr,i64)");
+        emitModule("declare ptr @nexus_ui_text_field_id(double,double,double,double,ptr,ptr,i64,i64)");
 
         emitModule("declare void "
                    "@nexus_ui_panel(double,double,double,double,double,double,double,double)");
@@ -409,6 +421,7 @@ namespace nexus {
         emitModule("declare i1 @nexus_scene_save(i64,ptr)");
 
         emitModule("declare i64 @nexus_scene_load(ptr)");
+        emitModule("declare i64 @nexus_scene_apply(i64)");
 
         emitModule("declare void @nexus_scene_destroy(i64)");
 

@@ -24,6 +24,13 @@ namespace nexus {
                                     T::string(),
                                     "nexus_ui_text_field"};
 
+        if (name == "ui_text_field_id")
+            return BuiltinSignature{name,
+                                    {T::f64(), T::f64(), T::f64(), T::f64(),
+                                     T::string(), T::string(), T::i64(), T::i64()},
+                                    T::string(),
+                                    "nexus_ui_text_field_id"};
+
         if (name == "ui_panel")
             return BuiltinSignature{
                 name,

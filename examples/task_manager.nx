@@ -3,6 +3,50 @@
 
 // system(command) -> i64 — встроенная функция NEXUS (выполняет команду ОС)
 
+// The sample is Windows-only and passes user input to cmd.exe through system().
+// Accept only plain executable/image-name tokens; never forward shell syntax.
+fn is_safe_command_token(value: string) -> bool {
+    let length = string.len(value)
+    if length == 0 || length > 128 || value == "." || value == ".." {
+        return false
+    }
+    let mut i = 0
+    while i < length {
+        let b = string.byte_at(value, i)
+        let allowed =
+        (b >= 48 && b <= 57) ||
+        (b >= 65 && b <= 90) ||
+        (b >= 97 && b <= 122) ||
+        b == 45 || b == 46 || b == 95
+        if ! allowed {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+fn is_safe_pid(value: string) -> bool {
+    let length = string.len(value)
+    if length == 0 || length > 10 {
+        return false
+    }
+    let mut i = 0
+    let mut numeric_pid: i64 = 0
+    while i < length {
+        let b = string.byte_at(value, i)
+        if b < 48 || b > 57 {
+            return false
+        }
+        numeric_pid = numeric_pid * 10 +(b - 48)
+        if numeric_pid > 4294967295 {
+            return false
+        }
+        i = i + 1
+    }
+    return numeric_pid > 0
+}
+
 fn show_header() {
     print("==============================================")
     print("        NEXUS TASK MANAGER  v1.0")
@@ -148,8 +192,8 @@ fn list_processes() {
 
 fn process_details() {
     let name = input("Имя процесса (например chrome.exe): ")
-    if name == "" {
-        print("Имя не введено.")
+    if ! is_safe_command_token(name) {
+        print("Недопустимое имя процесса. Разрешены только латинские буквы, цифры, точка, дефис и подчёркивание.")
         return
     }
     print("")
@@ -158,8 +202,8 @@ fn process_details() {
 
 fn kill_by_name() {
     let name = input("Имя процесса для завершения (например notepad.exe): ")
-    if name == "" {
-        print("Имя не введено.")
+    if ! is_safe_command_token(name) {
+        print("Недопустимое имя процесса. Разрешены только латинские буквы, цифры, точка, дефис и подчёркивание.")
         return
     }
     print("Завершаю " + name + " ...")
@@ -173,8 +217,8 @@ fn kill_by_name() {
 
 fn kill_by_pid() {
     let pid_s = input("PID процесса: ")
-    if pid_s == "" {
-        print("PID не введён.")
+    if ! is_safe_pid(pid_s) {
+        print("PID должен содержать от 1 до 10 цифр и быть ненулевым.")
         return
     }
     let rc = system("taskkill /PID " + pid_s + " /F")
@@ -187,8 +231,8 @@ fn kill_by_pid() {
 
 fn launch_program() {
     let prog = input("Программа для запуска (notepad, calc, mspaint...): ")
-    if prog == "" {
-        print("Ничего не введено.")
+    if ! is_safe_command_token(prog) {
+        print("Недопустимое имя программы. Укажи имя исполняемого файла без пути и аргументов.")
         return
     }
     let rc = system("start \"\" " + prog)

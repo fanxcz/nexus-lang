@@ -1,6 +1,11 @@
 
-static uint8_t canvas_u8(double v) {
+static constexpr size_t kCanvasMaxPixels = 16u * 1024u * 1024u;
+static constexpr size_t kCanvasUndoMemoryLimit = 32u * 1024u * 1024u;
+static constexpr size_t kCanvasUndoMaxSnapshots = 32u;
 
+static uint8_t canvas_u8(double v) {
+    if (std::isnan(v))
+        return 0;
     return uint8_t(std::clamp(v, 0.0, 1.0) * 255.0 + 0.5);
 }
 static size_t canvas_index(const CanvasData& c, int x, int y) {
@@ -19,6 +24,149 @@ static void canvas_put(CanvasData& c, int x, int y, uint8_t r, uint8_t g, uint8_
     c.pixels[i + 2] = b;
     c.pixels[i + 3] = a;
 }
+
+static void canvas_checkpoint_internal(CanvasData& c);
+
+static void canvas_blend_pixel(uint8_t* destination, const uint8_t* source) {
+    if (!destination || !source)
+        return;
+
+    const uint32_t sourceAlpha = source[3];
+    if (sourceAlpha == 0)
+        return;
+    if (sourceAlpha == 255) {
+        std::memcpy(destination, source, 4);
+        return;
+    }
+
+    const uint32_t destinationAlpha = destination[3];
+    const uint32_t inverseSourceAlpha = 255u - sourceAlpha;
+    const uint32_t outputAlphaNumerator =
+        sourceAlpha * 255u + destinationAlpha * inverseSourceAlpha;
+    if (outputAlphaNumerator == 0) {
+        std::memset(destination, 0, 4);
+        return;
+    }
+
+    for (size_t channel = 0; channel < 3; ++channel) {
+        const uint32_t numerator =
+            uint32_t(source[channel]) * sourceAlpha * 255u +
+            uint32_t(destination[channel]) * destinationAlpha * inverseSourceAlpha;
+        destination[channel] = static_cast<uint8_t>(
+            (numerator + outputAlphaNumerator / 2u) / outputAlphaNumerator);
+    }
+    destination[3] = static_cast<uint8_t>((outputAlphaNumerator + 127u) / 255u);
+}
+
+static bool canvas_blit_pixels(CanvasData& destination,
+                               const CanvasData& source,
+                               bool checkpoint = true) {
+    if (destination.w <= 0 || destination.h <= 0 ||
+        destination.w != source.w || destination.h != source.h ||
+        destination.pixels.size() != source.pixels.size() ||
+        destination.pixels.size() % 4u != 0u || &destination == &source)
+        return false;
+
+    if (checkpoint)
+        canvas_checkpoint_internal(destination);
+    for (size_t offset = 0; offset < destination.pixels.size(); offset += 4u)
+        canvas_blend_pixel(destination.pixels.data() + offset, source.pixels.data() + offset);
+    return true;
+}
+
+// Imports a converted RGBA pixel buffer with contain/center fitting and
+// source-over alpha composition. The caller owns the SDL surface and its lock.
+static bool canvas_import_pixels(CanvasData& destination,
+                                 const uint8_t* source,
+                                 int sourceWidth,
+                                 int sourceHeight,
+                                 int sourcePitch) {
+    if (!source || destination.w <= 0 || destination.h <= 0 ||
+        sourceWidth <= 0 || sourceHeight <= 0 ||
+        sourceWidth > 8192 || sourceHeight > 8192 ||
+        sourcePitch < sourceWidth * 4 ||
+        destination.pixels.size() != size_t(destination.w) * size_t(destination.h) * 4u)
+        return false;
+
+    const double scale = std::min(double(destination.w) / double(sourceWidth),
+                                  double(destination.h) / double(sourceHeight));
+    if (!std::isfinite(scale) || scale <= 0.0)
+        return false;
+    const int fittedWidth =
+        std::clamp(int(std::lround(double(sourceWidth) * scale)), 1, destination.w);
+    const int fittedHeight =
+        std::clamp(int(std::lround(double(sourceHeight) * scale)), 1, destination.h);
+    const int offsetX = (destination.w - fittedWidth) / 2;
+    const int offsetY = (destination.h - fittedHeight) / 2;
+
+    canvas_checkpoint_internal(destination);
+    for (int y = 0; y < fittedHeight; ++y) {
+        const int sourceY = std::min(
+            sourceHeight - 1,
+            int((double(y) + 0.5) * double(sourceHeight) / double(fittedHeight)));
+        const uint8_t* sourceRow = source + size_t(sourceY) * size_t(sourcePitch);
+        for (int x = 0; x < fittedWidth; ++x) {
+            const int sourceX = std::min(
+                sourceWidth - 1,
+                int((double(x) + 0.5) * double(sourceWidth) / double(fittedWidth)));
+            const uint8_t* sourcePixel = sourceRow + size_t(sourceX) * 4u;
+            uint8_t* destinationPixel =
+                destination.pixels.data() + canvas_index(destination, offsetX + x, offsetY + y);
+            canvas_blend_pixel(destinationPixel, sourcePixel);
+        }
+    }
+    return true;
+}
+static bool canvas_clip_line(double& x1,
+                                double& y1,
+                                double& x2,
+                                double& y2,
+                                int width,
+                                int height,
+                                double margin) {
+    if (width <= 0 || height <= 0)
+        return false;
+
+    const double originalX = x1;
+    const double originalY = y1;
+    const double dx = x2 - x1;
+    const double dy = y2 - y1;
+    if (!std::isfinite(dx) || !std::isfinite(dy) ||
+        !std::isfinite(margin) || margin < 0.0)
+        return false;
+    double first = 0.0;
+    double last = 1.0;
+
+    const auto clip = [&](double p, double q) {
+        if (p == 0.0)
+            return q >= 0.0;
+        const double ratio = q / p;
+        if (p < 0.0) {
+            if (ratio > last)
+                return false;
+            first = std::max(first, ratio);
+        } else {
+            if (ratio < first)
+                return false;
+            last = std::min(last, ratio);
+        }
+        return true;
+    };
+
+    if (!clip(-dx, x1 + margin) ||
+        !clip(dx, double(width - 1) + margin - x1) ||
+        !clip(-dy, y1 + margin) ||
+        !clip(dy, double(height - 1) + margin - y1) ||
+        first > last)
+        return false;
+
+    x1 = originalX + first * dx;
+    y1 = originalY + first * dy;
+    x2 = originalX + last * dx;
+    y2 = originalY + last * dy;
+    return true;
+}
+
 static void canvas_circle(
     CanvasData& c, int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
@@ -59,13 +207,29 @@ static void canvas_blit_texture(CanvasData& c) {
     glTexImage2D(GL_TEXTURE_2D, 0, 4, c.w, c.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, c.pixels.data());
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+static void canvas_push_snapshot(std::vector<CanvasSnapshot>& history,
+                                  const CanvasData& canvas) {
+    if (canvas.pixels.empty() || canvas.pixels.size() > kCanvasUndoMemoryLimit) {
+        history.clear();
+        return;
+    }
+
+    try {
+        history.push_back(CanvasSnapshot{canvas.pixels});
+    } catch (const std::exception&) {
+        history.clear();
+        return;
+    }
+    size_t bytes = history.size() * canvas.pixels.size();
+    while (!history.empty() &&
+           (history.size() > kCanvasUndoMaxSnapshots || bytes > kCanvasUndoMemoryLimit)) {
+        bytes -= history.front().pixels.size();
+        history.erase(history.begin());
+    }
+}
+
 static void canvas_checkpoint_internal(CanvasData& c) {
-
-    c.undo.push_back(CanvasSnapshot{c.pixels});
-
-    if (c.undo.size() > 32)
-        c.undo.erase(c.undo.begin());
-
+    canvas_push_snapshot(c.undo, c);
     c.redo.clear();
 }
 static bool canvas_save_bmp_impl(const CanvasData& c, const char* path) {
@@ -129,6 +293,13 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
     if (!f)
         return false;
 
+    f.seekg(0, std::ios::end);
+    const std::streamoff fileBytes = f.tellg();
+    constexpr std::streamoff maxBmpBytes = 64 * 1024 * 1024 + 54;
+    if (fileBytes < 54 || fileBytes > maxBmpBytes)
+        return false;
+    f.seekg(0, std::ios::beg);
+
     std::vector<uint8_t> b((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     if (b.size() < 54 || b[0] != 'B' || b[1] != 'M')
         return false;
@@ -146,10 +317,15 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
     const uint16_t bits = rd16v(28);
     const uint32_t comp = rd32v(30);
 
-    if (w <= 0 || hs == 0 || (bits != 24 && bits != 32) || comp != 0 || offset >= b.size())
+    if (w <= 0 || w > 8192 || hs == 0 ||
+        hs == std::numeric_limits<int32_t>::min() ||
+        (bits != 24 && bits != 32) || comp != 0 || offset < 54 || offset >= b.size())
         return false;
 
     const int h = hs < 0 ? -hs : hs;
+    if (h <= 0 || h > 8192 ||
+        uint64_t(w) * uint64_t(h) > static_cast<uint64_t>(kCanvasMaxPixels))
+        return false;
     const size_t pxBytes = size_t(bits / 8);
     const size_t rowStride = ((size_t(w) * pxBytes + 3u) / 4u) * 4u;
 
@@ -178,13 +354,25 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
 }
 int64_t nexus_gfx_canvas_create(int64_t w, int64_t h, double r, double g, double b, double a) {
 
-    if (!gGraphics || w <= 0 || h <= 0 || w > 8192 || h > 8192)
+    if (!gGraphics) {
+        gGraphicsError = "graphics must be initialized before creating a canvas";
         return 0;
+    }
+    if (w <= 0 || h <= 0 || w > 8192 || h > 8192 ||
+        uint64_t(w) * uint64_t(h) > static_cast<uint64_t>(kCanvasMaxPixels)) {
+        gGraphicsError = "canvas dimensions must be positive, at most 8192 per side and 16 megapixels total";
+        return 0;
+    }
 
     CanvasData c;
     c.w = int(w);
     c.h = int(h);
-    c.pixels.resize(size_t(c.w) * size_t(c.h) * 4u);
+    try {
+        c.pixels.resize(size_t(c.w) * size_t(c.h) * 4u);
+    } catch (const std::exception&) {
+        gGraphicsError = "canvas pixel buffer allocation failed";
+        return 0;
+    }
 
     const uint8_t R = canvas_u8(r), G = canvas_u8(g), B = canvas_u8(b), A = canvas_u8(a);
 

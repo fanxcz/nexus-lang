@@ -2,19 +2,39 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { spawn, spawnSync } = require('node:child_process');
+const { pathToFileURL } = require('node:url');
 const { isInside, assertInsideProject } = require('./path-guard.cjs');
+const { toProjectLocation } = require('./lsp-location.cjs');
+const { NexusLspClient } = require('./lsp-client.cjs');
 
 let win;
 let projectRoot = null;
 let activeProcess = null;
 let selectedCompiler = null;
+const languageServer = new NexusLspClient();
+
+languageServer.on('diagnostics', params => {
+  if (win && !win.isDestroyed()) win.webContents.send('lsp:diagnostics', params);
+});
+languageServer.on('stderr', data => {
+  if (win && !win.isDestroyed()) sendOutput(win.webContents, 'stderr', '[LSP] ' + data);
+});
+languageServer.on('error', error => {
+  if (win && !win.isDestroyed()) sendOutput(win.webContents, 'error', '[LSP] ' + error.message);
+});
+languageServer.on('exit', status => {
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('lsp:exit', status);
+    sendOutput(win.webContents, 'system', '[LSP] language server stopped');
+  }
+});
 
 async function assertProjectPath(target) {
   return assertInsideProject(projectRoot, target);
 }
 function createWindow() {
   win = new BrowserWindow({
-    width: 1280, height: 820, minWidth: 820, minHeight: 560,
+    width: 1280, height: 820, minWidth: 760, minHeight: 560,
     backgroundColor: '#1e1e1e',
     title: 'NEXUS Studio',
     webPreferences: {
@@ -171,6 +191,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('project:open', async () => {
     const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
     if (result.canceled || !result.filePaths[0]) return null;
+    await languageServer.stop();
     projectRoot = result.filePaths[0];
     return { root: projectRoot, tree: await readTree(projectRoot) };
   });
@@ -207,6 +228,90 @@ app.whenReady().then(async () => {
     await fs.writeFile(target, '', { flag: 'wx' });
     return true;
   });
+  async function languageServerUri(rel) {
+    if (!projectRoot) throw new Error('Сначала открой папку проекта.');
+    const target = await assertProjectPath(path.resolve(projectRoot, String(rel)));
+    if (path.extname(target).toLowerCase() !== '.nx') {
+      throw new Error('Language services are available only for .nx files.');
+    }
+    return pathToFileURL(await fs.realpath(target)).href;
+  }
+
+  ipcMain.handle('lsp:start', async () => {
+    if (!projectRoot) throw new Error('Сначала открой папку проекта.');
+    const compiler = await detectCompiler();
+    if (!compiler) throw new Error('Компилятор NEXUS не найден. Выбери его через «Компилятор…».');
+    await languageServer.start(compiler, projectRoot);
+    return { ready: true };
+  });
+  ipcMain.handle('lsp:open', async (_event, rel, text, version = 1) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
+    languageServer.openDocument(uri, String(text), Number(version) || 1);
+    return { uri };
+  });
+  ipcMain.handle('lsp:change', async (_event, rel, text, version) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) return false;
+    return languageServer.changeDocument(uri, String(text), Number(version) || 1);
+  });
+  ipcMain.handle('lsp:save', async (_event, rel) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) return false;
+    return languageServer.saveDocument(uri);
+  });
+  ipcMain.handle('lsp:close', async (_event, rel) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) return false;
+    return languageServer.closeDocument(uri);
+  });
+  async function requestPositionedLanguageFeature(rel, method, position) {
+    if (!['textDocument/completion', 'textDocument/hover', 'textDocument/signatureHelp'].includes(method)) {
+      throw new Error('This language-server request is not available in NEXUS Studio.');
+    }
+    if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
+    const line = Number(position && position.line);
+    const character = Number(position && position.character);
+    if (!Number.isSafeInteger(line) || line < 0 || line > 1000000 ||
+        !Number.isSafeInteger(character) || character < 0 || character > 1000000) {
+      throw new Error('A valid LSP cursor position is required.');
+    }
+    const uri = await languageServerUri(rel);
+    return languageServer.request(method, {
+      textDocument: { uri },
+      position: { line, character }
+    });
+  }
+  ipcMain.handle('lsp:completion', async (_event, rel, position) =>
+    requestPositionedLanguageFeature(rel, 'textDocument/completion', position));
+  ipcMain.handle('lsp:hover', async (_event, rel, position) =>
+    requestPositionedLanguageFeature(rel, 'textDocument/hover', position));
+  ipcMain.handle('lsp:signatureHelp', async (_event, rel, position) =>
+    requestPositionedLanguageFeature(rel, 'textDocument/signatureHelp', position));
+
+  ipcMain.handle('lsp:definition', async (_event, rel, position) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
+    const line = Number(position?.line);
+    const character = Number(position?.character);
+    if (!Number.isSafeInteger(line) || line < 0 ||
+        !Number.isSafeInteger(character) || character < 0) {
+      throw new Error('A valid LSP cursor position is required.');
+    }
+
+    const result = await languageServer.request('textDocument/definition', {
+      textDocument: { uri },
+      position: { line, character }
+    });
+    const locations = Array.isArray(result) ? result : (result ? [result] : []);
+    const safeLocations = [];
+    for (const location of locations) {
+      const safeLocation = await toProjectLocation(location, projectRoot);
+      if (safeLocation) safeLocations.push(safeLocation);
+    }
+    return safeLocations;
+  });
+
   ipcMain.handle('terminal:run', async (event, command) => {
     if (!projectRoot) throw new Error('Сначала открой папку проекта.');
     const shell = process.platform === 'win32' ? (process.env.ComSpec || 'cmd.exe') : '/bin/sh';
@@ -221,7 +326,9 @@ app.whenReady().then(async () => {
     } else {
       activeProcess.kill('SIGTERM');
     }
-    activeProcess = null;
+    // Keep the process slot occupied until the child's close event arrives.
+    // Clearing it here would allow a second terminal/build process to overlap
+    // with the process that is still shutting down.
     return true;
   });
   ipcMain.handle('compiler:info', async () => {
@@ -246,4 +353,8 @@ app.whenReady().then(async () => {
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('window-all-closed', () => {
+  void languageServer.stop().finally(() => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+});

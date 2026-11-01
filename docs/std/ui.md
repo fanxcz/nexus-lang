@@ -28,21 +28,34 @@ Negative gaps/padding are treated as zero. Invalid indexes/counts return a zero-
 - ui2d_progress(rect, value, r, g, b, a)
 - ui2d_separator(x1, y1, x2, y2, thickness, r, g, b, a)
 - ui2d_text_field(rect, value, placeholder, max_bytes) -> string
+- ui2d_text_field_id(rect, value, placeholder, max_bytes, widget_id) -> string
 
 Call widgets after polling events and between the runtime's begin/end drawing calls.
 Keep checkbox, slider and text-field results in your own mutable variables. The
 API is immediate-mode: widgets draw every frame and process current input.
 
-`ui2d_text_field` is a basic single-line editor: click it to focus, type UTF-8
-text, and use Backspace to remove the preceding code point. `max_bytes` is a
-UTF-8 byte limit clamped to 1–8192; a non-positive limit makes the field
-read-only. Enter or Tab ends editing, and clicking elsewhere drops focus.
-Focus is currently identified by the field's rectangle, so keep its bounds
-stable while it is displayed.
+`ui2d_text_field` is a single-line UTF-8 editor. Click to focus; use Left/Right,
+Home/End, Shift+arrows and Ctrl+A to move or select text. Ctrl+C copies the selection,
+Ctrl+X cuts only after a successful clipboard write, and Ctrl+V pastes one line of
+clipboard text. Backspace/Delete remove text, and typing replaces the current selection. Escape restores the value from
+when focus began. Tab and Shift+Tab move through editable text fields in source
+order and wrap at the ends. `max_bytes` is clamped to 1–8192; a non-positive
+limit makes the field read-only.
 
-Caret placement, selection, Delete/arrow-key editing, Escape cancellation,
-explicit widget IDs, full Tab traversal across multiple fields, retained widget
-trees, accessibility semantics, and native file dialogs are not implemented yet.
+The legacy `ui2d_text_field` uses its rectangle as identity. Use
+`ui2d_text_field_id` with a unique positive `widget_id` to preserve focus and
+caret state if a field moves or resizes between frames. The API remains
+immediate-mode; it does not provide retained widget trees, full accessibility
+semantics or native file dialogs.
+
+## Clipboard
+
+- `ui2d_clipboard_get() -> string` reads text from the system clipboard.
+- `ui2d_clipboard_set(text: string) -> bool` writes text to the system clipboard.
+
+Clipboard access requires an initialized graphics backend and SDL2 clipboard support.
+An empty read result can mean either an empty clipboard or a failed read; check
+`gfx_error()` when the distinction matters. A write returns `false` on failure.
 
 ## Example
 

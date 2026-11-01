@@ -11,6 +11,17 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Added
 
+- Add `std.os.config_dir(app_name)` for per-user application configuration
+  directories on Windows, macOS and Linux, with `std.os.config_error()` exposing
+  failure details. Unsafe app-name path components are rejected; runtime tests cover
+  creation, invalid names, traversal and filesystem failure, including the NEXUS
+  builtin wrapper under an isolated config root.
+
+- Add `std.os.config_dir(app_name)` for per-user application configuration
+  directories on Windows, macOS and Linux, with `std.os.config_error()` exposing
+  failure details. Unsafe app-name path components are rejected; runtime tests cover
+  creation, invalid names, traversal and filesystem failure.
+
 - Added explicit exclusive mutable slices using `mut []T` and `mut array[start..end]`.
   Mutable slices support indexed writes (including compound assignment), function
   parameters and `len` on the LLVM backend. The semantic analyzer rejects immutable
@@ -40,7 +51,87 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   same files. Arrays are validated structurally; scalar fields still read only
   scalar values.
 
+- The LSP JSON-RPC string decoder now handles all standard JSON string escapes, BMP Unicode `\uXXXX` escapes and UTF-16 surrogate pairs, converting escaped Unicode to UTF-8. A dedicated CTest covers valid and invalid escape sequences, JSON-RPC ids, positions, and watched-file capability detection.
+
+- The LSP protocol field reader now skips quoted JSON values when resolving keys, preventing embedded `\"uri\"`/`\"line\"` text from being mistaken for protocol fields. Unit tests cover these decoy cases as well as escaped Unicode and watched-file capability parsing.
+
+- The LSP now advertises and implements `textDocument/prepareRename`.
+  The request returns a UTF-16 identifier range and placeholder only when the
+  cursor resolves to a renameable symbol. Regression coverage includes invalid
+  cursor positions and an astral Unicode character before the selected token.
+
+- Added dependency-free Node.js contract tests for the VS Code extension's
+  language registration, grammar, language configuration, snippets and LSP
+  client launch contract. CI runs the checks alongside the existing Studio
+  source/path-security checks.
+
+- NEXUS Studio now launches the installed compiler's LSP process for the active project,
+  sends the open `.nx` document lifecycle, and renders published compiler diagnostics
+  as Ace annotations. Its JSON-RPC client validates UTF-8 and message framing,
+  handles process shutdown, and has dependency-free Node.js tests.
+
+- NEXUS Studio now uses the active document's LSP session for Ctrl+Space completion,
+  hover information, and F12 go-to-definition. The main process exposes only explicit
+  language-feature IPC handlers; definition targets are checked to remain project-local
+  
+- Add SDL-backed system clipboard read/write helpers to the graphics runtime and
+  `std.ui`, plus Ctrl+C/Ctrl+X/Ctrl+V in immediate-mode text fields. The symbols are
+  optional at load time; clipboard access returns safe sentinels and records
+  `gfx_error()` when no graphics backend or clipboard capability is available.
+  Headless backend-state coverage verifies the failure path.
+
+- NEXUS Studio now supports multiple open document tabs with independent in-memory
+  buffers and dirty state. Switching documents serializes tab operations, preserves
+  unsaved text, and confirms before closing a modified tab or replacing the project.
+
+- Added source-over alpha compositing for CPU canvases, contain-fit image import
+  through SDL_image with BMP fallback, and optional PNG export through
+  `IMG_SavePNG`. Canvas creation/import are capped at 16 megapixels; BMP file
+  reads are bounded, and each canvas keeps at most 32 MiB of undo snapshots.
+- NEXUS Paint now supports a base canvas plus three transparent raster layers,
+  independent per-layer undo/redo, layer visibility, image import, and flattened
+  BMP export with optional PNG export. Runtime CTests cover pixel compositing,
+  image fitting, and the undo memory budget; the Paint smoke test checks the
+  layered editor and keeps the project template byte-identical to the app.
+
+- Added `scene_apply(scene)` to restore a saved scene snapshot into the live ECS
+  registry. It returns the number of recreated entities, returns `-1` for an
+  invalid snapshot, and explicitly invalidates previous ECS entity handles.
+  The NEXUS Editor example uses this operation when loading a saved scene.
+
+- Expanded the immediate-mode UI text field with caret movement, UTF-8 selection and
+  replacement, Backspace/Delete, Escape-to-restore and Tab/Shift+Tab traversal. Added
+  a stable-ID variant while retaining the rectangle-identified legacy API, plus
+  runtime tests for Unicode boundary handling and byte-limited edits.
+
 ### Changed
+
+- Moved pre-`project()` compiler selection into `cmake/NexusOptions.cmake`,
+  then split dependency discovery, source groups, compiler targets, installation
+  and CTest registrations into `NexusDependencies`, `NexusSources`,
+  `NexusTargets`, `NexusInstall` and `NexusTests`. The root CMake file now
+  orchestrates the modules while retaining CMake 3.20 and C++20.
+
+- Split the build entry point into `NexusOptions`, `NexusDependencies`,
+  `NexusSources`, `NexusTargets`, `NexusInstall` and `NexusTests` modules.
+  Compiler selection remains before `project()`; dependency detection and
+  target/install/test setup follow platform initialization.
+- Package lockfile refresh now rejects symlinked local package directories and
+  manifests, any symlink within a checksummed package tree, and paths that traverse out
+  of `vendor/`; canonical package paths are confined before manifests are read or trees
+  are hashed.
+- The NEXUS Studio desktop packaging matrix now also runs on pull requests
+  that change Studio sources or the workflow, building Windows, Linux and macOS
+  packages and uploading the generated artifacts for inspection.
+
+- Refreshed the documentation landing page and shared site styling, added an
+  ecosystem integration map, and clarified which Studio, Paint, backend and
+  distribution capabilities are currently implemented or constrained.
+
+- Improved Studio's narrow-window layout, keyboard focus visibility and
+  accessible status/output announcements. The child-process slot remains
+  occupied until the process close event, preventing overlapping build/terminal
+  processes during shutdown.
 
 - Version numbers now come from one place: `scripts/nexus_version.py` reads the
   compiler version from `CMakeLists.txt` and the extension version from
@@ -50,6 +141,31 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   longer describes itself as "NEXUS 2.1".
 
 ### Fixed
+
+- Scene snapshot IO validates finite numeric fields, rejects truncated, oversized and
+  trailing records, preserves float round-trip precision, and reports failed writes.
+  Scene application builds a replacement entity map before swapping it into the live ECS,
+  so allocation failures do not leave a partially cleared world. Regression tests cover
+  malformed snapshots and save failures.
+
+- The Windows-only Task Manager now accepts only plain executable-name tokens for
+  `tasklist`, `taskkill` and `start` calls, and enforces the full unsigned 32-bit PID
+  range (1 through 4,294,967,295). A CTest extracts and executes the actual validators
+  against shell metacharacters, paths, malformed PIDs and numeric boundary values.
+  NEXUS Showcase also exits cleanly when graphics initialization fails.
+
+- NEXUS Paint now checkpoints the canvas before **New**, reports failed BMP save/load operations
+  instead of leaving a stale success status, and reports a failed final save at shutdown.
+  The project template is kept byte-for-byte synchronized with the standalone example and
+  the Paint smoke test enforces that contract.
+
+- NEXUS Editor no longer destroys its active scene handle when loading a file.
+  It applies a successfully loaded snapshot to the live ECS registry, keeps the
+  new snapshot handle active, and reports save/load/apply failures in the UI.
+
+- Cross-platform native-backend smoke tests now distinguish unsupported language features
+  on Windows/Linux from the target-level absence of a built-in native emitter on macOS.
+  Runtime memory range-test failures identify the exact range case and expected/actual result.
 
 - `nexus_gfx_audio_available()` now reports whether an audio device is open, not merely whether the SDL shared library can be loaded. Headless systems no longer report audio as available before a device exists.
 - Passing a directory as a source file now reports `cannot open <path>: is a

@@ -62,6 +62,48 @@ fn palette_b(index: i64) -> f64 {
     return 0.45
 }
 
+fn paint_composite(base: i64,
+layer1: i64,
+layer2: i64,
+layer3: i64,
+layer1_visible: bool,
+layer2_visible: bool,
+layer3_visible: bool) -> i64 {
+    let width = gfx_canvas_width(base)
+    let height = gfx_canvas_height(base)
+    if width <= 0 || height <= 0 {
+        return 0
+    }
+
+    let result = gfx_canvas_create(width, height, 0.0, 0.0, 0.0, 0.0)
+    if result == 0 {
+        return 0
+    }
+    if ! gfx_canvas_blit(result, base) {
+        gfx_canvas_destroy(result)
+        return 0
+    }
+    if layer1 != 0 && layer1_visible {
+        if ! gfx_canvas_blit(result, layer1) {
+            gfx_canvas_destroy(result)
+            return 0
+        }
+    }
+    if layer2 != 0 && layer2_visible {
+        if ! gfx_canvas_blit(result, layer2) {
+            gfx_canvas_destroy(result)
+            return 0
+        }
+    }
+    if layer3 != 0 && layer3_visible {
+        if ! gfx_canvas_blit(result, layer3) {
+            gfx_canvas_destroy(result)
+            return 0
+        }
+    }
+    return result
+}
+
 fn main() {
     const UI_WIDTH: f64 = 1600.0
     const UI_HEIGHT: f64 = 900.0
@@ -106,6 +148,14 @@ fn main() {
     let mut status = "Ready"
     let mut f11_down = false
     let mut fullscreen = false
+    let mut layer1 = 0
+    let mut layer2 = 0
+    let mut layer3 = 0
+    let mut active_layer = 0
+    let mut layer1_visible = true
+    let mut layer2_visible = true
+    let mut layer3_visible = true
+    let mut image_path = "nexus_import.png"
 
     while ! gfx_should_close() {
         gfx_poll()
@@ -137,6 +187,11 @@ fn main() {
         let canvas_top = canvas_y +(canvas_area_height - display_height) * 0.5
         let panel_x = canvas_x + canvas_area_width + GAP
 
+        let mut active_canvas = canvas
+        if active_layer == 1 && layer1 != 0 { active_canvas = layer1 }
+        if active_layer == 2 && layer2 != 0 { active_canvas = layer2 }
+        if active_layer == 3 && layer3 != 0 { active_canvas = layer3 }
+
         let mouse_x = gfx_mouse_x()
         let mouse_y = gfx_mouse_y()
 
@@ -161,18 +216,24 @@ fn main() {
             start_y = image_y
             last_x = image_x
             last_y = image_y
-            gfx_canvas_checkpoint(canvas)
+            if tool != 3 {
+                gfx_canvas_checkpoint(active_canvas)
+            }
 
             if tool == 0 {
-                gfx_canvas_brush(canvas, image_x, image_y, brush_size, red, green, blue, 1.0)
+                gfx_canvas_brush(active_canvas, image_x, image_y, brush_size, red, green, blue, 1.0)
             }
 
             if tool == 1 {
-                gfx_canvas_brush(canvas, image_x, image_y, brush_size, 1.0, 1.0, 1.0, 1.0)
+                if active_layer == 0 {
+                    gfx_canvas_brush(active_canvas, image_x, image_y, brush_size, 1.0, 1.0, 1.0, 1.0)
+                } else {
+                    gfx_canvas_brush(active_canvas, image_x, image_y, brush_size, 0.0, 0.0, 0.0, 0.0)
+                }
             }
 
             if tool == 3 {
-                gfx_canvas_fill(canvas, to_i64(image_x), to_i64(image_y), red, green, blue, 1.0)
+                gfx_canvas_fill(active_canvas, to_i64(image_x), to_i64(image_y), red, green, blue, 1.0)
                 drawing = false
                 status = "Filled"
             }
@@ -180,13 +241,18 @@ fn main() {
 
         if drawing && gfx_mouse_down(1) && inside_canvas {
             if tool == 0 {
-                gfx_canvas_line(canvas, last_x, last_y, image_x, image_y,
+                gfx_canvas_line(active_canvas, last_x, last_y, image_x, image_y,
                 brush_size, red, green, blue, 1.0)
             }
 
             if tool == 1 {
-                gfx_canvas_line(canvas, last_x, last_y, image_x, image_y,
-                brush_size, 1.0, 1.0, 1.0, 1.0)
+                if active_layer == 0 {
+                    gfx_canvas_line(active_canvas, last_x, last_y, image_x, image_y,
+                    brush_size, 1.0, 1.0, 1.0, 1.0)
+                } else {
+                    gfx_canvas_line(active_canvas, last_x, last_y, image_x, image_y,
+                    brush_size, 0.0, 0.0, 0.0, 0.0)
+                }
             }
 
             last_x = image_x
@@ -195,13 +261,13 @@ fn main() {
 
         if drawing && gfx_event_is("mouse_up") && gfx_event_mouse_button() == 1 {
             if tool == 2 {
-                gfx_canvas_line(canvas, start_x, start_y, image_x, image_y,
+                gfx_canvas_line(active_canvas, start_x, start_y, image_x, image_y,
                 brush_size, red, green, blue, 1.0)
                 status = "Line"
             }
 
             if tool == 4 {
-                gfx_canvas_rect(canvas, start_x, start_y,
+                gfx_canvas_rect(active_canvas, start_x, start_y,
                 image_x - start_x, image_y - start_y,
                 brush_size, red, green, blue, 1.0, false)
                 status = "Rectangle"
@@ -222,6 +288,15 @@ fn main() {
 
         gfx_canvas_draw(canvas, canvas_left, canvas_top,
         display_width, display_height, 1.0)
+        if layer1 != 0 && layer1_visible {
+            gfx_canvas_draw(layer1, canvas_left, canvas_top, display_width, display_height, 1.0)
+        }
+        if layer2 != 0 && layer2_visible {
+            gfx_canvas_draw(layer2, canvas_left, canvas_top, display_width, display_height, 1.0)
+        }
+        if layer3 != 0 && layer3_visible {
+            gfx_canvas_draw(layer3, canvas_left, canvas_top, display_width, display_height, 1.0)
+        }
 
         gfx_rect(panel_x, canvas_y, PANEL_WIDTH, canvas_area_height,
         0.040, 0.045, 0.070, 1.0)
@@ -233,6 +308,16 @@ fn main() {
         let button_y = 16.0
         if ui_button(18.0, button_y, 82.0, 40.0, "NEW") {
             gfx_canvas_clear(canvas, 1.0, 1.0, 1.0, 1.0)
+            if layer1 != 0 {
+                gfx_canvas_clear(layer1, 0.0, 0.0, 0.0, 0.0)
+            }
+            if layer2 != 0 {
+                gfx_canvas_clear(layer2, 0.0, 0.0, 0.0, 0.0)
+            }
+            if layer3 != 0 {
+                gfx_canvas_clear(layer3, 0.0, 0.0, 0.0, 0.0)
+            }
+            active_layer = 0
             status = "New canvas"
         }
         if ui_button(108.0, button_y, 96.0, 40.0, "PENCIL") {
@@ -256,20 +341,55 @@ fn main() {
             status = "Fill"
         }
         if ui_button(606.0, button_y, 82.0, 40.0, "UNDO") {
-            if gfx_canvas_undo(canvas) { status = "Undo" }
+            if gfx_canvas_undo(active_canvas) { status = "Undo" }
         }
         if ui_button(696.0, button_y, 82.0, 40.0, "REDO") {
-            if gfx_canvas_redo(canvas) { status = "Redo" }
+            if gfx_canvas_redo(active_canvas) { status = "Redo" }
         }
-        if ui_button(786.0, button_y, 88.0, 40.0, "SAVE") {
-            if gfx_canvas_save_bmp(canvas, "nexus_paint.bmp") { status = "Saved" }
+        if ui_button(786.0, button_y, 88.0, 40.0, "SAVE BMP") {
+            let flattened = paint_composite(
+            canvas, layer1, layer2, layer3,
+            layer1_visible, layer2_visible, layer3_visible
+            )
+            if flattened != 0 {
+                if gfx_canvas_save_bmp(flattened, "nexus_paint.bmp") {
+                    status = "Saved composite BMP"
+                } else {
+                    status = "BMP save failed: " + gfx_error()
+                    print("NEXUS Paint: " + status)
+                }
+                gfx_canvas_destroy(flattened)
+            } else {
+                status = "Could not flatten visible layers"
+            }
         }
-        if ui_button(882.0, button_y, 88.0, 40.0, "OPEN") {
-            let loaded = gfx_canvas_load_bmp("nexus_paint.bmp")
-            if loaded != 0 {
-                gfx_canvas_destroy(canvas)
-                canvas = loaded
-                status = "Loaded"
+        if ui_button(882.0, button_y, 88.0, 40.0, "IMPORT") {
+            if gfx_canvas_import_image(active_canvas, image_path) {
+                status = "Imported " + image_path
+            } else {
+                status = "Import failed: " + gfx_error()
+                print("NEXUS Paint: " + status)
+            }
+        }
+
+        image_path = ui_text_field(
+        980.0, button_y, 230.0, 40.0, image_path, "image file path", 160
+        )
+        if ui_button(1220.0, button_y, 92.0, 40.0, "SAVE PNG") {
+            let flattened = paint_composite(
+            canvas, layer1, layer2, layer3,
+            layer1_visible, layer2_visible, layer3_visible
+            )
+            if flattened != 0 {
+                if gfx_canvas_save_png(flattened, "nexus_paint.png") {
+                    status = "Saved composite PNG"
+                } else {
+                    status = "PNG export unavailable: " + gfx_error()
+                    print("NEXUS Paint: " + status)
+                }
+                gfx_canvas_destroy(flattened)
+            } else {
+                status = "Could not flatten visible layers"
             }
         }
 
@@ -315,9 +435,102 @@ fn main() {
         ui_label(info_x, canvas_y + 412.0, "FILES", 1.15)
         ui_label(info_x, canvas_y + 442.0, "nexus_paint.bmp", 0.86)
         ui_label(info_x, canvas_y + 482.0, "EDITING", 1.15)
-        ui_label(info_x, canvas_y + 512.0, "UNDO / REDO: 32", 0.86)
+        ui_label(info_x, canvas_y + 512.0, "UNDO / REDO: 32MB HISTORY", 0.86)
         ui_label(info_x, canvas_y + 536.0, "LEFT MOUSE: DRAW", 0.86)
         ui_label(info_x, canvas_y + 560.0, "BACKEND: " + gfx_backend(), 0.86)
+
+        ui_label(info_x, canvas_y + 590.0, "LAYERS", 1.1)
+        if ui_button(info_x, canvas_y + 608.0, 240.0, 30.0, "ADD LAYER") {
+            if layer1 == 0 {
+                layer1 = gfx_canvas_create(to_i64(CANVAS_WIDTH), to_i64(CANVAS_HEIGHT), 0.0, 0.0, 0.0, 0.0)
+                if layer1 != 0 {
+                    active_layer = 1
+                    status = "Layer 1 created"
+                } else {
+                    status = "Layer 1 creation failed: " + gfx_error()
+                }
+            } else if layer2 == 0 {
+                layer2 = gfx_canvas_create(to_i64(CANVAS_WIDTH), to_i64(CANVAS_HEIGHT), 0.0, 0.0, 0.0, 0.0)
+                if layer2 != 0 {
+                    active_layer = 2
+                    status = "Layer 2 created"
+                } else {
+                    status = "Layer 2 creation failed: " + gfx_error()
+                }
+            } else if layer3 == 0 {
+                layer3 = gfx_canvas_create(to_i64(CANVAS_WIDTH), to_i64(CANVAS_HEIGHT), 0.0, 0.0, 0.0, 0.0)
+                if layer3 != 0 {
+                    active_layer = 3
+                    status = "Layer 3 created"
+                } else {
+                    status = "Layer 3 creation failed: " + gfx_error()
+                }
+            } else {
+                status = "Maximum of three paint layers reached"
+            }
+        }
+
+        if ui_button(info_x, canvas_y + 640.0, 112.0, 28.0, "BASE") {
+            active_layer = 0
+            status = "Base layer selected"
+        }
+        if layer1 != 0 {
+            if ui_button(info_x + 120.0, canvas_y + 640.0, 120.0, 28.0, "LAYER 1") {
+                active_layer = 1
+                status = "Layer 1 selected"
+            }
+        }
+        if layer2 != 0 {
+            if ui_button(info_x, canvas_y + 674.0, 112.0, 28.0, "LAYER 2") {
+                active_layer = 2
+                status = "Layer 2 selected"
+            }
+        }
+        if layer3 != 0 {
+            if ui_button(info_x + 120.0, canvas_y + 674.0, 120.0, 28.0, "LAYER 3") {
+                active_layer = 3
+                status = "Layer 3 selected"
+            }
+        }
+        if layer1 != 0 {
+            if layer1_visible {
+                if ui_button(info_x, canvas_y + 706.0, 112.0, 26.0, "HIDE 1") {
+                    layer1_visible = false
+                    status = "Layer 1 hidden"
+                }
+            } else {
+                if ui_button(info_x, canvas_y + 706.0, 112.0, 26.0, "SHOW 1") {
+                    layer1_visible = true
+                    status = "Layer 1 visible"
+                }
+            }
+        }
+        if layer2 != 0 {
+            if layer2_visible {
+                if ui_button(info_x + 120.0, canvas_y + 706.0, 120.0, 26.0, "HIDE 2") {
+                    layer2_visible = false
+                    status = "Layer 2 hidden"
+                }
+            } else {
+                if ui_button(info_x + 120.0, canvas_y + 706.0, 120.0, 26.0, "SHOW 2") {
+                    layer2_visible = true
+                    status = "Layer 2 visible"
+                }
+            }
+        }
+        if layer3 != 0 {
+            if layer3_visible {
+                if ui_button(info_x, canvas_y + 732.0, 112.0, 26.0, "HIDE 3") {
+                    layer3_visible = false
+                    status = "Layer 3 hidden"
+                }
+            } else {
+                if ui_button(info_x, canvas_y + 732.0, 112.0, 26.0, "SHOW 3") {
+                    layer3_visible = true
+                    status = "Layer 3 visible"
+                }
+            }
+        }
 
         if inside_canvas {
             gfx_circle(mouse_x, mouse_y,
@@ -328,7 +541,21 @@ fn main() {
         gfx_end()
     }
 
-    gfx_canvas_save_bmp(canvas, "nexus_paint.bmp")
+    let final_composite = paint_composite(
+    canvas, layer1, layer2, layer3,
+    layer1_visible, layer2_visible, layer3_visible
+    )
+    if final_composite != 0 {
+        if ! gfx_canvas_save_bmp(final_composite, "nexus_paint.bmp") {
+            print("NEXUS Paint: final composite save failed: " + gfx_error())
+        }
+        gfx_canvas_destroy(final_composite)
+    } else {
+        print("NEXUS Paint: could not create final composite")
+    }
+    if layer1 != 0 { gfx_canvas_destroy(layer1) }
+    if layer2 != 0 { gfx_canvas_destroy(layer2) }
+    if layer3 != 0 { gfx_canvas_destroy(layer3) }
     gfx_canvas_destroy(canvas)
     gfx_shutdown()
 }

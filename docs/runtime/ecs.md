@@ -32,6 +32,7 @@ fn main() {
 ## Helpers
 
 - `ecs_create()`, `ecs_destroy(id)`, `ecs_alive(id)`
+- `scene_apply(scene)` replaces the live ECS registry from a previously loaded scene snapshot; old entity handles become invalid.
 - `ecs_set_position(id, x, y)`, `ecs_set_velocity(id, x, y)`, `ecs_set_size(id, width, height)`
 - `ecs_set_color(id, r, g, b, a)`, `ecs_set_texture(id, textureId)`
 - `ecs_x(id)`, `ecs_y(id)`, `ecs_count()`

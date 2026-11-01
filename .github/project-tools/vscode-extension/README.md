@@ -4,7 +4,7 @@ This extension registers `.nx` files as the **NEXUS** language. It includes synt
 
 ## Features
 
-The current LSP implementation provides diagnostics, keyword/builtin completion, context-aware struct-field and enum-variant completion, signature help, hover, go-to-definition, references, rename, document outline, workspace symbol search, whole-document and range formatting, and quick-fix suggestions for common unknown-name errors. Workspace symbol search is capped at 500 results.
+The current LSP implementation provides diagnostics, keyword/builtin completion, context-aware struct-field and enum-variant completion, signature help, hover, go-to-definition, references, prepare-rename, rename, document outline, workspace symbol search, whole-document and range formatting, and quick-fix suggestions for common unknown-name errors. Workspace symbol search is capped at 500 results.
 
 Navigation and type-aware completion are best-effort rather than a full compiler-backed index. Imported aliases, complete type inference for arbitrary member-expression chains, debugging integration, and inlay hints are not implemented. See the [LSP guide](../../../docs/tooling/lsp.md) for details.
 
@@ -47,3 +47,13 @@ Add this to VS Code settings JSON if `nexus` is not on PATH:
 ```
 
 The extension is not yet published on the VS Code Marketplace.
+
+## Validate the extension source
+
+Run the dependency-free contract tests from this directory:
+
+```sh
+npm test
+```
+
+The tests check the `.nx` registration, grammar scope and core syntax rules, language configuration, snippets, and that the language client starts the configured compiler with `lsp`.

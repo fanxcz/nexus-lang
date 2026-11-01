@@ -26,10 +26,17 @@ void nexus_gfx_canvas_clear(int64_t id, double r, double g, double b, double a) 
 void nexus_gfx_canvas_brush(
     int64_t id, double x, double y, double size, double r, double g, double b, double a) {
     auto it = gCanvases.find(id);
-    if (it == gCanvases.end())
+    if (it == gCanvases.end() ||
+        !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(size))
         return;
-    const int radius = std::max(1, int(std::round(size * 0.5)));
-    canvas_circle(it->second,
+    CanvasData& canvas = it->second;
+    const double maxDiameter = double(std::max(canvas.w, canvas.h)) * 2.0;
+    const double boundedSize = std::clamp(size, 1.0, maxDiameter);
+    const int radius = std::max(1, int(std::round(boundedSize * 0.5)));
+    if (x < -double(radius) || y < -double(radius) ||
+        x > double(canvas.w - 1 + radius) || y > double(canvas.h - 1 + radius))
+        return;
+    canvas_circle(canvas,
                   int(std::round(x)),
                   int(std::round(y)),
                   radius,
@@ -49,17 +56,24 @@ void nexus_gfx_canvas_line(int64_t id,
                            double b,
                            double a) {
     auto it = gCanvases.find(id);
-    if (it == gCanvases.end())
+    if (it == gCanvases.end() ||
+        !std::isfinite(x1) || !std::isfinite(y1) ||
+        !std::isfinite(x2) || !std::isfinite(y2) || !std::isfinite(size))
         return;
     CanvasData& c = it->second;
+    const double maxDiameter = double(std::max(c.w, c.h)) * 2.0;
+    const double boundedSize = std::clamp(size, 1.0, maxDiameter);
+    const int radius = std::max(1, int(std::round(boundedSize * 0.5)));
+    if (!canvas_clip_line(x1, y1, x2, y2, c.w, c.h, double(radius)))
+        return;
     const double dx = x2 - x1, dy = y2 - y1;
     const int steps = std::max(1, int(std::ceil(std::max(std::abs(dx), std::abs(dy)))));
     for (int i = 0; i <= steps; ++i) {
-        double t = double(i) / double(steps);
+        const double t = double(i) / double(steps);
         canvas_circle(c,
                       int(std::round(x1 + dx * t)),
                       int(std::round(y1 + dy * t)),
-                      std::max(1, int(std::round(size * 0.5))),
+                      radius,
                       canvas_u8(r),
                       canvas_u8(g),
                       canvas_u8(b),
@@ -78,24 +92,36 @@ void nexus_gfx_canvas_rect(int64_t id,
                            double a,
                            bool filled) {
     auto it = gCanvases.find(id);
-    if (it == gCanvases.end())
+    if (it == gCanvases.end() ||
+        !std::isfinite(x) || !std::isfinite(y) ||
+        !std::isfinite(w) || !std::isfinite(h))
         return;
     CanvasData& c = it->second;
-    int x0 = int(std::floor(x)), y0 = int(std::floor(y)), x1 = int(std::ceil(x + w)),
-        y1 = int(std::ceil(y + h));
+    const double right = x + w;
+    const double bottom = y + h;
+    if (!std::isfinite(right) || !std::isfinite(bottom))
+        return;
+
     if (filled) {
-        x0 = std::max(0, x0);
-        y0 = std::max(0, y0);
-        x1 = std::min(c.w - 1, x1);
-        y1 = std::min(c.h - 1, y1);
+        const double leftEdge = std::min(x, right);
+        const double rightEdge = std::max(x, right);
+        const double topEdge = std::min(y, bottom);
+        const double bottomEdge = std::max(y, bottom);
+        if (rightEdge < 0.0 || bottomEdge < 0.0 ||
+            leftEdge >= double(c.w) || topEdge >= double(c.h))
+            return;
+        const int x0 = int(std::clamp(std::floor(leftEdge), 0.0, double(c.w - 1)));
+        const int y0 = int(std::clamp(std::floor(topEdge), 0.0, double(c.h - 1)));
+        const int x1 = int(std::clamp(std::ceil(rightEdge), 0.0, double(c.w - 1)));
+        const int y1 = int(std::clamp(std::ceil(bottomEdge), 0.0, double(c.h - 1)));
         for (int yy = y0; yy <= y1; ++yy)
             for (int xx = x0; xx <= x1; ++xx)
                 canvas_put(c, xx, yy, canvas_u8(r), canvas_u8(g), canvas_u8(b), canvas_u8(a));
     } else {
-        nexus_gfx_canvas_line(id, x0, y0, x1, y0, size, r, g, b, a);
-        nexus_gfx_canvas_line(id, x1, y0, x1, y1, size, r, g, b, a);
-        nexus_gfx_canvas_line(id, x1, y1, x0, y1, size, r, g, b, a);
-        nexus_gfx_canvas_line(id, x0, y1, x0, y0, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x, y, right, y, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, right, y, right, bottom, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, right, bottom, x, bottom, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x, bottom, x, y, size, r, g, b, a);
     }
 }
 void nexus_gfx_canvas_fill(
@@ -177,14 +203,172 @@ void nexus_gfx_canvas_draw(int64_t id, double x, double y, double w, double h, d
 }
 bool nexus_gfx_canvas_save_bmp(int64_t id, const char* path) {
     auto it = gCanvases.find(id);
-    return it != gCanvases.end() && canvas_save_bmp_impl(it->second, path);
+    if (it == gCanvases.end() || !path || !*path) {
+        gGraphicsError = "BMP export requires a live canvas and a file path";
+        return false;
+    }
+    if (!canvas_save_bmp_impl(it->second, path)) {
+        gGraphicsError = std::string("could not write BMP file: ") + path;
+        return false;
+    }
+    gGraphicsError.clear();
+    return true;
 }
+
+bool nexus_gfx_canvas_blit(int64_t destinationId, int64_t sourceId) {
+    gGraphicsError.clear();
+    auto destination = gCanvases.find(destinationId);
+    auto source = gCanvases.find(sourceId);
+    if (destination == gCanvases.end() || source == gCanvases.end() ||
+        destinationId == sourceId) {
+        gGraphicsError = "canvas blit requires two different live canvases";
+        return false;
+    }
+    if (!canvas_blit_pixels(destination->second, source->second)) {
+        gGraphicsError = "canvas blit requires canvases with matching dimensions";
+        return false;
+    }
+    return true;
+}
+
+bool nexus_gfx_canvas_import_image(int64_t id, const char* path) {
+    gGraphicsError.clear();
+    auto canvas = gCanvases.find(id);
+    if (canvas == gCanvases.end() || !path || !*path) {
+        gGraphicsError = "canvas image import requires a live canvas and a file path";
+        return false;
+    }
+    if (!SDL_FreeSurface || !SDL_ConvertSurfaceFormat) {
+        gGraphicsError = "SDL surface conversion is unavailable";
+        return false;
+    }
+
+    SDL_Surface* source = IMG_Load ? IMG_Load(path) : nullptr;
+    if (!source && SDL_LoadBMP)
+        source = SDL_LoadBMP(path);
+    if (!source) {
+        gGraphicsError = IMG_GetError
+            ? std::string("image import failed: ") + IMG_GetError()
+            : "image import failed (SDL2_image or a valid BMP file is required)";
+        return false;
+    }
+
+    if (source->w <= 0 || source->h <= 0 || source->w > 8192 || source->h > 8192) {
+        SDL_FreeSurface(source);
+        gGraphicsError = "image dimensions must be between 1 and 8192 pixels";
+        return false;
+    }
+    if (uint64_t(source->w) * uint64_t(source->h) > UINT64_C(16777216)) {
+        SDL_FreeSurface(source);
+        gGraphicsError = "image import is limited to 16 megapixels to bound temporary memory";
+        return false;
+    }
+
+    SDL_Surface* converted =
+        SDL_ConvertSurfaceFormat(source, SDL_PIXELFORMAT_ABGR8888, 0);
+    SDL_FreeSurface(source);
+    if (!converted) {
+        gGraphicsError = std::string("image conversion failed: ") + sdl_error();
+        return false;
+    }
+
+    bool locked = false;
+    bool imported = false;
+    if (converted->pixels && converted->pitch >= converted->w * 4 && SDL_LockSurface) {
+        if (SDL_LockSurface(converted) == 0) {
+            locked = true;
+            imported = canvas_import_pixels(canvas->second,
+                                            static_cast<const uint8_t*>(converted->pixels),
+                                            converted->w,
+                                            converted->h,
+                                            converted->pitch);
+        } else {
+            gGraphicsError = std::string("image surface lock failed: ") + sdl_error();
+        }
+    } else if (converted->pixels && converted->pitch >= converted->w * 4) {
+        imported = canvas_import_pixels(canvas->second,
+                                        static_cast<const uint8_t*>(converted->pixels),
+                                        converted->w,
+                                        converted->h,
+                                        converted->pitch);
+    } else {
+        gGraphicsError = "converted image surface has invalid pixel storage";
+    }
+    if (locked && SDL_UnlockSurface)
+        SDL_UnlockSurface(converted);
+    SDL_FreeSurface(converted);
+
+    if (!imported && gGraphicsError.empty())
+        gGraphicsError = "image pixels could not be imported into the canvas";
+    if (imported)
+        gGraphicsError.clear();
+    return imported;
+}
+
+bool nexus_gfx_canvas_save_png(int64_t id, const char* path) {
+    gGraphicsError.clear();
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end() || !path || !*path) {
+        gGraphicsError = "PNG export requires a live canvas and a file path";
+        return false;
+    }
+    if (!IMG_SavePNG || !SDL_CreateRGBSurfaceWithFormat || !SDL_FreeSurface) {
+        gGraphicsError = "PNG export requires SDL2_image with IMG_SavePNG support";
+        return false;
+    }
+
+    CanvasData& canvas = it->second;
+    SDL_Surface* surface =
+        SDL_CreateRGBSurfaceWithFormat(0, canvas.w, canvas.h, 32, SDL_PIXELFORMAT_ABGR8888);
+    if (!surface) {
+        gGraphicsError = std::string("PNG surface creation failed: ") + sdl_error();
+        return false;
+    }
+    if (!surface->pixels || surface->pitch < canvas.w * 4) {
+        SDL_FreeSurface(surface);
+        gGraphicsError = "PNG surface has invalid pixel storage";
+        return false;
+    }
+
+    bool locked = false;
+    if (SDL_LockSurface) {
+        if (SDL_LockSurface(surface) != 0) {
+            gGraphicsError = std::string("PNG surface lock failed: ") + sdl_error();
+            SDL_FreeSurface(surface);
+            return false;
+        }
+        locked = true;
+    }
+    for (int y = 0; y < canvas.h; ++y) {
+        std::memcpy(static_cast<uint8_t*>(surface->pixels) + size_t(y) * size_t(surface->pitch),
+                    canvas.pixels.data() + size_t(y) * size_t(canvas.w) * 4u,
+                    size_t(canvas.w) * 4u);
+    }
+    if (locked && SDL_UnlockSurface)
+        SDL_UnlockSurface(surface);
+
+    const int result = IMG_SavePNG(surface, path);
+    SDL_FreeSurface(surface);
+    if (result != 0) {
+        gGraphicsError = IMG_GetError
+            ? std::string("PNG export failed: ") + IMG_GetError()
+            : "PNG export failed";
+        return false;
+    }
+    gGraphicsError.clear();
+    return true;
+}
+
 int64_t nexus_gfx_canvas_load_bmp(const char* path) {
-    if (!gGraphics)
+    if (!gGraphics || !path || !*path) {
+        gGraphicsError = "BMP import requires initialized graphics and a file path";
         return 0;
+    }
     CanvasData c;
-    if (!canvas_load_bmp_impl(path, c))
+    if (!canvas_load_bmp_impl(path, c)) {
+        gGraphicsError = "could not load BMP (expected an uncompressed 24-bit or 32-bit image up to 16 megapixels)";
         return 0;
+    }
     if (gSoftware2D) {
         c.software = SDL_CreateTexture(
             gRenderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, c.w, c.h);
@@ -200,6 +384,7 @@ int64_t nexus_gfx_canvas_load_bmp(const char* path) {
     }
     const int64_t id = gNextCanvas++;
     gCanvases[id] = std::move(c);
+    gGraphicsError.clear();
     return id;
 }
 void nexus_gfx_canvas_checkpoint(int64_t id) {
@@ -212,7 +397,7 @@ bool nexus_gfx_canvas_undo(int64_t id) {
     if (it == gCanvases.end() || it->second.undo.empty())
         return false;
     CanvasData& c = it->second;
-    c.redo.push_back(CanvasSnapshot{c.pixels});
+    canvas_push_snapshot(c.redo, c);
     c.pixels = std::move(c.undo.back().pixels);
     c.undo.pop_back();
     return true;
@@ -222,7 +407,7 @@ bool nexus_gfx_canvas_redo(int64_t id) {
     if (it == gCanvases.end() || it->second.redo.empty())
         return false;
     CanvasData& c = it->second;
-    c.undo.push_back(CanvasSnapshot{c.pixels});
+    canvas_push_snapshot(c.undo, c);
     c.pixels = std::move(c.redo.back().pixels);
     c.redo.pop_back();
     return true;
@@ -235,3 +420,87 @@ int64_t nexus_gfx_canvas_height(int64_t id) {
     auto it = gCanvases.find(id);
     return it == gCanvases.end() ? 0 : it->second.h;
 }
+
+#ifdef NEXUS_RUNTIME_TESTING
+int nexus_runtime_test_canvas_blend_pixel(const uint8_t* destination,
+                                          const uint8_t* source,
+                                          uint8_t* result) {
+    if (!destination || !source || !result)
+        return 0;
+    std::memcpy(result, destination, 4);
+    canvas_blend_pixel(result, source);
+    return 1;
+}
+int nexus_runtime_test_canvas_import_rgba(int64_t destinationWidth,
+                                          int64_t destinationHeight,
+                                          const uint8_t* destinationPixels,
+                                          const uint8_t* sourcePixels,
+                                          int64_t sourceWidth,
+                                          int64_t sourceHeight,
+                                          int64_t sourcePitch,
+                                          uint8_t* resultPixels) {
+    if (!destinationPixels || !sourcePixels || !resultPixels ||
+        destinationWidth < 1 || destinationHeight < 1 ||
+        destinationWidth > 8192 || destinationHeight > 8192 ||
+        uint64_t(destinationWidth) * uint64_t(destinationHeight) >
+            static_cast<uint64_t>(kCanvasMaxPixels) ||
+        sourceWidth < 1 || sourceHeight < 1 || sourceWidth > 8192 || sourceHeight > 8192 ||
+        uint64_t(sourceWidth) * uint64_t(sourceHeight) >
+            static_cast<uint64_t>(kCanvasMaxPixels) ||
+        sourcePitch < sourceWidth * 4 || sourcePitch > std::numeric_limits<int>::max())
+        return 0;
+    CanvasData destination;
+    destination.w = static_cast<int>(destinationWidth);
+    destination.h = static_cast<int>(destinationHeight);
+    const size_t destinationBytes =
+        size_t(destination.w) * size_t(destination.h) * 4u;
+    destination.pixels.assign(destinationPixels, destinationPixels + destinationBytes);
+    if (!canvas_import_pixels(destination,
+                              sourcePixels,
+                              static_cast<int>(sourceWidth),
+                              static_cast<int>(sourceHeight),
+                              static_cast<int>(sourcePitch)))
+        return 0;
+    std::memcpy(resultPixels, destination.pixels.data(), destinationBytes);
+    return 1;
+}
+int nexus_runtime_test_canvas_blit_rgba(int64_t width,
+                                        int64_t height,
+                                        const uint8_t* destinationPixels,
+                                        const uint8_t* sourcePixels,
+                                        uint8_t* resultPixels) {
+    if (!destinationPixels || !sourcePixels || !resultPixels ||
+        width < 1 || height < 1 || width > 8192 || height > 8192 ||
+        uint64_t(width) * uint64_t(height) > static_cast<uint64_t>(kCanvasMaxPixels))
+        return 0;
+    CanvasData destination, source;
+    destination.w = source.w = static_cast<int>(width);
+    destination.h = source.h = static_cast<int>(height);
+    const size_t bytes = size_t(destination.w) * size_t(destination.h) * 4u;
+    destination.pixels.assign(destinationPixels, destinationPixels + bytes);
+    source.pixels.assign(sourcePixels, sourcePixels + bytes);
+    if (!canvas_blit_pixels(destination, source, false))
+        return 0;
+    std::memcpy(resultPixels, destination.pixels.data(), bytes);
+    return 1;
+}
+int64_t nexus_runtime_test_canvas_undo_snapshot_count(int64_t width,
+                                                       int64_t height,
+                                                       int64_t checkpoints) {
+    if (width < 1 || height < 1 || width > 8192 || height > 8192 ||
+        uint64_t(width) * uint64_t(height) > static_cast<uint64_t>(kCanvasMaxPixels) ||
+        checkpoints < 0 || checkpoints > 64)
+        return -1;
+    CanvasData canvas;
+    canvas.w = static_cast<int>(width);
+    canvas.h = static_cast<int>(height);
+    try {
+        canvas.pixels.resize(size_t(canvas.w) * size_t(canvas.h) * 4u);
+        for (int64_t i = 0; i < checkpoints; ++i)
+            canvas_checkpoint_internal(canvas);
+    } catch (const std::exception&) {
+        return -1;
+    }
+    return static_cast<int64_t>(canvas.undo.size());
+}
+#endif

@@ -25,6 +25,21 @@ nexus editor --gui
 
 This experimental path compiles and launches the bundled editor example. It can require the LLVM/Clang fallback and graphics runtime, depending on which constructs are used and how NEXUS was packaged. It is not yet a full replacement for a mature IDE.
 
+## NEXUS Studio
+
+The Electron desktop application supports multiple open document tabs and keeps
+independent unsaved buffers while switching between files. It can start the separately
+installed compiler with the `lsp` argument for the active project, send the active `.nx`
+editor buffer to the server, and show published compiler diagnostics as editor annotations.
+The language server process is stopped when the Studio window closes and restarted when the
+selected project or compiler changes.
+
+Studio currently integrates diagnostics, completion (Ctrl+Space), hover information, and
+go-to-definition (F12) for the active `.nx` document. Completion and navigation are backed by
+the installed compiler's LSP process; definition targets are restricted to project-local `.nx`
+files. Signature help, references, rename, formatting actions, and debugging are not yet
+integrated into the Studio UI; use the VS Code extension for those additional capabilities.
+
 ## Language server
 
 The extension starts `nexus lsp` for live compiler diagnostics, completion, signature help, hover, go-to-definition, references, rename, document/range formatting, quick fixes, and workspace-symbol search. Workspace indexing uses lexical declarations and known inferred types rather than a complete semantic model; import aliases and some cross-file field inference remain limited. A source debugger/debug adapter and format-on-save workflow are not included.

@@ -102,28 +102,34 @@ namespace nexus {
                 ".git", ".vscode", "build", "dist", "node_modules", "CMakeFiles"};
             std::vector<fs::path> files;
             std::error_code ec;
-            for (fs::recursive_directory_iterator
-                     it(root, fs::directory_options::skip_permission_denied, ec),
-                 end;
-                 it != end;
-                 it.increment(ec)) {
-                if (ec)
-                    throw std::runtime_error("cannot traverse package for checksum: " +
-                                             ec.message());
+            fs::recursive_directory_iterator it(root, fs::directory_options::none, ec), end;
+            if (ec)
+                throw std::runtime_error("cannot traverse package for checksum: " + ec.message());
+            while (it != end) {
+                const fs::path entryPath = it->path();
                 const auto status = it->symlink_status(ec);
                 if (ec)
                     throw std::runtime_error("cannot inspect package for checksum: " +
                                              ec.message());
+                const std::string entryName = entryPath.filename().string();
                 if (fs::is_symlink(status)) {
                     it.disable_recursion_pending();
-                    continue;
-                }
-                if (fs::is_directory(status) && excluded.contains(it->path().filename().string())) {
+                    if (!excluded.contains(entryName)) {
+                        throw std::runtime_error(
+                            "package contains a symbolic link: " +
+                            entryPath.lexically_relative(root).generic_string());
+                    }
+                } else if (fs::is_directory(status) && excluded.contains(entryName)) {
                     it.disable_recursion_pending();
-                    continue;
+                } else if (fs::is_regular_file(status)) {
+                    files.push_back(entryPath);
                 }
-                if (fs::is_regular_file(status))
-                    files.push_back(it->path());
+
+                ec.clear();
+                it.increment(ec);
+                if (ec)
+                    throw std::runtime_error("cannot traverse package for checksum: " +
+                                             ec.message());
             }
 
             std::sort(files.begin(), files.end(), [&](const fs::path& left, const fs::path& right) {

@@ -10,6 +10,8 @@ Use GitHub's **Report a vulnerability** option in the repository's Security tab 
 
 Security-sensitive areas include source parsing, compiler code generation, generated native executables, package archive handling, filesystem operations, process execution, runtime FFI, networking, and installer/update scripts.
 
+The runtime `system()` and `capture_output()` built-ins execute shell command strings with the current user's permissions. They are not sandboxed and do not provide structured argument escaping. Do not interpolate untrusted input into those command strings; use a fixed command and strict allow-list validation for any dynamic token. A program written in NEXUS should be treated as executable native code, not as sandboxed code.
+
 NEXUS is under active development; not every component has a formal security audit. Do not assume sandboxing or isolation unless a feature's documentation and tests explicitly establish it.
 
 ## Safe development

@@ -10,6 +10,9 @@ extern "C" const char* nexus_gfx_backend();
 extern "C" const char* nexus_gfx_error();
 extern "C" const char* nexus_gfx_audio_error();
 extern "C" int64_t nexus_gfx_audio_available();
+extern "C" bool nexus_gfx_clipboard_set(const char* text);
+extern "C" char* nexus_gfx_clipboard_get();
+extern "C" void nexus_free(void* pointer);
 extern "C" int64_t nexus_gfx_width();
 extern "C" int64_t nexus_gfx_height();
 extern "C" int64_t nexus_gfx_sound_load(const char* path);
@@ -37,6 +40,18 @@ int main() {
     expect(nexus_gfx_width() == 1280 && nexus_gfx_height() == 720,
            "logical size defaults must be 1280x720 before init");
     expect(!nexus_gfx_vsync(true), "vsync must be unavailable before init");
+
+    // SDL clipboard access is optional and requires an initialized video
+    // backend. Headless callers receive documented sentinels, not a crash.
+    expect(!nexus_gfx_clipboard_set("NEXUS"), "clipboard write must fail before graphics init");
+    char* clipboard = nexus_gfx_clipboard_get();
+    expect(clipboard != nullptr && clipboard[0] == '\0',
+           "clipboard read must return an empty string before graphics init");
+    if (clipboard)
+        nexus_free(clipboard);
+    const char* clipboardError = nexus_gfx_error();
+    expect(clipboardError && std::strstr(clipboardError, "clipboard") != nullptr,
+           "clipboard access without graphics init must record a reason");
 
     // Drawing calls are documented no-ops before initialization. They must not
     // dereference a null window or renderer.

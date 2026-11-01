@@ -498,6 +498,93 @@ execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR
 if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed after restoring dependency metadata: ${out}\\n${err}")
 endif()
+
+# Lockfile refresh must reject a declared vendor path that normalizes outside vendor/.
+string(REPLACE "vendor/sample_lib" "vendor/../package-source"
+  traversal_manifest "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${traversal_manifest}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg update WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(traversal_update_output "${out}\\n${err}")
+if(rc EQUAL 0 OR NOT traversal_update_output MATCHES "escapes vendor")
+  file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_locked}")
+  file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+  message(FATAL_ERROR "pkg update accepted a dependency path escaping vendor/: ${traversal_update_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after restoring path traversal fixture: ${out}\\n${err}")
+endif()
+
+# Lockfile refresh must not resolve a package directory symlink outside vendor/.
+if(NOT WIN32)
+  set(OUTSIDE_PACKAGE "${SMOKE_DIR}/outside-package")
+  set(SAVED_PACKAGE "${SMOKE_DIR}/vendor/sample_lib.saved")
+  file(MAKE_DIRECTORY "${OUTSIDE_PACKAGE}")
+  configure_file("${PKG_SOURCE}/nexus.toml" "${OUTSIDE_PACKAGE}/nexus.toml" COPYONLY)
+  file(COPY "${PKG_SOURCE}/src" DESTINATION "${OUTSIDE_PACKAGE}")
+  file(RENAME "${SMOKE_DIR}/vendor/sample_lib" "${SAVED_PACKAGE}")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E create_symlink "${OUTSIDE_PACKAGE}" "${SMOKE_DIR}/vendor/sample_lib"
+    RESULT_VARIABLE symlink_rc OUTPUT_VARIABLE symlink_out ERROR_VARIABLE symlink_err)
+  if(NOT symlink_rc EQUAL 0)
+    file(RENAME "${SAVED_PACKAGE}" "${SMOKE_DIR}/vendor/sample_lib")
+    message(FATAL_ERROR "could not prepare local package symlink test: ${symlink_out}\\n${symlink_err}")
+  endif()
+  execute_process(COMMAND "${NEXUS_BIN}" pkg update
+    WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+  set(symlink_dependency_output "${out}\\n${err}")
+  if(rc EQUAL 0 OR NOT symlink_dependency_output MATCHES "package directory must not be a symlink")
+    file(REMOVE "${SMOKE_DIR}/vendor/sample_lib")
+    file(RENAME "${SAVED_PACKAGE}" "${SMOKE_DIR}/vendor/sample_lib")
+    message(FATAL_ERROR "pkg update followed a package symlink outside vendor/: ${symlink_dependency_output}")
+  endif()
+  file(REMOVE "${SMOKE_DIR}/vendor/sample_lib")
+  file(RENAME "${SAVED_PACKAGE}" "${SMOKE_DIR}/vendor/sample_lib")
+  file(REMOVE_RECURSE "${OUTSIDE_PACKAGE}")
+
+  # A symlinked manifest must not redirect package metadata reads outside vendor/.
+  set(SAVED_MANIFEST "${SMOKE_DIR}/vendor/sample_lib/nexus.toml.saved")
+  file(RENAME "${SMOKE_DIR}/vendor/sample_lib/nexus.toml" "${SAVED_MANIFEST}")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E create_symlink "${PKG_SOURCE}/nexus.toml" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml"
+    RESULT_VARIABLE manifest_symlink_rc OUTPUT_VARIABLE manifest_symlink_out ERROR_VARIABLE manifest_symlink_err)
+  if(NOT manifest_symlink_rc EQUAL 0)
+    file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+    message(FATAL_ERROR "could not prepare package manifest symlink test: ${manifest_symlink_out}\n${manifest_symlink_err}")
+  endif()
+  execute_process(COMMAND "${NEXUS_BIN}" pkg update
+    WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+  set(manifest_symlink_output "${out}\n${err}")
+  if(rc EQUAL 0 OR NOT manifest_symlink_output MATCHES "package manifest must not be a symlink")
+    file(REMOVE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+    file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+    message(FATAL_ERROR "pkg update followed a package manifest symlink: ${manifest_symlink_output}")
+  endif()
+  file(REMOVE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+  file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+
+  # A symlinked source inside a package must be rejected instead of omitted from
+  # the integrity hash, otherwise its target could change without invalidating the lock.
+  set(PACKAGE_SOURCE_LINK "${SMOKE_DIR}/vendor/sample_lib/src/external.nx")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E create_symlink "${PKG_SOURCE}/src/main.nx" "${PACKAGE_SOURCE_LINK}"
+    RESULT_VARIABLE source_symlink_rc OUTPUT_VARIABLE source_symlink_out ERROR_VARIABLE source_symlink_err)
+  if(NOT source_symlink_rc EQUAL 0)
+    message(FATAL_ERROR "could not prepare package source symlink test: ${source_symlink_out}\n${source_symlink_err}")
+  endif()
+  execute_process(COMMAND "${NEXUS_BIN}" pkg update
+    WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+  set(source_symlink_output "${out}\n${err}")
+  file(REMOVE "${PACKAGE_SOURCE_LINK}")
+  if(rc EQUAL 0 OR NOT source_symlink_output MATCHES "package contains a symbolic link")
+    message(FATAL_ERROR "pkg update accepted a symlink inside a local package: ${source_symlink_output}")
+  endif()
+endif()
+
 file(WRITE "${SMOKE_DIR}/outside-sentinel.txt" "keep")
 execute_process(COMMAND "${NEXUS_BIN}" pkg remove ../outside-sentinel.txt WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
 if(rc EQUAL 0 OR NOT EXISTS "${SMOKE_DIR}/outside-sentinel.txt")

@@ -46,9 +46,9 @@ The 2D origin is the upper-left corner. Colors are RGBA floats, not a packed int
 
 - Textures: `gfx_texture_load`, `gfx_texture_draw`, `gfx_texture_draw_frame`, `gfx_texture_filter`, `gfx_texture_unload`, `gfx_texture_width`, `gfx_texture_height`.
 - Fonts: `gfx_font_load`, `gfx_text_font`, `gfx_font_unload`; depends on the optional TTF runtime library.
-- CPU canvas: `gfx_canvas_create`, `gfx_canvas_brush`, `gfx_canvas_line`, `gfx_canvas_rect`, `gfx_canvas_fill`, `gfx_canvas_checkpoint`, `gfx_canvas_undo`, `gfx_canvas_redo`, `gfx_canvas_save_bmp`, `gfx_canvas_load_bmp`, `gfx_canvas_draw`, `gfx_canvas_destroy`, and dimension helpers.
+- CPU canvas: `gfx_canvas_create`, `gfx_canvas_brush`, `gfx_canvas_line`, `gfx_canvas_rect`, `gfx_canvas_fill`, `gfx_canvas_checkpoint`, `gfx_canvas_undo`, `gfx_canvas_redo`, `gfx_canvas_blit`, `gfx_canvas_import_image`, `gfx_canvas_save_bmp`, `gfx_canvas_save_png`, `gfx_canvas_load_bmp`, `gfx_canvas_draw`, `gfx_canvas_destroy`, and dimension helpers.
 
-Texture loaders return ID 0 on failure. The canvas supports BMP load/save, not a general set of image formats. See the working [Paint template](../templates/paint.md).
+`gfx_canvas_blit(destination, source)` composites equal-sized canvases using source-over alpha. `gfx_canvas_import_image(canvas, path)` imports into the center of the target while preserving aspect ratio; it uses SDL_image when available and falls back to SDL_LoadBMP for BMP files. Both canvas creation and image import are limited to 8192 pixels per side and 16 megapixels total. The runtime reads at most 64 MiB of BMP data for file import. `gfx_canvas_save_bmp` is the built-in, dependency-free export path. `gfx_canvas_save_png` requires SDL2_image with `IMG_SavePNG` plus SDL's surface creation/free APIs; it returns false and sets `gfx_error()` when those optional symbols are unavailable. Each canvas retains at most 32 MiB of undo snapshots (up to 32 snapshots), so history depth depends on image dimensions. See the working [Paint template](../templates/paint.md).
 
 ### Default system font, measuring and styles
 

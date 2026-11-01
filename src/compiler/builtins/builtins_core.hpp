@@ -86,6 +86,12 @@ namespace nexus {
         if (name == "os.args_get")
             return BuiltinSignature{name, {T::i64()}, T::string(), "nexus_os_args_get"};
 
+        if (name == "os.config_dir")
+            return BuiltinSignature{name, {T::string()}, T::string(), "nexus_os_config_dir"};
+
+        if (name == "os.config_error")
+            return BuiltinSignature{name, {}, T::string(), "nexus_os_config_error"};
+
         if (name == "gfx3d_begin")
             return BuiltinSignature{name,
                                     {T::f64(),

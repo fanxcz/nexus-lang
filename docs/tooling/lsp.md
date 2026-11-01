@@ -7,7 +7,7 @@
 - Initialize and clean shutdown, full-document synchronization, and diagnostics on open/change/save/close.
 - Completion for keywords, built-ins and runtime functions, with context-aware suggestions for struct fields after `value.` and enum variants after `Enum::`.
 - Hover for language/built-in documentation and parsed function/type declarations in the current buffer or other discoverable workspace files when the selected symbol resolves to a workspace declaration.
-- Go-to-definition, references and rename for indexed declarations, references and scoped local bindings, including functions/types across discoverable workspace files.
+- Go-to-definition, references, rename preparation (`textDocument/prepareRename`) and rename for indexed declarations, references and scoped local bindings, including functions/types across discoverable workspace files.
 - Whole-document formatting with `textDocument/formatting` and selected-line formatting with `textDocument/rangeFormatting`. Both use the same conservative formatter as `nexus fmt`.
 - Quick-fix code actions for close struct-field-name suggestions and uniquely matching visible variable/parameter names.
 - A maximum protocol message size of 16 MiB.
@@ -55,7 +55,7 @@ file-types = ["nx"]
 
 ## Verification
 
-The cross-platform CTest suite sends initialize, document lifecycle, completion, hover, definition, references, rename, whole-document formatting, range formatting, code-action, shutdown and exit messages to the actual server process. It also checks diagnostics, workspace lookup and scoped symbol behavior.
+The cross-platform CTest suite sends initialize, document lifecycle, completion, hover, definition, references, prepare-rename, rename, whole-document formatting, range formatting, code-action, shutdown and exit messages to the actual server process. It also checks diagnostics, workspace lookup and scoped symbol behavior.
 
 ```sh
 ctest --test-dir build --output-on-failure
@@ -67,3 +67,5 @@ Next LSP milestones are semantic navigation for imported aliases and a broader i
 ### Workspace type completion
 
 Contextual field and enum completion also looks up declarations in other `.nx` files in the active workspace when the requested type is absent from the current buffer. A lightweight token scan is cached per source file, and the full parser runs only for files declaring the requested type. Cache entries are refreshed when file contents change and invalidated on saves and file-watch events. This supports explicit local variable types and direct struct initializers; imported aliases and full cross-module type inference remain future work.
+
+The protocol helper decodes standard JSON escapes, including `\uXXXX` sequences and UTF-16 surrogate pairs, into UTF-8 before the compiler sees document text. The protocol smoke tests cover escaped quotes/control characters, BMP Unicode, astral Unicode, invalid surrogate pairs and malformed hex escapes.

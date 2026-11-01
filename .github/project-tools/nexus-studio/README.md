@@ -5,6 +5,8 @@ A small desktop IDE for the NEXUS programming language: project explorer, editor
 ## Features
 - Open a project folder, browse files, create and save .nx source files.
 - Build the current .nx file into a native program or compile and run it.
+- Keep multiple files open in tabs with independent unsaved buffers; switch between documents without discarding edits.
+- Start the installed compiler's LSP process for the open project; show live diagnostics, request completions with Ctrl+Space, display symbol hover information, and navigate to definitions with F12.
 - Select a compiler once; its path is remembered after restarting the IDE.
 - Integrated terminal with Clear, Stop and Hide/Show controls.
 - Shortcuts: Ctrl/Cmd+O (open folder), Ctrl/Cmd+S (save), Ctrl/Cmd+N (new file), F7 (build), F5 (run).
@@ -33,3 +35,9 @@ Artifacts are written to release/. GitHub Actions builds native packages on Wind
 
 ## Security
 The renderer uses context isolation and a limited preload API. File operations are restricted to the opened project folder. Terminal commands run with the current user's permissions; execute only commands you trust.
+
+## Current boundaries
+
+NEXUS Studio supports multiple open document tabs and retains unsaved buffers when switching between files. It starts the separately installed NEXUS language server and integrates live diagnostics, completion, hover information, and go-to-definition for the active .nx document. Signature help, references, rename, formatting actions, and debugging are not yet integrated into the Studio UI. Use the VS Code extension for those additional language-client features.
+
+The integrated terminal executes commands with the current user's permissions. Only run commands and project code that you trust. File reads and writes made through Studio's project API are confined to the opened project folder; shell commands are intentionally not sandboxed.

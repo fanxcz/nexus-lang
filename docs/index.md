@@ -5,20 +5,87 @@ hide:
 
 <div class="nexus-hero" markdown>
 
-# NEXUS — native programming, clear and practical
+<div class="nexus-hero-copy" markdown>
 
-A compiled, statically checked language for native applications, developer tools, and game prototypes. The compiler now includes fixed-width numeric types and checked slices; SDL-based 2D helpers and an experimental compatibility-OpenGL 3D path provide a starting point for graphics projects.
+<div class="nexus-kicker">NEXUS 2.2.0 · C++20 toolchain</div>
 
-[Start learning](getting-started/index.md){ .md-button .md-button--primary }
+# Native software, from language to runtime.
+
+NEXUS is a statically checked programming language for native applications, command-line tools and graphics experiments. Explore a practical compiler, a built-in x86-64 backend for a defined subset, an LLVM path for broader programs, and a growing set of developer tools.
+
+[Explore the language](getting-started/index.md){ .md-button .md-button--primary }
 [Download NEXUS](downloads.md){ .md-button }
-[View source on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
-[Download language manual PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
+[Read the documentation](manual.md){ .md-button }
+[View on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
+
+<div class="nexus-hero-meta">
+  <span>Static checking</span>
+  <span>LLVM + native x86-64</span>
+  <span>Windows · Linux · macOS CI</span>
+</div>
 
 </div>
 
-<div class="nexus-kicker">Start here</div>
+<div class="nexus-hero-code" markdown>
 
-## Build your first program
+<div class="nexus-code-heading"><span>hello.nx</span><span>FIRST PROGRAM</span></div>
+
+```nx
+fn greet(name: string) -> string {
+    return "Hello, " + name + "!"
+}
+
+fn main() {
+    let message = greet("NEXUS")
+    print(message)
+}
+```
+
+<div class="nexus-code-caption">Write a small program. Check it. Build and run with the NEXUS CLI.</div>
+
+</div>
+
+</div>
+
+<div class="nexus-kicker">The toolchain</div>
+
+## One language, connected tools
+
+NEXUS brings the language, compiler, runtime and editor integrations into one repository. Each component has a defined boundary, and current backend and platform limits are documented rather than hidden.
+
+<div class="grid cards" markdown>
+
+-   :material-code-braces: **Language and compiler**
+
+    Position-aware lexer, recursive-descent parser, shared AST, semantic checks and two compilation paths.
+
+    [Compiler pipeline](architecture/compiler-pipeline.md)
+
+-   :material-lightning-bolt-outline: **Native execution**
+
+    A built-in x86-64 backend for its documented subset, plus an LLVM/Clang path for broader language coverage.
+
+    [Backend selection](tooling/backend-explainer.md)
+
+-   :material-cube-outline: **Runtime and library**
+
+    Strings, memory, file and data helpers, SDL-based graphics and optional native integrations.
+
+    [Runtime overview](runtime/index.md)
+
+-   :material-lan: **Developer tooling**
+
+    CLI, REPL, formatter, linter, diagnostics, language server and VS Code language support.
+
+    [Tooling guide](tooling/index.md)
+
+</div>
+
+## Get productive
+
+<div class="nexus-quickstart" markdown>
+
+### Build your first program
 
 Create `hello.nx`:
 
@@ -29,119 +96,118 @@ fn main() {
 }
 ```
 
-Run it from your terminal:
+Run it from a terminal:
 
-```powershell
+```sh
 nexus check hello.nx
 nexus run hello.nx
 ```
 
-The compiler checks source code before building. Run `nexus doctor` if the compiler, toolchain or runtime is not available.
+The compiler checks the source before building. Run `nexus doctor` when the compiler, toolchain or runtime is not available.
 
-## Explore NEXUS
-
-<div class="grid cards" markdown>
-
--   :material-rocket-launch-outline: **Get started**
-
-    Install the compiler, create a project, and learn the basic workflow.
-
-    [Quick Start](getting-started/quickstart.md)
-
--   :material-language-c: **Language reference**
-
-    Learn variables, types, functions, arrays, structs, enums, loops, imports and the current feature boundaries.
-
-    [Syntax and examples](language/syntax.md)
-
--   :material-package-variant-closed: **Standard library**
-
-    Explore files, strings, JSON, networking, math, collections, UI layout and runtime helpers.
-
-    [Library modules](std/index.md)
-
--   :material-desktop-classic: **Build native apps**
-
-    Create a windowed app or CLI utility, use immediate-mode widgets, and explore the current runtime and development workflow.
-
-    [Application development](applications.md)
-
--   :material-gamepad-variant-outline: **Game development**
-
-    Explore tilemaps, collision helpers, sprites, animation, cameras, and the experimental 3D API.
-
-    [Game development status](runtime/voxel-roadmap.md)
-
--   :material-download-box-outline: **Downloads**
-
-    Windows setup, portable compiler bundle, NEXUS Paint installer, VS Code extension and checksum files.
-
-    [Official downloads](downloads.md)
-
--   :material-bug-outline: **Compiler and tooling**
-
-    Check diagnostics, backend choice, formatter, linter, LSP, project templates and self-tests.
-
-    [Tooling reference](tooling/index.md)
+[Follow the quick start](getting-started/quickstart.md){ .md-button .md-button--primary }
 
 </div>
 
-## Featured projects
+## Choose your workflow
+
+<div class="grid cards" markdown>
+
+-   :material-console: **Command-line projects**
+
+    Create a small CLI utility, use compiler diagnostics and build from a terminal.
+
+    `nexus new MyTool --template cli`
+
+    [CLI guide](tooling/commands.md)
+
+-   :material-monitor: **Native applications**
+
+    Start from the current application template and use the available runtime UI and graphics APIs.
+
+    `nexus new MyApp --template app`
+
+    [Application development](applications.md)
+
+-   :material-code-editor: **VS Code**
+
+    Open `.nx` files with syntax highlighting, snippets and the NEXUS language server client. Install the compiler separately.
+
+    [Extension guide](tooling/vscode-extension.md)
+
+-   :material-application-brackets-outline: **NEXUS Studio**
+
+    Use the source-buildable Electron editor, project explorer, terminal and compiler Build/Run integration.
+
+    [Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
+
+</div>
+
+## Examples in the repository
 
 <div class="grid cards" markdown>
 
 -   **Vector Lab**
 
-    A small playable arena that demonstrates vector math, obstacle collision, delta-time movement and animation curves.
+    A small playable arena demonstrating vector math, obstacle collision, delta-time movement and animation curves.
 
-    [Open the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/vector_lab.nx)
+    [Explore the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/vector_lab.nx)
 
 -   **NEXUS Paint**
 
-    A native raster-painting example built with the graphics and UI runtime.
+    A raster-painting example with brush, eraser, line and rectangle tools, fill, undo/redo and BMP file operations.
 
-    [Open the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
+    [Explore the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
 
-</div>
+-   **UI Playground**
 
-## A practical development workflow
+    A runnable sample for the current immediate-mode controls and layout helpers.
 
-Start with a small program, check it, then choose the compiler backend explicitly
-when you need to control which toolchain builds the executable.
-
-<div class="grid cards" markdown>
-
--   **Command-line utility**
-
-    Keep the first project simple and portable.
-
-    `nexus new MyTool --template cli`
-
--   **Native windowed app**
-
-    Try the current widget and layout layer.
-
-    `nexus new MyApp --template app`
-
--   **Interactive UI sample**
-
-    Explore panels, checkboxes, buttons, sliders and responsive layout helpers.
-
-    [Open UI Playground source](https://github.com/fanxcz/nexus-lang/blob/main/examples/ui_playground.nx)
+    [Explore the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/ui_playground.nx)
 
 </div>
 
 ## What is implemented today
 
-- **Compiler:** C++20 front end, fixed-width integer/floating-point types, checked read-only and mutable slices, LLVM/Clang compilation path, and a built-in x86-64 backend for a documented subset.
-- **Runtime:** console/file helpers, UTF-8 strings, SDL-backed 2D drawing, experimental compatibility-OpenGL 3D, optional audio, and immediate-mode UI widgets.
-- **Developer tools:** project templates, formatter/linter, diagnostics, language server, REPL, test suite and portable Windows packaging.
-- **Application and graphics libraries:** typed math helpers, UI layout/controls, file/network/database utilities, and modular tilemap/sprite/camera/audio helpers.
+| Area | Current capability | Boundary |
+|---|---|---|
+| Compiler | C++20 frontend, fixed-width numeric types, checked slices | Native backend supports a documented subset; broader programs may require LLVM/Clang |
+| Runtime | Console and file helpers, UTF-8 strings, memory and data APIs | Graphics/audio depend on optional native libraries |
+| Graphics | SDL-backed 2D helpers and compatibility-OpenGL 3D path | 3D path is experimental; no production voxel engine |
+| Language services | Diagnostics, completion, hover, navigation, rename, formatting and quick fixes | LSP workspace/type information has documented lexical limitations |
+| Editors | VS Code extension and source-buildable NEXUS Studio | Studio does not yet embed the LSP; compiler is installed separately |
+| Distribution | Windows setup and portable packages, Paint installer and VSIX | Platform availability is artifact-specific; a CI host build is not a published installer |
 
-For voxel-game development, the compiler now has useful language foundations, but NEXUS does not yet ship a production voxel engine. Chunk meshing/batching, GPU buffer management, modern shader support, job scheduling, procedural noise, and compressed chunk persistence remain roadmap work. See the [3D and voxel development status](runtime/voxel-roadmap.md).
+NEXUS does not yet ship a production voxel engine. Chunk meshing/batching, GPU buffer management, modern shader support, job scheduling, procedural noise and compressed chunk persistence remain roadmap work. The UI layer is immediate-mode rather than a full widget framework, and the 2D physics helpers are not a rigid-body engine.
 
-NEXUS is actively developed. The built-in native backend supports a documented subset of the language; broader programs may need LLVM/Clang. The UI module is immediate-mode rather than a full widget framework, and the 2D physics helpers are not a rigid-body engine. The [language overview](language/overview.md) and [platform support matrix](development/platform-support.md) describe current limits.
+## Explore the platform
 
-## Documentation and community
+<div class="grid cards" markdown>
 
-[Manual](manual.md) · [Examples](examples/overview.md) · [Roadmap](development/roadmap.md) · [GitHub Issues](https://github.com/fanxcz/nexus-lang/issues)
+-   **Download Center**
+
+    Verified compiler and application artifacts, setup guidance and SHA-256 files.
+
+    [Choose a download](downloads.md)
+
+-   **Language reference**
+
+    Learn syntax, types, functions, modules and error handling.
+
+    [Read the language guide](language/index.md)
+
+-   **Architecture**
+
+    Understand how the frontend, semantic analysis, backends, runtime and tools fit together.
+
+    [Explore the ecosystem architecture](architecture/ecosystem.md)
+
+-   **Development**
+
+    Build from source, run tests, inspect platform support and contribute.
+
+    [Developer guide](development/index.md)
+
+</div>
+
+NEXUS is actively developed. Consult the [platform support matrix](development/platform-support.md), [language reference](language/overview.md) and [roadmap](development/roadmap.md) before relying on a feature for production.

@@ -59,3 +59,13 @@ Use the **NEXUS Language Server** output channel to diagnose startup issues. The
 - **No colors:** reload VS Code and check the language selector says NEXUS.
 - **No completion or diagnostics:** run `nexus lsp` in a terminal, verify PATH/`nexus.serverPath`, then check the **NEXUS Language Server** output channel.
 - **VSIX packaging fails:** run `npm install` in the extension directory, then retry `npx --yes @vscode/vsce package`.
+
+## Validate the extension sources
+
+The extension's dependency-free Node.js tests validate the `.nx` language registration, TextMate grammar, language configuration, snippets and language-client launch contract:
+
+```sh
+npm test
+```
+
+Run this from `.github/project-tools/vscode-extension/`. The repository's cross-platform build workflow runs the same check on Ubuntu, Windows and macOS. The compiler LSP smoke test separately exercises protocol behavior, including `textDocument/prepareRename`.

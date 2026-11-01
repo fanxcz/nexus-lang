@@ -15,7 +15,11 @@ fn main() {
     print("  - Utils: str_i64, str_i32, to_f64")
     print("")
 
-    gfx_init(1280, 720, "NEXUS Ultimate Showcase")
+    let ok = gfx_init(1280, 720, "NEXUS Ultimate Showcase")
+    if ! ok {
+        print("Graphics backend unavailable: " + gfx_error())
+        return
+    }
     gfx_vsync(true)
 
     let mut player_x: f64 = 640.0

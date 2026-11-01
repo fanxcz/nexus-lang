@@ -21,6 +21,13 @@ NEXUS aims to make it practical to build native software with one language: smal
 
 Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Game development is an active direction. The repository has SDL-backed 2D helpers and an experimental compatibility-OpenGL 3D path; it does not yet provide production chunk meshing, GPU mesh batching, modern shader management, job scheduling, terrain noise, or compressed chunk persistence. See the [3D and voxel development status](docs/runtime/voxel-roadmap.md).
 
+## Architecture and developer setup
+
+The current compiler, backends, runtime, language services, applications and
+distribution boundaries are mapped in the
+[ecosystem architecture guide](docs/architecture/ecosystem.md). For build-system
+module responsibilities, see the [CMake integration guide](docs/build/cmake.md).
+
 ## Unreleased compiler improvements
 
 The current development tree adds fixed-width `i8`/`i16`/`i32`, `u8`/`u16`/`u32`/`u64`, `f32`, and executable LLVM slices. Read-only `[]T` views support checked indexing and function parameters/returns; explicit exclusive `mut []T` views allow checked indexed mutation while enforcing conservative lexical borrowing rules. Programs using these features select LLVM with `--backend auto`; the native x86-64 backend intentionally rejects slice and wider numeric types. See the [type reference](docs/language/types.md) and [voxel-game roadmap](docs/runtime/voxel-roadmap.md).

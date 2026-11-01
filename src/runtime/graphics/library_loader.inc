@@ -60,6 +60,7 @@
         if (gIMG && !IMG_Load) {
             IMG_Load = reinterpret_cast<PFN_IMG_Load>(load_symbol(gIMG, "IMG_Load"));
             IMG_GetError = reinterpret_cast<PFN_IMG_GetError>(load_symbol(gIMG, "IMG_GetError"));
+            IMG_SavePNG = reinterpret_cast<PFN_IMG_SavePNG>(load_symbol(gIMG, "IMG_SavePNG"));
         }
         if (!gTTF)
             gTTF = load_optional(ttfNames, sizeof(ttfNames) / sizeof(ttfNames[0]));
@@ -176,12 +177,19 @@
         LOAD_REQUIRED_SDL(SDL_ShowCursor);
         LOAD_OPTIONAL_SDL(SDL_StartTextInput);
         LOAD_OPTIONAL_SDL(SDL_StopTextInput);
+        LOAD_OPTIONAL_SDL(SDL_GetClipboardText);
+        LOAD_OPTIONAL_SDL(SDL_SetClipboardText);
+        LOAD_OPTIONAL_SDL(SDL_HasClipboardText);
+        LOAD_OPTIONAL_SDL(SDL_free);
 
         LOAD_REQUIRED_SDL(SDL_GetPerformanceCounter);
         LOAD_REQUIRED_SDL(SDL_GetPerformanceFrequency);
 
         LOAD_OPTIONAL_SDL(SDL_LoadBMP);
         LOAD_OPTIONAL_SDL(SDL_ConvertSurfaceFormat);
+        LOAD_OPTIONAL_SDL(SDL_CreateRGBSurfaceWithFormat);
+        LOAD_OPTIONAL_SDL(SDL_LockSurface);
+        LOAD_OPTIONAL_SDL(SDL_UnlockSurface);
         LOAD_OPTIONAL_SDL(SDL_FreeSurface);
 
         LOAD_OPTIONAL_SDL(SDL_OpenAudioDevice);

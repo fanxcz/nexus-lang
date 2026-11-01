@@ -18,6 +18,13 @@ namespace nexus {
         if (name == "gfx_error")
             return BuiltinSignature{name, {}, T::string(), "nexus_gfx_error"};
 
+        if (name == "gfx_clipboard_get")
+            return BuiltinSignature{name, {}, T::string(), "nexus_gfx_clipboard_get"};
+
+        if (name == "gfx_clipboard_set")
+            return BuiltinSignature{
+                name, {T::string()}, T::boolean(), "nexus_gfx_clipboard_set"};
+
         if (name == "gfx_shutdown")
             return BuiltinSignature{name, {}, T::void_(), "nexus_gfx_shutdown"};
 
@@ -233,6 +240,18 @@ namespace nexus {
                                     {T::i64(), T::f64(), T::f64(), T::f64(), T::f64(), T::f64()},
                                     T::void_(),
                                     "nexus_gfx_canvas_draw"};
+
+        if (name == "gfx_canvas_blit")
+            return BuiltinSignature{
+                name, {T::i64(), T::i64()}, T::boolean(), "nexus_gfx_canvas_blit"};
+
+        if (name == "gfx_canvas_import_image")
+            return BuiltinSignature{
+                name, {T::i64(), T::string()}, T::boolean(), "nexus_gfx_canvas_import_image"};
+
+        if (name == "gfx_canvas_save_png")
+            return BuiltinSignature{
+                name, {T::i64(), T::string()}, T::boolean(), "nexus_gfx_canvas_save_png"};
 
         if (name == "gfx_canvas_save_bmp")
             return BuiltinSignature{

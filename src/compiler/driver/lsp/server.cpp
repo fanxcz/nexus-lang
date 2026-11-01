@@ -1200,7 +1200,7 @@ namespace nexus {
                          "\".\",\":\"]},"
                          "\"signatureHelpProvider\":{\"triggerCharacters\":[\"(\",\",\"]},"
                          "\"definitionProvider\":true,\"referencesProvider\":true,"
-                         "\"renameProvider\":true,\"hoverProvider\":true,"
+                         "\"renameProvider\":{\"prepareProvider\":true},\"hoverProvider\":true,"
                          "\"documentFormattingProvider\":true,\"documentRangeFormattingProvider\":"
                          "true,\"documentSymbolProvider\":true,\"workspaceSymbolProvider\":true,"
                          "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\"]}}}}");
@@ -2176,6 +2176,39 @@ namespace nexus {
                         result = payload.str();
                     }
                     send("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}");
+                } else if (method == "textDocument/prepareRename" && !id.empty()) {
+                    const std::string uri = extractString(body, "uri");
+                    const auto document = openDocuments.find(uri);
+                    const std::size_t requestedLine = extractNumber(body, "line");
+                    const std::size_t requestedCharacter = extractNumber(body, "character");
+                    std::string result = "null";
+                    if (document != openDocuments.end()) {
+                        const std::string identifier =
+                            identifierAtPosition(document->second, requestedLine, requestedCharacter);
+                        if (!identifier.empty()) {
+                            const auto occurrences = findIdentifierOccurrences(
+                                identifier, uri, document->second, requestedLine, requestedCharacter);
+                            for (const auto& occurrence : occurrences) {
+                                if (occurrence.uri != uri || occurrence.line != requestedLine ||
+                                    requestedCharacter < occurrence.startCharacter ||
+                                    requestedCharacter > occurrence.endCharacter)
+                                    continue;
+                                std::ostringstream prepared;
+                                prepared << "{\"range\":{\"start\":{\"line\":"
+                                         << occurrence.line << ",\"character\":"
+                                         << occurrence.startCharacter
+                                         << "},\"end\":{\"line\":"
+                                         << occurrence.line << ",\"character\":"
+                                         << occurrence.endCharacter
+                                         << "}},\"placeholder\":\""
+                                         << jsonEscape(identifier) << "\"}";
+                                result = prepared.str();
+                                break;
+                            }
+                        }
+                    }
+                    send("{\"jsonrpc\":\"2.0\",\"id\":" + id +
+                         ",\"result\":" + result + "}");
                 } else if (method == "textDocument/rename" && !id.empty()) {
                     const std::string uri = extractString(body, "uri");
                     const auto document = openDocuments.find(uri);

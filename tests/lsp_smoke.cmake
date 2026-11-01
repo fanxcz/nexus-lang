@@ -30,6 +30,7 @@ set(change_good "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didChange\",\"pa
 set(change_semantic "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didChange\",\"params\":{\"textDocument\":{\"uri\":\"file:///broken.nx\",\"version\":3},\"contentChanges\":[{\"text\":\"fn main() { print(unknown) }\"}]}}")
 set(close_msg "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didClose\",\"params\":{\"textDocument\":{\"uri\":\"file:///broken.nx\"}}}")
 set(completion "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"textDocument/completion\",\"params\":{\"textDocument\":{\"uri\":\"file:///hello.nx\"},\"position\":{\"line\":0,\"character\":0}}}")
+set(open_unicode_rename "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///unicode_rename.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn helper() {}\\nfn main() { let face = \\\"😀\\\"; helper() }\"}}}")
 set(open_definition "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///definition.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn helper() {}\\nfn main() { helper() }\"}}}")
 set(open_caller "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///caller.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn caller() { helper() }\"}}}")
 set(open_hover "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///hover.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn main() { print(42) }\"}}}")
@@ -39,6 +40,9 @@ set(formatting "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"textDocument/formatti
 set(open_range_format "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"file:///range.nx\",\"languageId\":\"nx\",\"version\":1,\"text\":\"fn first(){print(1)}\\nfn second(){print(2)}\\n\"}}}")
 set(range_formatting "{\"jsonrpc\":\"2.0\",\"id\":21,\"method\":\"textDocument/rangeFormatting\",\"params\":{\"textDocument\":{\"uri\":\"file:///range.nx\"},\"range\":{\"start\":{\"line\":1,\"character\":0},\"end\":{\"line\":1,\"character\":21}},\"options\":{\"tabSize\":4,\"insertSpaces\":true}}}")
 set(references "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file:///definition.nx\"},\"position\":{\"line\":1,\"character\":14},\"context\":{\"includeDeclaration\":true}}}")
+set(prepare_rename "{\"jsonrpc\":\"2.0\",\"id\":35,\"method\":\"textDocument/prepareRename\",\"params\":{\"textDocument\":{\"uri\":\"file:///definition.nx\"},\"position\":{\"line\":1,\"character\":14}}}")
+set(prepare_rename_unicode "{\"jsonrpc\":\"2.0\",\"id\":37,\"method\":\"textDocument/prepareRename\",\"params\":{\"textDocument\":{\"uri\":\"file:///unicode_rename.nx\"},\"position\":{\"line\":1,\"character\":29}}}")
+set(prepare_rename_invalid "{\"jsonrpc\":\"2.0\",\"id\":36,\"method\":\"textDocument/prepareRename\",\"params\":{\"textDocument\":{\"uri\":\"file:///definition.nx\"},\"position\":{\"line\":1,\"character\":10}}}")
 set(rename "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"textDocument/rename\",\"params\":{\"textDocument\":{\"uri\":\"file:///definition.nx\"},\"position\":{\"line\":1,\"character\":14},\"newName\":\"renamed_helper\"}}")
 set(hover "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"textDocument/hover\",\"params\":{\"textDocument\":{\"uri\":\"file:///hover.nx\"},\"position\":{\"line\":0,\"character\":13}}}")
 set(hover_user "{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"textDocument/hover\",\"params\":{\"textDocument\":{\"uri\":\"file:///hover_user.nx\"},\"position\":{\"line\":2,\"character\":4}}}")
@@ -88,8 +92,11 @@ set(shutdown "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"shutdown\",\"params\":n
 set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
-foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_signature_decl}" "${open_signature_call}" "${open_signature_builtin}" "${open_signature_nested}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${signature_help}" "${signature_help_builtin}" "${signature_help_nested}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_nested}" "${open_workspace_enum_completion}" "${open_workspace_hover}" "${open_workspace_struct_hover}" "${document_symbols}" "${workspace_symbols}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_nested_completion}" "${workspace_enum_completion}" "${workspace_hover}" "${workspace_struct_hover}" "${workspace_enum_hover}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_nested_fields}" "${nested_field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
-  string(LENGTH "${message}" message_length)
+foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_signature_decl}" "${open_signature_call}" "${open_signature_builtin}" "${open_signature_nested}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_unicode_rename}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${prepare_rename}" "${prepare_rename_unicode}" "${prepare_rename_invalid}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${signature_help}" "${signature_help_builtin}" "${signature_help_nested}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_nested}" "${open_workspace_enum_completion}" "${open_workspace_hover}" "${open_workspace_struct_hover}" "${document_symbols}" "${workspace_symbols}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_nested_completion}" "${workspace_enum_completion}" "${workspace_hover}" "${workspace_struct_hover}" "${workspace_enum_hover}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_nested_fields}" "${nested_field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
+  # LSP Content-Length counts UTF-8 bytes, not Unicode code points or UTF-16 units.
+  string(HEX "${message}" message_hex)
+  string(LENGTH "${message_hex}" message_hex_length)
+  math(EXPR message_length "${message_hex_length} / 2")
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
 file(WRITE "${LSP_INPUT}" "${input_data}")
@@ -151,6 +158,15 @@ if(formatting_text_pos EQUAL -1)
   message(FATAL_ERROR "NEXUS LSP formatting text differs from the shared formatter: ${out}")
 endif()
 
+
+string(FIND "${out}" "\"prepareProvider\":true" prepare_rename_capability_pos)
+string(FIND "${out}" "\"id\":35,\"result\":{\"range\":{\"start\":{\"line\":1,\"character\":12},\"end\":{\"line\":1,\"character\":18}},\"placeholder\":\"helper\"}" prepare_rename_pos)
+string(FIND "${out}" "\"id\":37,\"result\":{\"range\":{\"start\":{\"line\":1,\"character\":29},\"end\":{\"line\":1,\"character\":35}},\"placeholder\":\"helper\"}" prepare_rename_unicode_pos)
+string(FIND "${out}" "\"id\":36,\"result\":null" prepare_rename_invalid_pos)
+if(prepare_rename_capability_pos EQUAL -1 OR prepare_rename_pos EQUAL -1 OR
+   prepare_rename_unicode_pos EQUAL -1 OR prepare_rename_invalid_pos EQUAL -1)
+  message(FATAL_ERROR "NEXUS LSP prepareRename did not return the expected symbol range or reject an invalid cursor: ${out}")
+endif()
 
 if(NOT out MATCHES "referencesProvider" OR NOT out MATCHES "renameProvider")
   message(FATAL_ERROR "NEXUS LSP did not advertise references and rename: ${out}")

@@ -2,6 +2,12 @@ if(NOT DEFINED NEXUS_BIN OR NOT DEFINED NEXUS_SOURCE_DIR OR NOT DEFINED TEST_BIN
   message(FATAL_ERROR "NEXUS_BIN, NEXUS_SOURCE_DIR, and TEST_BINARY_DIR are required")
 endif()
 
+if(APPLE)
+  set(NATIVE_REJECTION_PATTERN "no emitter for target")
+else()
+  set(NATIVE_REJECTION_PATTERN "outside the builtin native v0 subset")
+endif()
+
 set(PROGRAM_DIR "${NEXUS_SOURCE_DIR}/tests/slice_programs")
 set(SCRATCH "${TEST_BINARY_DIR}/slice-llvm-smoke")
 file(REMOVE_RECURSE "${SCRATCH}")
@@ -55,7 +61,7 @@ execute_process(
 if(native_rc EQUAL 0)
   message(FATAL_ERROR "native backend unexpectedly accepted the slice program")
 endif()
-if(NOT "${native_out}${native_err}" MATCHES "outside the builtin native")
+if(NOT "${native_out}${native_err}" MATCHES "${NATIVE_REJECTION_PATTERN}")
   message(FATAL_ERROR "native backend rejected slices without an actionable diagnostic: ${native_out}${native_err}")
 endif()
 

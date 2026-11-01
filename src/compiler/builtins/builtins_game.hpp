@@ -37,6 +37,9 @@ namespace nexus {
         if (name == "scene_load")
             return BuiltinSignature{name, {T::string()}, T::i64(), "nexus_scene_load"};
 
+        if (name == "scene_apply")
+            return BuiltinSignature{name, {T::i64()}, T::i64(), "nexus_scene_apply"};
+
         if (name == "scene_destroy")
             return BuiltinSignature{name, {T::i64()}, T::void_(), "nexus_scene_destroy"};
 

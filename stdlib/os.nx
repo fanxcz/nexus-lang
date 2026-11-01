@@ -1,3 +1,11 @@
 // Operating system interface
 fn args_count() -> i64 { return os.args_count() }
 fn args_get(index: i64) -> string { return os.args_get(index) }
+
+/// Creates the per-user configuration directory for the application.
+/// Returns an empty string on failure; read config_error() for the reason.
+fn config_dir(app_name: string) -> string { return os.config_dir(app_name) }
+
+/// Describes the most recent config_dir failure for this thread.
+/// Returns an empty string after a successful config_dir call.
+fn config_error() -> string { return os.config_error() }
