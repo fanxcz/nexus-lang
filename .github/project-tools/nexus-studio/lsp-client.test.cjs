@@ -43,6 +43,18 @@ class FakeChild extends EventEmitter {
           this.stdout.write(encodeMessage({
             jsonrpc: '2.0', id: message.id, result: null
           }));
+        } else if (message.method === 'textDocument/completion') {
+          this.stdout.write(encodeMessage({
+            jsonrpc: '2.0',
+            id: message.id,
+            result: [{ label: 'print', kind: 14, detail: 'NEXUS builtin' }]
+          }));
+        } else if (message.method === 'textDocument/hover') {
+          this.stdout.write(encodeMessage({
+            jsonrpc: '2.0',
+            id: message.id,
+            result: { contents: { kind: 'markdown', value: '**print**' } }
+          }));
         }
       }
     });
@@ -203,6 +215,15 @@ test('language client initializes, acknowledges server requests and forwards dia
     child.received.filter(message => /^textDocument\/did/.test(message.method || '')).map(x => x.method),
     ['textDocument/didOpen', 'textDocument/didChange', 'textDocument/didSave', 'textDocument/didClose']
   );
+
+  const completions = await client.request('textDocument/completion', {
+    textDocument: { uri }, position: { line: 0, character: 4 }
+  });
+  assert.equal(completions[0].label, 'print');
+  const hover = await client.request('textDocument/hover', {
+    textDocument: { uri }, position: { line: 0, character: 1 }
+  });
+  assert.equal(hover.contents.value, '**print**');
 
   await client.stop();
   assert.equal(client.ready, false);
