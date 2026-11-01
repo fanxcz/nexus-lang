@@ -59,6 +59,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   as Ace annotations. Its JSON-RPC client validates UTF-8 and message framing,
   handles process shutdown, and has dependency-free Node.js tests.
 
+- NEXUS Studio now supports multiple open document tabs with independent in-memory
+  buffers and dirty state. Switching documents serializes tab operations, preserves
+  unsaved text, and confirms before closing a modified tab or replacing the project.
+
 - Added `scene_apply(scene)` to restore a saved scene snapshot into the live ECS
   registry. It returns the number of recreated entities, returns `-1` for an
   invalid snapshot, and explicitly invalidates previous ECS entity handles.
