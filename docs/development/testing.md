@@ -106,3 +106,16 @@ python scripts/audit_repository.py
 The audit inventories every Git-tracked path, verifies that files are present, checks recognized text files for UTF-8 validity and unresolved merge-conflict markers, parses all tracked JSON and Python files, syntax-checks tracked JavaScript with Node.js, and checks stylesheet block structure. CI runs this before the compiler build on Ubuntu, Windows, and macOS.
 
 This preflight is intentionally lightweight. It complements rather than replaces the CMake/CTest suite, sanitizer runs, VS Code and Studio checks, Markdown link checks, strict MkDocs build, and download/package validation.
+
+## Desktop developer-tool checks
+
+The cross-platform build workflow runs the standalone source checks for both editor tools before configuring the compiler:
+
+```sh
+npm run check --prefix .github/project-tools/nexus-studio
+npm test --prefix .github/project-tools/vscode-extension
+```
+
+The Studio check syntax-checks Electron main/preload/renderer sources and runs the path-guard tests, including symlink escape rejection where the host permits symlink creation. The VS Code extension tests validate its manifest, language/grammar references, language configuration, snippets and LSP client command without downloading the compiler or VS Code.
+
+These checks do not claim that a GUI was interactively exercised on the CI host. Native desktop packages remain validated by the dedicated Studio packaging workflow.
