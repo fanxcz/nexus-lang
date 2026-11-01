@@ -237,6 +237,13 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
     if (!f)
         return false;
 
+    f.seekg(0, std::ios::end);
+    const std::streamoff fileBytes = f.tellg();
+    constexpr std::streamoff maxBmpBytes = 64 * 1024 * 1024 + 54;
+    if (fileBytes < 54 || fileBytes > maxBmpBytes)
+        return false;
+    f.seekg(0, std::ios::beg);
+
     std::vector<uint8_t> b((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     if (b.size() < 54 || b[0] != 'B' || b[1] != 'M')
         return false;
