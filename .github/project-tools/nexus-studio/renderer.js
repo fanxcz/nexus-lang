@@ -93,10 +93,10 @@
           callback(null, []);
           return;
         }
-        api.getCompletions(filePath, {
+        pendingLanguageSync.catch(() => {}).then(() => api.getCompletions(filePath, {
           line: position.row,
           character: position.column
-        }).then(result => {
+        })).then(result => {
           if (filePath !== currentPath) {
             callback(null, []);
             return;
