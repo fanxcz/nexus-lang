@@ -113,34 +113,48 @@ test('decoder accepts case-insensitive Content-Length with additional headers', 
 });
 
 test('decoder rejects missing, duplicate, malformed and oversized Content-Length', () => {
-  const decoder = new JsonRpcStreamDecoder(32);
-  assert.throws(() => decoder.push(Buffer.from('X-Test: yes\r\n\r\n{}')), /exactly one Content-Length/);
-  assert.throws(() => decoder.push(Buffer.from('Content-Length: 2\r\ncontent-length: 2\r\n\r\n{}')),
-    /exactly one Content-Length/);
-  assert.throws(() => decoder.push(Buffer.from('Content-Length: nope\r\n\r\n{}')), /invalid/);
-  assert.throws(() => decoder.push(Buffer.from('Content-Length: 33\r\n\r\n')), /permitted range/);
-  assert.throws(() => decoder.push(Buffer.from('x'.repeat(16 * 1024 + 1))), /header exceeds/);
+  assert.throws(() =>
+    new JsonRpcStreamDecoder(32).push(Buffer.from('X-Test: yes\r\n\r\n{}')),
+    /exactly one Content-Length/
+  );
+  assert.throws(() =>
+    new JsonRpcStreamDecoder(32).push(
+      Buffer.from('Content-Length: 2\r\ncontent-length: 2\r\n\r\n{}')
+    ),
+    /exactly one Content-Length/
+  );
+  assert.throws(() =>
+    new JsonRpcStreamDecoder(32).push(Buffer.from('Content-Length: nope\r\n\r\n{}')),
+    /invalid/
+  );
+  assert.throws(() =>
+    new JsonRpcStreamDecoder(32).push(Buffer.from('Content-Length: 33\r\n\r\n')),
+    /permitted range/
+  );
+  assert.throws(() =>
+    new JsonRpcStreamDecoder(32).push(Buffer.from('x'.repeat(16 * 1024 + 1))),
+    /header exceeds/
+  );
 });
 
 test('decoder rejects non-object and invalid JSON payloads', () => {
-  const decoder = new JsonRpcStreamDecoder();
   const arrayBody = Buffer.from('[]');
   const arrayFrame = Buffer.concat([
     Buffer.from('Content-Length: 2\r\n\r\n'), arrayBody
   ]);
-  assert.throws(() => decoder.push(arrayFrame), /must be an object/);
+  assert.throws(() => new JsonRpcStreamDecoder().push(arrayFrame), /must be an object/);
 
   const invalidBody = Buffer.from('{broken');
   const invalidFrame = Buffer.concat([
     Buffer.from('Content-Length: ' + invalidBody.length + '\r\n\r\n'), invalidBody
   ]);
-  assert.throws(() => decoder.push(invalidFrame), /not valid JSON/);
+  assert.throws(() => new JsonRpcStreamDecoder().push(invalidFrame), /not valid JSON/);
 
   const invalidUtf8Body = Buffer.from([0xff]);
   const invalidUtf8Frame = Buffer.concat([
     Buffer.from('Content-Length: 1\r\n\r\n'), invalidUtf8Body
   ]);
-  assert.throws(() => decoder.push(invalidUtf8Frame), /not valid UTF-8/);
+  assert.throws(() => new JsonRpcStreamDecoder().push(invalidUtf8Frame), /not valid UTF-8/);
 });
 
 test('language client initializes, acknowledges server requests and forwards diagnostics', async () => {
