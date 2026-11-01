@@ -143,13 +143,23 @@
     static double gUiSliderWidth = 0.0;
     static double gUiSliderHeight = 0.0;
 
-    // Immediate-mode text field focus is keyed by its rectangle. Apps should
-    // keep each field's rectangle stable while the control remains visible.
+    // Immediate-mode text field focus can use an explicit positive widget ID.
+    // The legacy API keeps rectangle identity for source compatibility.
     static bool gUiTextFieldFocused = false;
+    static int64_t gUiTextFieldFocusId = 0;
     static double gUiTextFieldX = 0.0;
     static double gUiTextFieldY = 0.0;
     static double gUiTextFieldWidth = 0.0;
     static double gUiTextFieldHeight = 0.0;
+    static size_t gUiTextFieldCaret = 0;
+    static size_t gUiTextFieldAnchor = 0;
+    static std::string gUiTextFieldOriginal;
+    static bool gUiTextFieldAdvancePending = false;
+    static int64_t gUiTextFieldReverseTarget = 0;
+    static int64_t gUiTextFieldFirstInFrame = 0;
+    static int64_t gUiTextFieldPreviousInFrame = 0;
+    static int64_t gUiTextFieldLastInFrame = 0;
+    static int64_t gUiTextFieldLastPreviousFrame = 0;
 
     struct EcsEntity {
 
