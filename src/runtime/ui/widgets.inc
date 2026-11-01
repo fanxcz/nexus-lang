@@ -192,14 +192,14 @@ static bool nexus_ui_text_delete_forward(std::string& text, size_t& caret, size_
     return true;
 }
 
-static bool nexus_ui_key_nexus_ui_key_pressed(size_t scanCode) {
+static bool nexus_ui_key_pressed(size_t scanCode) {
     return scanCode < gKeyPressed.size() &&
            gKeyPressed[scanCode] != 0 &&
            scanCode < gUiTextFieldConsumedKeys.size() &&
            gUiTextFieldConsumedKeys[scanCode] == 0;
 }
 
-static void nexus_ui_key_nexus_ui_key_consume(size_t scanCode) {
+static void nexus_ui_key_consume(size_t scanCode) {
     if (scanCode < gUiTextFieldConsumedKeys.size())
         gUiTextFieldConsumedKeys[scanCode] = 1;
 }
