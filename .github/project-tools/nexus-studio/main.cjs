@@ -14,7 +14,7 @@ async function assertProjectPath(target) {
 }
 function createWindow() {
   win = new BrowserWindow({
-    width: 1280, height: 820, minWidth: 820, minHeight: 560,
+    width: 1280, height: 820, minWidth: 760, minHeight: 560,
     backgroundColor: '#1e1e1e',
     title: 'NEXUS Studio',
     webPreferences: {
@@ -221,7 +221,9 @@ app.whenReady().then(async () => {
     } else {
       activeProcess.kill('SIGTERM');
     }
-    activeProcess = null;
+    // Keep the process slot occupied until the child's close event arrives.
+    // Clearing it here would allow a second terminal/build process to overlap
+    // with the process that is still shutting down.
     return true;
   });
   ipcMain.handle('compiler:info', async () => {
