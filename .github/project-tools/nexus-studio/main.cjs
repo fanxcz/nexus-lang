@@ -2,7 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { spawn, spawnSync } = require('node:child_process');
-const { pathToFileURL } = require('node:url');
+const { pathToFileURL, fileURLToPath } = require('node:url');
 const { isInside, assertInsideProject } = require('./path-guard.cjs');
 const { NexusLspClient } = require('./lsp-client.cjs');
 
@@ -263,6 +263,44 @@ app.whenReady().then(async () => {
     const uri = await languageServerUri(rel);
     if (!languageServer.ready) return false;
     return languageServer.closeDocument(uri);
+  });
+  ipcMain.handle('lsp:definition', async (_event, rel, position) => {
+    const uri = await languageServerUri(rel);
+    if (!languageServer.ready) throw new Error('NEXUS language server is not ready.');
+    const line = Number(position?.line);
+    const character = Number(position?.character);
+    if (!Number.isSafeInteger(line) || line < 0 ||
+        !Number.isSafeInteger(character) || character < 0) {
+      throw new Error('A valid LSP cursor position is required.');
+    }
+
+    const result = await languageServer.request('textDocument/definition', {
+      textDocument: { uri },
+      position: { line, character }
+    });
+    const locations = Array.isArray(result) ? result : (result ? [result] : []);
+    const safeLocations = [];
+    for (const location of locations) {
+      const targetUri = location && (location.uri || location.targetUri);
+      if (typeof targetUri !== 'string' || !targetUri.startsWith('file:')) continue;
+      try {
+        const realTarget = await fs.realpath(fileURLToPath(targetUri));
+        const checkedTarget = await assertProjectPath(realTarget);
+        if (path.extname(checkedTarget).toLowerCase() !== '.nx') continue;
+        const range = location.range || location.targetSelectionRange || location.targetRange;
+        if (!range || !range.start ||
+            !Number.isSafeInteger(range.start.line) || !Number.isSafeInteger(range.start.character)) {
+          continue;
+        }
+        safeLocations.push({
+          path: path.relative(projectRoot, checkedTarget).split(path.sep).join('/'),
+          range
+        });
+      } catch {
+        // Ignore malformed, missing, or out-of-project definition targets.
+      }
+    }
+    return safeLocations;
   });
 
   ipcMain.handle('terminal:run', async (event, command) => {
