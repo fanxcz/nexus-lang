@@ -21,12 +21,16 @@ async function toProjectLocation(location, projectRoot) {
 
   try {
     const targetPath = fileURLToPath(targetUri);
+    const realRoot = await fs.realpath(projectRoot);
     const realTarget = await fs.realpath(targetPath);
-    const checkedTarget = await assertInsideProject(projectRoot, realTarget);
-    if (path.extname(checkedTarget).toLowerCase() !== '.nx') return null;
+    const checkedTarget = await assertInsideProject(realRoot, realTarget);
+    const targetStat = await fs.stat(checkedTarget);
+    if (!targetStat.isFile() || path.extname(checkedTarget).toLowerCase() !== '.nx') {
+      return null;
+    }
 
     return {
-      path: path.relative(projectRoot, checkedTarget).split(path.sep).join('/'),
+      path: path.relative(realRoot, checkedTarget).split(path.sep).join('/'),
       range
     };
   } catch {
