@@ -566,6 +566,23 @@ if(NOT WIN32)
   endif()
   file(REMOVE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
   file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+
+  # A symlinked source inside a package must be rejected instead of omitted from
+  # the integrity hash, otherwise its target could change without invalidating the lock.
+  set(PACKAGE_SOURCE_LINK "${SMOKE_DIR}/vendor/sample_lib/src/external.nx")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E create_symlink "${PKG_SOURCE}/src/main.nx" "${PACKAGE_SOURCE_LINK}"
+    RESULT_VARIABLE source_symlink_rc OUTPUT_VARIABLE source_symlink_out ERROR_VARIABLE source_symlink_err)
+  if(NOT source_symlink_rc EQUAL 0)
+    message(FATAL_ERROR "could not prepare package source symlink test: ${source_symlink_out}\n${source_symlink_err}")
+  endif()
+  execute_process(COMMAND "${NEXUS_BIN}" pkg update
+    WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+  set(source_symlink_output "${out}\n${err}")
+  file(REMOVE "${PACKAGE_SOURCE_LINK}")
+  if(rc EQUAL 0 OR NOT source_symlink_output MATCHES "package contains a symbolic link")
+    message(FATAL_ERROR "pkg update accepted a symlink inside a local package: ${source_symlink_output}")
+  endif()
 endif()
 
 file(WRITE "${SMOKE_DIR}/outside-sentinel.txt" "keep")
