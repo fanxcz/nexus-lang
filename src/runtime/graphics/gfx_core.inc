@@ -5,6 +5,43 @@ bool nexus_gfx_init(int64_t w, int64_t h, const char* title) {
 const char* nexus_gfx_error() {
     return gGraphicsError.c_str();
 }
+
+bool nexus_gfx_clipboard_set(const char* text) {
+    if (!gGraphics) {
+        gGraphicsError = "clipboard access requires an initialized graphics backend";
+        return false;
+    }
+    if (!SDL_SetClipboardText) {
+        gGraphicsError = "SDL2 runtime does not expose clipboard write support";
+        return false;
+    }
+    if (SDL_SetClipboardText(text ? text : "") != 0) {
+        gGraphicsError = std::string("clipboard write failed: ") + sdl_error();
+        return false;
+    }
+    gGraphicsError.clear();
+    return true;
+}
+
+char* nexus_gfx_clipboard_get() {
+    if (!gGraphics) {
+        gGraphicsError = "clipboard access requires an initialized graphics backend";
+        return nx_strdup("");
+    }
+    if (!SDL_GetClipboardText || !SDL_free) {
+        gGraphicsError = "SDL2 runtime does not expose clipboard read/release support";
+        return nx_strdup("");
+    }
+    char* clipboardText = SDL_GetClipboardText();
+    if (!clipboardText) {
+        gGraphicsError = std::string("clipboard read failed: ") + sdl_error();
+        return nx_strdup("");
+    }
+    const std::string value(clipboardText);
+    SDL_free(clipboardText);
+    gGraphicsError.clear();
+    return nx_strdup(value.c_str());
+}
 void nexus_gfx_shutdown() {
     shutdown_graphics();
 }
