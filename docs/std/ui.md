@@ -47,6 +47,15 @@ caret state if a field moves or resizes between frames. The API remains
 immediate-mode; it does not provide retained widget trees, full accessibility
 semantics or native file dialogs.
 
+## Clipboard
+
+- `ui2d_clipboard_get() -> string` reads text from the system clipboard.
+- `ui2d_clipboard_set(text: string) -> bool` writes text to the system clipboard.
+
+Clipboard access requires an initialized graphics backend and SDL2 clipboard support.
+An empty read result can mean either an empty clipboard or a failed read; check
+`gfx_error()` when the distinction matters. A write returns `false` on failure.
+
 ## Example
 
 The repository's examples/ui_playground.nx demonstrates a settings panel,
