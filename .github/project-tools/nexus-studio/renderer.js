@@ -530,16 +530,16 @@
     await chooseCompiler();
     return !!compilerPath;
   }
-  async function buildOrRun(mode) {
-    if (!root) { await openProject(); if (!root) return; }
-    if (dirty && !(await saveCurrent())) return;
+  async function buildOrRunNow(mode) {
+    if (!root) { await openProjectNow(); if (!root) return; }
+    if (dirty && !(await saveCurrentNow())) return;
     if (!currentPath || !currentPath.toLowerCase().endsWith('.nx')) {
       try {
         const selected = await api.chooseSource();
         if (!selected) return;
-        const opened = await openFile(selected);
+        const opened = await openFileNow(selected);
         if (!opened || currentPath !== selected) return;
-        if (dirty && !(await saveCurrent())) return;
+        if (dirty && !(await saveCurrentNow())) return;
       } catch (error) {
         appendOutput('Select source failed: ' + error.message, 'error');
         return;
@@ -549,16 +549,21 @@
       appendOutput('Select a .nx source file before building or running.', 'error');
       return;
     }
+    const sourcePath = currentPath;
     if (!(await ensureCompiler())) return;
     try {
       setStatus(mode === 'build' ? 'Building…' : 'Running…');
-      appendOutput((mode === 'build' ? 'Build started: ' : 'Run started: ') + currentPath, 'system');
-      if (mode === 'build') await api.buildFile(currentPath);
-      else await api.runFile(currentPath);
+      appendOutput((mode === 'build' ? 'Build started: ' : 'Run started: ') + sourcePath, 'system');
+      if (mode === 'build') await api.buildFile(sourcePath);
+      else await api.runFile(sourcePath);
     } catch (error) {
       appendOutput((mode === 'build' ? 'Build failed: ' : 'Run failed: ') + error.message, 'error');
       setStatus('Failed');
     }
+  }
+
+  function buildOrRun(mode) {
+    return enqueueDocumentOperation(() => buildOrRunNow(mode));
   }
   async function runTerminalCommand(command) {
     if (!root) { appendOutput('Open a project folder first.', 'error'); return; }
