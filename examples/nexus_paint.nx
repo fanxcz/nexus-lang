@@ -435,7 +435,7 @@ fn main() {
         ui_label(info_x, canvas_y + 412.0, "FILES", 1.15)
         ui_label(info_x, canvas_y + 442.0, "nexus_paint.bmp", 0.86)
         ui_label(info_x, canvas_y + 482.0, "EDITING", 1.15)
-        ui_label(info_x, canvas_y + 512.0, "UNDO / REDO: 32", 0.86)
+        ui_label(info_x, canvas_y + 512.0, "UNDO / REDO: 32MB HISTORY", 0.86)
         ui_label(info_x, canvas_y + 536.0, "LEFT MOUSE: DRAW", 0.86)
         ui_label(info_x, canvas_y + 560.0, "BACKEND: " + gfx_backend(), 0.86)
 
