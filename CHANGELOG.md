@@ -42,6 +42,11 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 - The LSP JSON-RPC string decoder now handles all standard JSON string escapes, BMP Unicode `\\uXXXX` escapes and UTF-16 surrogate pairs, converting escaped Unicode to UTF-8. A dedicated CTest covers valid and invalid escape sequences, JSON-RPC ids, positions, and watched-file capability detection.
 
+- LSP JSON-RPC string decoding now handles the standard JSON escapes and UTF-16
+  surrogate pairs, converting escaped Unicode to UTF-8. A focused protocol unit test
+  covers string escaping, numeric/string request IDs, numeric fields, watched-file
+  capability detection and malformed surrogate/hex escape rejection.
+
 - The LSP now advertises and implements `textDocument/prepareRename`.
   The request returns a UTF-16 identifier range and placeholder only when the
   cursor resolves to a renameable symbol. Regression coverage includes invalid
