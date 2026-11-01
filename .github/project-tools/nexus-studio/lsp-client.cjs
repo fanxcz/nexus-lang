@@ -64,9 +64,10 @@ class JsonRpcStreamDecoder {
       const body = this.buffer.subarray(bodyStart, frameEnd);
       let message;
       try {
-        message = JSON.parse(body.toString('utf8'));
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(body);
+        message = JSON.parse(text);
       } catch (error) {
-        throw new Error('JSON-RPC body is not valid JSON: ' + error.message);
+        throw new Error('JSON-RPC body is not valid UTF-8 JSON: ' + error.message);
       }
       if (!message || typeof message !== 'object' || Array.isArray(message)) {
         throw new Error('JSON-RPC body must be an object');
@@ -172,7 +173,7 @@ class NexusLspClient extends EventEmitter {
             synchronization: { didSave: true, dynamicRegistration: false }
           }
         },
-        clientInfo: { name: 'NEXUS Studio', version: '0.3.0' }
+        clientInfo: { name: 'NEXUS Studio', version: '0.2.0' }
       });
       this.notify('initialized', {});
       this.ready = true;
@@ -299,12 +300,32 @@ class NexusLspClient extends EventEmitter {
     this._failPending(new Error('NEXUS language server stopped'));
     if (child.stdin && child.stdin.writable) child.stdin.end();
 
+    // Do not start a second language server while the previous process is still
+    // shutting down (for example, when the user opens a different project).
     if (child.exitCode === null && child.signalCode === null) {
-      const timer = setTimeout(() => {
-        if (child.exitCode === null && child.signalCode === null) child.kill();
-      }, 1200);
-      timer.unref?.();
+      await new Promise(resolve => {
+        let finished = false;
+        let killTimer;
+        let graceTimer;
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(killTimer);
+          clearTimeout(graceTimer);
+          child.off('close', finish);
+          resolve();
+        };
+        child.once('close', finish);
+        killTimer = setTimeout(() => {
+          if (child.exitCode !== null || child.signalCode !== null) return finish();
+          child.kill();
+          graceTimer = setTimeout(finish, 750);
+          graceTimer.unref?.();
+        }, 1200);
+        killTimer.unref?.();
+      });
     }
+    if (this.child === child) this.child = null;
   }
 }
 
