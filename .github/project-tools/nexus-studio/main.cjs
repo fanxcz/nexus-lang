@@ -21,6 +21,12 @@ languageServer.on('stderr', data => {
 languageServer.on('error', error => {
   if (win && !win.isDestroyed()) sendOutput(win.webContents, 'error', '[LSP] ' + error.message);
 });
+languageServer.on('exit', status => {
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('lsp:exit', status);
+    sendOutput(win.webContents, 'system', '[LSP] language server stopped');
+  }
+});
 
 async function assertProjectPath(target) {
   return assertInsideProject(projectRoot, target);
