@@ -5,6 +5,14 @@
 # Tests
 # ============================================================================
 if (NEXUS_BUILD_TESTS)
+  add_executable(nexus_lsp_protocol_test
+      tests/lsp_protocol_test.cpp
+      src/compiler/driver/lsp/protocol.cpp
+  )
+  target_compile_features(nexus_lsp_protocol_test PRIVATE cxx_std_20)
+  target_include_directories(nexus_lsp_protocol_test PRIVATE src/compiler)
+  add_test(NAME nexus_lsp_protocol_test COMMAND nexus_lsp_protocol_test)
+
   enable_testing()
   add_executable(nexus_tests
       tests/test_main.cpp
