@@ -11,6 +11,7 @@
   let languageServerReady = false;
   let languageServerPromise = null;
   let languageServerGeneration = 0;
+  let pendingLanguageSync = Promise.resolve();
   let suppressEditorChange = false;
   const welcome = $('welcome');
   const editorWrap = $('editorWrap');
@@ -54,9 +55,14 @@
       if (currentUri && languageServerReady) {
         lspVersion += 1;
         const version = lspVersion;
-        api.changeLanguageDocument(currentPath, editor.getValue(), version).catch(error => {
-          appendOutput('Language sync failed: ' + error.message, 'error');
-        });
+        const filePath = currentPath;
+        const source = editor.getValue();
+        pendingLanguageSync = pendingLanguageSync
+          .catch(() => {})
+          .then(() => api.changeLanguageDocument(filePath, source, version))
+          .catch(error => {
+            appendOutput('Language sync failed: ' + error.message, 'error');
+          });
       }
     });
     editor.commands.addCommand({
@@ -144,6 +150,7 @@
     languageServerPromise = null;
     languageServerReady = false;
     if (currentUri && currentPath) {
+      await pendingLanguageSync.catch(() => {});
       await api.closeLanguageDocument(currentPath).catch(() => {});
     }
     currentUri = null;
@@ -203,6 +210,7 @@
   async function openProject() {
     if (dirty && !confirm('Discard unsaved changes and open another project?')) return;
     try {
+      await pendingLanguageSync.catch(() => {});
       const project = await api.openProject();
       if (!project) return;
       root = project.root;
@@ -230,6 +238,7 @@
     if (dirty && !confirm('Discard unsaved changes?')) return false;
     try {
       if (currentUri && currentPath) {
+        await pendingLanguageSync.catch(() => {});
         await api.closeLanguageDocument(currentPath).catch(() => {});
       }
       currentUri = null;
@@ -272,6 +281,7 @@
     }
     try {
       await api.saveFile(currentPath, editor.getValue());
+      await pendingLanguageSync.catch(() => {});
       if (currentUri && languageServerReady) {
         await api.saveLanguageDocument(currentPath);
       }
