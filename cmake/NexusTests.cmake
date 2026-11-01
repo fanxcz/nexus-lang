@@ -57,6 +57,16 @@ if (NEXUS_BUILD_TESTS)
   target_link_libraries(nexus_runtime_geometry_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
   add_test(NAME nexus_runtime_geometry_test COMMAND nexus_runtime_geometry_test)
 
+  add_executable(nexus_runtime_canvas_test
+      tests/runtime_canvas_test.cpp
+      src/runtime/runtime.cpp
+  )
+  target_compile_features(nexus_runtime_canvas_test PRIVATE cxx_std_20)
+  target_compile_definitions(nexus_runtime_canvas_test PRIVATE NEXUS_RUNTIME_TESTING)
+  target_link_libraries(nexus_runtime_canvas_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
+  add_test(NAME nexus_runtime_canvas_test COMMAND nexus_runtime_canvas_test)
+  set_tests_properties(nexus_runtime_canvas_test PROPERTIES TIMEOUT 30)
+
   add_executable(nexus_runtime_numeric_test
       tests/runtime_numeric_test.cpp
       src/runtime/runtime.cpp
