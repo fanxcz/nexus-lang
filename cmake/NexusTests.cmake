@@ -103,6 +103,15 @@ if (NEXUS_BUILD_TESTS)
   add_test(NAME nexus_runtime_os_test COMMAND nexus_runtime_os_test)
   set_tests_properties(nexus_runtime_os_test PROPERTIES TIMEOUT 30)
 
+  add_test(NAME nexus_os_config_dir_smoke
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+          -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
+          -DCMAKE_EXECUTABLE_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}
+          -P ${CMAKE_SOURCE_DIR}/tests/os_config_dir_smoke.cmake)
+  set_tests_properties(nexus_os_config_dir_smoke PROPERTIES TIMEOUT 30)
+
   add_executable(nexus_runtime_json_test
       tests/runtime_json_test.cpp
       src/runtime/runtime.cpp
