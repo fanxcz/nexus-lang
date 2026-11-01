@@ -20,6 +20,9 @@ extern "C" int nexus_runtime_test_canvas_blit_rgba(int64_t width,
                                                      const uint8_t* destinationPixels,
                                                      const uint8_t* sourcePixels,
                                                      uint8_t* resultPixels);
+extern "C" int64_t nexus_runtime_test_canvas_undo_snapshot_count(int64_t width,
+                                                                         int64_t height,
+                                                                         int64_t checkpoints);
 
 static bool expectPixel(const uint8_t* actual,
                         const std::array<uint8_t, 4>& expected,
@@ -112,6 +115,17 @@ int main() {
               0, 4, destination.data(), source.data(), 2, 1, 8, imported.data()) == 0;
     ok &= nexus_runtime_test_canvas_blit_rgba(
               0, 1, destinationRow.data(), sourceRow.data(), blitResult.data()) == 0;
+
+    // A 1024x720 RGBA snapshot is about 2.8 MiB. The per-canvas 32 MiB
+    // budget retains only the newest eleven full snapshots, not 32.
+    const int64_t historyCount = nexus_runtime_test_canvas_undo_snapshot_count(1024, 720, 20);
+    if (historyCount != 11) {
+        std::fprintf(stderr,
+                     "runtime canvas undo history exceeded its byte budget "
+                     "(retained %lld snapshots, expected 11)\n",
+                     static_cast<long long>(historyCount));
+        ok = false;
+    }
 
     return ok ? 0 : 1;
 }
