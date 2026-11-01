@@ -75,6 +75,15 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Fixed
 
+- NEXUS Paint now checkpoints the canvas before **New**, reports failed BMP save/load operations
+  instead of leaving a stale success status, and reports a failed final save at shutdown.
+  The project template is kept byte-for-byte synchronized with the standalone example and
+  the Paint smoke test enforces that contract.
+
+- Cross-platform native-backend smoke tests now distinguish unsupported language features
+  on Windows/Linux from the target-level absence of a built-in native emitter on macOS.
+  Runtime memory range-test failures identify the exact range case and expected/actual result.
+
 - `nexus_gfx_audio_available()` now reports whether an audio device is open, not merely whether the SDL shared library can be loaded. Headless systems no longer report audio as available before a device exists.
 - Passing a directory as a source file now reports `cannot open <path>: is a
   directory` on every platform. POSIX hosts previously leaked libstdc++'s
