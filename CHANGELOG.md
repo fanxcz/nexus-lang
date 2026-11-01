@@ -81,8 +81,9 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   Compiler selection remains before `project()`; dependency detection and
   target/install/test setup follow platform initialization.
 - Package lockfile refresh now rejects symlinked local package directories and
-  manifests, and verifies that canonical package paths remain below the project's
-  canonical `vendor/` directory before reading or hashing them.
+  manifests, any symlink within a checksummed package tree, and paths that traverse out
+  of `vendor/`; canonical package paths are confined before manifests are read or trees
+  are hashed.
 - The NEXUS Studio desktop packaging matrix now also runs on pull requests
   that change Studio sources or the workflow, building Windows, Linux and macOS
   packages and uploading the generated artifacts for inspection.
