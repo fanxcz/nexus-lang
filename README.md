@@ -16,17 +16,17 @@
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
 ## Project focus
+
+NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
+
+Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Game development is an active direction. The repository has SDL-backed 2D helpers and an experimental compatibility-OpenGL 3D path; it does not yet provide production chunk meshing, GPU mesh batching, modern shader management, job scheduling, terrain noise, or compressed chunk persistence. See the [3D and voxel development status](docs/runtime/voxel-roadmap.md).
+
 ## Architecture and developer setup
 
 The current compiler, backends, runtime, language services, applications and
 distribution boundaries are mapped in the
 [ecosystem architecture guide](docs/architecture/ecosystem.md). For build-system
 module responsibilities, see the [CMake integration guide](docs/build/cmake.md).
-
-
-NEXUS aims to make it practical to build native software with one language: small desktop tools, command-line utilities, creative applications, and eventually richer desktop apps. The repository already contains a minimal native-window app template, a CLI template, the NEXUS Paint application example, project tooling, and language-server/editor support. These are foundations rather than a claim that NEXUS already has a mature, full-featured desktop UI framework.
-
-Start with the [application-development guide](docs/applications.md) or create a project with `nexus new MyApp --template app`. Game development is an active direction. The repository has SDL-backed 2D helpers and an experimental compatibility-OpenGL 3D path; it does not yet provide production chunk meshing, GPU mesh batching, modern shader management, job scheduling, terrain noise, or compressed chunk persistence. See the [3D and voxel development status](docs/runtime/voxel-roadmap.md).
 
 ## Unreleased compiler improvements
 
