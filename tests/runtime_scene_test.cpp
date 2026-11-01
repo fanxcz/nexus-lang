@@ -5,6 +5,7 @@
 #include <fstream>
 #include <limits>
 #include <string>
+#include <system_error>
 
 extern "C" {
 int64_t nexus_scene_create();
