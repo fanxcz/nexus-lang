@@ -524,6 +524,27 @@ if(NOT WIN32)
   file(REMOVE "${SMOKE_DIR}/vendor/sample_lib")
   file(RENAME "${SAVED_PACKAGE}" "${SMOKE_DIR}/vendor/sample_lib")
   file(REMOVE_RECURSE "${OUTSIDE_PACKAGE}")
+
+  # A symlinked manifest must not redirect package metadata reads outside vendor/.
+  set(SAVED_MANIFEST "${SMOKE_DIR}/vendor/sample_lib/nexus.toml.saved")
+  file(RENAME "${SMOKE_DIR}/vendor/sample_lib/nexus.toml" "${SAVED_MANIFEST}")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E create_symlink "${PKG_SOURCE}/nexus.toml" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml"
+    RESULT_VARIABLE manifest_symlink_rc OUTPUT_VARIABLE manifest_symlink_out ERROR_VARIABLE manifest_symlink_err)
+  if(NOT manifest_symlink_rc EQUAL 0)
+    file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+    message(FATAL_ERROR "could not prepare package manifest symlink test: ${manifest_symlink_out}\n${manifest_symlink_err}")
+  endif()
+  execute_process(COMMAND "${NEXUS_BIN}" pkg update
+    WORKING_DIRECTORY "${SMOKE_DIR}" RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+  set(manifest_symlink_output "${out}\n${err}")
+  if(rc EQUAL 0 OR NOT manifest_symlink_output MATCHES "package manifest must not be a symlink")
+    file(REMOVE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+    file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+    message(FATAL_ERROR "pkg update followed a package manifest symlink: ${manifest_symlink_output}")
+  endif()
+  file(REMOVE "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
+  file(RENAME "${SAVED_MANIFEST}" "${SMOKE_DIR}/vendor/sample_lib/nexus.toml")
 endif()
 
 file(WRITE "${SMOKE_DIR}/outside-sentinel.txt" "keep")
