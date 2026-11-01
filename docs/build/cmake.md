@@ -53,3 +53,21 @@ ctest --test-dir build --output-on-failure
 ```
 
 The test set covers the compiler, diagnostics, project scaffolding, native backend, runtime memory, language-server and VS Code-extension smoke checks. Some platform-specific tests are only registered on supported operating systems.
+
+
+## CMake module boundaries
+
+The root `CMakeLists.txt` is the build entry point and includes focused modules in dependency order:
+
+| Module | Responsibility | Ordering constraint |
+|---|---|---|
+| `cmake/NexusOptions.cmake` | C/C++ compiler selection and Windows Clang auto-detection | Included before `project()`, because CMake initializes platform rules there |
+| `cmake/NexusDependencies.cmake` | Optional SDL2 and SDL extension discovery | Included after `project()` |
+| `cmake/NexusSources.cmake` | Source groups for the frontend, semantic analyzer, backends and driver | Included before target creation |
+| `cmake/NexusTargets.cmake` | Compiler target, include paths, compile definitions and platform/runtime linking | Requires source groups and compiler options |
+| `cmake/NexusInstall.cmake` | Compiler, runtime, standard library, templates and asset install rules | Requires the compiler target |
+| `cmake/NexusTests.cmake` | CTest executables, unit tests and smoke/regression registrations | Enabled only when `NEXUS_BUILD_TESTS=ON` |
+
+The split keeps compiler selection before project initialization, and keeps SDL discovery and target setup after toolchain detection. The source lists are shared by the compiler and unit-test targets to avoid maintaining divergent frontend/backend file lists.
+
+The runtime's topic-specific `.inc` files are still assembled by `src/runtime/runtime.cpp` into one translation unit because graphics, canvas, audio, scene and ECS code share static state. The CMake modules do not split that runtime into independent object files.
