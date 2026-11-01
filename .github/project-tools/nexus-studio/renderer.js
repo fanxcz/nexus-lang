@@ -84,13 +84,52 @@
     editor = ace.edit('editor');
     editor.setTheme('ace/theme/nexus');
     editor.session.setMode('ace/mode/nexus');
+    const languageTools = ace.require('ace/ext/language_tools');
+    const nexusCompleter = {
+      getCompletions: (_editor, _session, position, _prefix, callback) => {
+        const filePath = currentPath;
+        if (!filePath || !filePath.toLowerCase().endsWith('.nx') ||
+            !currentUri || !languageServerReady) {
+          callback(null, []);
+          return;
+        }
+        api.getCompletions(filePath, {
+          line: position.row,
+          character: position.column
+        }).then(result => {
+          if (filePath !== currentPath) {
+            callback(null, []);
+            return;
+          }
+          const items = Array.isArray(result) ? result :
+            (result && Array.isArray(result.items) ? result.items : []);
+          const completions = items.slice(0, 200).map(item => ({
+            caption: String(item.label || ''),
+            value: String(item.textEdit?.newText || item.insertText || item.label || ''),
+            meta: String(item.detail || 'NEXUS'),
+            score: 1000 + (Number(item.sortText) || 0)
+          })).filter(item => item.caption && item.value);
+          callback(null, completions);
+        }).catch(error => {
+          setStatus('Completion unavailable');
+          callback(null, []);
+        });
+      }
+    };
     editor.setOptions({
       fontSize: '14px',
       showPrintMargin: false,
       tabSize: 4,
       useSoftTabs: true,
       wrap: false,
-      highlightActiveLine: true
+      highlightActiveLine: true,
+      enableBasicAutocompletion: [nexusCompleter],
+      enableLiveAutocompletion: false
+    });
+    editor.commands.addCommand({
+      name: 'nexusCompletion',
+      bindKey: { win: 'Ctrl-Space', mac: 'Ctrl-Space' },
+      exec: instance => instance.execCommand('startAutocomplete')
     });
     editor.session.on('change', () => {
       if (!currentPath || suppressEditorChange) return;
@@ -635,6 +674,52 @@
     return enqueueDocumentOperation(() => goToDefinitionNow());
   }
 
+  async function showHoverNow() {
+    if (!editor || !currentPath || !currentPath.toLowerCase().endsWith('.nx')) {
+      setStatus('Open a NEXUS source file first');
+      return false;
+    }
+    const filePath = currentPath;
+    const cursor = editor.getCursorPosition();
+    try {
+      if (!languageServerReady && !(await ensureLanguageServer())) {
+        setStatus('Language services unavailable');
+        return false;
+      }
+      if (!currentUri) await openCurrentLanguageDocument();
+      await pendingLanguageSync.catch(() => {});
+      const result = await api.getHover(filePath, {
+        line: cursor.row,
+        character: cursor.column
+      });
+      const contents = result && result.contents;
+      let message = '';
+      if (typeof contents === 'string') {
+        message = contents;
+      } else if (Array.isArray(contents)) {
+        message = contents.map(item => typeof item === 'string' ? item :
+          (item && (item.value || item.language) || '')).filter(Boolean).join('\n');
+      } else if (contents && typeof contents === 'object') {
+        message = String(contents.value || contents.language || '');
+      }
+      if (!message) {
+        setStatus('No hover information');
+        return false;
+      }
+      appendOutput(message, 'system');
+      setStatus('Hover information shown in output');
+      return true;
+    } catch (error) {
+      appendOutput('Hover failed: ' + error.message, 'error');
+      setStatus('Hover unavailable');
+      return false;
+    }
+  }
+
+  function showHover() {
+    return enqueueDocumentOperation(() => showHoverNow());
+  }
+
   async function runTerminalCommand(command) {
     if (!root) { appendOutput('Open a project folder first.', 'error'); return; }
     appendOutput('> ' + command, 'command');
@@ -657,6 +742,7 @@
   $('welcomeNew').addEventListener('click', newFile);
   $('saveFile').addEventListener('click', saveCurrent);
   $('definitionFile').addEventListener('click', goToDefinition);
+  $('hoverInfo').addEventListener('click', showHover);
   $('selectCompiler').addEventListener('click', chooseCompiler);
   $('buildFile').addEventListener('click', () => buildOrRun('build'));
   $('runFile').addEventListener('click', () => buildOrRun('run'));
