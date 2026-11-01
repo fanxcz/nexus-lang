@@ -344,3 +344,58 @@ button:disabled {
 @media (max-width: 660px) {
   .diagnostic-status { max-width: 110px; }
 }
+
+.open-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  min-height: 34px;
+  padding: 3px 8px 0;
+  overflow-x: auto;
+  background: var(--panel-dark);
+  border-bottom: 1px solid #343536;
+  scrollbar-width: thin;
+}
+.open-tabs:empty { display: none; }
+.open-tab {
+  display: flex;
+  align-items: center;
+  min-width: 105px;
+  max-width: 230px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: #17191a;
+  border-radius: 4px 4px 0 0;
+}
+.open-tab.active {
+  border-color: #454748;
+  background: var(--panel);
+}
+.open-tab-select, .open-tab-close {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #c8c8c0;
+}
+.open-tab-select {
+  flex: 1;
+  overflow: hidden;
+  padding: 7px 8px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.open-tab-select:hover { color: var(--text); background: transparent; }
+.open-tab-close {
+  flex: 0 0 26px;
+  padding: 5px;
+  font-size: 16px;
+  line-height: 1;
+}
+.open-tab-close:hover { color: var(--warning); background: transparent; }
+.open-tab.active .open-tab-select { color: var(--text); }
+.open-tab:focus-within { outline: 1px solid var(--accent); outline-offset: -1px; }
+@media (max-width: 660px) {
+  .open-tabs { min-height: 32px; padding-inline: 5px; }
+  .open-tab { min-width: 86px; max-width: 160px; }
+}
