@@ -4,6 +4,7 @@
 # ============================================================================
 # Tests
 # ============================================================================
+if (NEXUS_BUILD_TESTS)
   enable_testing()
   add_executable(nexus_lsp_protocol_test
       tests/lsp_protocol_test.cpp
