@@ -64,7 +64,6 @@
         // Text fields are invoked in source order after event polling. Keep the
         // previous frame's last ID so Shift+Tab can wrap to the last field.
         gUiTextFieldLastPreviousFrame = gUiTextFieldLastInFrame;
-        gUiTextFieldFirstInFrame = 0;
         gUiTextFieldPreviousInFrame = 0;
         gUiTextFieldLastInFrame = 0;
     }
