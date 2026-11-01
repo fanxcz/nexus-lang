@@ -34,9 +34,11 @@ editor buffer to the server, and show published compiler diagnostics as editor a
 The language server process is stopped when the Studio window closes and restarted when the
 selected project or compiler changes.
 
-Studio currently consumes diagnostics only. Completion, hover, definition/reference navigation,
-and debugging are not yet integrated into its UI; use the VS Code extension for the broader
-language-client workflow.
+Studio currently integrates diagnostics, completion (Ctrl+Space), hover information, and
+go-to-definition (F12) for the active `.nx` document. Completion and navigation are backed by
+the installed compiler's LSP process; definition targets are restricted to project-local `.nx`
+files. Signature help, references, rename, formatting actions, and debugging are not yet
+integrated into the Studio UI; use the VS Code extension for those additional capabilities.
 
 ## Language server
 
