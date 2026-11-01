@@ -15,6 +15,7 @@
       <button id="newFile" title="Create a source file (Ctrl+N)">New file</button>
       <button id="saveFile" title="Save the current file (Ctrl+S)">Save</button>
       <button id="definitionFile" title="Go to definition (F12)">Definition</button>
+      <button id="hoverInfo" title="Show information about the symbol under the cursor">Hover</button>
       <span class="toolbar-separator"></span>
       <button id="selectCompiler" title="Select the installed NEXUS compiler">Compiler…</button>
       <button id="buildFile" class="primary" title="Compile the current .nx file (F7)">Build</button>
@@ -81,6 +82,7 @@
   </footer>
 
   <script src="./node_modules/ace-builds/src/ace.js"></script>
+  <script src="./node_modules/ace-builds/src/ext-language_tools.js"></script>
   <script src="./node_modules/ace-builds/src/mode-c_cpp.js"></script>
   <script src="./renderer/nexus-mode.js"></script>
   <script src="./renderer.js"></script>
