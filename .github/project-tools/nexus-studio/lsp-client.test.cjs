@@ -114,7 +114,13 @@ test('decoder rejects non-object and invalid JSON payloads', () => {
   const invalidFrame = Buffer.concat([
     Buffer.from('Content-Length: ' + invalidBody.length + '\r\n\r\n'), invalidBody
   ]);
-  assert.throws(() => decoder.push(invalidFrame), /not valid JSON/);
+  assert.throws(() => decoder.push(invalidFrame), /not valid UTF-8 JSON/);
+
+  const invalidUtf8Body = Buffer.from([0xff]);
+  const invalidUtf8Frame = Buffer.concat([
+    Buffer.from('Content-Length: 1\\r\\n\\r\\n'), invalidUtf8Body
+  ]);
+  assert.throws(() => decoder.push(invalidUtf8Frame), /not valid UTF-8 JSON/);
 });
 
 test('language client initializes, acknowledges server requests and forwards diagnostics', async () => {
