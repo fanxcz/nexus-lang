@@ -2,7 +2,6 @@
 
 include(GNUInstallDirs)
 # ============================================================================
-include(GNUInstallDirs)
 target_compile_definitions(nexus PRIVATE NEXUS_INSTALL_RUNTIME_DIR="${CMAKE_INSTALL_FULL_DATADIR}/nexus/runtime")
 install(TARGETS nexus RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 # The runtime is one translation unit assembled from topic files, so the
