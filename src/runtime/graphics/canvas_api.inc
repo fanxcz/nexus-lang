@@ -179,6 +179,143 @@ bool nexus_gfx_canvas_save_bmp(int64_t id, const char* path) {
     auto it = gCanvases.find(id);
     return it != gCanvases.end() && canvas_save_bmp_impl(it->second, path);
 }
+
+bool nexus_gfx_canvas_blit(int64_t destinationId, int64_t sourceId) {
+    auto destination = gCanvases.find(destinationId);
+    auto source = gCanvases.find(sourceId);
+    if (destination == gCanvases.end() || source == gCanvases.end() ||
+        destinationId == sourceId) {
+        gGraphicsError = "canvas blit requires two different live canvases";
+        return false;
+    }
+    if (!canvas_blit_pixels(destination->second, source->second)) {
+        gGraphicsError = "canvas blit requires canvases with matching dimensions";
+        return false;
+    }
+    return true;
+}
+
+bool nexus_gfx_canvas_import_image(int64_t id, const char* path) {
+    auto canvas = gCanvases.find(id);
+    if (canvas == gCanvases.end() || !path || !*path) {
+        gGraphicsError = "canvas image import requires a live canvas and a file path";
+        return false;
+    }
+    if (!SDL_FreeSurface || !SDL_ConvertSurfaceFormat) {
+        gGraphicsError = "SDL surface conversion is unavailable";
+        return false;
+    }
+
+    SDL_Surface* source = IMG_Load ? IMG_Load(path) : nullptr;
+    if (!source && SDL_LoadBMP)
+        source = SDL_LoadBMP(path);
+    if (!source) {
+        gGraphicsError = IMG_GetError
+            ? std::string("image import failed: ") + IMG_GetError()
+            : "image import failed (SDL2_image or a valid BMP file is required)";
+        return false;
+    }
+
+    if (source->w <= 0 || source->h <= 0 || source->w > 8192 || source->h > 8192) {
+        SDL_FreeSurface(source);
+        gGraphicsError = "image dimensions must be between 1 and 8192 pixels";
+        return false;
+    }
+
+    SDL_Surface* converted =
+        SDL_ConvertSurfaceFormat(source, SDL_PIXELFORMAT_ABGR8888, 0);
+    SDL_FreeSurface(source);
+    if (!converted) {
+        gGraphicsError = std::string("image conversion failed: ") + sdl_error();
+        return false;
+    }
+
+    bool locked = false;
+    bool imported = false;
+    if (converted->pixels && converted->pitch >= converted->w * 4 && SDL_LockSurface) {
+        if (SDL_LockSurface(converted) == 0) {
+            locked = true;
+            imported = canvas_import_pixels(canvas->second,
+                                            static_cast<const uint8_t*>(converted->pixels),
+                                            converted->w,
+                                            converted->h,
+                                            converted->pitch);
+        } else {
+            gGraphicsError = std::string("image surface lock failed: ") + sdl_error();
+        }
+    } else if (converted->pixels && converted->pitch >= converted->w * 4) {
+        imported = canvas_import_pixels(canvas->second,
+                                        static_cast<const uint8_t*>(converted->pixels),
+                                        converted->w,
+                                        converted->h,
+                                        converted->pitch);
+    } else {
+        gGraphicsError = "converted image surface has invalid pixel storage";
+    }
+    if (locked && SDL_UnlockSurface)
+        SDL_UnlockSurface(converted);
+    SDL_FreeSurface(converted);
+
+    if (!imported && gGraphicsError.empty())
+        gGraphicsError = "image pixels could not be imported into the canvas";
+    if (imported)
+        gGraphicsError.clear();
+    return imported;
+}
+
+bool nexus_gfx_canvas_save_png(int64_t id, const char* path) {
+    auto it = gCanvases.find(id);
+    if (it == gCanvases.end() || !path || !*path) {
+        gGraphicsError = "PNG export requires a live canvas and a file path";
+        return false;
+    }
+    if (!IMG_SavePNG || !SDL_CreateRGBSurfaceWithFormat || !SDL_FreeSurface) {
+        gGraphicsError = "PNG export requires SDL2_image with IMG_SavePNG support";
+        return false;
+    }
+
+    CanvasData& canvas = it->second;
+    SDL_Surface* surface =
+        SDL_CreateRGBSurfaceWithFormat(0, canvas.w, canvas.h, 32, SDL_PIXELFORMAT_ABGR8888);
+    if (!surface) {
+        gGraphicsError = std::string("PNG surface creation failed: ") + sdl_error();
+        return false;
+    }
+    if (!surface->pixels || surface->pitch < canvas.w * 4) {
+        SDL_FreeSurface(surface);
+        gGraphicsError = "PNG surface has invalid pixel storage";
+        return false;
+    }
+
+    bool locked = false;
+    if (SDL_LockSurface) {
+        if (SDL_LockSurface(surface) != 0) {
+            gGraphicsError = std::string("PNG surface lock failed: ") + sdl_error();
+            SDL_FreeSurface(surface);
+            return false;
+        }
+        locked = true;
+    }
+    for (int y = 0; y < canvas.h; ++y) {
+        std::memcpy(static_cast<uint8_t*>(surface->pixels) + size_t(y) * size_t(surface->pitch),
+                    canvas.pixels.data() + size_t(y) * size_t(canvas.w) * 4u,
+                    size_t(canvas.w) * 4u);
+    }
+    if (locked && SDL_UnlockSurface)
+        SDL_UnlockSurface(surface);
+
+    const int result = IMG_SavePNG(surface, path);
+    SDL_FreeSurface(surface);
+    if (result != 0) {
+        gGraphicsError = IMG_GetError
+            ? std::string("PNG export failed: ") + IMG_GetError()
+            : "PNG export failed";
+        return false;
+    }
+    gGraphicsError.clear();
+    return true;
+}
+
 int64_t nexus_gfx_canvas_load_bmp(const char* path) {
     if (!gGraphics)
         return 0;
@@ -235,3 +372,63 @@ int64_t nexus_gfx_canvas_height(int64_t id) {
     auto it = gCanvases.find(id);
     return it == gCanvases.end() ? 0 : it->second.h;
 }
+
+#ifdef NEXUS_RUNTIME_TESTING
+int nexus_runtime_test_canvas_blend_pixel(const uint8_t* destination,
+                                          const uint8_t* source,
+                                          uint8_t* result) {
+    if (!destination || !source || !result)
+        return 0;
+    std::memcpy(result, destination, 4);
+    canvas_blend_pixel(result, source);
+    return 1;
+}
+int nexus_runtime_test_canvas_import_rgba(int64_t destinationWidth,
+                                          int64_t destinationHeight,
+                                          const uint8_t* destinationPixels,
+                                          const uint8_t* sourcePixels,
+                                          int64_t sourceWidth,
+                                          int64_t sourceHeight,
+                                          int64_t sourcePitch,
+                                          uint8_t* resultPixels) {
+    if (!destinationPixels || !sourcePixels || !resultPixels ||
+        destinationWidth < 1 || destinationHeight < 1 ||
+        destinationWidth > 8192 || destinationHeight > 8192 ||
+        sourceWidth < 1 || sourceHeight < 1 || sourceWidth > 8192 || sourceHeight > 8192 ||
+        sourcePitch < sourceWidth * 4 || sourcePitch > std::numeric_limits<int>::max())
+        return 0;
+    CanvasData destination;
+    destination.w = static_cast<int>(destinationWidth);
+    destination.h = static_cast<int>(destinationHeight);
+    const size_t destinationBytes =
+        size_t(destination.w) * size_t(destination.h) * 4u;
+    destination.pixels.assign(destinationPixels, destinationPixels + destinationBytes);
+    if (!canvas_import_pixels(destination,
+                              sourcePixels,
+                              static_cast<int>(sourceWidth),
+                              static_cast<int>(sourceHeight),
+                              static_cast<int>(sourcePitch)))
+        return 0;
+    std::memcpy(resultPixels, destination.pixels.data(), destinationBytes);
+    return 1;
+}
+int nexus_runtime_test_canvas_blit_rgba(int64_t width,
+                                        int64_t height,
+                                        const uint8_t* destinationPixels,
+                                        const uint8_t* sourcePixels,
+                                        uint8_t* resultPixels) {
+    if (!destinationPixels || !sourcePixels || !resultPixels ||
+        width < 1 || height < 1 || width > 8192 || height > 8192)
+        return 0;
+    CanvasData destination, source;
+    destination.w = source.w = static_cast<int>(width);
+    destination.h = source.h = static_cast<int>(height);
+    const size_t bytes = size_t(destination.w) * size_t(destination.h) * 4u;
+    destination.pixels.assign(destinationPixels, destinationPixels + bytes);
+    source.pixels.assign(sourcePixels, sourcePixels + bytes);
+    if (!canvas_blit_pixels(destination, source, false))
+        return 0;
+    std::memcpy(resultPixels, destination.pixels.data(), bytes);
+    return 1;
+}
+#endif
