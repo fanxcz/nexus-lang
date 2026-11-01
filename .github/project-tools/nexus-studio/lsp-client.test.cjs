@@ -118,7 +118,7 @@ test('decoder rejects non-object and invalid JSON payloads', () => {
 
   const invalidUtf8Body = Buffer.from([0xff]);
   const invalidUtf8Frame = Buffer.concat([
-    Buffer.from('Content-Length: 1\\r\\n\\r\\n'), invalidUtf8Body
+    Buffer.from('Content-Length: 1\r\n\r\n'), invalidUtf8Body
   ]);
   assert.throws(() => decoder.push(invalidUtf8Frame), /not valid UTF-8 JSON/);
 });
