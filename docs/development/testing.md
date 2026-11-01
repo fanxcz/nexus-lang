@@ -23,6 +23,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 |---|---|
 | `nexus_tests` | C++ lexer/parser/semantic/compiler unit checks |
 | `nexus_runtime_memory_test` | Runtime memory behavior |
+| `nexus_runtime_scene_test` | Scene snapshot save/load/apply, ECS replacement and invalid-handle safety |
 | `nexus_runtime_json_test` | JSON grammar, escape decoding, Unicode, bounded parsing, top-level lookup and array access |
 | `nexus_runtime_http_test` | Ensures URL input is passed to the HTTP client without shell interpretation |
 | `nexus_version_smoke` | CLI version output |
@@ -116,6 +117,6 @@ npm run check --prefix .github/project-tools/nexus-studio
 npm test --prefix .github/project-tools/vscode-extension
 ```
 
-The Studio check syntax-checks Electron main/preload/renderer sources and runs the path-guard tests, including symlink escape rejection where the host permits symlink creation. The VS Code extension tests validate its manifest, language/grammar references, language configuration, snippets and LSP client command without downloading the compiler or VS Code.
+The Studio check syntax-checks Electron main/preload/renderer sources and runs the path-guard tests, including symlink escape rejection where the host permits symlink creation. The compiler's runtime suite also exercises scene snapshot application and the NEXUS Editor is compiled through the LLVM example smoke test. The VS Code extension tests validate its manifest, language/grammar references, language configuration, snippets and LSP client command without downloading the compiler or VS Code.
 
 These checks do not claim that a GUI was interactively exercised on the CI host. Native desktop packages remain validated by the dedicated Studio packaging workflow.
