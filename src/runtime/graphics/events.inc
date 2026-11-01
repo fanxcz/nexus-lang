@@ -61,6 +61,12 @@
         std::fill(gKeyPressed.begin(), gKeyPressed.end(), uint8_t(0));
         gMouseClickedButtons.fill(0);
         gTextInputThisFrame.clear();
+        // Text fields are invoked in source order after event polling. Keep the
+        // previous frame's last ID so Shift+Tab can wrap to the last field.
+        gUiTextFieldLastPreviousFrame = gUiTextFieldLastInFrame;
+        gUiTextFieldFirstInFrame = 0;
+        gUiTextFieldPreviousInFrame = 0;
+        gUiTextFieldLastInFrame = 0;
     }
     static void process_events() {
 
@@ -88,8 +94,8 @@
                     if (e.key.repeat == 0)
                         gKeyPressed[size_t(gLastKey)] = 1;
                 }
-                // Escape closes the window by default (SDL_SCANCODE_ESCAPE == 41).
-                if (gLastKey == 41)
+                // Escape cancels an active text field; otherwise it closes the window.
+                if (gLastKey == 41 && !gUiTextFieldFocused)
                     gClose = true;
             } else if (e.type == SDL_KEYUP) {
                 gLastKey = int(e.key.keysym.scancode);
