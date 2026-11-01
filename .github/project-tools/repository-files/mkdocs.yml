@@ -179,6 +179,7 @@ nav:
       - Targets: build/targets.md
   - Architecture:
       - Overview: architecture/index.md
+      - Ecosystem Integration: architecture/ecosystem.md
       - Repository Layout: architecture/repository-layout.md
       - Compiler Pipeline: architecture/compiler-pipeline.md
       - Runtime Design: architecture/runtime-design.md
