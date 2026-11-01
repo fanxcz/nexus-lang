@@ -10,6 +10,7 @@
   let lspVersion = 0;
   let languageServerReady = false;
   let languageServerPromise = null;
+  let languageServerGeneration = 0;
   let suppressEditorChange = false;
   const welcome = $('welcome');
   const editorWrap = $('editorWrap');
@@ -101,20 +102,60 @@
     if (languageServerReady) return true;
     if (!root) return false;
     if (!languageServerPromise) {
-      languageServerPromise = api.startLanguageServer()
+      const generation = languageServerGeneration;
+      const pending = api.startLanguageServer()
         .then(() => {
+          if (generation !== languageServerGeneration) return false;
           languageServerReady = true;
           appendOutput('NEXUS language services ready.', 'system');
           return true;
         })
         .catch(error => {
-          languageServerReady = false;
-          appendOutput('Language services unavailable: ' + error.message, 'error');
+          if (generation === languageServerGeneration) {
+            languageServerReady = false;
+            appendOutput('Language services unavailable: ' + error.message, 'error');
+          }
           return false;
-        })
-        .finally(() => { languageServerPromise = null; });
+        });
+      const tracked = pending.finally(() => {
+        if (languageServerPromise === tracked) languageServerPromise = null;
+      });
+      languageServerPromise = tracked;
     }
     return languageServerPromise;
+  }
+
+  async function openCurrentLanguageDocument() {
+    if (!currentPath || !editor || !currentPath.toLowerCase().endsWith('.nx')) {
+      currentUri = null;
+      clearDiagnostics();
+      return false;
+    }
+    if (!languageServerReady && !(await ensureLanguageServer())) return false;
+    const opened = await api.openLanguageDocument(currentPath, editor.getValue(), 1);
+    currentUri = opened.uri;
+    lspVersion = 1;
+    $('diagnosticStatus').textContent = 'Checking…';
+    return true;
+  }
+
+  async function restartLanguageServer() {
+    languageServerGeneration += 1;
+    languageServerPromise = null;
+    languageServerReady = false;
+    if (currentUri && currentPath) {
+      await api.closeLanguageDocument(currentPath).catch(() => {});
+    }
+    currentUri = null;
+    if (!(await ensureLanguageServer())) return false;
+    if (currentPath && currentPath.toLowerCase().endsWith('.nx')) {
+      try {
+        await openCurrentLanguageDocument();
+      } catch (error) {
+        appendOutput('Could not reopen language document: ' + error.message, 'error');
+      }
+    }
+    return true;
   }
 
   function clearDiagnostics() {
@@ -168,6 +209,8 @@
       currentPath = '';
       currentUri = null;
       lspVersion = 0;
+      languageServerGeneration += 1;
+      languageServerPromise = null;
       languageServerReady = false;
       clearDiagnostics();
       $('projectName').textContent = root.split(/[\\/]/).filter(Boolean).pop() || root;
@@ -208,10 +251,7 @@
       await refreshTree();
       if (rel.toLowerCase().endsWith('.nx') && await ensureLanguageServer()) {
         try {
-          const opened = await api.openLanguageDocument(rel, content, 1);
-          currentUri = opened.uri;
-          lspVersion = 1;
-          $('diagnosticStatus').textContent = 'Checking…';
+          await openCurrentLanguageDocument();
         } catch (error) {
           appendOutput('Could not open language document: ' + error.message, 'error');
         }
@@ -266,6 +306,7 @@
       compilerPath = result.path;
       updateCompilerStatus();
       appendOutput('Compiler selected: ' + compilerPath, 'system');
+      if (root) await restartLanguageServer();
     } catch (error) { appendOutput('Compiler selection failed: ' + error.message, 'error'); }
   }
   function updateCompilerStatus() {
