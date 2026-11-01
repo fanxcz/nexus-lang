@@ -119,4 +119,4 @@ npm test --prefix .github/project-tools/vscode-extension
 
 The Studio check syntax-checks Electron main/preload/renderer sources and runs the path-guard tests, including symlink escape rejection where the host permits symlink creation. The compiler's runtime suite also exercises scene snapshot application and the NEXUS Editor is compiled through the LLVM example smoke test. The VS Code extension tests validate its manifest, language/grammar references, language configuration, snippets and LSP client command without downloading the compiler or VS Code.
 
-These checks do not claim that a GUI was interactively exercised on the CI host. Native desktop packages remain validated by the dedicated Studio packaging workflow.
+These checks do not claim that a GUI was interactively exercised on the CI host. The dedicated Studio packaging workflow builds Windows, Linux and macOS packages on source/workflow pull requests as well as branch pushes; the generated installers/archives are retained as CI artifacts for inspection.
