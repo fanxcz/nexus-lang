@@ -223,6 +223,32 @@ class NexusLspClient extends EventEmitter {
   }
 
   _dispatch(message) {
+    // Requests and notifications from the server have their own ID space;
+    // a server request may legally reuse an ID of a pending client request.
+    if (typeof message.method === 'string') {
+      if (message.method === 'client/registerCapability' ||
+          message.method === 'client/unregisterCapability') {
+        if (Object.prototype.hasOwnProperty.call(message, 'id')) {
+          this._send({ jsonrpc: '2.0', id: message.id, result: null });
+        }
+        return;
+      }
+      if (message.method === 'textDocument/publishDiagnostics') {
+        this.emit('diagnostics', message.params || {});
+        return;
+      }
+      if (Object.prototype.hasOwnProperty.call(message, 'id')) {
+        this._send({
+          jsonrpc: '2.0',
+          id: message.id,
+          error: { code: -32601, message: 'Method not found: ' + message.method }
+        });
+      } else {
+        this.emit('notification', message);
+      }
+      return;
+    }
+
     if (Object.prototype.hasOwnProperty.call(message, 'id') && this.pending.has(message.id)) {
       const pending = this.pending.get(message.id);
       this.pending.delete(message.id);
@@ -232,21 +258,7 @@ class NexusLspClient extends EventEmitter {
       } else {
         pending.resolve(message.result);
       }
-      return;
     }
-
-    if (message.method === 'client/registerCapability' ||
-        message.method === 'client/unregisterCapability') {
-      if (Object.prototype.hasOwnProperty.call(message, 'id')) {
-        this._send({ jsonrpc: '2.0', id: message.id, result: null });
-      }
-      return;
-    }
-    if (message.method === 'textDocument/publishDiagnostics') {
-      this.emit('diagnostics', message.params || {});
-      return;
-    }
-    if (message.method) this.emit('notification', message);
   }
 
   _failPending(error) {
