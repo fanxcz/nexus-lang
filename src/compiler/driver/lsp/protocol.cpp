@@ -240,7 +240,7 @@ namespace nexus {
         }
 
         std::size_t extractNumber(const std::string& json, const std::string& field) {
-            const std::size_t pos = findJsonFieldValueStart(json, field);
+            std::size_t pos = findJsonFieldValueStart(json, field);
             if (pos == std::string::npos)
                 return std::size_t{0};
             const auto begin = pos;
@@ -284,6 +284,7 @@ namespace nexus {
             return afterTrue == watchedEnd || json[afterTrue] == ',' ||
                    json[afterTrue] == '}' ||
                    std::isspace(static_cast<unsigned char>(json[afterTrue]));
+        }
 
         void send(const std::string& payload) {
             std::cout << "Content-Length: " << payload.size() << "\r\n\r\n"
