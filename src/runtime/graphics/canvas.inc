@@ -354,7 +354,11 @@ static bool canvas_load_bmp_impl(const char* path, CanvasData& out) {
 }
 int64_t nexus_gfx_canvas_create(int64_t w, int64_t h, double r, double g, double b, double a) {
 
-    if (!gGraphics || w <= 0 || h <= 0 || w > 8192 || h > 8192 ||
+    if (!gGraphics) {
+        gGraphicsError = "graphics must be initialized before creating a canvas";
+        return 0;
+    }
+    if (w <= 0 || h <= 0 || w > 8192 || h > 8192 ||
         uint64_t(w) * uint64_t(h) > static_cast<uint64_t>(kCanvasMaxPixels)) {
         gGraphicsError = "canvas dimensions must be positive, at most 8192 per side and 16 megapixels total";
         return 0;
