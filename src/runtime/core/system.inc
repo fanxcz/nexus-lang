@@ -49,6 +49,7 @@ static bool nexus_os_valid_app_name(const char* appName, std::string& result) {
 
 char* nexus_os_config_dir(const char* appName) {
     gNxOsConfigError.clear();
+    try {
     std::string validatedName;
     if (!nexus_os_valid_app_name(appName, validatedName))
         return nexus_os_copy_string("");
@@ -109,6 +110,13 @@ char* nexus_os_config_dir(const char* appName) {
     }
 
     return nexus_os_copy_string(destination.lexically_normal().string());
+    } catch (const std::exception& error) {
+        gNxOsConfigError = std::string("cannot resolve application configuration directory: ") +
+                           error.what();
+    } catch (...) {
+        gNxOsConfigError = "cannot resolve application configuration directory";
+    }
+    return nexus_os_copy_string("");
 }
 
 char* nexus_os_config_error() {
