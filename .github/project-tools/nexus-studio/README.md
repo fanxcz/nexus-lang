@@ -5,6 +5,7 @@ A small desktop IDE for the NEXUS programming language: project explorer, editor
 ## Features
 - Open a project folder, browse files, create and save .nx source files.
 - Build the current .nx file into a native program or compile and run it.
+- Start the installed compiler's LSP process for the open project and show live compiler diagnostics as Ace editor annotations.
 - Select a compiler once; its path is remembered after restarting the IDE.
 - Integrated terminal with Clear, Stop and Hide/Show controls.
 - Shortcuts: Ctrl/Cmd+O (open folder), Ctrl/Cmd+S (save), Ctrl/Cmd+N (new file), F7 (build), F5 (run).
@@ -36,6 +37,6 @@ The renderer uses context isolation and a limited preload API. File operations a
 
 ## Current boundaries
 
-NEXUS Studio is currently a single-active-document editor. It does not yet embed the NEXUS language server, provide multi-tab editing, or include a debugger. For diagnostics, semantic completion and navigation, use the separately installed NEXUS compiler through the VS Code extension.
+NEXUS Studio is currently a single-active-document editor. It starts the separately installed NEXUS language server and displays compiler diagnostics for the active .nx buffer, but it does not yet provide Studio-native completion, hover, definition navigation, multi-tab editing, or a debugger. For the full language-client workflow, use the VS Code extension.
 
 The integrated terminal executes commands with the current user's permissions. Only run commands and project code that you trust. File reads and writes made through Studio's project API are confined to the opened project folder; shell commands are intentionally not sandboxed.
