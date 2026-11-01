@@ -442,7 +442,11 @@ int nexus_runtime_test_canvas_import_rgba(int64_t destinationWidth,
     if (!destinationPixels || !sourcePixels || !resultPixels ||
         destinationWidth < 1 || destinationHeight < 1 ||
         destinationWidth > 8192 || destinationHeight > 8192 ||
+        uint64_t(destinationWidth) * uint64_t(destinationHeight) >
+            static_cast<uint64_t>(kCanvasMaxPixels) ||
         sourceWidth < 1 || sourceHeight < 1 || sourceWidth > 8192 || sourceHeight > 8192 ||
+        uint64_t(sourceWidth) * uint64_t(sourceHeight) >
+            static_cast<uint64_t>(kCanvasMaxPixels) ||
         sourcePitch < sourceWidth * 4 || sourcePitch > std::numeric_limits<int>::max())
         return 0;
     CanvasData destination;
@@ -466,7 +470,8 @@ int nexus_runtime_test_canvas_blit_rgba(int64_t width,
                                         const uint8_t* sourcePixels,
                                         uint8_t* resultPixels) {
     if (!destinationPixels || !sourcePixels || !resultPixels ||
-        width < 1 || height < 1 || width > 8192 || height > 8192)
+        width < 1 || height < 1 || width > 8192 || height > 8192 ||
+        uint64_t(width) * uint64_t(height) > static_cast<uint64_t>(kCanvasMaxPixels))
         return 0;
     CanvasData destination, source;
     destination.w = source.w = static_cast<int>(width);
