@@ -19,6 +19,97 @@ static void canvas_put(CanvasData& c, int x, int y, uint8_t r, uint8_t g, uint8_
     c.pixels[i + 2] = b;
     c.pixels[i + 3] = a;
 }
+
+static void canvas_blend_pixel(uint8_t* destination, const uint8_t* source) {
+    if (!destination || !source)
+        return;
+
+    const uint32_t sourceAlpha = source[3];
+    if (sourceAlpha == 0)
+        return;
+    if (sourceAlpha == 255) {
+        std::memcpy(destination, source, 4);
+        return;
+    }
+
+    const uint32_t destinationAlpha = destination[3];
+    const uint32_t inverseSourceAlpha = 255u - sourceAlpha;
+    const uint32_t outputAlphaNumerator =
+        sourceAlpha * 255u + destinationAlpha * inverseSourceAlpha;
+    if (outputAlphaNumerator == 0) {
+        std::memset(destination, 0, 4);
+        return;
+    }
+
+    for (size_t channel = 0; channel < 3; ++channel) {
+        const uint32_t numerator =
+            uint32_t(source[channel]) * sourceAlpha * 255u +
+            uint32_t(destination[channel]) * destinationAlpha * inverseSourceAlpha;
+        destination[channel] = static_cast<uint8_t>(
+            (numerator + outputAlphaNumerator / 2u) / outputAlphaNumerator);
+    }
+    destination[3] = static_cast<uint8_t>((outputAlphaNumerator + 127u) / 255u);
+}
+
+static bool canvas_blit_pixels(CanvasData& destination,
+                               const CanvasData& source,
+                               bool checkpoint = true) {
+    if (destination.w <= 0 || destination.h <= 0 ||
+        destination.w != source.w || destination.h != source.h ||
+        destination.pixels.size() != source.pixels.size() ||
+        destination.pixels.size() % 4u != 0u || &destination == &source)
+        return false;
+
+    if (checkpoint)
+        canvas_checkpoint_internal(destination);
+    for (size_t offset = 0; offset < destination.pixels.size(); offset += 4u)
+        canvas_blend_pixel(destination.pixels.data() + offset, source.pixels.data() + offset);
+    return true;
+}
+
+// Imports a converted RGBA pixel buffer with contain/center fitting and
+// source-over alpha composition. The caller owns the SDL surface and its lock.
+static bool canvas_import_pixels(CanvasData& destination,
+                                 const uint8_t* source,
+                                 int sourceWidth,
+                                 int sourceHeight,
+                                 int sourcePitch) {
+    if (!source || destination.w <= 0 || destination.h <= 0 ||
+        sourceWidth <= 0 || sourceHeight <= 0 ||
+        sourceWidth > 8192 || sourceHeight > 8192 ||
+        sourcePitch < sourceWidth * 4 ||
+        destination.pixels.size() != size_t(destination.w) * size_t(destination.h) * 4u)
+        return false;
+
+    const double scale = std::min(double(destination.w) / double(sourceWidth),
+                                  double(destination.h) / double(sourceHeight));
+    if (!std::isfinite(scale) || scale <= 0.0)
+        return false;
+    const int fittedWidth =
+        std::clamp(int(std::lround(double(sourceWidth) * scale)), 1, destination.w);
+    const int fittedHeight =
+        std::clamp(int(std::lround(double(sourceHeight) * scale)), 1, destination.h);
+    const int offsetX = (destination.w - fittedWidth) / 2;
+    const int offsetY = (destination.h - fittedHeight) / 2;
+
+    canvas_checkpoint_internal(destination);
+    for (int y = 0; y < fittedHeight; ++y) {
+        const int sourceY = std::min(
+            sourceHeight - 1,
+            int((double(y) + 0.5) * double(sourceHeight) / double(fittedHeight)));
+        const uint8_t* sourceRow = source + size_t(sourceY) * size_t(sourcePitch);
+        for (int x = 0; x < fittedWidth; ++x) {
+            const int sourceX = std::min(
+                sourceWidth - 1,
+                int((double(x) + 0.5) * double(sourceWidth) / double(fittedWidth)));
+            const uint8_t* sourcePixel = sourceRow + size_t(sourceX) * 4u;
+            uint8_t* destinationPixel =
+                destination.pixels.data() + canvas_index(destination, offsetX + x, offsetY + y);
+            canvas_blend_pixel(destinationPixel, sourcePixel);
+        }
+    }
+    return true;
+}
 static void canvas_circle(
     CanvasData& c, int cx, int cy, int radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
