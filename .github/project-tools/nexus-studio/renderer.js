@@ -14,10 +14,12 @@
   let languageServerGeneration = 0;
   let pendingLanguageSync = Promise.resolve();
   let suppressEditorChange = false;
+  const documents = new Map();
   const welcome = $('welcome');
   const editorWrap = $('editorWrap');
   const output = $('terminalOutput');
   const treeEl = $('fileTree');
+  const tabsEl = $('openTabs');
 
   function setStatus(text) { $('saveStatus').textContent = text; }
   function appendOutput(text, type = 'stdout') {
@@ -27,11 +29,49 @@
     output.appendChild(line);
     output.scrollTop = output.scrollHeight;
   }
+  function renderTabs() {
+    tabsEl.replaceChildren();
+    for (const [filePath, item] of documents.entries()) {
+      const tab = document.createElement('div');
+      tab.className = 'open-tab' + (filePath === currentPath ? ' active' : '');
+
+      const select = document.createElement('button');
+      select.type = 'button';
+      select.className = 'open-tab-select';
+      select.setAttribute('role', 'tab');
+      select.setAttribute('aria-selected', String(filePath === currentPath));
+      select.title = filePath;
+      const fileName = filePath.split(/[\\/]/).pop() || filePath;
+      select.textContent = (item.dirty ? '● ' : '') + fileName;
+      select.addEventListener('click', () => { void switchDocument(filePath); });
+
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'open-tab-close';
+      close.textContent = '×';
+      close.title = 'Close ' + filePath;
+      close.setAttribute('aria-label', 'Close ' + filePath);
+      close.addEventListener('click', event => {
+        event.stopPropagation();
+        void closeDocument(filePath);
+      });
+
+      tab.append(select, close);
+      tabsEl.appendChild(tab);
+    }
+  }
+
   function markDirty(value) {
     dirty = value;
+    if (currentPath && documents.has(currentPath)) {
+      const active = documents.get(currentPath);
+      active.dirty = value;
+      if (editor) active.content = editor.getValue();
+    }
     $('dirtyMark').textContent = dirty ? '●' : '';
     $('dirtyMark').className = dirty ? 'dirty' : '';
     setStatus(dirty ? 'Unsaved changes' : 'All changes saved');
+    renderTabs();
   }
   function ensureEditor() {
     if (editor) return;
@@ -258,45 +298,118 @@
       void ensureLanguageServer();
     } catch (error) { appendOutput('Open folder failed: ' + error.message, 'error'); }
   }
-  async function openFile(rel) {
-    if (dirty && !confirm('Discard unsaved changes?')) return false;
-    try {
-      if (currentUri && currentPath) {
-        await pendingLanguageSync.catch(() => {});
-        await api.closeLanguageDocument(currentPath).catch(() => {});
+  async function switchDocument(rel) {
+    const next = documents.get(rel);
+    if (!next) return false;
+    if (currentPath === rel && editor) return true;
+
+    if (currentPath && editor && documents.has(currentPath)) {
+      const previous = documents.get(currentPath);
+      previous.content = editor.getValue();
+      previous.dirty = dirty;
+      previous.uri = currentUri;
+    }
+    if (currentUri && currentPath) {
+      await pendingLanguageSync.catch(() => {});
+      await api.closeLanguageDocument(currentPath).catch(() => {});
+      const previous = documents.get(currentPath);
+      if (previous) previous.uri = null;
+    }
+
+    currentUri = null;
+    lspVersion = 0;
+    clearDiagnostics();
+    ensureEditor();
+    if (!editor) return false;
+
+    currentPath = rel;
+    suppressEditorChange = true;
+    editor.setValue(next.content, -1);
+    suppressEditorChange = false;
+    editor.session.setMode(rel.toLowerCase().endsWith('.nx') ? 'ace/mode/nexus' : 'ace/mode/text');
+    welcome.classList.add('hidden');
+    editorWrap.classList.remove('hidden');
+    $('tabName').textContent = rel.split(/[\\/]/).pop() || rel;
+    $('activeTab').title = rel;
+    $('statusLang').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS' : 'TEXT';
+    markDirty(!!next.dirty);
+    await refreshTree();
+
+    if (rel.toLowerCase().endsWith('.nx') && await ensureLanguageServer()) {
+      try {
+        await openCurrentLanguageDocument();
+      } catch (error) {
+        appendOutput('Could not open language document: ' + error.message, 'error');
       }
-      currentUri = null;
+    } else {
       clearDiagnostics();
-      const content = await api.readFile(rel);
-      ensureEditor();
-      if (!editor) return false;
-      currentPath = rel;
-      suppressEditorChange = true;
-      editor.setValue(content, -1);
-      suppressEditorChange = false;
-      editor.session.setMode(rel.toLowerCase().endsWith('.nx') ? 'ace/mode/nexus' : 'ace/mode/text');
-      welcome.classList.add('hidden');
-      editorWrap.classList.remove('hidden');
-      $('tabName').textContent = rel.split('/').pop();
-      $('activeTab').title = rel;
-      $('statusLang').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS' : 'TEXT';
-      markDirty(false);
-      await refreshTree();
-      if (rel.toLowerCase().endsWith('.nx') && await ensureLanguageServer()) {
-        try {
-          await openCurrentLanguageDocument();
-        } catch (error) {
-          appendOutput('Could not open language document: ' + error.message, 'error');
-        }
-      } else {
-        clearDiagnostics();
+    }
+    setStatus('Opened ' + rel);
+    return true;
+  }
+
+  async function openFile(rel) {
+    try {
+      if (!documents.has(rel)) {
+        const content = await api.readFile(rel);
+        documents.set(rel, {
+          path: rel,
+          content,
+          dirty: false,
+          uri: null,
+          version: 0
+        });
+        renderTabs();
       }
-      setStatus('Opened ' + rel);
-      return true;
+      const opened = await switchDocument(rel);
+      if (!opened && documents.get(rel)?.dirty === false) {
+        documents.delete(rel);
+        renderTabs();
+      }
+      return opened;
     } catch (error) {
       appendOutput('Open file failed: ' + error.message, 'error');
       return false;
     }
+  }
+
+  async function closeDocument(rel) {
+    const item = documents.get(rel);
+    if (!item) return false;
+    if (item.dirty && !confirm('Discard unsaved changes in ' + rel + '?')) return false;
+
+    if (rel === currentPath) {
+      if (currentUri) {
+        await pendingLanguageSync.catch(() => {});
+        await api.closeLanguageDocument(rel).catch(() => {});
+      }
+      documents.delete(rel);
+      currentUri = null;
+      currentPath = '';
+      lspVersion = 0;
+      if (documents.size) {
+        const nextPath = Array.from(documents.keys()).pop();
+        await switchDocument(nextPath);
+      } else {
+        clearDiagnostics();
+        if (editor) {
+          suppressEditorChange = true;
+          editor.setValue('', -1);
+          suppressEditorChange = false;
+        }
+        welcome.classList.remove('hidden');
+        editorWrap.classList.add('hidden');
+        $('tabName').textContent = 'Welcome';
+        $('activeTab').title = '';
+        $('statusLang').textContent = 'NEXUS';
+        markDirty(false);
+        await refreshTree();
+      }
+    } else {
+      documents.delete(rel);
+      renderTabs();
+    }
+    return true;
   }
   async function saveCurrent() {
     if (!currentPath || !editor) {
