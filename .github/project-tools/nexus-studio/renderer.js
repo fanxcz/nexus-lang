@@ -329,6 +329,10 @@
     if (!next) return false;
     if (currentPath === rel && editor) return true;
 
+    ensureEditor();
+    if (!editor) return false;
+    editor.setReadOnly(true);
+
     if (currentPath && editor && documents.has(currentPath)) {
       const previous = documents.get(currentPath);
       previous.content = editor.getValue();
@@ -371,6 +375,7 @@
       clearDiagnostics();
     }
     setStatus('Opened ' + rel);
+    editor.setReadOnly(false);
     return true;
   }
 
@@ -414,6 +419,7 @@
     if (item.dirty && !confirm('Discard unsaved changes in ' + rel + '?')) return false;
 
     if (rel === currentPath) {
+      if (editor) editor.setReadOnly(true);
       if (currentUri) {
         await pendingLanguageSync.catch(() => {});
         await api.closeLanguageDocument(rel).catch(() => {});
@@ -431,6 +437,7 @@
           suppressEditorChange = true;
           editor.setValue('', -1);
           suppressEditorChange = false;
+          editor.setReadOnly(false);
         }
         welcome.classList.remove('hidden');
         editorWrap.classList.add('hidden');
