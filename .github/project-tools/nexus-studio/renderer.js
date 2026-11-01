@@ -377,7 +377,7 @@
     return enqueueDocumentOperation(() => switchDocumentNow(rel));
   }
 
-  async function openFile(rel) {
+  async function openFileNow(rel) {
     try {
       if (!documents.has(rel)) {
         const content = await api.readFile(rel);
@@ -390,7 +390,7 @@
         });
         renderTabs();
       }
-      const opened = await switchDocument(rel);
+      const opened = await switchDocumentNow(rel);
       if (!opened && documents.get(rel)?.dirty === false) {
         documents.delete(rel);
         renderTabs();
@@ -400,6 +400,10 @@
       appendOutput('Open file failed: ' + error.message, 'error');
       return false;
     }
+  }
+
+  function openFile(rel) {
+    return enqueueDocumentOperation(() => openFileNow(rel));
   }
 
   async function closeDocumentNow(rel) {
