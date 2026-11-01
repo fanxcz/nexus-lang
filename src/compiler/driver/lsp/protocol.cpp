@@ -294,6 +294,7 @@ namespace nexus {
 
         std::string jsonEscape(const std::string& value) {
             std::string escaped;
+            static constexpr char hex[] = "0123456789abcdef";
             for (const unsigned char c : value) {
                 switch (c) {
                 case '"':
@@ -301,6 +302,12 @@ namespace nexus {
                     break;
                 case '\\':
                     escaped += "\\\\";
+                    break;
+                case '\b':
+                    escaped += "\\b";
+                    break;
+                case '\f':
+                    escaped += "\\f";
                     break;
                 case '\n':
                     escaped += "\\n";
@@ -311,20 +318,14 @@ namespace nexus {
                 case '\t':
                     escaped += "\\t";
                     break;
-                case '\b':
-                    escaped += "\\b";
-                    break;
-                case '\f':
-                    escaped += "\\f";
-                    break;
                 default:
                     if (c < 0x20) {
-                        constexpr char hex[] = "0123456789abcdef";
                         escaped += "\\u00";
                         escaped.push_back(hex[(c >> 4) & 0x0f]);
                         escaped.push_back(hex[c & 0x0f]);
-                    } else
+                    } else {
                         escaped.push_back(static_cast<char>(c));
+                    }
                     break;
                 }
             }
