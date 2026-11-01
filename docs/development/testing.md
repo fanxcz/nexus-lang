@@ -24,6 +24,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 | `nexus_tests` | C++ lexer/parser/semantic/compiler unit checks |
 | `nexus_runtime_memory_test` | Runtime memory behavior |
 | `nexus_runtime_scene_test` | Scene snapshot save/load/apply, ECS replacement and invalid-handle safety |
+| `nexus_task_manager_security_smoke` | Executes the Task Manager's extracted shell-token/PID validators against allowed and hostile inputs |
 | `nexus_runtime_json_test` | JSON grammar, escape decoding, Unicode, bounded parsing, top-level lookup and array access |
 | `nexus_runtime_http_test` | Ensures URL input is passed to the HTTP client without shell interpretation |
 | `nexus_version_smoke` | CLI version output |
@@ -117,6 +118,6 @@ npm run check --prefix .github/project-tools/nexus-studio
 npm test --prefix .github/project-tools/vscode-extension
 ```
 
-The Studio check syntax-checks Electron main/preload/renderer sources and runs the path-guard tests, including symlink escape rejection where the host permits symlink creation. The compiler's runtime suite also exercises scene snapshot application and the NEXUS Editor is compiled through the LLVM example smoke test. The VS Code extension tests validate its manifest, language/grammar references, language configuration, snippets and LSP client command without downloading the compiler or VS Code.
+The Studio check syntax-checks Electron main/preload/renderer sources and runs the path-guard tests, including symlink escape rejection where the host permits symlink creation. The compiler's runtime suite also exercises validated scene snapshot IO/application and the NEXUS Editor is compiled through the LLVM example smoke test. The LLVM example smoke also compiles Focus, Showcase and the Windows-only Task Manager; `nexus_task_manager_security_smoke` extracts and executes the exact Task Manager input validators without invoking Windows shell commands. The VS Code extension tests validate its manifest, language/grammar references, language configuration, snippets and LSP client command without downloading the compiler or VS Code.
 
 These checks do not claim that a GUI was interactively exercised on the CI host. The dedicated Studio packaging workflow builds Windows, Linux and macOS packages on source/workflow pull requests as well as branch pushes; the generated installers/archives are retained as CI artifacts for inspection.
