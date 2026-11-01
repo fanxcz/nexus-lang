@@ -26,10 +26,17 @@ void nexus_gfx_canvas_clear(int64_t id, double r, double g, double b, double a) 
 void nexus_gfx_canvas_brush(
     int64_t id, double x, double y, double size, double r, double g, double b, double a) {
     auto it = gCanvases.find(id);
-    if (it == gCanvases.end())
+    if (it == gCanvases.end() ||
+        !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(size))
         return;
-    const int radius = std::max(1, int(std::round(size * 0.5)));
-    canvas_circle(it->second,
+    CanvasData& canvas = it->second;
+    const double maxDiameter = double(std::max(canvas.w, canvas.h)) * 2.0;
+    const double boundedSize = std::clamp(size, 1.0, maxDiameter);
+    const int radius = std::max(1, int(std::round(boundedSize * 0.5)));
+    if (x < -double(radius) || y < -double(radius) ||
+        x > double(canvas.w - 1 + radius) || y > double(canvas.h - 1 + radius))
+        return;
+    canvas_circle(canvas,
                   int(std::round(x)),
                   int(std::round(y)),
                   radius,
@@ -49,17 +56,24 @@ void nexus_gfx_canvas_line(int64_t id,
                            double b,
                            double a) {
     auto it = gCanvases.find(id);
-    if (it == gCanvases.end())
+    if (it == gCanvases.end() ||
+        !std::isfinite(x1) || !std::isfinite(y1) ||
+        !std::isfinite(x2) || !std::isfinite(y2) || !std::isfinite(size))
         return;
     CanvasData& c = it->second;
+    const double maxDiameter = double(std::max(c.w, c.h)) * 2.0;
+    const double boundedSize = std::clamp(size, 1.0, maxDiameter);
+    const int radius = std::max(1, int(std::round(boundedSize * 0.5)));
+    if (!canvas_clip_line(x1, y1, x2, y2, c.w, c.h, double(radius)))
+        return;
     const double dx = x2 - x1, dy = y2 - y1;
     const int steps = std::max(1, int(std::ceil(std::max(std::abs(dx), std::abs(dy)))));
     for (int i = 0; i <= steps; ++i) {
-        double t = double(i) / double(steps);
+        const double t = double(i) / double(steps);
         canvas_circle(c,
                       int(std::round(x1 + dx * t)),
                       int(std::round(y1 + dy * t)),
-                      std::max(1, int(std::round(size * 0.5))),
+                      radius,
                       canvas_u8(r),
                       canvas_u8(g),
                       canvas_u8(b),
@@ -78,24 +92,36 @@ void nexus_gfx_canvas_rect(int64_t id,
                            double a,
                            bool filled) {
     auto it = gCanvases.find(id);
-    if (it == gCanvases.end())
+    if (it == gCanvases.end() ||
+        !std::isfinite(x) || !std::isfinite(y) ||
+        !std::isfinite(w) || !std::isfinite(h))
         return;
     CanvasData& c = it->second;
-    int x0 = int(std::floor(x)), y0 = int(std::floor(y)), x1 = int(std::ceil(x + w)),
-        y1 = int(std::ceil(y + h));
+    const double right = x + w;
+    const double bottom = y + h;
+    if (!std::isfinite(right) || !std::isfinite(bottom))
+        return;
+
     if (filled) {
-        x0 = std::max(0, x0);
-        y0 = std::max(0, y0);
-        x1 = std::min(c.w - 1, x1);
-        y1 = std::min(c.h - 1, y1);
+        const double leftEdge = std::min(x, right);
+        const double rightEdge = std::max(x, right);
+        const double topEdge = std::min(y, bottom);
+        const double bottomEdge = std::max(y, bottom);
+        if (rightEdge < 0.0 || bottomEdge < 0.0 ||
+            leftEdge >= double(c.w) || topEdge >= double(c.h))
+            return;
+        const int x0 = int(std::clamp(std::floor(leftEdge), 0.0, double(c.w - 1)));
+        const int y0 = int(std::clamp(std::floor(topEdge), 0.0, double(c.h - 1)));
+        const int x1 = int(std::clamp(std::ceil(rightEdge), 0.0, double(c.w - 1)));
+        const int y1 = int(std::clamp(std::ceil(bottomEdge), 0.0, double(c.h - 1)));
         for (int yy = y0; yy <= y1; ++yy)
             for (int xx = x0; xx <= x1; ++xx)
                 canvas_put(c, xx, yy, canvas_u8(r), canvas_u8(g), canvas_u8(b), canvas_u8(a));
     } else {
-        nexus_gfx_canvas_line(id, x0, y0, x1, y0, size, r, g, b, a);
-        nexus_gfx_canvas_line(id, x1, y0, x1, y1, size, r, g, b, a);
-        nexus_gfx_canvas_line(id, x1, y1, x0, y1, size, r, g, b, a);
-        nexus_gfx_canvas_line(id, x0, y1, x0, y0, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x, y, right, y, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, right, y, right, bottom, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, right, bottom, x, bottom, size, r, g, b, a);
+        nexus_gfx_canvas_line(id, x, bottom, x, y, size, r, g, b, a);
     }
 }
 void nexus_gfx_canvas_fill(
