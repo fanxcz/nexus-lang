@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <cstring>
 
+extern "C" int nexus_runtime_test_ui_key_consumption(size_t scanCode);
+
 extern "C" int nexus_runtime_test_ui_text_edit(char* buffer,
                                                  size_t capacity,
                                                  int64_t* caret,
@@ -37,6 +39,14 @@ static bool expectPosition(int64_t caret,
 
 int main() {
     bool ok = true;
+
+    if (nexus_runtime_test_ui_key_consumption(43) != 1 ||
+        nexus_runtime_test_ui_key_consumption(80) != 1 ||
+        nexus_runtime_test_ui_key_consumption(512) != -1) {
+        std::fprintf(stderr, "runtime UI test failed: a keyboard edge was not consumed exactly once\n");
+        ok = false;
+    }
+
     char text[64] = "Aé🙂Z";
     int64_t caret = 1;
     int64_t anchor = 1;
