@@ -23,7 +23,7 @@ fn main() {
         gfx_poll()
         if gfx_key_down("ESC") { running = false }
         if ui_button(20.0, 20.0, 120.0, 42.0, "SAVE") {
-            if scene_save(scene, "scenes/editor_scene.nxs") {
+            if scene_save(scene, "editor_scene.nxs") {
                 status = "Scene saved"
                 gfx_sound_tone(880.0, 60, 0.08)
             } else {
@@ -31,7 +31,7 @@ fn main() {
             }
         }
         if ui_button(150.0, 20.0, 120.0, 42.0, "LOAD") {
-            let loaded = scene_load("scenes/editor_scene.nxs")
+            let loaded = scene_load("editor_scene.nxs")
             if loaded == 0 {
                 status = "Load failed"
             } else {
