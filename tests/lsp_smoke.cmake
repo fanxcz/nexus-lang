@@ -93,7 +93,10 @@ set(exit_msg "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":null}")
 
 set(input_data "")
 foreach(message IN ITEMS "${init}" "${initialized}" "${watcher_registration_response}" "${open_signature_decl}" "${open_signature_call}" "${open_signature_builtin}" "${open_signature_nested}" "${open_bad}" "${change_good}" "${change_semantic}" "${close_msg}" "${completion}" "${open_unicode_rename}" "${open_definition}" "${open_caller}" "${open_hover}" "${open_user_hover}" "${definition}" "${formatting}" "${open_range_format}" "${range_formatting}" "${references}" "${prepare_rename}" "${prepare_rename_unicode}" "${prepare_rename_invalid}" "${rename}" "${hover}" "${hover_user}" "${hover_struct}" "${hover_enum}" "${signature_help}" "${signature_help_builtin}" "${signature_help_nested}" "${open_workspace_caller}" "${open_workspace_completion}" "${open_workspace_nested}" "${open_workspace_enum_completion}" "${open_workspace_hover}" "${open_workspace_struct_hover}" "${document_symbols}" "${workspace_symbols}" "${workspace_definition}" "${workspace_references}" "${workspace_rename}" "${workspace_member_completion}" "${workspace_nested_completion}" "${workspace_enum_completion}" "${workspace_hover}" "${workspace_struct_hover}" "${workspace_enum_hover}" "${open_scope}" "${scope_references}" "${scope_rename}" "${scope_definition}" "${open_completion_fields}" "${field_completion}" "${open_completion_nested_fields}" "${nested_field_completion}" "${open_completion_enum}" "${enum_completion}" "${open_multi_syntax}" "${open_unknown_field}" "${field_quickfix}" "${open_unknown_variable}" "${variable_quickfix}" "${open_multi_semantic}" "${shutdown}" "${exit_msg}")
-  string(LENGTH "${message}" message_length)
+  # LSP Content-Length counts UTF-8 bytes, not Unicode code points or UTF-16 units.
+  string(HEX "${message}" message_hex)
+  string(LENGTH "${message_hex}" message_hex_length)
+  math(EXPR message_length "${message_hex_length} / 2")
   string(APPEND input_data "Content-Length: ${message_length}\r\n\r\n${message}")
 endforeach()
 file(WRITE "${LSP_INPUT}" "${input_data}")
