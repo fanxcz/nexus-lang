@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
 
 extern "C" {
@@ -34,6 +35,43 @@ int main() {
     if (!nexus_scene_save(snapshot, path.c_str())) {
         std::fprintf(stderr, "scene snapshot save failed\n");
         return 1;
+    }
+
+    const auto missingDirectory = std::filesystem::temp_directory_path() /
+                                  ("nexus-scene-missing-" + std::to_string(nonce));
+    std::filesystem::remove_all(missingDirectory);
+    const auto unwritablePath = (missingDirectory / "scene.nxs").string();
+    if (nexus_scene_save(snapshot, unwritablePath.c_str())) {
+        std::fprintf(stderr, "scene snapshot save unexpectedly succeeded for a missing directory\\n");
+        std::filesystem::remove(path);
+        return 10;
+    }
+
+    const auto expectRejected = [&](const std::string& name, const std::string& payload) {
+        const auto invalidPath = (std::filesystem::temp_directory_path() /
+                                  ("nexus-scene-invalid-" + name + "-" +
+                                   std::to_string(nonce) + ".nxs")).string();
+        {
+            std::ofstream invalid(invalidPath, std::ios::out | std::ios::trunc);
+            if (!invalid)
+                return false;
+            invalid << payload;
+            if (!invalid.good())
+                return false;
+        }
+        const int64_t before = nexus_ecs_count();
+        const int64_t loadedInvalid = nexus_scene_load(invalidPath.c_str());
+        std::error_code error;
+        std::filesystem::remove(invalidPath, error);
+        return loadedInvalid == 0 && nexus_ecs_count() == before && !error;
+    };
+    if (!expectRejected("truncated", "NEXUS_SCENE 1\\n1\\n1 2 3\\n") ||
+        !expectRejected("nonfinite", "NEXUS_SCENE 1\\n1\\nnan 0 0 0 1 1 1 1 1 1 0\\n") ||
+        !expectRejected("trailing", "NEXUS_SCENE 1\\n0\\nextra data\\n") ||
+        !expectRejected("oversized", "NEXUS_SCENE 1\\n100001\\n")) {
+        std::fprintf(stderr, "malformed scene snapshots were not rejected safely\\n");
+        std::filesystem::remove(path);
+        return 11;
     }
 
     const int64_t extra = nexus_ecs_create();
