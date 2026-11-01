@@ -94,6 +94,12 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   so allocation failures do not leave a partially cleared world. Regression tests cover
   malformed snapshots and save failures.
 
+- The Windows-only Task Manager now accepts only plain executable-name tokens for
+  `tasklist`, `taskkill` and `start` calls, and enforces the unsigned 32-bit PID
+  range. A CTest extracts and executes the actual validators against shell metacharacters,
+  paths, malformed PIDs and boundary values. NEXUS Showcase also exits cleanly when graphics
+  initialization fails.
+
 - NEXUS Paint now checkpoints the canvas before **New**, reports failed BMP save/load operations
   instead of leaving a stale success status, and reports a failed final save at shutdown.
   The project template is kept byte-for-byte synchronized with the standalone example and
