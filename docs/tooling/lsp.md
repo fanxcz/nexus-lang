@@ -67,3 +67,5 @@ Next LSP milestones are semantic navigation for imported aliases and a broader i
 ### Workspace type completion
 
 Contextual field and enum completion also looks up declarations in other `.nx` files in the active workspace when the requested type is absent from the current buffer. A lightweight token scan is cached per source file, and the full parser runs only for files declaring the requested type. Cache entries are refreshed when file contents change and invalidated on saves and file-watch events. This supports explicit local variable types and direct struct initializers; imported aliases and full cross-module type inference remain future work.
+
+The protocol helper decodes standard JSON escapes, including `\\uXXXX` sequences and UTF-16 surrogate pairs, into UTF-8 before the compiler sees document text. The protocol smoke tests cover escaped quotes/control characters, BMP Unicode, astral Unicode, invalid surrogate pairs and malformed hex escapes.
