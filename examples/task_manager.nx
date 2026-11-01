@@ -14,11 +14,11 @@ fn is_safe_command_token(value: string) -> bool {
     while i < length {
         let b = string.byte_at(value, i)
         let allowed =
-            (b >= 48 && b <= 57) ||
-            (b >= 65 && b <= 90) ||
-            (b >= 97 && b <= 122) ||
-            b == 45 || b == 46 || b == 95
-        if !allowed {
+        (b >= 48 && b <= 57) ||
+        (b >= 65 && b <= 90) ||
+        (b >= 97 && b <= 122) ||
+        b == 45 || b == 46 || b == 95
+        if ! allowed {
             return false
         }
         i = i + 1
@@ -38,7 +38,7 @@ fn is_safe_pid(value: string) -> bool {
         if b < 48 || b > 57 {
             return false
         }
-        numeric_pid = numeric_pid * 10 + (b - 48)
+        numeric_pid = numeric_pid * 10 +(b - 48)
         if numeric_pid > 4294967295 {
             return false
         }
@@ -192,7 +192,7 @@ fn list_processes() {
 
 fn process_details() {
     let name = input("Имя процесса (например chrome.exe): ")
-    if !is_safe_command_token(name) {
+    if ! is_safe_command_token(name) {
         print("Недопустимое имя процесса. Разрешены только латинские буквы, цифры, точка, дефис и подчёркивание.")
         return
     }
@@ -202,7 +202,7 @@ fn process_details() {
 
 fn kill_by_name() {
     let name = input("Имя процесса для завершения (например notepad.exe): ")
-    if !is_safe_command_token(name) {
+    if ! is_safe_command_token(name) {
         print("Недопустимое имя процесса. Разрешены только латинские буквы, цифры, точка, дефис и подчёркивание.")
         return
     }
@@ -217,7 +217,7 @@ fn kill_by_name() {
 
 fn kill_by_pid() {
     let pid_s = input("PID процесса: ")
-    if !is_safe_pid(pid_s) {
+    if ! is_safe_pid(pid_s) {
         print("PID должен содержать от 1 до 10 цифр и быть ненулевым.")
         return
     }
@@ -231,7 +231,7 @@ fn kill_by_pid() {
 
 fn launch_program() {
     let prog = input("Программа для запуска (notepad, calc, mspaint...): ")
-    if !is_safe_command_token(prog) {
+    if ! is_safe_command_token(prog) {
         print("Недопустимое имя программы. Укажи имя исполняемого файла без пути и аргументов.")
         return
     }
