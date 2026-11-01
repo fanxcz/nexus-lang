@@ -51,13 +51,23 @@ The LSP currently offers diagnostics, completion, signature help, hover, definit
 
 ## Build system
 
-The compiler-selection settings are kept in `cmake/NexusOptions.cmake` and are
-included before the root `project()` call. This ordering is important: CMake
-must initialize platform-specific compiler and linker rules using the selected
-toolchain. Dependency discovery, source lists, executable targets, install
-rules and CTest registration are still owned by the root `CMakeLists.txt`;
-the small module is a first separation of responsibilities, not a claim that
-the whole build configuration has already been decomposed.
+The root `CMakeLists.txt` is an orchestration entry point. It includes focused
+modules in dependency order:
+
+| Module | Responsibility | Required order |
+|---|---|---|
+| `cmake/NexusOptions.cmake` | Select C/C++ compilers and auto-detect Clang on Windows | Before `project()` |
+| `cmake/NexusDependencies.cmake` | Discover optional SDL2 and SDL extensions | After `project()` |
+| `cmake/NexusSources.cmake` | Define frontend, semantic, backend and driver source groups | Before target creation |
+| `cmake/NexusTargets.cmake` | Configure compiler executable, include paths, definitions and link dependencies | After sources and compile options |
+| `cmake/NexusInstall.cmake` | Install compiler, runtime, standard library, templates and assets | After compiler target creation |
+| `cmake/NexusTests.cmake` | Register compiler, runtime, integration, regression and smoke tests | Under `NEXUS_BUILD_TESTS` |
+
+Compiler selection remains before `project()` so CMake initializes platform
+rules with the selected toolchain. Dependencies and targets are configured
+after platform detection. The source groups are shared by the compiler and
+unit-test targets, reducing the risk that one target silently misses a source
+file included by the other.
 
 The project keeps CMake 3.20 as its declared minimum and C++20 as its language
 standard. Compiler overrides remain available through
