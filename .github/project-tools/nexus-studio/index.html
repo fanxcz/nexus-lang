@@ -10,7 +10,7 @@
 <body>
   <header class="topbar">
     <div class="brand">NEXUS <span>Studio</span></div>
-    <div class="toolbar">
+    <div class="toolbar" role="toolbar" aria-label="Project and build actions">
       <button id="openProject" title="Open a project folder (Ctrl+O)">Open folder</button>
       <button id="newFile" title="Create a source file (Ctrl+N)">New file</button>
       <button id="saveFile" title="Save the current file (Ctrl+S)">Save</button>
@@ -22,17 +22,17 @@
   </header>
 
   <div class="workspace">
-    <aside class="sidebar">
+    <aside class="sidebar" aria-label="Project explorer">
       <div class="section-heading"><span>EXPLORER</span><button id="refreshTree" title="Refresh file list">Refresh</button></div>
       <div class="project-name"><span>▾</span><span id="projectName">No folder opened</span></div>
-      <div id="fileTree" class="file-tree"><div class="empty-state">Open a project folder to see its files.</div></div>
+      <div id="fileTree" class="file-tree" aria-label="Project files"><div class="empty-state">Open a project folder to see its files.</div></div>
     </aside>
 
     <main class="main">
       <div class="tabs">
         <div id="activeTab" class="tab"><span class="file-glyph">◇</span><span id="tabName">Welcome</span><span id="dirtyMark"></span></div>
         <div class="tab-spacer"></div>
-        <div id="saveStatus" class="save-status">Ready</div>
+        <div id="saveStatus" class="save-status" role="status" aria-live="polite">Ready</div>
       </div>
 
       <section id="welcome" class="welcome">
@@ -54,7 +54,7 @@
 
       <section id="editorWrap" class="editor-wrap hidden"><div id="editor"></div></section>
 
-      <section class="terminal-panel">
+      <section class="terminal-panel" aria-label="Integrated terminal and output">
         <div class="terminal-head">
           <span class="terminal-title">OUTPUT / TERMINAL</span>
           <div class="terminal-tools">
@@ -63,17 +63,17 @@
             <button id="toggleTerminal" title="Collapse or expand terminal">Hide</button>
           </div>
         </div>
-        <div id="terminalOutput" class="terminal-output"><div class="terminal-note">Open a project, then use Build or Run. Shell commands can also be entered below.</div></div>
+        <div id="terminalOutput" class="terminal-output" role="log" aria-label="Command output" aria-live="polite" aria-relevant="additions text"><div class="terminal-note">Open a project, then use Build or Run. Shell commands can also be entered below.</div></div>
         <form id="terminalForm" class="terminal-input-row">
           <span class="prompt">&gt;</span>
-          <input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Terminal command…">
+          <input id="terminalInput" aria-label="Terminal command" autocomplete="off" spellcheck="false" placeholder="Terminal command…">
           <button class="terminal-submit" type="submit">Enter</button>
         </form>
       </section>
     </main>
   </div>
 
-  <footer class="statusbar">
+  <footer class="statusbar" aria-label="Editor status">
     <div><span class="status-indicator"></span><span id="statusProject">No project open</span></div>
     <div><span id="compilerStatus">Compiler not selected</span><span id="statusLang">NEXUS</span><span>UTF-8</span><span id="statusPlatform">Desktop</span></div>
   </footer>
