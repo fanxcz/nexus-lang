@@ -112,8 +112,21 @@ namespace nexus {
                 Dependency dependency{name, value, {}, {}};
                 const fs::path local(value);
                 const fs::path normalizedLocal = local.lexically_normal();
-                if (!local.is_absolute() && normalizedLocal.begin() != normalizedLocal.end() &&
-                    *normalizedLocal.begin() == "vendor") {
+                auto firstDeclaredComponent = local.begin();
+                while (firstDeclaredComponent != local.end() &&
+                       (*firstDeclaredComponent == "." || firstDeclaredComponent->empty())) {
+                    ++firstDeclaredComponent;
+                }
+                const bool declaredFromVendor =
+                    firstDeclaredComponent != local.end() && *firstDeclaredComponent == "vendor";
+                const bool normalizedUnderVendor =
+                    normalizedLocal.begin() != normalizedLocal.end() &&
+                    *normalizedLocal.begin() == "vendor";
+                if (!local.is_absolute() && declaredFromVendor && !normalizedUnderVendor) {
+                    throw std::runtime_error("cannot lock local dependency '" + name +
+                                             "': package path escapes vendor/");
+                }
+                if (!local.is_absolute() && normalizedUnderVendor) {
                     const fs::path dependencyRoot = (cfg.root / normalizedLocal).lexically_normal();
                     const fs::path rel = dependencyRoot.lexically_relative(cfg.root);
                     std::error_code ec;
