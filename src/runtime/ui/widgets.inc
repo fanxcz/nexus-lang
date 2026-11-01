@@ -288,7 +288,14 @@ static char* nexus_ui_text_field_impl(double x,
             value, nexus_ui_utf8_column(value, gUiTextFieldAnchor));
 
         const auto pressed = [](size_t scanCode) {
-            return gKeyPressed.size() > scanCode && gKeyPressed[scanCode] != 0;
+            return scanCode < gKeyPressed.size() &&
+                   gKeyPressed[scanCode] != 0 &&
+                   scanCode < gUiTextFieldConsumedKeys.size() &&
+                   gUiTextFieldConsumedKeys[scanCode] == 0;
+        };
+        const auto consume = [](size_t scanCode) {
+            if (scanCode < gUiTextFieldConsumedKeys.size())
+                gUiTextFieldConsumedKeys[scanCode] = 1;
         };
         const bool shiftDown =
             (gKeys.size() > 225 && gKeys[225]) || (gKeys.size() > 229 && gKeys[229]);
@@ -296,6 +303,7 @@ static char* nexus_ui_text_field_impl(double x,
             (gKeys.size() > 224 && gKeys[224]) || (gKeys.size() > 228 && gKeys[228]);
 
         if (pressed(41)) {
+            consume(41);
             if (value != gUiTextFieldOriginal) {
                 value = gUiTextFieldOriginal;
                 valueChanged = true;
@@ -304,6 +312,7 @@ static char* nexus_ui_text_field_impl(double x,
             focused = false;
             gTextInputThisFrame.clear();
         } else if (pressed(43)) {
+            consume(43);
             const int64_t previous = gUiTextFieldPreviousInFrame;
             const int64_t previousFrameLast = gUiTextFieldLastPreviousFrame;
             const int64_t target = shiftDown
@@ -328,15 +337,18 @@ static char* nexus_ui_text_field_impl(double x,
             focused = false;
             gTextInputThisFrame.clear();
         } else if (pressed(40)) {
+            consume(40);
             nexus_ui_text_field_blur();
             focused = false;
             gTextInputThisFrame.clear();
         } else {
             if (controlDown && pressed(4)) {
+                consume(4);
                 gUiTextFieldAnchor = 0;
                 gUiTextFieldCaret = value.size();
             }
             if (pressed(80)) {
+                consume(80);
                 if (!shiftDown && gUiTextFieldCaret != gUiTextFieldAnchor) {
                     gUiTextFieldCaret = std::min(gUiTextFieldCaret, gUiTextFieldAnchor);
                 } else {
@@ -346,6 +358,7 @@ static char* nexus_ui_text_field_impl(double x,
                     gUiTextFieldAnchor = gUiTextFieldCaret;
             }
             if (pressed(79)) {
+                consume(79);
                 if (!shiftDown && gUiTextFieldCaret != gUiTextFieldAnchor) {
                     gUiTextFieldCaret = std::max(gUiTextFieldCaret, gUiTextFieldAnchor);
                 } else {
@@ -355,22 +368,30 @@ static char* nexus_ui_text_field_impl(double x,
                     gUiTextFieldAnchor = gUiTextFieldCaret;
             }
             if (pressed(74)) {
+                consume(74);
                 gUiTextFieldCaret = 0;
                 if (!shiftDown)
                     gUiTextFieldAnchor = gUiTextFieldCaret;
             }
             if (pressed(77)) {
+                consume(77);
                 gUiTextFieldCaret = value.size();
                 if (!shiftDown)
                     gUiTextFieldAnchor = gUiTextFieldCaret;
             }
-            if (pressed(42) && nexus_ui_text_backspace(
-                    value, gUiTextFieldCaret, gUiTextFieldAnchor)) {
-                valueChanged = true;
+            if (pressed(42)) {
+                consume(42);
+                if (nexus_ui_text_backspace(
+                        value, gUiTextFieldCaret, gUiTextFieldAnchor)) {
+                    valueChanged = true;
+                }
             }
-            if (pressed(76) && nexus_ui_text_delete_forward(
-                    value, gUiTextFieldCaret, gUiTextFieldAnchor)) {
-                valueChanged = true;
+            if (pressed(76)) {
+                consume(76);
+                if (nexus_ui_text_delete_forward(
+                        value, gUiTextFieldCaret, gUiTextFieldAnchor)) {
+                    valueChanged = true;
+                }
             }
             if (!gTextInputThisFrame.empty()) {
                 if (nexus_ui_text_insert(value,
