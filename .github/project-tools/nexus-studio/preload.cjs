@@ -25,6 +25,12 @@ contextBridge.exposeInMainWorld('nexusStudio', {
   closeLanguageDocument: filePath => ipcRenderer.invoke('lsp:close', filePath),
   findDefinition: (filePath, position) =>
     ipcRenderer.invoke('lsp:definition', filePath, position),
+  getCompletions: (filePath, position) =>
+    ipcRenderer.invoke('lsp:completion', filePath, position),
+  getHover: (filePath, position) =>
+    ipcRenderer.invoke('lsp:hover', filePath, position),
+  getSignatureHelp: (filePath, position) =>
+    ipcRenderer.invoke('lsp:signatureHelp', filePath, position),
   onDiagnostics: callback =>
     ipcRenderer.on('lsp:diagnostics', (_event, diagnostics) => callback(diagnostics)),
   onLanguageServerExit: callback =>
