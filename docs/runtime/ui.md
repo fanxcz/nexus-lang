@@ -41,7 +41,7 @@ fn main() {
 }
 ```
 
-For `ui_text_field`, click to focus and type UTF-8 text. Left/Right move by Unicode code point; Home/End move to the boundaries; Shift+arrows select; Ctrl+A selects all; Backspace and Delete remove text; typing replaces the selection. Escape restores the value that was present when focus began. Tab and Shift+Tab move through editable text fields in source order and wrap at the ends. `max_bytes` is limited to 1–8192; a non-positive value makes the field read-only. The legacy control uses its rectangle as identity; use `ui_text_field_id` with a unique positive ID if the field can move or resize between frames.
+For `ui_text_field`, click to focus and type UTF-8 text. Left/Right move by Unicode code point; Home/End move to the boundaries; Shift+arrows select; Ctrl+A selects all; Ctrl+C copies the selection, Ctrl+X cuts it after a successful clipboard write, and Ctrl+V pastes a single-line version of clipboard text. Backspace and Delete remove text; typing replaces the selection. Escape restores the value that was present when focus began. Tab and Shift+Tab move through editable text fields in source order and wrap at the ends. `max_bytes` is limited to 1–8192; a non-positive value makes the field read-only. The legacy control uses its rectangle as identity; use `ui_text_field_id` with a unique positive ID if the field can move or resize between frames.
 
 ## Clipboard
 
