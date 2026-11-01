@@ -34,7 +34,8 @@ builds, useful standard-library functions and reliable packaging.
   memory helpers, concrete Option/Result helper enums, and UI/application helpers.
   The APIs are narrower than mature standard libraries in other languages.
 - **Runtime:** SDL-backed drawing, window/input handling, textures, fonts, optional
-  audio, immediate-mode UI widgets, basic ECS/scene helpers, particles and simple
+  audio, immediate-mode UI widgets (including UTF-8 text editing with caret/selection,
+  stable field IDs and Tab traversal), basic ECS/scene helpers, particles and simple
   collision functions. Optional host libraries affect runtime availability.
 - **2D modules:** `std.vec2`, `std.vec3`, `std.engine2d`, `std.tilemap`,
   `std.tilemap_render`, `std.collision2d`, `std.physics2d`, `std.animation2d`,
@@ -69,7 +70,10 @@ that the files it publishes are present and usable.
 **Goal:** NEXUS can comfortably build small desktop tools rather than only drawing demos.
 
 1. Extend the basic `std.ui` text field with stable widget IDs, caret/selection editing,
-   Escape-to-cancel, full multi-field focus traversal, consistent control states and UI scaling.
+   Escape-to-cancel and ordered Tab/Shift+Tab traversal across editable text fields.
+   These text-editing and focus behaviors are now implemented and covered by a runtime
+   UTF-8/editing test. Consistent control states, UI scaling, mouse drag-selection and
+   IME composition remain follow-up work.
 2. Add OS integration through tested APIs: file dialogs, clipboard, application
    configuration directories, process launching and clear error results.
 3. Establish consistent conventions for return codes, handles, missing values and
