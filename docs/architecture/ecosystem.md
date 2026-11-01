@@ -88,7 +88,7 @@ The standard library lives separately in `stdlib/` and is imported by NEXUS prog
 | REPL | `src/compiler/driver/repl/` | Interactive command/session implementation |
 | LSP | `src/compiler/driver/lsp/` | Language-server protocol and lexical workspace services with documented limitations |
 | VS Code extension | `.github/project-tools/vscode-extension/` | `.nx` language registration, TextMate grammar, snippets and a client that starts `nexus lsp`; compiler is installed separately |
-| NEXUS Studio | `.github/project-tools/nexus-studio/` | Electron editor, project explorer, integrated terminal, compiler selection, Build/Run and live diagnostics from the installed LSP; completion/navigation/debugging are not yet integrated |
+| NEXUS Studio | `.github/project-tools/nexus-studio/` | Electron editor, project explorer, integrated terminal, compiler selection, Build/Run and live diagnostics from the installed LSP; completion/hover/navigation/debugging are not yet integrated |
 | NEXUS Paint | `examples/nexus_paint.nx` | Raster canvas example with pencil, eraser, line/rectangle, fill, undo/redo and BMP load/save against the current graphics runtime |
 | Other examples | `examples/` | Demonstrations and starter projects; each example's requirements are defined by its source and guide |
 
