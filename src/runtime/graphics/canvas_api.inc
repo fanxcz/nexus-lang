@@ -453,4 +453,23 @@ int nexus_runtime_test_canvas_blit_rgba(int64_t width,
     std::memcpy(resultPixels, destination.pixels.data(), bytes);
     return 1;
 }
+int64_t nexus_runtime_test_canvas_undo_snapshot_count(int64_t width,
+                                                       int64_t height,
+                                                       int64_t checkpoints) {
+    if (width < 1 || height < 1 || width > 8192 || height > 8192 ||
+        uint64_t(width) * uint64_t(height) > static_cast<uint64_t>(kCanvasMaxPixels) ||
+        checkpoints < 0 || checkpoints > 64)
+        return -1;
+    CanvasData canvas;
+    canvas.w = static_cast<int>(width);
+    canvas.h = static_cast<int>(height);
+    try {
+        canvas.pixels.resize(size_t(canvas.w) * size_t(canvas.h) * 4u);
+        for (int64_t i = 0; i < checkpoints; ++i)
+            canvas_checkpoint_internal(canvas);
+    } catch (const std::exception&) {
+        return -1;
+    }
+    return static_cast<int64_t>(canvas.undo.size());
+}
 #endif
