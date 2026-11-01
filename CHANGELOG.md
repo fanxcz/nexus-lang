@@ -75,9 +75,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   language-feature IPC handlers; definition targets are checked to remain project-local
   
 - Add SDL-backed system clipboard read/write helpers to the graphics runtime and
-  `std.ui`. The symbols are optional at load time; clipboard access returns a safe
-  sentinel and records `gfx_error()` when no graphics backend or clipboard capability
-  is available. Headless backend-state coverage verifies the failure path.
+  `std.ui`, plus Ctrl+C/Ctrl+X/Ctrl+V in immediate-mode text fields. The symbols are
+  optional at load time; clipboard access returns safe sentinels and records
+  `gfx_error()` when no graphics backend or clipboard capability is available.
+  Headless backend-state coverage verifies the failure path.
 
 - NEXUS Studio now supports multiple open document tabs with independent in-memory
   buffers and dirty state. Switching documents serializes tab operations, preserves
