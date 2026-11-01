@@ -23,6 +23,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 |---|---|
 | `nexus_tests` | C++ lexer/parser/semantic/compiler unit checks |
 | `nexus_runtime_memory_test` | Runtime memory behavior |
+| `nexus_lsp_protocol_test` | JSON-RPC field extraction, JSON string escapes, UTF-16 surrogate pairs and output escaping |
 | `nexus_runtime_scene_test` | Scene snapshot save/load/apply, ECS replacement and invalid-handle safety |
 | `nexus_task_manager_security_smoke` | Executes the Task Manager's extracted shell-token/PID validators against allowed and hostile inputs |
 | `nexus_runtime_json_test` | JSON grammar, escape decoding, Unicode, bounded parsing, top-level lookup and array access |
