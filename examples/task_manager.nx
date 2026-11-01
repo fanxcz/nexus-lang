@@ -32,18 +32,19 @@ fn is_safe_pid(value: string) -> bool {
         return false
     }
     let mut i = 0
-    let mut nonzero = false
+    let mut numeric_pid: i64 = 0
     while i < length {
         let b = string.byte_at(value, i)
         if b < 48 || b > 57 {
             return false
         }
-        if b != 48 {
-            nonzero = true
+        numeric_pid = numeric_pid * 10 + (b - 48)
+        if numeric_pid > 4294967295 {
+            return false
         }
         i = i + 1
     }
-    return nonzero
+    return numeric_pid > 0
 }
 
 fn show_header() {
