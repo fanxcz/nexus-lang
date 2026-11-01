@@ -31,7 +31,7 @@ Small, focused source files cover arrays, loops, branching, functions, structs, 
 
 - [`ui_playground.nx`](ui_playground.nx) — settings panel with buttons, checkboxes, slider, progress bar and layout cells.
 
-`nexus_paint.nx`, `nexus_editor.nx`, `nexus_focus.nx`, `nexus_studio.nx`, `task_manager.nx`, and `interactive_cli.nx` demonstrate larger interactive applications and workflows.
+`nexus_paint.nx`, `nexus_editor.nx`, `nexus_focus.nx`, `nexus_studio.nx`, `task_manager.nx`, and `interactive_cli.nx` demonstrate larger interactive applications and workflows. NEXUS Editor uses scene snapshots; its Load action applies the saved snapshot to the live ECS registry and replaces existing entity handles.
 
 ## Templates
 
