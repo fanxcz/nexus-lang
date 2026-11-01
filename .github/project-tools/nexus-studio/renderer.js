@@ -9,6 +9,7 @@
   let currentUri = null;
   let lspVersion = 0;
   let languageServerReady = false;
+  let languageServerCrashed = false;
   let languageServerPromise = null;
   let languageServerGeneration = 0;
   let pendingLanguageSync = Promise.resolve();
@@ -52,6 +53,19 @@
     editor.session.on('change', () => {
       if (!currentPath || suppressEditorChange) return;
       markDirty(true);
+      if (!currentUri && languageServerCrashed &&
+          currentPath.toLowerCase().endsWith('.nx')) {
+        const filePath = currentPath;
+        languageServerCrashed = false;
+        void ensureLanguageServer().then(ready => {
+          if (ready && currentPath === filePath && !currentUri) {
+            return openCurrentLanguageDocument();
+          }
+          return false;
+        }).catch(error => {
+          appendOutput('Language services restart failed: ' + error.message, 'error');
+        });
+      }
       if (currentUri && languageServerReady) {
         lspVersion += 1;
         const version = lspVersion;
@@ -113,6 +127,7 @@
         .then(() => {
           if (generation !== languageServerGeneration) return false;
           languageServerReady = true;
+          languageServerCrashed = false;
           appendOutput('NEXUS language services ready.', 'system');
           return true;
         })
@@ -171,6 +186,14 @@
     $('diagnosticStatus').title = 'NEXUS language diagnostics';
   }
 
+  api.onLanguageServerExit(() => {
+    if (languageServerReady) languageServerCrashed = true;
+    languageServerReady = false;
+    currentUri = null;
+    $('diagnosticStatus').textContent = 'Language server stopped';
+    $('diagnosticStatus').title = 'Edit the active .nx file to try restarting language services';
+  });
+
   api.onDiagnostics(params => {
     if (!editor || !currentUri || params.uri !== currentUri) return;
     const diagnostics = Array.isArray(params.diagnostics) ? params.diagnostics : [];
@@ -220,6 +243,7 @@
       languageServerGeneration += 1;
       languageServerPromise = null;
       languageServerReady = false;
+      languageServerCrashed = false;
       clearDiagnostics();
       $('projectName').textContent = root.split(/[\\/]/).filter(Boolean).pop() || root;
       $('statusProject').textContent = root;
