@@ -77,6 +77,9 @@
     SDLPROC(SDL_StopTextInput, void, ())
     SDLPROC(SDL_LoadBMP, SDL_Surface*, (const char*))
     SDLPROC(SDL_ConvertSurfaceFormat, SDL_Surface*, (SDL_Surface*, uint32_t, uint32_t))
+    SDLPROC(SDL_CreateRGBSurfaceWithFormat, SDL_Surface*, (uint32_t, int, int, int, uint32_t))
+    SDLPROC(SDL_LockSurface, int, (SDL_Surface*))
+    SDLPROC(SDL_UnlockSurface, void, (SDL_Surface*))
     SDLPROC(SDL_FreeSurface, void, (SDL_Surface*))
     SDLPROC(SDL_GetPerformanceCounter, uint64_t, ())
     SDLPROC(SDL_GetPerformanceFrequency, uint64_t, ())
@@ -94,10 +97,12 @@
     using PFN_IMG_Load = SDL_Surface* (*)(const char*);
 
     using PFN_IMG_GetError = const char* (*)();
+    using PFN_IMG_SavePNG = int (*)(SDL_Surface*, const char*);
 
     static PFN_IMG_Load IMG_Load = nullptr;
 
     static PFN_IMG_GetError IMG_GetError = nullptr;
+    static PFN_IMG_SavePNG IMG_SavePNG = nullptr;
 
     using PFN_TTF_Init = int (*)();
 
