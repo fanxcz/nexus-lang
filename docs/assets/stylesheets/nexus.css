@@ -249,3 +249,132 @@ body, .md-container, .md-main { background: var(--nexus-bg); }
     animation-duration: .01ms !important;
   }
 }
+
+/* NEXUS landing page and shared ecosystem design tokens. */
+:root {
+  --nexus-surface-2: #151617;
+  --nexus-surface-3: #1b1c1d;
+  --nexus-border-strong: #414243;
+  --nexus-text-strong: #f4f4ef;
+  --nexus-accent-contrast: #090a0b;
+}
+.md-header { border-bottom-width: 1px; }
+.md-header__inner { min-height: 3rem; }
+.md-content__inner { padding-top: clamp(.7rem, 2vw, 1.4rem); }
+.md-typeset h2 { scroll-margin-top: 5rem; }
+.md-typeset .grid.cards > ul > li {
+  min-width: 0;
+  padding: 1.15rem;
+}
+.md-typeset .grid.cards > ul > li strong { color: var(--nexus-text-strong); }
+.md-typeset .grid.cards > ul > li p { line-height: 1.65; }
+.md-typeset .grid.cards > ul > li a { font-weight: 700; }
+.md-typeset pre { overflow: auto; }
+.md-typeset pre > code { tab-size: 4; }
+.md-typeset .md-button:focus-visible {
+  outline: 2px solid var(--nexus-yellow);
+  outline-offset: 3px;
+}
+.nexus-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(18rem, .92fr);
+  align-items: center;
+  gap: clamp(1.25rem, 3.2vw, 2.8rem);
+  border-left-width: 4px;
+  margin: .35rem 0 2.2rem;
+  padding: clamp(1.4rem, 4vw, 3rem);
+}
+.nexus-hero-copy { min-width: 0; }
+.nexus-hero h1 {
+  max-width: 13ch;
+  font-size: clamp(2.1rem, 4.5vw, 3.45rem);
+  line-height: 1.04;
+  letter-spacing: -.045em;
+}
+.nexus-hero-copy > p { max-width: 42rem; color: #c7c8c1; }
+.nexus-hero .nexus-kicker { margin-bottom: .85rem; }
+.nexus-hero .md-button { margin-top: .65rem; }
+.nexus-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  margin-top: 1.35rem;
+}
+.nexus-hero-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  padding: .18rem .55rem;
+  border: 1px solid #353637;
+  border-radius: .18rem;
+  background: #121314;
+  color: #c5c6bf;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .015em;
+}
+.nexus-hero-code {
+  min-width: 0;
+  padding: .8rem;
+  border: 1px solid #343536;
+  border-radius: .25rem;
+  background: #090a0b;
+  box-shadow: 0 14px 35px rgb(0 0 0 / 18%);
+}
+.nexus-code-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .15rem .25rem .7rem;
+  color: #d6d7cf;
+  font-size: .7rem;
+  font-weight: 750;
+}
+.nexus-code-heading span:last-child {
+  color: var(--nexus-yellow);
+  font-size: .62rem;
+  letter-spacing: .12em;
+}
+.nexus-hero-code pre {
+  margin: 0;
+  border-color: #28292a;
+  background: #0e0f10;
+}
+.nexus-code-caption {
+  padding: .6rem .25rem .1rem;
+  color: #999b94;
+  font-size: .73rem;
+  line-height: 1.5;
+}
+.nexus-quickstart {
+  margin: 1rem 0 1.6rem;
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid var(--nexus-border);
+  border-radius: .25rem;
+  background: var(--nexus-panel);
+}
+.nexus-quickstart h3 { margin-top: 0; }
+.nexus-quickstart pre { margin-bottom: .9rem; }
+.nexus-quickstart .md-button { margin-top: .2rem; }
+.nexus-section-intro { max-width: 56rem; color: var(--nexus-muted); }
+.md-typeset .nexus-status-table td:first-child { color: var(--nexus-text-strong); font-weight: 700; }
+.md-typeset .nexus-status-table td:last-child { color: #b8b9b2; }
+.md-typeset .grid.cards > ul > li:hover { border-color: #b4951d; background: #141510; }
+.md-typeset .admonition { border-left-width: 3px; }
+.md-typeset :target { scroll-margin-top: 5rem; }
+.md-footer { margin-top: 2rem; }
+@media (max-width: 60rem) {
+  .nexus-hero { grid-template-columns: minmax(0, 1fr); }
+  .nexus-hero h1 { max-width: 18ch; }
+  .nexus-hero-code { max-width: 100%; }
+}
+@media (max-width: 44rem) {
+  .nexus-hero { gap: 1.1rem; padding: 1.2rem; }
+  .nexus-hero h1 { font-size: clamp(2rem, 10vw, 2.65rem); }
+  .nexus-hero-meta { gap: .35rem; }
+  .nexus-hero-meta span { font-size: .62rem; }
+  .nexus-hero-code { padding: .55rem; }
+  .nexus-code-heading { font-size: .64rem; }
+  .nexus-quickstart { padding: .9rem; }
+  .md-typeset table:not([class]) { max-width: 100%; }
+}
