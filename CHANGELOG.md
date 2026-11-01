@@ -40,7 +40,7 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   same files. Arrays are validated structurally; scalar fields still read only
   scalar values.
 
-- The LSP JSON-RPC string decoder now handles all standard JSON string escapes, BMP Unicode `\\uXXXX` escapes and UTF-16 surrogate pairs, converting escaped Unicode to UTF-8. A dedicated CTest covers valid and invalid escape sequences, JSON-RPC ids, positions, and watched-file capability detection.
+- The LSP JSON-RPC string decoder now handles all standard JSON string escapes, BMP Unicode `\uXXXX` escapes and UTF-16 surrogate pairs, converting escaped Unicode to UTF-8. A dedicated CTest covers valid and invalid escape sequences, JSON-RPC ids, positions, and watched-file capability detection.
 
 - The LSP protocol field reader now skips quoted JSON values when resolving keys, preventing embedded `\"uri\"`/`\"line\"` text from being mistaken for protocol fields. Unit tests cover these decoy cases as well as escaped Unicode and watched-file capability parsing.
 
