@@ -131,6 +131,9 @@ static bool canvas_clip_line(double& x1,
     const double originalY = y1;
     const double dx = x2 - x1;
     const double dy = y2 - y1;
+    if (!std::isfinite(dx) || !std::isfinite(dy) ||
+        !std::isfinite(margin) || margin < 0.0)
+        return false;
     double first = 0.0;
     double last = 1.0;
 
