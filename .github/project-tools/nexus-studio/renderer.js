@@ -111,6 +111,8 @@
         const version = lspVersion;
         const filePath = currentPath;
         const source = editor.getValue();
+        const active = documents.get(filePath);
+        if (active) active.version = version;
         pendingLanguageSync = pendingLanguageSync
           .catch(() => {})
           .then(() => api.changeLanguageDocument(filePath, source, version))
@@ -196,6 +198,11 @@
     const opened = await api.openLanguageDocument(currentPath, editor.getValue(), 1);
     currentUri = opened.uri;
     lspVersion = 1;
+    const active = documents.get(currentPath);
+    if (active) {
+      active.uri = currentUri;
+      active.version = lspVersion;
+    }
     $('diagnosticStatus').textContent = 'Checking…';
     return true;
   }
@@ -230,6 +237,8 @@
     if (languageServerReady) languageServerCrashed = true;
     languageServerReady = false;
     currentUri = null;
+    const active = documents.get(currentPath);
+    if (active) active.uri = null;
     $('diagnosticStatus').textContent = 'Language server stopped';
     $('diagnosticStatus').title = 'Edit the active .nx file to try restarting language services';
   });
@@ -271,7 +280,9 @@
     } catch (error) { appendOutput(error.message, 'error'); }
   }
   async function openProject() {
-    if (dirty && !confirm('Discard unsaved changes and open another project?')) return;
+    const hasUnsavedDocuments = Array.from(documents.values()).some(item => item.dirty);
+    if (hasUnsavedDocuments &&
+        !confirm('Discard unsaved changes in all open documents and open another project?')) return;
     try {
       await pendingLanguageSync.catch(() => {});
       const project = await api.openProject();
@@ -280,6 +291,8 @@
       currentPath = '';
       currentUri = null;
       lspVersion = 0;
+      documents.clear();
+      renderTabs();
       languageServerGeneration += 1;
       languageServerPromise = null;
       languageServerReady = false;
@@ -433,7 +446,6 @@
   }
   async function newFile() {
     if (!root) { await openProject(); if (!root) return; }
-    if (dirty && !confirm('Discard unsaved changes and create another file?')) return;
     const rel = prompt('File path relative to the project folder:', 'main.nx');
     if (!rel) return;
     if (rel.startsWith('/') || rel.split(/[\\/]/).includes('..') || /^[A-Za-z]:/.test(rel)) {
