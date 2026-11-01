@@ -122,7 +122,7 @@ nexus pkg build
 nexus pkg publish
 ```
 
-The current package manager supports local vendoring and creation of a local `.nxpkg` archive. `publish` does not upload to a hosted package registry. `nexus pkg verify` validates local package checksums and checks that manifest dependencies, lockfile entries, versions, and paths under `vendor/` agree.
+The current package manager supports local vendoring and creation of a local `.nxpkg` archive. `publish` does not upload to a hosted package registry. `nexus pkg verify` validates local package checksums and checks that manifest dependencies, lockfile entries, versions, and paths under `vendor/` agree. Lock refresh and verification reject package-root or manifest symlinks, symlinked files/directories inside a checksummed package, and paths that traverse out of `vendor/`; dependency integrity is computed only for a canonical package directory contained by the project's canonical `vendor/` directory.
 
 ## Language server
 
