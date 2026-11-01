@@ -1,0 +1,25 @@
+import std.os
+
+fn main() {
+    let directory = config_dir("NEXUS Runtime Smoke")
+    if directory == "" {
+        print("config_dir failed: " + config_error())
+        exit(1)
+    }
+    if config_error() != "" {
+        print("config_error was not cleared after a successful call")
+        exit(2)
+    }
+
+    let unsafe_directory = config_dir("../outside")
+    if unsafe_directory != "" {
+        print("config_dir accepted a path traversal component")
+        exit(3)
+    }
+    if config_error() == "" {
+        print("config_dir did not report a rejected application name")
+        exit(4)
+    }
+
+    print("NEXUS config directory smoke: PASS")
+}
