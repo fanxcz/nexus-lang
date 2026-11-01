@@ -332,51 +332,54 @@
     ensureEditor();
     if (!editor) return false;
     editor.setReadOnly(true);
-
-    if (currentPath && editor && documents.has(currentPath)) {
-      const previous = documents.get(currentPath);
-      previous.content = editor.getValue();
-      previous.dirty = dirty;
-      previous.uri = currentUri;
-    }
-    if (currentUri && currentPath) {
-      await pendingLanguageSync.catch(() => {});
-      await api.closeLanguageDocument(currentPath).catch(() => {});
-      const previous = documents.get(currentPath);
-      if (previous) previous.uri = null;
-    }
-
-    currentUri = null;
-    lspVersion = 0;
-    clearDiagnostics();
-    ensureEditor();
-    if (!editor) return false;
-
-    currentPath = rel;
-    suppressEditorChange = true;
-    editor.setValue(next.content, -1);
-    suppressEditorChange = false;
-    editor.session.setMode(rel.toLowerCase().endsWith('.nx') ? 'ace/mode/nexus' : 'ace/mode/text');
-    welcome.classList.add('hidden');
-    editorWrap.classList.remove('hidden');
-    $('tabName').textContent = rel.split(/[\\/]/).pop() || rel;
-    $('activeTab').title = rel;
-    $('statusLang').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS' : 'TEXT';
-    markDirty(!!next.dirty);
-    await refreshTree();
-
-    if (rel.toLowerCase().endsWith('.nx') && await ensureLanguageServer()) {
-      try {
-        await openCurrentLanguageDocument();
-      } catch (error) {
-        appendOutput('Could not open language document: ' + error.message, 'error');
+    try {
+      if (currentPath && editor && documents.has(currentPath)) {
+        const previous = documents.get(currentPath);
+        previous.content = editor.getValue();
+        previous.dirty = dirty;
+        previous.uri = currentUri;
       }
-    } else {
+      if (currentUri && currentPath) {
+        await pendingLanguageSync.catch(() => {});
+        await api.closeLanguageDocument(currentPath).catch(() => {});
+        const previous = documents.get(currentPath);
+        if (previous) previous.uri = null;
+      }
+
+      currentUri = null;
+      lspVersion = 0;
       clearDiagnostics();
+      currentPath = rel;
+      suppressEditorChange = true;
+      try {
+        editor.setValue(next.content, -1);
+      } finally {
+        suppressEditorChange = false;
+      }
+      editor.session.setMode(rel.toLowerCase().endsWith('.nx') ? 'ace/mode/nexus' : 'ace/mode/text');
+      welcome.classList.add('hidden');
+      editorWrap.classList.remove('hidden');
+      $('tabName').textContent = rel.split(/[\\/]/).pop() || rel;
+      $('activeTab').title = rel;
+      $('statusLang').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS' : 'TEXT';
+      markDirty(!!next.dirty);
+      await refreshTree();
+
+      if (rel.toLowerCase().endsWith('.nx') && await ensureLanguageServer()) {
+        try {
+          await openCurrentLanguageDocument();
+        } catch (error) {
+          appendOutput('Could not open language document: ' + error.message, 'error');
+        }
+      } else {
+        clearDiagnostics();
+      }
+      setStatus('Opened ' + rel);
+      return true;
+    } finally {
+      suppressEditorChange = false;
+      if (editor) editor.setReadOnly(false);
     }
-    setStatus('Opened ' + rel);
-    editor.setReadOnly(false);
-    return true;
   }
 
   function switchDocument(rel) {
