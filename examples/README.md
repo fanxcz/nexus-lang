@@ -49,3 +49,5 @@ nexus run examples/vector_lab.nx
 ```
 
 Some examples load assets through repository-relative paths. Run them from the repository root unless their own launcher changes the working directory. See [`assets/README.md`](assets/README.md) before moving or removing files under `assets/`.
+
+`task_manager.nx` is a Windows-only terminal example. It uses `tasklist` and `taskkill`; user-provided process names and PIDs are validated before they reach the shell.
