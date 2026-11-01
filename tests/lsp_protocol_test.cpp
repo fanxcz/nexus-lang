@@ -5,7 +5,7 @@
 
 namespace {
     int fail(const char* message) {
-        std::fprintf(stderr, "FAIL LSP protocol: %s\n", message);
+        std::fprintf(stderr, "FAIL LSP protocol: %s\\n", message);
         return 1;
     }
 }
@@ -15,11 +15,11 @@ int main() {
 
     const std::string escaped =
         R"({"text":"line\\nquote: \\"ok\\" slash: \\/ tab: \\t back: \\\\ end"})";
-    if (extractString(escaped, "text") != "line\nquote: \"ok\" slash: / tab: \t back: \\ end")
+    if (extractString(escaped, "text") != "line\\nquote: \\"ok\\" slash: / tab: \\t back: \\\\ end")
         return fail("standard JSON string escapes were not decoded");
 
     const std::string unicode = R"({"text":"caf\\u00e9 \\uD83D\\uDE00"})";
-    if (extractString(unicode, "text") != std::string("caf\xc3\xa9 \xf0\x9f\x98\x80"))
+    if (extractString(unicode, "text") != std::string("caf\\xc3\\xa9 \\xf0\\x9f\\x98\\x80"))
         return fail("BMP escapes or UTF-16 surrogate pairs were not decoded to UTF-8");
 
     if (!extractString(R"({"text":""})", "text").empty())
@@ -34,7 +34,7 @@ int main() {
 
     if (extractId(R"({"jsonrpc":"2.0","id":42,"method":"x"})") != "42")
         return fail("numeric JSON-RPC id was not preserved");
-    if (extractId(R"({"jsonrpc":"2.0","id":"req-7","method":"x"})") != "\"req-7\"")
+    if (extractId(R"({"jsonrpc":"2.0","id":"req-7","method":"x"})") != "\\"req-7\\"")
         return fail("string JSON-RPC id was not preserved");
     if (extractNumber(R"({"line":12,"character":34})", "character") != 34)
         return fail("numeric field extraction failed");
@@ -48,8 +48,8 @@ int main() {
             R"({"capabilities":{"workspace":{"didChangeWatchedFiles":{"dynamicRegistration":false}}}})"))
         return fail("static watched-file capability was misdetected as dynamic");
 
-    const std::string escapedOutput = jsonEscape("line\n\t\"\\");
-    if (escapedOutput != "line\\n\\t\\\"\\\\")
+    const std::string escapedOutput = jsonEscape("line\\n\\t\\"\\\\");
+    if (escapedOutput != "line\\\\n\\\\t\\\\\\"\\\\\\\\")
         return fail("JSON output escaping is incorrect");
 
     std::puts("NEXUS LSP protocol tests: PASS");
