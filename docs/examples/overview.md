@@ -37,8 +37,9 @@ The CLI accepts a source-file path directly; `nexus run --example NAME` is not a
 | `nexus_arena.nx` | Terminal turn-based hero-versus-boss combat simulation |
 | `terminal_game.nx` | Minimal terminal-grid movement game |
 | `nexus_studio.nx` | Terminal menu demo containing calculator, guessing and mini-battle routines |
+| `task_manager.nx` | Windows-only console sample using `tasklist`, `taskkill`, `systeminfo` and `start`; names/PIDs are restricted before shell commands |
 
-The names describe individual sample programs, not claims that each is a complete production product or game framework.
+The names describe individual sample programs, not claims that each is a complete production product or game framework. The Task Manager sample invokes Windows shell commands through the runtime and is not a cross-platform process-management API.
 
 ## Graphics and runtime
 
