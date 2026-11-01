@@ -14,6 +14,12 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 - Add `std.os.config_dir(app_name)` for per-user application configuration
   directories on Windows, macOS and Linux, with `std.os.config_error()` exposing
   failure details. Unsafe app-name path components are rejected; runtime tests cover
+  creation, invalid names, traversal and filesystem failure, including the NEXUS
+  builtin wrapper under an isolated config root.
+
+- Add `std.os.config_dir(app_name)` for per-user application configuration
+  directories on Windows, macOS and Linux, with `std.os.config_error()` exposing
+  failure details. Unsafe app-name path components are rejected; runtime tests cover
   creation, invalid names, traversal and filesystem failure.
 
 - Added explicit exclusive mutable slices using `mut []T` and `mut array[start..end]`.
