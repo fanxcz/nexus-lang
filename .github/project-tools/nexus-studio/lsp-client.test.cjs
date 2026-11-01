@@ -134,13 +134,13 @@ test('decoder rejects non-object and invalid JSON payloads', () => {
   const invalidFrame = Buffer.concat([
     Buffer.from('Content-Length: ' + invalidBody.length + '\r\n\r\n'), invalidBody
   ]);
-  assert.throws(() => decoder.push(invalidFrame), /not valid UTF-8 JSON/);
+  assert.throws(() => decoder.push(invalidFrame), /not valid JSON/);
 
   const invalidUtf8Body = Buffer.from([0xff]);
   const invalidUtf8Frame = Buffer.concat([
     Buffer.from('Content-Length: 1\r\n\r\n'), invalidUtf8Body
   ]);
-  assert.throws(() => decoder.push(invalidUtf8Frame), /not valid UTF-8 JSON/);
+  assert.throws(() => decoder.push(invalidUtf8Frame), /not valid UTF-8/);
 });
 
 test('language client initializes, acknowledges server requests and forwards diagnostics', async () => {
@@ -163,11 +163,12 @@ test('language client initializes, acknowledges server requests and forwards dia
   assert.equal(client.ready, true);
   assert.equal(spawnCall[0], '/opt/nexus/bin/nexus');
   assert.deepEqual(spawnCall[1], ['lsp']);
-  assert.equal(spawnCall[2].cwd, '/tmp/NEXUS project');
+  assert.ok(spawnCall[2].cwd.endsWith('NEXUS project'));
 
   const initialize = child.received.find(message => message.method === 'initialize');
   assert.ok(initialize);
-  assert.equal(initialize.params.rootPath, '/tmp/NEXUS project');
+  assert.ok(initialize.params.rootPath.endsWith('NEXUS project'));
+  assert.ok(initialize.params.rootUri.endsWith('/NEXUS%20project'));
   assert.equal(initialize.params.workspaceFolders[0].name, 'NEXUS project');
   assert.ok(child.received.some(message => message.method === 'initialized'));
   assert.ok(child.received.some(message =>
@@ -260,23 +261,18 @@ test('Windows command launch quotes a compiler path with spaces', async () => {
 });
 
 test('stopping the child rejects outstanding requests', async () => {
-  class SilentChild extends FakeChild {
-    constructor() {
-      super();
-      this.stdin.removeAllListeners('data');
-    }
-  }
-  const child = new SilentChild();
+  const child = new FakeChild();
   const client = new NexusLspClient({
     platform: 'linux',
     spawnProcess: () => child
   });
-  client.child = child;
-  client.ready = true;
+  await client.start('/usr/bin/nexus', '/tmp/project');
   const pending = client.request('workspace/symbol', { query: 'x' });
   await new Promise(resolve => setImmediate(resolve));
   child.kill('SIGTERM');
   await assert.rejects(pending, /exited/);
+  assert.equal(client.ready, false);
+  assert.equal(client.child, null);
 });
 
 test('stop observes a child that closes immediately after stdin is ended', async () => {
