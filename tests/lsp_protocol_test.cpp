@@ -24,6 +24,11 @@ int main() {
 
     if (!extractString(R"({"text":""})", "text").empty())
         return fail("empty JSON string did not decode to empty text");
+    const std::string decoyUri =
+        R"({"text":"fake \\"uri\\":\\"file:///wrong.nx\\"","params":{"textDocument":{"uri":"file:///right.nx"}}})";
+    if (extractString(decoyUri, "uri") != "file:///right.nx")
+        return fail("a field-like string value was mistaken for a JSON key");
+
 
     if (!extractString(R"({"text":"bad\uD800x"})", "text").empty())
         return fail("unpaired high surrogate was accepted");
@@ -40,6 +45,8 @@ int main() {
         return fail("numeric field extraction failed");
     if (extractNumber(R"({"line":-1})", "line") != 0)
         return fail("negative position was not rejected");
+    if (extractNumber(R"({"text":"fake \\"line\\":999","position":{"line":1}})", "line") != 1)
+        return fail("a field-like string value was mistaken for a JSON key");
 
     if (!supportsWatchedFilesRegistration(
             R"({"capabilities":{"workspace":{"didChangeWatchedFiles":{"dynamicRegistration":true}}}})"))
@@ -47,6 +54,9 @@ int main() {
     if (supportsWatchedFilesRegistration(
             R"({"capabilities":{"workspace":{"didChangeWatchedFiles":{"dynamicRegistration":false}}}})"))
         return fail("static watched-file capability was misdetected as dynamic");
+    if (supportsWatchedFilesRegistration(
+            R"({"text":"fake \\"workspace\\":{\\"didChangeWatchedFiles\\":{\\"dynamicRegistration\\":true}}","capabilities":{}})"))
+        return fail("a field-like string value was mistaken for a watched-file capability");
 
     const std::string escapedOutput = jsonEscape("line\n\t\"\\");
     if (escapedOutput != "line\\n\\t\\\"\\\\")
