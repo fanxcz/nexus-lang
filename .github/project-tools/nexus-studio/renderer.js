@@ -656,6 +656,7 @@
   $('newFile').addEventListener('click', newFile);
   $('welcomeNew').addEventListener('click', newFile);
   $('saveFile').addEventListener('click', saveCurrent);
+  $('definitionFile').addEventListener('click', goToDefinition);
   $('selectCompiler').addEventListener('click', chooseCompiler);
   $('buildFile').addEventListener('click', () => buildOrRun('build'));
   $('runFile').addEventListener('click', () => buildOrRun('run'));
