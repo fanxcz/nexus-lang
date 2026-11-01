@@ -75,7 +75,10 @@ that the files it publishes are present and usable.
    UTF-8/editing test. Consistent control states, UI scaling, mouse drag-selection and
    IME composition remain follow-up work.
 2. Add OS integration through tested APIs: file dialogs, clipboard, application
-   configuration directories, process launching and clear error results.
+   configuration directories, process launching and clear error results. The
+   cross-platform per-user configuration directory helper and explicit error accessor
+   are now implemented; file dialogs, clipboard and an argument-array process API
+   remain follow-up work.
 3. Establish consistent conventions for return codes, handles, missing values and
    error messages across filesystem, JSON, network and database helpers.
 4. Provide a multi-file example application that exercises UI controls, persistence,
