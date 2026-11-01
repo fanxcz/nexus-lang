@@ -10,6 +10,86 @@ namespace nexus {
         namespace lsp {
 
         namespace {
+            std::size_t findJsonFieldValueStart(const std::string& json, const std::string& field,
+                                                std::size_t begin = 0,
+                                                std::size_t end = std::string::npos) {
+                end = std::min(end, json.size());
+                std::size_t position = begin;
+                while (position < end) {
+                    if (json[position] != '"') {
+                        ++position;
+                        continue;
+                    }
+
+                    const std::size_t keyBegin = position + 1;
+                    ++position;
+                    bool escaped = false;
+                    while (position < end) {
+                        const char current = json[position];
+                        if (!escaped && current == '"')
+                            break;
+                        if (!escaped && current == '\\')
+                            escaped = true;
+                        else
+                            escaped = false;
+                        ++position;
+                    }
+                    if (position >= end)
+                        return std::string::npos;
+
+                    const bool matches =
+                        position - keyBegin == field.size() &&
+                        json.compare(keyBegin, field.size(), field) == 0;
+                    std::size_t value = position + 1;
+                    while (value < end &&
+                           std::isspace(static_cast<unsigned char>(json[value])))
+                        ++value;
+                    if (matches && value < end && json[value] == ':') {
+                        ++value;
+                        while (value < end &&
+                               std::isspace(static_cast<unsigned char>(json[value])))
+                            ++value;
+                        return value;
+                    }
+                    ++position;
+                }
+                return std::string::npos;
+            }
+
+            std::size_t matchingJsonObjectEnd(const std::string& json, std::size_t begin,
+                                              std::size_t end = std::string::npos) {
+                end = std::min(end, json.size());
+                if (begin >= end || json[begin] != '{')
+                    return std::string::npos;
+                std::size_t depth = 0;
+                bool inString = false;
+                bool escaped = false;
+                for (std::size_t i = begin; i < end; ++i) {
+                    const char current = json[i];
+                    if (inString) {
+                        if (!escaped && current == '"')
+                            inString = false;
+                        if (!escaped && current == '\\')
+                            escaped = true;
+                        else
+                            escaped = false;
+                        continue;
+                    }
+                    if (current == '"') {
+                        inString = true;
+                    } else if (current == '{') {
+                        ++depth;
+                    } else if (current == '}') {
+                        if (depth == 0)
+                            return std::string::npos;
+                        --depth;
+                        if (depth == 0)
+                            return i;
+                    }
+                }
+                return std::string::npos;
+            }
+
             int hexDigit(char value) {
                 if (value >= '0' && value <= '9')
                     return value - '0';
@@ -54,16 +134,9 @@ namespace nexus {
         } // namespace
 
         std::string extractString(const std::string& json, const std::string& field) {
-            const std::string key = "\"" + field + "\"";
-            auto pos = json.find(key);
+            std::size_t pos = findJsonFieldValueStart(json, field);
             if (pos == std::string::npos)
                 return std::string{};
-            pos = json.find(':', pos + key.size());
-            if (pos == std::string::npos)
-                return std::string{};
-            ++pos;
-            while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos])))
-                ++pos;
             if (pos >= json.size() || json[pos] != '"')
                 return std::string{};
 
@@ -138,15 +211,9 @@ namespace nexus {
         }
 
         std::string extractId(const std::string& json) {
-            const auto key = json.find("\"id\"");
-            if (key == std::string::npos)
-                return std::string{};
-            auto pos = json.find(':', key + 4);
+            auto pos = findJsonFieldValueStart(json, "id");
             if (pos == std::string::npos)
                 return std::string{};
-            ++pos;
-            while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos])))
-                ++pos;
             if (pos >= json.size())
                 return std::string{};
             const auto begin = pos;
@@ -173,16 +240,9 @@ namespace nexus {
         }
 
         std::size_t extractNumber(const std::string& json, const std::string& field) {
-            const std::string key = "\"" + field + "\"";
-            const auto keyPos = json.find(key);
-            if (keyPos == std::string::npos)
-                return std::size_t{0};
-            auto pos = json.find(':', keyPos + key.size());
+            const std::size_t pos = findJsonFieldValueStart(json, field);
             if (pos == std::string::npos)
                 return std::size_t{0};
-            ++pos;
-            while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos])))
-                ++pos;
             const auto begin = pos;
             while (pos < json.size() && std::isdigit(static_cast<unsigned char>(json[pos])))
                 ++pos;
@@ -196,21 +256,34 @@ namespace nexus {
         }
 
         bool supportsWatchedFilesRegistration(const std::string& json) {
-            const auto workspace = json.find("\"workspace\"");
-            if (workspace == std::string::npos)
+            const std::size_t workspaceValue =
+                findJsonFieldValueStart(json, "workspace");
+            if (workspaceValue == std::string::npos)
                 return false;
-            const auto watchedFiles = json.find("\"didChangeWatchedFiles\"", workspace);
-            if (watchedFiles == std::string::npos)
+            const std::size_t workspaceEnd = matchingJsonObjectEnd(json, workspaceValue);
+            if (workspaceEnd == std::string::npos)
                 return false;
-            const auto dynamicRegistration = json.find("\"dynamicRegistration\"", watchedFiles);
-            if (dynamicRegistration == std::string::npos)
+
+            const std::size_t watchedValue =
+                findJsonFieldValueStart(json, "didChangeWatchedFiles", workspaceValue,
+                                        workspaceEnd);
+            if (watchedValue == std::string::npos)
                 return false;
-            const auto colon = json.find(':', dynamicRegistration);
-            if (colon == std::string::npos)
+            const std::size_t watchedEnd =
+                matchingJsonObjectEnd(json, watchedValue, workspaceEnd);
+            if (watchedEnd == std::string::npos)
                 return false;
-            const auto value = json.find_first_not_of(" \t\r\n", colon + 1);
-            return value != std::string::npos && json.compare(value, 4, "true") == 0;
-        }
+
+            const std::size_t registrationValue =
+                findJsonFieldValueStart(json, "dynamicRegistration", watchedValue,
+                                        watchedEnd);
+            if (registrationValue == std::string::npos ||
+                json.compare(registrationValue, 4, "true") != 0)
+                return false;
+            const std::size_t afterTrue = registrationValue + 4;
+            return afterTrue == watchedEnd || json[afterTrue] == ',' ||
+                   json[afterTrue] == '}' ||
+                   std::isspace(static_cast<unsigned char>(json[afterTrue]));
 
         void send(const std::string& payload) {
             std::cout << "Content-Length: " << payload.size() << "\r\n\r\n"
