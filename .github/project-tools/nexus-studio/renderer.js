@@ -68,6 +68,7 @@
       const active = documents.get(currentPath);
       active.dirty = value;
       if (editor) active.content = editor.getValue();
+      if (value) active.revision = (active.revision || 0) + 1;
     }
     $('dirtyMark').textContent = dirty ? '●' : '';
     $('dirtyMark').className = dirty ? 'dirty' : '';
@@ -386,7 +387,8 @@
           content,
           dirty: false,
           uri: null,
-          version: 0
+          version: 0,
+          revision: 0
         });
         renderTabs();
       }
@@ -456,6 +458,8 @@
     }
     const filePath = currentPath;
     const content = editor.getValue();
+    const savedDocument = documents.get(filePath);
+    const revisionAtSave = savedDocument ? (savedDocument.revision || 0) : 0;
     try {
       await api.saveFile(filePath, content);
       await pendingLanguageSync.catch(() => {});
@@ -463,13 +467,16 @@
         await api.saveLanguageDocument(filePath);
       }
       const saved = documents.get(filePath);
-      if (saved) {
+      const noNewerEdits = !saved || (saved.revision || 0) === revisionAtSave;
+      if (saved && noNewerEdits) {
         saved.content = content;
         saved.dirty = false;
       }
-      if (currentPath === filePath) markDirty(false);
+      if (currentPath === filePath && noNewerEdits) markDirty(false);
       else renderTabs();
-      setStatus('Saved ' + filePath);
+      setStatus(noNewerEdits
+        ? 'Saved ' + filePath
+        : 'Saved snapshot; newer edits remain unsaved in ' + filePath);
       await refreshTree();
       return true;
     } catch (error) {
