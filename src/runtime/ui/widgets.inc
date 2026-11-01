@@ -222,6 +222,7 @@ static char* nexus_ui_text_field_impl(double x,
     if (nexus_gfx_mouse_clicked(1)) {
         // A direct pointer action supersedes a pending keyboard traversal.
         gUiTextFieldAdvancePending = false;
+        gUiTextFieldReverseWrapPending = false;
         gUiTextFieldReverseTarget = 0;
     }
     const int64_t identity = nexus_ui_text_field_identity(widgetId, x, y, w, h);
@@ -307,11 +308,20 @@ static char* nexus_ui_text_field_impl(double x,
             const int64_t previousFrameLast = gUiTextFieldLastPreviousFrame;
             const int64_t target = shiftDown
                 ? (previous != 0 ? previous : previousFrameLast) : 0;
-            if (shiftDown && target != 0) {
-                gUiTextFieldReverseTarget = target;
+            if (shiftDown) {
+                if (target != 0) {
+                    gUiTextFieldReverseTarget = target;
+                    gUiTextFieldReverseWrapPending = false;
+                } else {
+                    // The first field in the first rendered frame has no
+                    // previous ID yet; resolve the wrap after this frame.
+                    gUiTextFieldReverseTarget = 0;
+                    gUiTextFieldReverseWrapPending = true;
+                }
                 gUiTextFieldAdvancePending = false;
             } else {
                 gUiTextFieldAdvancePending = true;
+                gUiTextFieldReverseWrapPending = false;
                 gUiTextFieldReverseTarget = 0;
             }
             nexus_ui_text_field_blur(true);
