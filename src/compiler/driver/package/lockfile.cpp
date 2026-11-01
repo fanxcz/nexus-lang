@@ -115,6 +115,7 @@ namespace nexus {
                 if (!local.is_absolute() && normalizedLocal.begin() != normalizedLocal.end() &&
                     *normalizedLocal.begin() == "vendor") {
                     const fs::path dependencyRoot = (cfg.root / normalizedLocal).lexically_normal();
+                    const fs::path rel = dependencyRoot.lexically_relative(cfg.root);
                     std::error_code ec;
                     const auto dependencyStatus = fs::symlink_status(dependencyRoot, ec);
                     if (ec == std::errc::no_such_file_or_directory ||
