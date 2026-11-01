@@ -156,6 +156,7 @@
     static std::string gUiTextFieldOriginal;
     static bool gUiTextFieldAdvancePending = false;
     static bool gUiTextFieldReverseWrapPending = false;
+    static std::array<uint8_t, 512> gUiTextFieldConsumedKeys{};
     static int64_t gUiTextFieldReverseTarget = 0;
     static int64_t gUiTextFieldPreviousInFrame = 0;
     static int64_t gUiTextFieldLastInFrame = 0;
