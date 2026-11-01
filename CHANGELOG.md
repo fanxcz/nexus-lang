@@ -54,6 +54,11 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   client launch contract. CI runs the checks alongside the existing Studio
   source/path-security checks.
 
+- NEXUS Studio now launches the installed compiler's LSP process for the active project,
+  sends the open `.nx` document lifecycle, and renders published compiler diagnostics
+  as Ace annotations. Its JSON-RPC client validates UTF-8 and message framing,
+  handles process shutdown, and has dependency-free Node.js tests.
+
 - Added `scene_apply(scene)` to restore a saved scene snapshot into the live ECS
   registry. It returns the number of recreated entities, returns `-1` for an
   invalid snapshot, and explicitly invalidates previous ECS entity handles.
@@ -71,6 +76,9 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   `NexusSources`, `NexusTargets`, `NexusInstall` and `NexusTests` modules.
   Compiler selection remains before `project()`; dependency detection and
   target/install/test setup follow platform initialization.
+- Package lockfile refresh now rejects symlinked local package directories and
+  manifests, and verifies that canonical package paths remain below the project's
+  canonical `vendor/` directory before reading or hashing them.
 - The NEXUS Studio desktop packaging matrix now also runs on pull requests
   that change Studio sources or the workflow, building Windows, Linux and macOS
   packages and uploading the generated artifacts for inspection.
