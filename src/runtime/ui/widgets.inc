@@ -1,3 +1,6 @@
+// Immediate-mode UTF-8 text fields. The legacy API uses rectangle identity;
+// ui_text_field_id accepts a stable positive widget ID. Editing state is shared
+// by the focused field and the caller retains the returned string.
 static bool nexus_ui_utf8_continuation(uint8_t byte) {
     return (byte & 0xC0u) == 0x80u;
 }
@@ -113,12 +116,13 @@ static void nexus_ui_text_field_focus(int64_t identity,
     gUiTextFieldAnchor = value.size();
 }
 
-static void nexus_ui_text_field_blur() {
+static void nexus_ui_text_field_blur(bool preserveTraversal = false) {
     gUiTextFieldFocused = false;
     gUiTextFieldFocusId = 0;
     gUiTextFieldCaret = 0;
     gUiTextFieldAnchor = 0;
-    gUiTextFieldReverseTarget = 0;
+    if (!preserveTraversal)
+        gUiTextFieldReverseTarget = 0;
     if (SDL_StopTextInput)
         SDL_StopTextInput();
 }
@@ -212,12 +216,16 @@ static char* nexus_ui_text_field_impl(double x,
         value.resize(nexus_ui_utf8_safe_prefix(value, limit));
         valueChanged = true;
     }
+    if (w <= 0.0 || h <= 0.0 || !gGraphics)
+        return resultValue();
 
+    if (nexus_gfx_mouse_clicked(1)) {
+        // A direct pointer action supersedes a pending keyboard traversal.
+        gUiTextFieldAdvancePending = false;
+        gUiTextFieldReverseTarget = 0;
+    }
     const int64_t identity = nexus_ui_text_field_identity(widgetId, x, y, w, h);
     if (editable) {
-        if (gUiTextFieldFirstInFrame == 0)
-            gUiTextFieldFirstInFrame = identity;
-
         // A forward traversal is consumed by the next editable field in source
         // order. If the current field was last, it remains pending and wraps to
         // the first field on the next frame.
@@ -232,14 +240,6 @@ static char* nexus_ui_text_field_impl(double x,
         }
     } else if (nexus_ui_text_field_is_focused(identity, x, y, w, h)) {
         nexus_ui_text_field_blur();
-    }
-
-    if (w <= 0.0 || h <= 0.0 || !gGraphics) {
-        if (editable) {
-            gUiTextFieldPreviousInFrame = identity;
-            gUiTextFieldLastInFrame = identity;
-        }
-        return resultValue();
     }
 
     const double mx = nexus_gfx_mouse_x();
@@ -314,7 +314,7 @@ static char* nexus_ui_text_field_impl(double x,
                 gUiTextFieldAdvancePending = true;
                 gUiTextFieldReverseTarget = 0;
             }
-            nexus_ui_text_field_blur();
+            nexus_ui_text_field_blur(true);
             focused = false;
             gTextInputThisFrame.clear();
         } else if (pressed(40)) {
