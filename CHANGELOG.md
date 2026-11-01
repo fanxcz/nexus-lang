@@ -59,6 +59,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   as Ace annotations. Its JSON-RPC client validates UTF-8 and message framing,
   handles process shutdown, and has dependency-free Node.js tests.
 
+- NEXUS Studio now uses the active document's LSP session for Ctrl+Space completion,
+  hover information, and F12 go-to-definition. The main process exposes only explicit
+  language-feature IPC handlers; definition targets are checked to remain project-local
+  
 - NEXUS Studio now supports multiple open document tabs with independent in-memory
   buffers and dirty state. Switching documents serializes tab operations, preserves
   unsaved text, and confirms before closing a modified tab or replacing the project.
