@@ -82,6 +82,11 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   invalid snapshot, and explicitly invalidates previous ECS entity handles.
   The NEXUS Editor example uses this operation when loading a saved scene.
 
+- Expanded the immediate-mode UI text field with caret movement, UTF-8 selection and
+  replacement, Backspace/Delete, Escape-to-restore and Tab/Shift+Tab traversal. Added
+  a stable-ID variant while retaining the rectangle-identified legacy API, plus
+  runtime tests for Unicode boundary handling and byte-limited edits.
+
 ### Changed
 
 - Moved pre-`project()` compiler selection into `cmake/NexusOptions.cmake`,
