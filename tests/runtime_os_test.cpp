@@ -117,6 +117,8 @@ int main() {
                  "config_dir accepted a file as the config base");
     ok &= expect(!takeString(nexus_os_config_error()).empty(),
                  "config base failure did not report an error");
+    ok &= expect(setConfigBase(rootText),
+                 "could not restore a valid config base for the recovery check");
     ok &= expect(!takeString(nexus_os_config_dir("NEXUS")).empty(),
                  "config_dir did not recover after a filesystem error");
     ok &= expect(takeString(nexus_os_config_error()).empty(),
