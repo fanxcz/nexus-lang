@@ -13,6 +13,6 @@ The `scene_*` helpers store and load snapshots of built-in ECS entity data. They
 - `scene_clear(scene)` clears snapshot data.
 - `scene_destroy(scene)` releases the snapshot.
 
-A snapshot includes supported built-in fields such as position, velocity, size, colour and texture ID. Applying a snapshot invalidates all existing ECS entity handles because the live entity registry is replaced; texture handles remain runtime-owned. An invalid scene handle does not modify the live ECS registry.
+A snapshot includes supported built-in fields such as position, velocity, size, colour and texture ID. Applying a snapshot invalidates all existing ECS entity handles because the live entity registry is replaced. Snapshot texture IDs are copied as numeric references; texture resources are not serialized or recreated, so referenced textures must already exist in the active runtime. An invalid scene handle does not modify the live ECS registry.
 
 This is a deliberately small serialization/apply API, not a general-purpose editor scene graph, resource manager or save-game system.
