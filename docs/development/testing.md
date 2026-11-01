@@ -23,6 +23,7 @@ ctest --test-dir build -R nexus_native_smoke --output-on-failure
 |---|---|
 | `nexus_tests` | C++ lexer/parser/semantic/compiler unit checks |
 | `nexus_runtime_memory_test` | Runtime memory behavior |
+| `nexus_runtime_os_test` | Platform configuration-directory creation, application-name validation and failure reporting |
 | `nexus_lsp_protocol_test` | JSON-RPC field extraction, JSON string escapes, UTF-16 surrogate pairs and output escaping |
 | `nexus_runtime_scene_test` | Scene snapshot save/load/apply, ECS replacement and invalid-handle safety |
 | `nexus_runtime_ui_test` | UTF-8 text field caret movement, selection replacement, Backspace/Delete and byte-limit handling |
