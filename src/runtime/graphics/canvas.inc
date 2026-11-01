@@ -4,7 +4,8 @@ static constexpr size_t kCanvasUndoMemoryLimit = 32u * 1024u * 1024u;
 static constexpr size_t kCanvasUndoMaxSnapshots = 32u;
 
 static uint8_t canvas_u8(double v) {
-
+    if (std::isnan(v))
+        return 0;
     return uint8_t(std::clamp(v, 0.0, 1.0) * 255.0 + 0.5);
 }
 static size_t canvas_index(const CanvasData& c, int x, int y) {
@@ -163,7 +164,12 @@ static void canvas_push_snapshot(std::vector<CanvasSnapshot>& history,
         return;
     }
 
-    history.push_back(CanvasSnapshot{canvas.pixels});
+    try {
+        history.push_back(CanvasSnapshot{canvas.pixels});
+    } catch (const std::exception&) {
+        history.clear();
+        return;
+    }
     size_t bytes = history.size() * canvas.pixels.size();
     while (!history.empty() &&
            (history.size() > kCanvasUndoMaxSnapshots || bytes > kCanvasUndoMemoryLimit)) {
