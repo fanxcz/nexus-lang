@@ -26,6 +26,14 @@ class FakeChild extends EventEmitter {
       for (const message of this.inputDecoder.push(chunk)) {
         this.received.push(message);
         if (message.method === 'initialize') {
+          // Server-originated requests use an independent ID space and may
+          // reuse the client's outstanding initialize ID.
+          this.stdout.write(encodeMessage({
+            jsonrpc: '2.0',
+            id: message.id,
+            method: 'client/registerCapability',
+            params: { registrations: [] }
+          }));
           this.stdout.write(encodeMessage({
             jsonrpc: '2.0',
             id: message.id,
@@ -150,6 +158,9 @@ test('language client initializes, acknowledges server requests and forwards dia
   assert.equal(initialize.params.rootPath, '/tmp/NEXUS project');
   assert.equal(initialize.params.workspaceFolders[0].name, 'NEXUS project');
   assert.ok(child.received.some(message => message.method === 'initialized'));
+  assert.ok(child.received.some(message =>
+    message.id === initialize.id && message.result === null
+  ));
 
   child.stdout.write(encodeMessage({
     jsonrpc: '2.0',
@@ -159,6 +170,17 @@ test('language client initializes, acknowledges server requests and forwards dia
   }));
   await new Promise(resolve => setImmediate(resolve));
   assert.ok(child.received.some(message => message.id === 'register-watch' && message.result === null));
+
+  child.stdout.write(encodeMessage({
+    jsonrpc: '2.0',
+    id: 'unsupported-request',
+    method: 'workspace/applyEdit',
+    params: {}
+  }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(child.received.some(message =>
+    message.id === 'unsupported-request' && message.error?.code === -32601
+  ));
 
   child.stdout.write(encodeMessage({
     jsonrpc: '2.0',
