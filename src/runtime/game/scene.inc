@@ -83,7 +83,7 @@ int64_t nexus_scene_load(const char* path) {
     }
 }
 // Replace the live ECS registry with the entities stored in a scene snapshot.
-// Existing entity handles become invalid; texture handles remain owned by the runtime.
+// Existing entity handles become invalid; texture IDs are copied but resources are not recreated.
 int64_t nexus_scene_apply(int64_t scene) {
     const auto snapshot = gScenes.find(scene);
     if (snapshot == gScenes.end())
