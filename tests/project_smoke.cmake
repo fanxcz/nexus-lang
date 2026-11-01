@@ -498,6 +498,27 @@ execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR
 if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
   message(FATAL_ERROR "pkg verify failed after restoring dependency metadata: ${out}\\n${err}")
 endif()
+
+# Lockfile refresh must reject a declared vendor path that normalizes outside vendor/.
+string(REPLACE "vendor/sample_lib" "vendor/../package-source"
+  traversal_manifest "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${traversal_manifest}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg update WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+set(traversal_update_output "${out}\\n${err}")
+if(rc EQUAL 0 OR NOT traversal_update_output MATCHES "escapes vendor")
+  file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_locked}")
+  file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+  message(FATAL_ERROR "pkg update accepted a dependency path escaping vendor/: ${traversal_update_output}")
+endif()
+file(WRITE "${SMOKE_DIR}/nexus.toml" "${manifest_locked}")
+file(WRITE "${SMOKE_DIR}/nexus.lock" "${lock_after_add}")
+execute_process(COMMAND "${NEXUS_BIN}" pkg verify WORKING_DIRECTORY "${SMOKE_DIR}"
+  RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT rc EQUAL 0 OR NOT out MATCHES "pkg verify: OK")
+  message(FATAL_ERROR "pkg verify failed after restoring path traversal fixture: ${out}\\n${err}")
+endif()
+
 # Lockfile refresh must not resolve a package directory symlink outside vendor/.
 if(NOT WIN32)
   set(OUTSIDE_PACKAGE "${SMOKE_DIR}/outside-package")
