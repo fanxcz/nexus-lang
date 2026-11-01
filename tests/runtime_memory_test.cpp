@@ -60,15 +60,37 @@ int main() {
     }
 
     const int64_t buffer = nexus_mem_alloc(16);
-    if (!buffer || !nexus_runtime_test_range_valid(buffer, 16) ||
-        !nexus_runtime_test_range_valid(buffer + 8, 8) ||
-        nexus_runtime_test_range_valid(buffer + 12, 8) ||
-        nexus_runtime_test_range_valid(buffer + 16, 1) ||
-        nexus_runtime_test_range_valid(buffer, std::numeric_limits<int64_t>::max()) ||
-        nexus_runtime_test_range_valid(buffer, -1) ||
-        nexus_runtime_test_range_valid(0, 8)) {
-        std::fprintf(stderr, "runtime memory range validation failed\n");
+    if (!buffer) {
+        std::fprintf(stderr, "runtime memory allocation for range validation failed\\n");
         return 6;
+    }
+    const struct {
+        const char* label;
+        int64_t address;
+        int64_t bytes;
+        bool expected;
+    } rangeCases[] = {
+        {"whole allocation", buffer, 16, true},
+        {"valid tail range", buffer + 8, 8, true},
+        {"range extending past allocation", buffer + 12, 8, false},
+        {"one byte past allocation", buffer + 16, 1, false},
+        {"oversized range", buffer, std::numeric_limits<int64_t>::max(), false},
+        {"negative byte count", buffer, -1, false},
+        {"null address", 0, 8, false},
+    };
+    for (const auto& test : rangeCases) {
+        const bool valid = nexus_runtime_test_range_valid(test.address, test.bytes) != 0;
+        if (valid != test.expected) {
+            std::fprintf(stderr,
+                         "runtime memory range validation failed for %s "
+                         "(address=%lld, bytes=%lld, expected=%s, got=%s)\\n",
+                         test.label,
+                         static_cast<long long>(test.address),
+                         static_cast<long long>(test.bytes),
+                         test.expected ? "valid" : "invalid",
+                         valid ? "valid" : "invalid");
+            return 6;
+        }
     }
     nexus_mem_set(buffer, 0x5A, 16);
     const int64_t repeatedBytePattern = INT64_C(0x5A5A5A5A5A5A5A5A);
