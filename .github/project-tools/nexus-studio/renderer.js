@@ -128,6 +128,11 @@
       bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
       exec: saveCurrent
     });
+    editor.commands.addCommand({
+      name: 'gotoDefinition',
+      bindKey: { win: 'F12', mac: 'F12' },
+      exec: goToDefinition
+    });
   }
   function renderTree(items, container, depth = 0) {
     for (const item of items) {
@@ -582,6 +587,54 @@
   function buildOrRun(mode) {
     return enqueueDocumentOperation(() => buildOrRunNow(mode));
   }
+  async function goToDefinitionNow() {
+    if (!editor || !currentPath || !currentPath.toLowerCase().endsWith('.nx')) {
+      setStatus('Open a NEXUS source file first');
+      return false;
+    }
+
+    const sourcePath = currentPath;
+    const cursor = editor.getCursorPosition();
+    editor.setReadOnly(true);
+    try {
+      if (!languageServerReady && !(await ensureLanguageServer())) {
+        setStatus('Language services unavailable');
+        return false;
+      }
+      if (!currentUri) await openCurrentLanguageDocument();
+      const locations = await api.findDefinition(sourcePath, {
+        line: cursor.row,
+        character: cursor.column
+      });
+      if (!Array.isArray(locations) || locations.length === 0) {
+        setStatus('No definition found');
+        return false;
+      }
+
+      const target = locations[0];
+      if (!target || typeof target.path !== 'string') {
+        setStatus('No project-local definition found');
+        return false;
+      }
+      const opened = await openFileNow(target.path);
+      if (!opened || !editor) return false;
+      const start = target.range && target.range.start;
+      if (start) editor.gotoLine(start.line + 1, start.character, true);
+      setStatus('Definition: ' + target.path);
+      return true;
+    } catch (error) {
+      appendOutput('Go to definition failed: ' + error.message, 'error');
+      setStatus('Navigation failed');
+      return false;
+    } finally {
+      if (editor) editor.setReadOnly(false);
+    }
+  }
+
+  function goToDefinition() {
+    return enqueueDocumentOperation(() => goToDefinitionNow());
+  }
+
   async function runTerminalCommand(command) {
     if (!root) { appendOutput('Open a project folder first.', 'error'); return; }
     appendOutput('> ' + command, 'command');
