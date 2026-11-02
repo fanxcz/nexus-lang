@@ -11,7 +11,7 @@ from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from nexus_version import asset_names  # noqa: E402
+from nexus_version import asset_names, compiler_version  # noqa: E402
 
 _NAMES = asset_names()
 ARTIFACTS = (
@@ -27,7 +27,7 @@ DOWNLOAD_LINK = re.compile(r"\]\(\s*(?:<)?[^)]*?assets/downloads/([^)>\s]+)")
 ZIP_CONTENTS = {
     _NAMES["portable"]: {
         "nexus.cmd", "bin/nexus-core.exe", "toolchain/zig.exe",
-        "runtime/SDL2.dll", "stdlib/engine2d.nx",
+        "runtime/SDL2.dll", "stdlib/engine2d.nx", "VERSION.txt",
     },
     _NAMES["vsix"]: {"extension/package.json"},
     _NAMES["paint_archive"]: {
@@ -77,6 +77,22 @@ def check_zip(path: Path, required: set[str]) -> None:
             bad_member = archive.testzip()
             if bad_member:
                 fail(f"{path.name} failed CRC validation at {bad_member}")
+            if path.name == _NAMES["portable"]:
+                try:
+                    packaged_version = archive.read("VERSION.txt").decode("ascii").strip()
+                except (KeyError, UnicodeDecodeError) as exc:
+                    fail(f"{path.name} has invalid VERSION.txt metadata: {exc}")
+                expected_version = compiler_version()
+                if packaged_version != expected_version:
+                    fail(
+                        f"{path.name} declares compiler version {packaged_version!r}, "
+                        f"expected {expected_version!r}"
+                    )
+                compiler_problem = pe_problem(
+                    archive.read("bin/nexus-core.exe"), "bin/nexus-core.exe in portable ZIP"
+                )
+                if compiler_problem:
+                    fail(compiler_problem)
             missing = sorted(required - names)
             if missing:
                 fail(f"{path.name} is missing required content: {', '.join(missing)}")
