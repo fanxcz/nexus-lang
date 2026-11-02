@@ -223,7 +223,27 @@ try {
             $requiredVersion = (Get-Content -LiteralPath $versionFile -Raw).Trim()
         }
         if (-not [string]::IsNullOrWhiteSpace($requiredVersion)) {
-            if ($requiredVersion -notmatch '^\d+\.\d+\.\d+        New-Item -ItemType Directory -Path $testDir | Out-Null
+            if ($requiredVersion -notmatch '^\d+\.\d+\.\d+$') {
+                throw "Invalid expected NEXUS version in package metadata: '$requiredVersion'"
+            }
+            if (Test-Path -LiteralPath $versionFile) {
+                $packageVersion = (Get-Content -LiteralPath $versionFile -Raw).Trim()
+                if ($packageVersion -ne $requiredVersion) {
+                    throw "Package VERSION.txt says $packageVersion, but installer expects $requiredVersion."
+                }
+            }
+            $reportedVersion = @(& $Compiler '--version' 2>&1)
+            $reportedExitCode = $LASTEXITCODE
+            $reportedText = $reportedVersion -join [Environment]::NewLine
+            $match = [regex]::Match($reportedText, '(?m)^Nexus\s+(\d+\.\d+\.\d+)\b')
+            if ($reportedExitCode -ne 0 -or -not $match.Success -or $match.Groups[1].Value -ne $requiredVersion) {
+                throw "Installed compiler version mismatch. Expected $requiredVersion, received: $reportedText"
+            }
+            Write-Info "Compiler version verified: $requiredVersion"
+        }
+        Write-Info ("Toolchain compiler: {0}" -f (& $clang --version | Select-Object -First 1))
+        $testDir = Join-Path $env:TEMP ("nexus-check-{0}" -f [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $testDir | Out-Null
         try {
             $testCpp = Join-Path $testDir 'check.cpp'
             $testExe = Join-Path $testDir 'check.exe'
