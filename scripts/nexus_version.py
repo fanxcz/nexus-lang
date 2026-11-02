@@ -13,7 +13,7 @@ Compiler, desktop app and extension versions are validated as one release set:
 Workflows, packaging scripts and the download validators ask this module instead
 of copying the numbers. ``check`` verifies that no tracked text file still pins a
 stale artifact name and that the installer, bootstrap scripts and download
-lists agree with all three version sources. It is wired into CTest, so a version
+lists agree with all three version sources and the NEXUS Paint installer metadata. It is wired into CTest, so a version
 bump that misses a file fails locally and in CI.
 
 Usage::

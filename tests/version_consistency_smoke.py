@@ -62,6 +62,13 @@ def build_fixture(root: Path) -> None:
         "OutputBaseFilename=NEXUS-Setup-{#MyAppVersion}\n"
         "VersionInfoVersion={#MyAppVersion}.0\n",
     )
+    write(
+        root / ".github/project-tools/installer/NEXUS-Paint-Setup.iss",
+        f'#define MyAppVersion "{COMPILER}"\n'
+        f'VersionInfoVersion={COMPILER}.0\n'
+        f'VersionInfoProductVersion={COMPILER}\n'
+        f'UninstallDisplayName=NEXUS Paint {COMPILER}\n',
+    )
     write(root / "Install-NEXUS.ps1", f"$version = '{COMPILER}'\n")
     write(
         root / "Install-NEXUS.bat",
