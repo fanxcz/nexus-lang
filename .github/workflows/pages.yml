@@ -255,7 +255,7 @@ jobs:
               throw "PATH resolved nexus.cmd to the wrong location: $($resolvedLauncher.Source)"
             }
             $version = & 'nexus.cmd' --version 2>&1
-            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch 'Nexus 2\.2\.0')) {
+            if ($LASTEXITCODE -ne 0 -or (($version -join "`n") -notmatch ('Nexus ' + [regex]::Escape($env:NEXUS_VERSION)))) {
               throw "nexus --version failed: $($version -join "`n")"
             }
 
@@ -463,6 +463,7 @@ jobs:
 
   build:
     name: Build static HTML website
+    needs: package-windows
     runs-on: ubuntu-latest
     # Publish docs as soon as the site is built. Windows packaging runs in
     # parallel so a slow native compiler/installer build cannot hold the homepage.
@@ -476,18 +477,11 @@ jobs:
         shell: bash
         run: python scripts/nexus_version.py github-env >> "$GITHUB_ENV"
 
-      - name: Preserve the currently published Windows downloads
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p docs/assets/downloads
-          base="https://fanxcz.github.io/nexus-lang/assets/downloads"
-          for asset in "$NEXUS_SETUP_ASSET" NEXUS_Windows_Portable.zip NEXUS-Paint-Windows-x64.exe NEXUS-Paint-Windows-x64.zip; do
-            echo "Reusing published download: $asset"
-            curl --fail --location --retry 3 --retry-all-errors --silent --show-error \
-              "$base/$asset" --output "docs/assets/downloads/$asset"
-            test -s "docs/assets/downloads/$asset"
-          done
+      - name: Download freshly built Windows packages
+        uses: actions/download-artifact@v4
+        with:
+          name: NEXUS_Windows_Packages
+          path: docs/assets/downloads
 
       - name: Package VS Code extension
         shell: bash

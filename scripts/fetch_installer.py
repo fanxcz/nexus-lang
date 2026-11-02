@@ -53,7 +53,7 @@ def verify_checksum(installer: Path, checksum: Path, name: str) -> str | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", required=True, help="published version, for example 2.2.0")
+    parser.add_argument("--version", required=True, help="published version, for example 3.0.0")
     parser.add_argument("--output", required=True, help="path for the verified installer")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL,
                         help="directory that serves the published downloads")
