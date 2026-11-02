@@ -20,13 +20,14 @@ Studio is an Electron desktop application; file access and terminal commands run
 
 ## Download desktop builds
 
-Studio's build workflow packages Windows (NSIS installer and portable executable), Linux (AppImage and DEB) and macOS (DMG and ZIP).
+The official [NEXUS Studio 3.0.0 GitHub Release](https://github.com/fanxcz/nexus-lang/releases/tag/studio-v3.0.0) includes native platform packages and SHA-256 sidecars.
 
-- [Browse Studio 3.0.0 package builds and checksums](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml)
-- [Run the cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
-- [Create a draft Studio release](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml)
-
-The workflow builds Windows, Linux and macOS packages with SHA-256 sidecars. Open the latest run and download the matching platform artifact. To publish a permanent GitHub Release, add a repository Actions secret named `NEXUS_RELEASE_TOKEN` containing a token with repository Contents: read/write permission. The workflow uses that token for release creation and falls back to `GITHUB_TOKEN`; if the repository restricts release writes from the default Actions token, the package artifacts remain available on the run page while the publish step returns HTTP 403.
+- [Windows x64 installer (.exe)](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Windows-x64.exe) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Windows-x64.exe.sha256.txt)
+- [Linux x86_64 AppImage](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-x86_64.AppImage) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-x86_64.AppImage.sha256.txt)
+- [Linux Debian/Ubuntu package (.deb)](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-amd64.deb) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-amd64.deb.sha256.txt)
+- [macOS Apple Silicon disk image (.dmg)](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-macOS-arm64.dmg) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-macOS-arm64.dmg.sha256.txt)
+- [All release files and notes](https://github.com/fanxcz/nexus-lang/releases/tag/studio-v3.0.0)
+- [Cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
 
 ## Build from source
 

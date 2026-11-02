@@ -33,6 +33,14 @@ npm run check
 npm start
 ```
 
+## Download Studio 3.0.0
+
+- [Windows x64 installer (.exe)](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Windows-x64.exe) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Windows-x64.exe.sha256.txt)
+- [Linux x86_64 AppImage](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-x86_64.AppImage) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-x86_64.AppImage.sha256.txt)
+- [Linux Debian/Ubuntu package (.deb)](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-amd64.deb) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-amd64.deb.sha256.txt)
+- [macOS Apple Silicon disk image (.dmg)](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-macOS-arm64.dmg) · [SHA-256](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-macOS-arm64.dmg.sha256.txt)
+- [All release files and notes](https://github.com/fanxcz/nexus-lang/releases/tag/studio-v3.0.0)
+
 ## Build desktop packages
 
 Run on the matching host platform:
@@ -43,7 +51,7 @@ npm run dist:linux
 npm run dist:mac
 ```
 
-Artifacts are written to `release/`. The [cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml) produces Windows, Linux and macOS packages. The [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml) builds all three platform packages, verifies their SHA-256 sidecars and publishes the `studio-v3.0.0` GitHub Release on a push. A manual workflow dispatch creates a draft release for review. Add the repository Actions secret `NEXUS_RELEASE_TOKEN` with Contents: read/write permission if the default `GITHUB_TOKEN` cannot create releases; without it, packages remain available as temporary workflow artifacts.
+Artifacts are written to `release/`. The [cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml) builds all three platform packages. The [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml) verifies their SHA-256 sidecars and publishes the official release.
 
 ## Shortcuts
 

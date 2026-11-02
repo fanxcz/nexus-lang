@@ -231,7 +231,8 @@ Consult the template and current documentation for its supported features. For U
 
 ## Downloadable applications
 
-**NEXUS Studio 3.0.0** is a cross-platform desktop IDE with a project explorer, multi-file editor tabs, unsaved-buffer tracking, compiler Build/Run, Problems diagnostics, command palette and an integrated terminal. Install NEXUS separately, then select `nexus.cmd` in Studio. [Browse desktop packages and SHA-256 checksums](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml). For a permanent GitHub Release, configure the repository Actions secret `NEXUS_RELEASE_TOKEN` with Contents: read/write permission.
+**NEXUS Studio 3.0.0** is a cross-platform desktop IDE with a project explorer, multi-file editor tabs, unsaved-buffer tracking, compiler Build/Run, Problems diagnostics, command palette and an integrated terminal. Install NEXUS separately, then select `nexus.cmd` in Studio. [Official Studio 3.0.0 release](https://github.com/fanxcz/nexus-lang/releases/tag/studio-v3.0.0). Download the [Windows installer](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Windows-x64.exe), [Linux AppImage](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-x86_64.AppImage), [Linux DEB](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-Linux-amd64.deb) or [macOS Apple Silicon DMG](https://github.com/fanxcz/nexus-lang/releases/download/studio-v3.0.0/NEXUS-Studio-3.0.0-macOS-arm64.dmg); SHA-256 files are linked beside each package.
+
 
 - [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
 
