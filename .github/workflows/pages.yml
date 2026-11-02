@@ -30,13 +30,6 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  # Pull requests have independent groups. For main/dispatch, the newest source
-  # must supersede stale packaging/deployment runs so a hung old run cannot block
-  # publication of the latest site and installer.
-  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages-docs' }}
-  cancel-in-progress: true
-
 jobs:
   package-windows:
     name: Build and package Windows compiler
@@ -574,6 +567,11 @@ jobs:
           path: ./site
 
   deploy:
+    # Serialize only the actual Pages publication. Packaging and site building
+    # remain free to run in parallel, so a slow Windows build cannot hold Pages.
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages-docs' }}
+      cancel-in-progress: true
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     name: Deploy GitHub Pages
     environment:
