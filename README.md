@@ -231,7 +231,7 @@ Consult the template and current documentation for its supported features. For U
 
 ## Downloadable applications
 
-**NEXUS Studio 3.0.0** is a cross-platform desktop IDE with a project explorer, multi-file editor tabs, unsaved-buffer tracking, compiler Build/Run, Problems diagnostics, command palette and an integrated terminal. Install NEXUS separately, then select `nexus.cmd` in Studio. [Browse desktop packages and SHA-256 checksums](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml).
+**NEXUS Studio 3.0.0** is a cross-platform desktop IDE with a project explorer, multi-file editor tabs, unsaved-buffer tracking, compiler Build/Run, Problems diagnostics, command palette and an integrated terminal. Install NEXUS separately, then select `nexus.cmd` in Studio. [Browse desktop packages and SHA-256 checksums](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml). For a permanent GitHub Release, configure the repository Actions secret `NEXUS_RELEASE_TOKEN` with Contents: read/write permission.
 
 - [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
 

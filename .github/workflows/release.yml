@@ -228,7 +228,7 @@ jobs:
 
       - name: Create release and attach archives
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.NEXUS_RELEASE_TOKEN || github.token }}
         shell: bash
         run: |
           set -euo pipefail

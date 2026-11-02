@@ -124,7 +124,7 @@ jobs:
           printf 'Validated %s package files and %s checksum files.\\n' "$package_count" "$checksum_count"
       - name: Publish Studio release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.NEXUS_RELEASE_TOKEN || github.token }}
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
           PRERELEASE: ${{ inputs.prerelease }}
           GITHUB_SHA: ${{ github.sha }}

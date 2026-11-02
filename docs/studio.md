@@ -26,7 +26,7 @@ Studio's build workflow packages Windows (NSIS installer and portable executable
 - [Run the cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
 - [Create a draft Studio release](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml)
 
-The workflow publishes Windows, Linux and macOS build artifacts with SHA-256 sidecars. Open the latest run and download the matching platform artifact. GitHub Actions artifacts are temporary downloads; a permanent GitHub Release requires the repository Actions token to be allowed to create releases.
+The workflow builds Windows, Linux and macOS packages with SHA-256 sidecars. Open the latest run and download the matching platform artifact. To publish a permanent GitHub Release, add a repository Actions secret named `NEXUS_RELEASE_TOKEN` containing a token with repository Contents: read/write permission. The workflow uses that token for release creation and falls back to `GITHUB_TOKEN`; if the repository restricts release writes from the default Actions token, the package artifacts remain available on the run page while the publish step returns HTTP 403.
 
 ## Build from source
 
