@@ -199,7 +199,7 @@ jobs:
             if ($LASTEXITCODE -ne 0 -or (($compilerOutput -join "`n") -notmatch $expectedVersion)) {
               throw "Compiler version mismatch in $compilerPath; expected $env:NEXUS_VERSION, got: $($compilerOutput -join "`n")"
             }
-            Write-Host "Verified compiler payload $compilerPath: $($compilerOutput -join ' ')"
+            Write-Host "Verified compiler payload ${compilerPath}: $($compilerOutput -join ' ')"
           }
 
           $zip = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable.zip'
