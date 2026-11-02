@@ -61,11 +61,11 @@ def build_fixture(root: Path) -> None:
         "[Setup]\n"
         "OutputBaseFilename=NEXUS-Setup-{#MyAppVersion}\n"
         "VersionInfoVersion={#MyAppVersion}.0\n"
-        "Parameters := '-Mode Check -ExpectedVersion \\"{#MyAppVersion}\\"';\n",
+        "Parameters := '-Mode Check -ExpectedVersion \"{#MyAppVersion}\"';\n",
     )
     write(
         root / ".github/project-tools/repository-files/NEXUS-Windows.ps1",
-        "param([string]$ExpectedVersion = '')\\n",
+        "param([string]$ExpectedVersion = '')\n",
     )
     write(
         root / ".github/project-tools/installer/NEXUS-Paint-Setup.iss",
@@ -166,7 +166,7 @@ def main() -> int:
         write(root / "CMakeLists.txt", project_file(COMPILER))
         write(
             root / ".github/project-tools/repository-files/NEXUS-Windows.ps1",
-            "param([string]$OtherValue = '')\\n",
+            "param([string]$OtherValue = '')\n",
         )
         expect_rejected(
             script, "check", "--root", str(root),
@@ -174,7 +174,7 @@ def main() -> int:
         )
         write(
             root / ".github/project-tools/repository-files/NEXUS-Windows.ps1",
-            "param([string]$ExpectedVersion = '')\\n",
+        "param([string]$ExpectedVersion = '')\n",
         )
 
         write(
