@@ -103,7 +103,18 @@ jobs:
           SH
           chmod 755 "$package/bin/clang++"
 
+          source_version="$(build/nexus --version)"
+          if ! grep -Eq "^Nexus \${NEXUS_VERSION}([[:space:]]|$)" <<<"$source_version"; then
+            echo "Built compiler version mismatch: expected \${NEXUS_VERSION}, got: \${source_version}" >&2
+            exit 1
+          fi
           install -m 755 build/nexus "$package/bin/nexus"
+          printf '%s\n' "$NEXUS_VERSION" > "$package/VERSION.txt"
+          packaged_version="$("$package/bin/nexus" --version)"
+          if ! grep -Eq "^Nexus \${NEXUS_VERSION}([[:space:]]|$)" <<<"$packaged_version"; then
+            echo "Packaged compiler version mismatch: expected \${NEXUS_VERSION}, got: \${packaged_version}" >&2
+            exit 1
+          fi
           # The runtime is one translation unit assembled from topic files.
           cp -R src/runtime/. "$package/runtime/"
           cp -R stdlib/. "$package/stdlib/"
@@ -165,7 +176,17 @@ jobs:
             if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $package 'toolchain') -Force }
           }
           if (-not (Test-Path 'build/nexus.exe')) { throw 'Compiler executable missing.' }
+          $expectedVersion = '^Nexus\s+' + [regex]::Escape($env:NEXUS_VERSION) + '\b'
+          $sourceVersion = @(& 'build/nexus.exe' --version 2>&1)
+          if ($LASTEXITCODE -ne 0 -or (($sourceVersion -join "`n") -notmatch $expectedVersion)) {
+            throw "Built compiler version mismatch; expected $env:NEXUS_VERSION, got: $($sourceVersion -join "`n")"
+          }
           Copy-Item 'build/nexus.exe' (Join-Path $package 'bin/nexus.exe') -Force
+          Set-Content -LiteralPath (Join-Path $package 'VERSION.txt') -Value $env:NEXUS_VERSION -Encoding ASCII
+          $packagedVersion = @(& (Join-Path $package 'bin/nexus.exe') --version 2>&1)
+          if ($LASTEXITCODE -ne 0 -or (($packagedVersion -join "`n") -notmatch $expectedVersion)) {
+            throw "Packaged compiler version mismatch; expected $env:NEXUS_VERSION, got: $($packagedVersion -join "`n")"
+          }
           # The runtime is one translation unit assembled from topic files.
           Copy-Item 'src/runtime/*' (Join-Path $package 'runtime') -Recurse -Force
           Copy-Item 'stdlib/*' (Join-Path $package 'stdlib') -Recurse -Force
