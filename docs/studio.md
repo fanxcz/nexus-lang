@@ -1,31 +1,32 @@
-# NEXUS Studio
+# NEXUS Studio 3.0.0
 
-NEXUS Studio is the desktop workspace for opening a project, editing one active source file, and running the NEXUS compiler without switching between separate tools.
+NEXUS Studio is the cross-platform desktop IDE for opening projects, editing multiple NEXUS files, building programs and reviewing compiler output in one workspace.
 
 ![NEXUS mark](assets/images/nexus-n-2026.svg){ width="64" }
 
-*Desktop workspace · preview release 0.3.0*
+*Desktop IDE · release 3.0.0*
 
-## What is included
+## IDE workspace
 
-- Project explorer for folders and files inside the selected workspace.
-- Ace-based editor with NEXUS syntax highlighting, line numbers and standard editing shortcuts.
-- Integrated terminal with process output, Stop, Clear and collapse controls.
-- Compiler detection from `NEXUS_COMPILER`, PATH and common install locations; a selected compiler path is saved between launches.
-- Direct Build and Run commands for the current `.nx` source file.
-- A command palette (`Ctrl/Cmd+Shift+P`) for the most common workspace actions.
+- **Project explorer:** browse nested folders, refresh project contents and filter filenames.
+- **Multi-tab editing:** open multiple files, switch tabs without losing unsaved buffers, and save the active file or every open file.
+- **NEXUS editor:** Ace-based editing with NEXUS syntax highlighting, line numbers, indentation, cursor position and familiar editing shortcuts.
+- **Problems panel:** collect compiler errors and warnings that include source locations; select a diagnostic to navigate to its file, line and column.
+- **Compiler workflow:** detect NEXUS through `NEXUS_COMPILER`, PATH or common install locations, or select a compiler path manually.
+- **Integrated terminal:** run project commands, inspect process output and stop a running process.
+- **Command palette:** search common workspace actions with `Ctrl/Cmd+Shift+P`.
 
-Studio does not bundle the compiler. Install NEXUS separately, then select its launcher if automatic detection does not find it. The official Windows distribution can use its `NEXUS-Windows.ps1` helper so the bundled toolchain and runtime DLLs are configured correctly.
+Studio is an Electron desktop application; file access and terminal commands run locally under the current OS account. The compiler is installed separately rather than bundled in the Studio app. On Windows, the official distribution's `NEXUS-Windows.ps1` helper configures its bundled toolchain and runtime DLLs.
 
 ## Download desktop builds
 
-The desktop build workflow packages Windows (NSIS installer and portable executable), Linux (AppImage and DEB) and macOS (DMG and ZIP) builds.
+Studio's build workflow packages Windows (NSIS installer and portable executable), Linux (AppImage and DEB) and macOS (DMG and ZIP).
 
 - [Browse published Studio releases](https://github.com/fanxcz/nexus-lang/releases?q=studio)
 - [Run the cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
 - [Create a draft Studio release](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml)
 
-The release workflow creates a **draft** release with SHA-256 sidecars so the maintainer can review the platform packages before publishing. Until a draft is approved and published, the build workflow's artifacts are temporary CI outputs rather than permanent download links.
+The release workflow creates a **draft** release with SHA-256 sidecars so the maintainer can review the platform packages before publishing. Build workflow artifacts remain temporary CI downloads.
 
 ## Build from source
 
@@ -46,7 +47,7 @@ npm run dist:linux
 npm run dist:mac
 ```
 
-The generated files are written to `release/`. The cross-platform GitHub Actions workflow builds all three platform packages on their native runners.
+The generated files are written to `release/`. The cross-platform GitHub Actions workflow builds all three platform packages on native runners.
 
 ## Shortcuts
 
@@ -54,13 +55,18 @@ The generated files are written to `release/`. The cross-platform GitHub Actions
 |---|---|
 | `Ctrl/Cmd+O` | Open a project folder |
 | `Ctrl/Cmd+N` | Create a source file |
-| `Ctrl/Cmd+S` | Save the current file |
+| `Ctrl/Cmd+S` | Save the active file |
+| `Ctrl/Cmd+W` | Close the active editor tab |
+| `Ctrl/Cmd+P` | Filter project filenames |
 | `Ctrl/Cmd+Shift+P` | Open the command palette |
 | `F7` | Build the current source file |
 | `F5` | Build and run the current source file |
+| `F8` | Toggle the Problems panel |
 
 ## Current boundaries
 
-Studio currently shows one active editor tab at a time. It does not include a debugger, Git client, integrated LSP diagnostics panel or multi-file refactoring UI. The integrated terminal runs commands with the current operating-system user's permissions; only open projects and commands you trust. File access is restricted to the selected project folder, and individual files larger than 2 MB are not opened in the editor.
+Studio 3.0.0 includes multi-tab editing, project navigation, build/run actions, compiler-output diagnostics and an integrated terminal. It does not include a graphical debugger, Git client, full language-server protocol client, symbol index or multi-file refactoring engine. Compiler diagnostics appear when the output includes a file and source location; this panel is not a full LSP diagnostics implementation.
 
-For language-aware completion, navigation and diagnostics, configure the [NEXUS VS Code extension](tooling/vscode-extension.md).
+The terminal runs with the current operating-system user's permissions; only open projects and run commands you trust. File access is restricted to the selected project folder, and individual files larger than 2 MB are not opened in the editor.
+
+For language-aware completion, navigation and richer diagnostics, configure the [NEXUS VS Code extension](tooling/vscode-extension.md).

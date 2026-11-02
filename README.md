@@ -5,15 +5,15 @@
 **NEXUS is an open-source, statically checked language for native applications, developer tools, and game prototypes.** Its compiler is written in C++20 and combines a built-in x86-64 backend for a documented subset with an LLVM-based path for broader language support. The current development tree includes fixed-width numeric types and checked read-only/mutable slices. Graphics support includes SDL-based 2D helpers and an experimental compatibility-OpenGL 3D path; a production voxel engine is still roadmap work.
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
-[![Quality gates](https://github.com/fanxcz/nexus-lang/actions/workflows/quality.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/quality.yml) [![Version](https://img.shields.io/badge/version-2.2.0-informational.svg)](CHANGELOG.md)
+[![Quality gates](https://github.com/fanxcz/nexus-lang/actions/workflows/quality.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/quality.yml) [![Version](https://img.shields.io/badge/version-3.0.0-informational.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
 **NEXUS Studio:** https://github.com/fanxcz/nexus-lang/blob/main/docs/studio.md  
-**Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads.html) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-**One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 2.2.0 installer, verifies SHA-256, then launches setup.
+**Windows installer:** download `NEXUS-Setup-3.0.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads.html) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 3.0.0 installer, verifies SHA-256, then launches setup.
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
 
@@ -27,7 +27,13 @@ Start with the [application-development guide](docs/applications.md) or create a
 
 The current development tree adds fixed-width `i8`/`i16`/`i32`, `u8`/`u16`/`u32`/`u64`, `f32`, and executable LLVM slices. Read-only `[]T` views support checked indexing and function parameters/returns; explicit exclusive `mut []T` views allow checked indexed mutation while enforcing conservative lexical borrowing rules. Programs using these features select LLVM with `--backend auto`; the native x86-64 backend intentionally rejects slice and wider numeric types. See the [type reference](docs/language/types.md) and [voxel-game roadmap](docs/runtime/voxel-roadmap.md).
 
-## What's new in 2.2.0
+## What's new in 3.0.0
+
+- Aligns the compiler, NEXUS Studio desktop app and VS Code extension on release version 3.0.0.
+- Upgrades NEXUS Studio into a multi-file development workspace with editor tabs, project-file filtering, build diagnostics and a dedicated Problems view.
+- Keeps compiler distribution and VSIX artifact names versioned and validates the three release versions together in CI.
+
+## What's new in 2.2.0 (previous release)
 
 - Adds i64 bitwise operators `&`, `|`, `^`, `<<`, `>>` together with the compound forms `&=`, `|=`, `^=`, `<<=`, `>>=`. They work in the LLVM path and the built-in x86-64 native backend, and the formatter preserves them.
 - `match` is now checked for exhaustiveness over `bool` and enum domains, so a missing variant is a compile-time error instead of a silent fall-through.
@@ -75,7 +81,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 ## Install on Windows 11
 
 1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads.html) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
-2. Download `NEXUS-Setup-2.2.0.exe` only from an official project artifact.
+2. Download `NEXUS-Setup-3.0.0.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
 5. Open a **new** PowerShell window and verify:

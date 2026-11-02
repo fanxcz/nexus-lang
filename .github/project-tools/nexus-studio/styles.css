@@ -465,3 +465,54 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
+
+
+/* NEXUS Studio 3.0.0 — IDE panels and editor tabs */
+:root { --accent:#78afe3; --accent-bright:#a5d0f3; --red:#e58b8b; --background:#101722; --panel:#151f2b; --line:#2b3949; --line-soft:#243140; --muted:#8d9bad; }
+body { background:#0f1620; }
+.topbar { background:#151f2b; border-bottom-color:#283b50; }
+.brand-copy small { color:#8fbce5; }
+.run-button { border-color:#78afe3; background:#78afe3; color:#0d1926; }
+.run-button:hover { border-color:#a5d0f3; background:#a5d0f3; color:#0d1926; }
+.build-button { border-color:#354b61; color:#c5ddf4; background:#202f40; }
+.build-button .button-glyph { color:#78afe3; }
+.sidebar { background:#151f2b; }
+.explorer-filter { display:flex; align-items:center; gap:8px; margin:9px 10px; padding:0 9px; min-height:31px; border:1px solid #344457; border-radius:5px; background:#101722; color:#91a4b9; }
+.explorer-filter:focus-within { border-color:#6b9cc9; }
+.explorer-filter input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:#e1eaf4; font:10px Consolas,monospace; }
+.explorer-filter input::placeholder { color:#74859a; }
+.editor-tabs { display:flex; align-items:stretch; min-width:0; overflow-x:auto; }
+.tab { min-width:112px; max-width:230px; height:39px; padding:0; gap:0; background:#182331; border-right:1px solid #29394b; border-top:2px solid transparent; }
+.tab.active { background:#101722; border-top-color:var(--accent); }
+.tab-main { height:100%; min-width:0; flex:1; display:flex; align-items:center; gap:8px; padding:0 9px 0 13px; border:0; background:transparent; color:#aebdce; text-align:left; font:10px Arial,sans-serif; }
+.tab.active .tab-main { color:#e5edf6; }
+.tab-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tab-dirty-dot { margin-left:auto; color:#e5bd72; font-size:7px; }
+.tab-close { width:25px; height:25px; flex:0 0 auto; margin:auto 5px auto 0; padding:0; border:0; border-radius:4px; background:transparent; color:#73859a; font-size:16px; line-height:1; }
+.tab-close:hover { background:#2a3a4c; color:#e8eef6; }
+.tab.is-dirty .tab-close { color:#d9ad55; }
+.problems-panel { height:155px; min-height:95px; flex:0 0 auto; display:flex; flex-direction:column; border-top:1px solid #304155; background:#121c28; }
+.problems-panel.hidden { display:none; }
+.problems-head { height:34px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 13px; border-bottom:1px solid #28394b; color:#b9c8d9; }
+.problems-head > div { display:flex; align-items:center; gap:9px; font-size:8px; letter-spacing:.12em; }
+.problems-head > div span { min-width:17px; padding:2px 5px; border-radius:8px; background:#25364a; color:#a9c6e2; text-align:center; font:9px Consolas,monospace; }
+.problems-head button { width:24px; height:24px; border:0; border-radius:4px; background:transparent; color:#91a2b5; font-size:17px; }
+.problems-head button:hover { background:#263648; color:#fff; }
+.problem-list { min-height:0; overflow:auto; padding:5px 8px; }
+.problems-empty { padding:13px 8px; color:#77899d; font-size:10px; }
+.problem-row { width:100%; display:flex; align-items:flex-start; gap:10px; padding:7px 8px; border:0; border-radius:4px; background:transparent; color:#c4d1df; text-align:left; }
+.problem-row:hover { background:#1e2d3d; }
+.problem-severity { width:13px; flex:0 0 auto; margin-top:2px; color:#e18a8a; font-size:9px; }
+.problem-row.warning .problem-severity { color:#e2b66b; }
+.problem-message { min-width:0; display:flex; flex-direction:column; gap:3px; }
+.problem-message strong { color:#dce6f1; font-size:10px; font-weight:600; overflow-wrap:anywhere; }
+.problem-message small { color:#8194aa; font:9px Consolas,monospace; }
+#toggleProblems.has-problems { color:#efb0a4; }
+#problemBadge { display:inline-flex; min-width:16px; justify-content:center; margin-left:3px; padding:1px 4px; border-radius:8px; background:#293a4c; color:#c7d9ea; font:9px Consolas,monospace; }
+.terminal-panel,.terminal-head { background:#101722; }
+.terminal-head { background:#151f2b; }
+.statusbar { background:#1a2837; border-top-color:#34495f; }
+.status-branch { color:#94bde3; }
+.compiler-ready { color:#a8d2b4; }
+.compiler-missing { color:#e4bd78; }
+@media(max-width:900px){.explorer-filter{margin-inline:7px}.tab{min-width:92px}}

@@ -1,16 +1,18 @@
-# NEXUS Studio
+# NEXUS Studio 3.0.0
 
-NEXUS Studio is the desktop workspace for opening a project, editing NEXUS source and running the compiler without switching between separate tools.
+NEXUS Studio is the cross-platform desktop IDE for NEXUS projects. It combines a project explorer, multi-file editor, compiler workflow, diagnostics list and integrated terminal in one workspace.
 
-## Features
+## IDE features
 
-- Project explorer for folders and files inside the selected workspace.
-- Ace editor with NEXUS syntax highlighting and keyboard-first editing.
-- Integrated terminal with process output, Stop, Clear and collapse controls.
-- Compiler detection through `NEXUS_COMPILER`, PATH and common install locations. The selected compiler path is remembered between launches.
-- Direct Build and Run actions for the active `.nx` file.
-- Searchable command palette (`Ctrl/Cmd+Shift+P`) for opening projects, creating files, choosing a compiler, refreshing the explorer and running Build/Run.
-- Windows NSIS installer and portable executable; Linux AppImage/DEB; macOS DMG/ZIP packaging.
+- **Project explorer:** open a folder, browse nested directories, refresh the tree and filter filenames.
+- **Multi-tab editor:** keep several files open, switch between tabs, preserve unsaved buffers and close tabs independently.
+- **NEXUS editing:** Ace editor with NEXUS syntax highlighting, line numbers, cursor position, indentation and familiar keyboard shortcuts.
+- **Problems panel:** compiler errors and warnings that include source locations are collected from build output; select an entry to open its file and jump to the reported line and column.
+- **Build and Run:** detect a compiler through `NEXUS_COMPILER`, PATH and common install locations, or select its executable manually.
+- **Integrated terminal:** run commands from the project root, inspect stdout/stderr, stop the current process, clear output and collapse the panel.
+- **Command palette:** search common project, editor, compiler, terminal and diagnostic actions with `Ctrl/Cmd+Shift+P`.
+
+Studio is a desktop application built with Electron. It is not a web-based IDE and its desktop file and process operations run locally on the current operating-system account.
 
 ## Compiler setup
 
@@ -41,19 +43,24 @@ npm run dist:linux
 npm run dist:mac
 ```
 
-Artifacts are written to `release/`. GitHub Actions also builds all three platform packages. To prepare a reviewable draft release with SHA-256 sidecars, run the [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml). The workflow deliberately creates a draft release rather than publishing unreviewed binaries.
+Artifacts are written to `release/`. The [cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml) produces Windows, Linux and macOS packages. The [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml) creates a draft release with SHA-256 sidecars for review.
 
 ## Shortcuts
 
 | Shortcut | Action |
 |---|---|
 | Ctrl/Cmd+O | Open project |
-| Ctrl/Cmd+N | New file |
-| Ctrl/Cmd+S | Save |
+| Ctrl/Cmd+N | Create file |
+| Ctrl/Cmd+S | Save active file |
+| Ctrl/Cmd+W | Close active tab |
+| Ctrl/Cmd+P | Filter project filenames |
 | Ctrl/Cmd+Shift+P | Command palette |
-| F7 | Build |
-| F5 | Build and run |
+| F7 | Build active source |
+| F5 | Build and run active source |
+| F8 | Toggle Problems panel |
 
 ## Current boundaries
 
-Studio currently shows one active editor tab at a time. It does not include a debugger, Git client, LSP diagnostics panel or multi-file refactoring UI. The integrated terminal runs commands with the current OS user's permissions; only run commands you trust. File operations are restricted to the opened project folder, and files larger than 2 MB are not opened in the editor.
+Studio 3.0.0 includes multi-file editing, project navigation, a compiler-driven Problems panel and a local terminal. It does **not** currently include a graphical debugger, Git client, integrated language-server protocol client, symbol index or multi-file refactoring engine. The Problems panel parses source locations emitted by the compiler; it is not a replacement for a full LSP diagnostics engine.
+
+The terminal runs commands with the current OS user's permissions; only run commands you trust. File operations are restricted to the opened project folder, and files larger than 2 MB are not opened in the editor.

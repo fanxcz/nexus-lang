@@ -21,20 +21,20 @@ npm install
 npx --yes @vscode/vsce package
 ```
 
-The current package version is **2.2.0**. The resulting VSIX includes its production language-client dependency; it does not bundle the compiler.
+The current package version is **3.0.0**. The resulting VSIX includes its production language-client dependency; it does not bundle the compiler.
 
 ## Install
 
 1. Open VS Code.
 2. Press **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**).
 3. Run **Extensions: Install from VSIX...**.
-4. Select `fanxcz.nexus-language-2.2.0.vsix`.
+4. Select `fanxcz.nexus-language-3.0.0.vsix`.
 5. Reload the window and open a `.nx` source file.
 
 Or use:
 
 ```sh
-code --install-extension fanxcz.nexus-language-2.2.0.vsix
+code --install-extension fanxcz.nexus-language-3.0.0.vsix
 ```
 
 The extension is not yet published on the VS Code Marketplace; installing from VSIX is the available route.

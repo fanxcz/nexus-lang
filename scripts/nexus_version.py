@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """Single source of truth for the NEXUS version numbers used by the repository.
 
-Two versions exist and are intentionally independent:
+Compiler, desktop app and extension versions are validated as one release set:
 
 * the compiler/installer version comes from ``project(nexus VERSION x.y.z)`` in
   ``CMakeLists.txt``;
 * the VS Code extension version comes from
-  ``.github/project-tools/vscode-extension/package.json``.
+  ``.github/project-tools/vscode-extension/package.json``;
+* the Studio desktop version comes from
+  ``.github/project-tools/nexus-studio/package.json``;
 
 Workflows, packaging scripts and the download validators ask this module instead
 of copying the numbers. ``check`` verifies that no tracked text file still pins a
 stale artifact name and that the installer, bootstrap scripts and download
-lists agree with the two sources above. It is wired into CTest, so a version
+lists agree with all three version sources. It is wired into CTest, so a version
 bump that misses a file fails locally and in CI.
 
 Usage::
 
     python scripts/nexus_version.py compiler
     python scripts/nexus_version.py extension
+    python scripts/nexus_version.py studio
     python scripts/nexus_version.py setup        # NEXUS-Setup-x.y.z.exe
     python scripts/nexus_version.py vsix         # NEXUS-Language-x.y.z.vsix
     python scripts/nexus_version.py github-env   # lines for $GITHUB_ENV
@@ -36,6 +39,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PROJECT_FILE = "CMakeLists.txt"
 EXTENSION_PACKAGE = Path(".github/project-tools/vscode-extension/package.json")
+STUDIO_PACKAGE = Path(".github/project-tools/nexus-studio/package.json")
 SETUP_INSTALLER = Path(".github/project-tools/installer/NEXUS-Setup.iss")
 PORTABLE_ARCHIVE = "NEXUS_Windows_Portable.zip"
 PAINT_EXECUTABLE = "NEXUS-Paint-Windows-x64.exe"
@@ -86,6 +90,19 @@ def extension_version(root: Path = ROOT) -> str:
     return str(version)
 
 
+def studio_version(root: Path = ROOT) -> str:
+    """Return the NEXUS Studio desktop version from its package manifest."""
+    package = root / STUDIO_PACKAGE
+    try:
+        data = json.loads(_read(package))
+        version = data["version"]
+    except (OSError, ValueError, KeyError) as error:
+        raise SystemExit(f"could not read the Studio version from {package}: {error}")
+    if not re.fullmatch(VERSION_PATTERN, str(version)):
+        raise SystemExit(f"{package}: version {version!r} is not x.y.z")
+    return str(version)
+
+
 def asset_names(root: Path = ROOT) -> dict[str, str]:
     """Return every download artifact name, keyed by a short stable label."""
     compiler = compiler_version(root)
@@ -121,7 +138,13 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
     """Return one message per inconsistency; an empty list means everything agrees."""
     compiler = compiler_version(root)
     extension = extension_version(root)
+    studio = studio_version(root)
     problems: list[str] = []
+    if extension != compiler or studio != compiler:
+        problems.append(
+            "release versions must match: compiler "
+            f"{compiler}, extension {extension}, Studio {studio}"
+        )
 
     for path in _text_files(root):
         text = _read(path)
@@ -209,7 +232,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "what",
-        choices=["compiler", "extension", "setup", "vsix", "github-env", "check"],
+        choices=["compiler", "extension", "studio", "setup", "vsix", "github-env", "check"],
         help="value to print, or `check` to verify the repository",
     )
     parser.add_argument("--root", type=Path, default=ROOT, help="repository root")
@@ -222,6 +245,8 @@ def main(argv: list[str] | None = None) -> int:
         print(compiler_version(root))
     elif args.what == "extension":
         print(extension_version(root))
+    elif args.what == "studio":
+        print(studio_version(root))
     elif args.what == "setup":
         print(asset_names(root)["setup"])
     elif args.what == "vsix":
@@ -229,8 +254,10 @@ def main(argv: list[str] | None = None) -> int:
     elif args.what == "github-env":
         compiler = compiler_version(root)
         extension = extension_version(root)
+        studio = studio_version(root)
         print(f"NEXUS_VERSION={compiler}")
         print(f"NEXUS_EXTENSION_VERSION={extension}")
+        print(f"NEXUS_STUDIO_VERSION={studio}")
         print(f"NEXUS_SETUP_ASSET=NEXUS-Setup-{compiler}.exe")
         print(f"NEXUS_VSIX_ASSET=NEXUS-Language-{extension}.vsix")
     else:
@@ -241,7 +268,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(
             "PASS version consistency: "
-            f"compiler {compiler_version(root)}, extension {extension_version(root)}"
+            f"compiler {compiler_version(root)}, extension {extension_version(root)}, "
+            f"Studio {studio_version(root)}"
         )
     return 0
 

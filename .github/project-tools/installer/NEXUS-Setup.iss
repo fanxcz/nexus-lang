@@ -1,6 +1,6 @@
 #define MyAppName "NEXUS"
 #ifndef MyAppVersion
-  #define MyAppVersion "2.2.0"
+  #define MyAppVersion "3.0.0"
 #endif
 #define MyAppPublisher "NEXUS Project"
 #ifndef SourceDir

@@ -15,7 +15,7 @@
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 32 32" role="presentation"><path d="M7 25V7h4l10 12V7h4v18h-4L11 13v12z" fill="currentColor"/></svg>
       </span>
-      <span class="brand-copy"><strong>NEXUS</strong><small>STUDIO</small></span>
+      <span class="brand-copy"><strong>NEXUS</strong><small>STUDIO 3.0.0</small></span>
       <span class="brand-divider"></span>
       <span class="workspace-label" id="projectName">No folder opened</span>
     </a>
@@ -60,6 +60,7 @@
         <span class="project-folder-icon" aria-hidden="true">▰</span>
         <span id="projectNameSidebar">No folder opened</span>
       </div>
+      <div class="explorer-filter"><span aria-hidden="true">⌕</span><input id="fileSearch" type="search" placeholder="Filter project files…" autocomplete="off" spellcheck="false" aria-label="Filter project files"></div>
       <div id="fileTree" class="file-tree">
         <div class="empty-state"><span class="empty-icon">◇</span><strong>No workspace yet</strong><span>Open a project folder to browse its files.</span><button id="sidebarOpen">Open folder</button></div>
       </div>
@@ -73,11 +74,8 @@
     <main class="main">
       <div class="editor-chrome">
         <div class="tabs">
-          <div id="activeTab" class="tab">
-            <span class="file-glyph" aria-hidden="true">◇</span>
-            <span id="tabName">Welcome</span>
-            <span id="dirtyMark"></span>
-          </div>
+          <div id="editorTabs" class="editor-tabs" role="tablist" aria-label="Open editor files"></div>
+          <span id="tabName" class="hidden"></span><span id="dirtyMark" class="hidden"></span><span id="activeTab" class="hidden"></span>
           <div class="tab-spacer"></div>
           <div id="saveStatus" class="save-status"><span class="save-status-dot"></span> Ready</div>
         </div>
@@ -128,6 +126,10 @@
 
       <section id="editorWrap" class="editor-wrap hidden"><div id="editor"></div></section>
 
+      <section id="problemsPanel" class="problems-panel hidden" aria-label="Compiler problems">
+        <div class="problems-head"><div><strong>PROBLEMS</strong><span id="problemCount">0</span></div><button id="closeProblems" type="button" title="Hide Problems panel">×</button></div>
+        <div id="problemList" class="problem-list"><div class="problems-empty">No problems detected. Build a NEXUS file to see diagnostics here.</div></div>
+      </section>
       <section class="terminal-panel">
         <div class="terminal-head">
           <div class="terminal-heading">
@@ -136,6 +138,7 @@
             <span class="terminal-subtitle">PROJECT OUTPUT</span>
           </div>
           <div class="terminal-tools">
+            <button id="toggleProblems" title="Show compiler problems">Problems <span id="problemBadge">0</span></button>
             <button id="clearTerminal" title="Clear output">Clear</button>
             <button id="stopTerminal" title="Stop the running command">Stop</button>
             <button id="toggleTerminal" title="Collapse or expand terminal">Hide</button>
@@ -161,6 +164,7 @@
       <span id="compilerStatus" class="compiler-missing">Compiler not selected</span>
       <span id="statusLang">NEXUS</span>
       <span>UTF-8</span>
+      <span id="cursorPosition">Ln 1, Col 1</span>
       <span id="statusPlatform">Desktop</span>
     </div>
   </footer>

@@ -7,6 +7,23 @@ spirit of [Keep a Changelog](https://keepachangelog.com/).
 Release notes for versions before 2.1.0 and the detailed per-change history
 live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files/CHANGELOG.md).
 
+## 3.0.0 — 2026-11-02
+
+### Added
+
+- Upgraded NEXUS Studio from a single-file workspace into a more complete desktop IDE: multi-file tabs with unsaved-buffer tracking, save-all, close-tab actions, project filename filtering, cursor position, a Problems panel for compiler-reported errors/warnings and jump-to-location navigation.
+- Added Studio keyboard shortcuts and command-palette actions for tab management, file filtering and the Problems panel.
+- Added an explicit NEXUS Studio 3.0.0 version source and made CI's version-consistency check require the compiler, desktop app and VS Code extension to match.
+
+### Changed
+
+- Aligned the compiler, Windows installer, portable distribution, VS Code extension, NEXUS Studio, documentation, website and release metadata on version 3.0.0.
+- Reworked Studio's desktop workspace into an IDE-style layout with a project explorer, editor tabs, compiler feedback and terminal panels.
+
+### Fixed
+
+- Updated current download names, version references and navigation links to use the 3.0.0 release metadata. Previous 2.2.0 release notes remain below for history.
+
 ## Unreleased
 
 ### Added
