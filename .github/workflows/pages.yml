@@ -363,6 +363,11 @@ jobs:
           & $iscc "/O$env:RUNNER_TEMP" "/DSourceDir=$stagedPackage" "/DMyAppVersion=$env:NEXUS_VERSION" '.github/project-tools/installer/NEXUS-Setup.iss'
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path -LiteralPath $installer)) { throw 'The NEXUS Setup EXE was not produced.' }
+          $setupVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($installer).ProductVersion
+          if ($setupVersion -notlike "$env:NEXUS_VERSION*") {
+            throw "NEXUS Setup EXE metadata mismatch: expected $env:NEXUS_VERSION, got '$setupVersion'."
+          }
+          Write-Host "Verified NEXUS Setup installer version: $setupVersion"
           Write-Host "Created graphical installer: $installer"
 
           # Publish Paint as a real setup executable so its SDL/SQLite DLLs are installed beside the app.
