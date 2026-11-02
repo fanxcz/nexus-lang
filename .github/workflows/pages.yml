@@ -570,7 +570,7 @@ jobs:
     # Serialize only the actual Pages publication. Packaging and site building
     # remain free to run in parallel, so a slow Windows build cannot hold Pages.
     concurrency:
-      group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages-docs' }}
+      group: ${{ github.event_name == 'pull_request' && format('pages-publish-pr-{0}', github.event.pull_request.number) || 'pages-publish' }}
       cancel-in-progress: true
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     name: Deploy GitHub Pages
