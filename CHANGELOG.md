@@ -9,24 +9,12 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ## 3.0.0 — 2026-11-02
 
-### Added
-
-- Upgraded NEXUS Studio from a single-file workspace into a more complete desktop IDE: multi-file tabs with unsaved-buffer tracking, save-all, close-tab actions, project filename filtering, cursor position, a Problems panel for compiler-reported errors/warnings and jump-to-location navigation.
-- Added Studio keyboard shortcuts and command-palette actions for tab management, file filtering and the Problems panel.
-- Added an explicit NEXUS Studio 3.0.0 version source and made CI's version-consistency check require the compiler, desktop app and VS Code extension to match.
-
-### Changed
-
-- Aligned the compiler, Windows installer, portable distribution, VS Code extension, NEXUS Studio, documentation, website and release metadata on version 3.0.0.
-- Reworked Studio's desktop workspace into an IDE-style layout with a project explorer, editor tabs, compiler feedback and terminal panels.
-
-### Fixed
-
-- Updated current download names, version references and navigation links to use the 3.0.0 release metadata. Previous 2.2.0 release notes remain below for history.
-
-## Unreleased
 
 ### Added
+
+- Expanded NEXUS Studio into a desktop IDE with multi-file tabs, saved/unsaved buffer tracking, filename filtering, cursor position, a compiler Problems panel and jump-to-source diagnostics.
+- Added IDE commands and shortcuts for saving all files, switching/closing tabs, filtering project files and opening compiler Problems.
+- Added NEXUS Studio as the third version source and require the compiler, extension and desktop app packages to share one release version.
 
 - Added an implementation-backed compiler architecture map, troubleshooting guide, NEXUS source style guide, backend support matrix, versioning policy, reproducible-build guidance, governance policy, GitHub settings guide and good-first-issue list.
 - Added opt-in Clang/libFuzzer targets for the lexer and parser with seed corpora; normal builds remain unchanged unless `NEXUS_BUILD_LIBFUZZER=ON` is selected.
@@ -66,6 +54,9 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   scalar values.
 
 ### Changed
+
+- Aligned the compiler, Windows installer, portable distribution, VS Code extension, NEXUS Studio, documentation and website on version 3.0.0.
+- Updated current downloads, version references and release links for the 3.0.0 release.
 
 - Version numbers now come from one place: `scripts/nexus_version.py` reads the
   compiler version from `CMakeLists.txt` and the extension version from
