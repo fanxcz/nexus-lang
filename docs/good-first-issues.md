@@ -15,4 +15,4 @@ These are scoped starter tasks based on existing code and documentation gaps. Th
 
 ## Contributor workflow
 
-Read [CONTRIBUTING.md](../CONTRIBUTING.md), follow the [NEXUS style guide](style-guide-nx.md), and run the focused test before opening a PR. Ask usage questions in Discussions; reserve Issues for reproducible bugs and accepted work items.
+Read [CONTRIBUTING.md](https://github.com/fanxcz/nexus-lang/blob/main/CONTRIBUTING.md), follow the [NEXUS style guide](style-guide-nx.md), and run the focused test before opening a PR. Ask usage questions in Discussions; reserve Issues for reproducible bugs and accepted work items.
