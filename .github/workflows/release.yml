@@ -240,7 +240,12 @@ jobs:
           fi
           release_tag="$GITHUB_REF_NAME"
           if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then release_tag="v${NEXUS_VERSION}"; fi
-          gh release create "$release_tag" "${files[@]}" \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "NEXUS $release_tag" \
-            --generate-notes
+          if gh release view "$release_tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $release_tag already exists; refreshing its platform archives."
+            gh release upload "$release_tag" "${files[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$release_tag" "${files[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "NEXUS $release_tag" \
+              --generate-notes
+          fi

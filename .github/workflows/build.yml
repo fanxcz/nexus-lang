@@ -54,14 +54,8 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
-      - name: Repository-wide formatter gate (POSIX)
-        if: runner.os != 'Windows'
-        run: ./build/nexus fmt --check --all
-
-      - name: Repository-wide formatter gate (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: .\build\nexus.exe fmt --check --all
+      # CTest's nexus_repository_sources test runs per-file format and lint
+      # checks while intentionally excluding invalid fuzz-corpus inputs.
 
       - name: Smoke test (POSIX)
         if: runner.os != 'Windows'
