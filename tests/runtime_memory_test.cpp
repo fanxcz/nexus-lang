@@ -67,14 +67,18 @@ int main() {
         nexus_runtime_test_range_valid(buffer, std::numeric_limits<int64_t>::max()) != 0;
     const bool negativeSizeValid = nexus_runtime_test_range_valid(buffer, -1) != 0;
     const bool nullRangeValid = nexus_runtime_test_range_valid(0, 8) != 0;
-    if (!buffer || !wholeRangeValid || !tailRangeValid || partialOverflowValid ||
-        hugeRangeValid || negativeSizeValid || nullRangeValid) {
+    if (!buffer || !wholeRangeValid || !tailRangeValid || partialOverflowValid || hugeRangeValid ||
+        negativeSizeValid || nullRangeValid) {
         std::fprintf(stderr,
                      "runtime memory range validation failed: pointer=%lld whole=%d tail=%d "
-                     "partial=%d end=%d huge=%d negative=%d null=%d\n",
-                     static_cast<long long>(buffer), wholeRangeValid, tailRangeValid,
-                     partialOverflowValid, hugeRangeValid,
-                     negativeSizeValid, nullRangeValid);
+                     "partial=%d huge=%d negative=%d null=%d\\n",
+                     static_cast<long long>(buffer),
+                     wholeRangeValid,
+                     tailRangeValid,
+                     partialOverflowValid,
+                     hugeRangeValid,
+                     negativeSizeValid,
+                     nullRangeValid);
         return 6;
     }
     nexus_mem_set(buffer, 0x5A, 16);
