@@ -22,6 +22,9 @@ SKIP_DIRS = {
     "target", ".cache", ".venv",
 }
 SKIP_LINT = (Path("selfhost") / "tests",)
+# This file is deliberately invalid input for the parser fuzzer, not source
+# that can be formatted into a valid NEXUS program.
+SKIP_FORMAT = (Path("tests/fuzz/corpus/parser/malformed.nx"),)
 
 
 def sources(root: Path) -> list[Path]:
@@ -61,14 +64,20 @@ def main() -> int:
     if info.returncode != 0 or "nexus-repository" not in info.stdout:
         raise SystemExit(f"nexus info rejected the repository manifest:\n{info.stdout}{info.stderr}")
 
-    formatted = run(args.nexus, "fmt", "--check", "--all", cwd=root)
-    if formatted.returncode != 0:
-        raise SystemExit(
-            "nexus fmt --check --all failed; run `nexus fmt --all` from the repository "
-            f"root:\n{formatted.stdout}{formatted.stderr}"
-        )
-
     all_sources = sources(root)
+    formatted_count = 0
+    for path in all_sources:
+        relative = path.relative_to(root)
+        if relative in SKIP_FORMAT:
+            continue
+        formatted = run(args.nexus, "fmt", "--check", str(path), cwd=root)
+        if formatted.returncode != 0:
+            raise SystemExit(
+                f"nexus fmt --check failed for {relative}; run `nexus fmt {relative}`:\n"
+                f"{formatted.stdout}{formatted.stderr}"
+            )
+        formatted_count += 1
+
     linted = 0
     warnings = 0
     for path in all_sources:
@@ -85,7 +94,7 @@ def main() -> int:
 
     print(
         f"PASS repository sources: {len(all_sources)} .nx files, {linted} linted, "
-        f"{warnings} TODO/FIXME marker(s), formatter clean"
+        f"{warnings} TODO/FIXME marker(s), {formatted_count} formatted, formatter clean"
     )
     return 0
 
