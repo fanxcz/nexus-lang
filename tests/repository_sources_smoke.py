@@ -21,10 +21,10 @@ SKIP_DIRS = {
     ".git", "build", "dist", "site", "vendor", "node_modules", "CMakeFiles",
     "target", ".cache", ".venv",
 }
-SKIP_LINT = (Path("selfhost") / "tests",)
-# This file is deliberately invalid input for the parser fuzzer, not source
-# that can be formatted into a valid NEXUS program.
-SKIP_FORMAT = (Path("tests/fuzz/corpus/parser/malformed.nx"),)
+SKIP_LINT = (Path("selfhost") / "tests", Path("tests/fuzz/corpus"))
+# Fuzz corpus files are parser/lexer test inputs, not shipped source programs.
+# Several intentionally contain incomplete or invalid syntax.
+SKIP_FORMAT = (Path("tests/fuzz/corpus"),)
 
 
 def sources(root: Path) -> list[Path]:
@@ -68,7 +68,7 @@ def main() -> int:
     formatted_count = 0
     for path in all_sources:
         relative = path.relative_to(root)
-        if relative in SKIP_FORMAT:
+        if any(relative.parts[: len(prefix.parts)] == prefix.parts for prefix in SKIP_FORMAT):
             continue
         formatted = run(args.nexus, "fmt", "--check", str(path), cwd=root)
         if formatted.returncode != 0:

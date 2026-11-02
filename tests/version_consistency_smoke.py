@@ -3,7 +3,7 @@
 
 The checker is what keeps the workflows, installer and download lists on one
 version. This test proves it accepts an internally consistent tree and rejects
-the two failures it exists for: a bumped compiler version that leaves older
+the the failures it exists for: a bumped compiler version that leaves older
 artifact names or installer pins behind, and an installer whose output name no
 longer derives from the version macro.
 """
@@ -21,7 +21,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 COMPILER = "9.9.9"
-EXTENSION = "1.2.3"
+EXTENSION = COMPILER
+STUDIO = COMPILER
 
 
 def write(path: Path, text: str) -> None:
@@ -46,6 +47,10 @@ def build_fixture(root: Path) -> None:
     write(
         root / ".github/project-tools/vscode-extension/package.json",
         json.dumps({"name": "nexus-language", "version": EXTENSION}),
+    )
+    write(
+        root / ".github/project-tools/nexus-studio/package.json",
+        json.dumps({"name": "nexus-studio", "version": STUDIO}),
     )
     write(
         root / ".github/project-tools/installer/NEXUS-Setup.iss",
@@ -121,13 +126,14 @@ def main() -> int:
     extension = json.loads(
         (REPO / ".github/project-tools/vscode-extension/package.json").read_text(encoding="utf-8")
     )["version"]
-    for what, expected in (("compiler", compiler), ("extension", extension)):
+    for what, expected in (("compiler", compiler), ("extension", extension), ("studio", extension)):
         result = expect_ok(repo_script, what)
         if result.stdout.strip() != expected:
             raise AssertionError(f"{what} printed {result.stdout.strip()!r}, expected {expected!r}")
     env = expect_ok(repo_script, "github-env").stdout
     for line in (f"NEXUS_VERSION={compiler}",
                  f"NEXUS_EXTENSION_VERSION={extension}",
+                 f"NEXUS_STUDIO_VERSION={extension}",
                  f"NEXUS_SETUP_ASSET=NEXUS-Setup-{compiler}.exe",
                  f"NEXUS_VSIX_ASSET=NEXUS-Language-{extension}.vsix"):
         if line not in env:
