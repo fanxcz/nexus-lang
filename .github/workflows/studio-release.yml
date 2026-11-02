@@ -99,29 +99,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          files=(dist/*)
+          mapfile -d '' files < <(find dist -mindepth 1 -maxdepth 1 -type f -print0 | sort -z)
           if [ "${#files[@]}" -eq 0 ]; then
-            echo "No Studio desktop packages were downloaded." >&2
+            echo "No Studio desktop package files were downloaded." >&2
             exit 1
           fi
-          for checksum in dist/*.sha256.txt; do
-            target="${checksum%.sha256.txt}"
-            test -s "$target"
-            expected="$(awk '{print $1}' "$checksum")"
-            actual="$(sha256sum "$target" | awk '{print $1}')"
-            if [[ "$expected" != "$actual" ]]; then
-              echo "SHA-256 mismatch: $target" >&2
-              exit 1
-            fi
+          package_count=0
+          checksum_count=0
+          for file in "${files[@]}"; do
+            case "$file" in
+              *.sha256.txt)
+                target="${file%.sha256.txt}"
+                test -s "$target" || { echo "Missing package for checksum: $file" >&2; exit 1; }
+                expected="$(awk '{print $1}' "$file")"
+                actual="$(sha256sum "$target" | awk '{print $1}')"
+                if [[ "$expected" != "$actual" ]]; then
+                  echo "SHA-256 mismatch: $target" >&2
+                  exit 1
+                fi
+                checksum_count=$((checksum_count + 1))
+                ;;
+              *)
+                package_count=$((package_count + 1))
+                ;;
+            esac
           done
-          package_count="$(find dist -maxdepth 1 -type f ! -name '*.sha256.txt' | wc -l)"
-          checksum_count="$(find dist -maxdepth 1 -type f -name '*.sha256.txt' | wc -l)"
           if [ "$package_count" -lt 3 ] || [ "$checksum_count" -lt 3 ]; then
             echo "Expected at least three platform packages and three checksum sidecars." >&2
             exit 1
           fi
-          printf 'Validated %s package files and %s checksum files.\\n' "$package_count" "$checksum_count"
+          echo "Validated $package_count package files and $checksum_count checksum files."
       - name: Publish Studio release
         env:
           GH_TOKEN: ${{ secrets.NEXUS_RELEASE_TOKEN || github.token }}
@@ -133,8 +140,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          args=(--repo "$GITHUB_REPOSITORY" --title "NEXUS Studio $RELEASE_VERSION" --target "$GITHUB_SHA")
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then args+=(--draft); fi
-          if [[ "$PRERELEASE" == "true" ]]; then args+=(--prerelease); fi
-          gh release create "studio-v$RELEASE_VERSION" dist/* "${args[@]}" \
-            --notes "NEXUS Studio $RELEASE_VERSION desktop IDE. Windows, Linux and macOS packages are attached with SHA-256 sidecars. This release was published only after all platform builds and checksum verification passed."
+          mapfile -d '' files < <(find dist -mindepth 1 -maxdepth 1 -type f -print0 | sort -z)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No release files found after validation." >&2
+            exit 1
+          fi
+          tag="studio-v$RELEASE_VERSION"
+          notes="NEXUS Studio $RELEASE_VERSION desktop IDE. Windows, Linux and macOS packages are attached with SHA-256 sidecars. All platform builds and checksum verification passed."
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            args=(--repo "$GITHUB_REPOSITORY" --title "NEXUS Studio $RELEASE_VERSION" --target "$GITHUB_SHA" --draft)
+            if [[ "$PRERELEASE" == "true" ]]; then args+=(--prerelease); fi
+            gh release create "$tag" "${files[@]}" "${args[@]}" --notes "$notes"
+          elif gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "NEXUS Studio $RELEASE_VERSION" --notes "$notes"
+          else
+            args=(--repo "$GITHUB_REPOSITORY" --title "NEXUS Studio $RELEASE_VERSION" --target "$GITHUB_SHA")
+            if [[ "$PRERELEASE" == "true" ]]; then args+=(--prerelease); fi
+            gh release create "$tag" "${files[@]}" "${args[@]}" --notes "$notes"
+          fi
