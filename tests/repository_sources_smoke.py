@@ -7,7 +7,9 @@ shipped ``.nx`` source passes ``nexus fmt --check`` and ``nexus lint``, and the
 root manifest itself parses.
 
 ``selfhost/tests/*.nx`` are program fragments consumed by the self-host suite,
-not standalone programs, so they are exempt from the lint pass.
+not standalone programs, so they are exempt from the lint pass. The
+negative-test directory also contains deliberately ill-typed programs that
+must be rejected by the compiler's semantic tests, not linted as applications.
 """
 
 from __future__ import annotations
@@ -21,7 +23,11 @@ SKIP_DIRS = {
     ".git", "build", "dist", "site", "vendor", "node_modules", "CMakeFiles",
     "target", ".cache", ".venv",
 }
-SKIP_LINT = (Path("selfhost") / "tests", Path("tests/fuzz/corpus"))
+SKIP_LINT = (
+    Path("selfhost") / "tests",
+    Path("tests/fuzz/corpus"),
+    Path("tests/negative"),
+)
 # Fuzz corpus files are parser/lexer test inputs, not shipped source programs.
 # Several intentionally contain incomplete or invalid syntax.
 SKIP_FORMAT = (Path("tests/fuzz/corpus"),)

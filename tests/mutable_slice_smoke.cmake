@@ -48,7 +48,8 @@ if(native_rc EQUAL 0)
 endif()
 if(NOT "${native_out}${native_err}" MATCHES "outside the builtin native")
   message(FATAL_ERROR "native backend rejection was not actionable: ${native_out}${native_err}")
-endif()endif()
+endif()
+endif()
 
 execute_process(
   COMMAND "${NEXUS_BIN}" build "${PROGRAM_DIR}/index_oob.nx" -o "${SCRATCH}/index-oob${SUFFIX}" --backend llvm
