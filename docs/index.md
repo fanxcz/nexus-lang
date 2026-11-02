@@ -1,147 +1,175 @@
 ---
 hide:
+  - navigation
   - toc
+  - footer
 ---
 
-<div class="nexus-hero" markdown>
+<div class="nexus-home">
+  <header class="nexus-site-header">
+    <a class="nexus-brand" href="./" aria-label="NEXUS home">
+      <img src="assets/images/nexus-n-2026.svg" alt="" width="34" height="34">
+      <span>NEXUS</span>
+      <span class="nexus-brand-divider"></span>
+      <small>LANGUAGE & TOOLCHAIN</small>
+    </a>
+    <nav class="nexus-site-nav" aria-label="Main navigation">
+      <a href="manual/">Language</a>
+      <a href="applications/">Applications</a>
+      <a href="examples/overview/">Examples</a>
+      <a href="studio/">Studio</a>
+      <a href="downloads/">Downloads</a>
+    </nav>
+    <a class="nexus-nav-cta" href="getting-started/quickstart/">Get started <span>↗</span></a>
+  </header>
 
-# NEXUS — native programming, clear and practical
+  <main>
+    <section class="nexus-hero">
+      <div class="nexus-hero-copy">
+        <div class="nexus-overline"><span class="nexus-live-dot"></span> OPEN SOURCE · VERSION 2.2.0</div>
+        <h1>Native software.<br><em>Clear by design.</em></h1>
+        <p class="nexus-hero-intro">NEXUS is a statically checked language and C++20 toolchain for desktop software, developer tools and small games. Start with a plain source file. Keep control of what gets built.</p>
+        <div class="nexus-hero-actions">
+          <a class="nexus-button nexus-button-primary" href="getting-started/quickstart/">Write your first program <span>↗</span></a>
+          <a class="nexus-button nexus-button-quiet" href="downloads/">Download compiler</a>
+        </div>
+        <div class="nexus-hero-footnote">Compiler · Runtime · Standard library · Desktop tools</div>
+      </div>
 
-A compiled, statically checked language for native applications, developer tools, and game prototypes. The compiler now includes fixed-width numeric types and checked slices; SDL-based 2D helpers and an experimental compatibility-OpenGL 3D path provide a starting point for graphics projects.
+      <div class="nexus-code-stage" aria-label="Illustrative NEXUS source editor preview">
+        <div class="nexus-code-window">
+          <div class="nexus-window-bar">
+            <div class="nexus-window-dots"><i></i><i></i><i></i></div>
+            <span class="nexus-window-file">examples / hello.nx</span>
+            <span class="nexus-window-mode">NEXUS</span>
+          </div>
+          <div class="nexus-code-body">
+            <div class="nexus-code-line"><span class="nexus-line-number">01</span><code><b>fn</b> main() {</code></div>
+            <div class="nexus-code-line"><span class="nexus-line-number">02</span><code>&nbsp;&nbsp;<b>let</b> language = <i>"NEXUS"</i></code></div>
+            <div class="nexus-code-line"><span class="nexus-line-number">03</span><code>&nbsp;&nbsp;print(<i>"Hello from "</i> + language)</code></div>
+            <div class="nexus-code-line"><span class="nexus-line-number">04</span><code>}</code></div>
+            <div class="nexus-code-cursor"></div>
+          </div>
+          <div class="nexus-code-output">
+            <div class="nexus-output-heading"><span>LOCAL WORKFLOW</span><span>READY</span></div>
+            <div class="nexus-output-step"><b>01</b><span>Check source</span><span class="nexus-step-state">nexus check</span></div>
+            <div class="nexus-output-step"><b>02</b><span>Build executable</span><span class="nexus-step-state">nexus build</span></div>
+            <div class="nexus-output-step"><b>03</b><span>Run the program</span><span class="nexus-step-state">nexus run</span></div>
+          </div>
+        </div>
+        <div class="nexus-code-caption"><span>01 / A small program</span><span>Source preview, not a product screenshot</span></div>
+      </div>
+    </section>
 
-[Start learning](getting-started/index.md){ .md-button .md-button--primary }
-[Download NEXUS](downloads.md){ .md-button }
-[View source on GitHub](https://github.com/fanxcz/nexus-lang){ .md-button }
-[Download language manual PDF](https://fanxcz.github.io/nexus-lang/pdf/NEXUS-Documentation.pdf){ .md-button }
+    <section class="nexus-facts" aria-label="NEXUS platform facts">
+      <div><strong>C++20</strong><span>Compiler implementation</span></div>
+      <div><strong>2 paths</strong><span>Native emitter and LLVM</span></div>
+      <div><strong>x86-64</strong><span>Built-in Windows and Linux targets</span></div>
+      <div><strong>SDL-based</strong><span>2D runtime and desktop UI helpers</span></div>
+    </section>
 
+    <section class="nexus-section nexus-approach">
+      <div class="nexus-section-heading">
+        <div class="nexus-overline">01 / THE TOOLCHAIN</div>
+        <h2>One language.<br><em>Two ways to compile.</em></h2>
+      </div>
+      <div class="nexus-approach-content">
+        <p class="nexus-section-lead">The frontend checks the program once. Choose the backend that fits the work, or let the driver select a supported path.</p>
+        <div class="nexus-backend-grid">
+          <article class="nexus-backend-card">
+            <div class="nexus-card-topline"><span>BACKEND A</span><span class="nexus-card-mark">N</span></div>
+            <h3>Built-in native</h3>
+            <p>Direct x86-64 code generation for a deliberately documented language subset. No separately installed LLVM compiler is needed for supported programs.</p>
+            <div class="nexus-card-meta"><span>PE32+ / Windows</span><span>ELF64 / Linux</span></div>
+            <a href="tooling/native-backend/">Native backend notes <span>↗</span></a>
+          </article>
+          <article class="nexus-backend-card nexus-backend-card-light">
+            <div class="nexus-card-topline"><span>BACKEND B</span><span class="nexus-card-mark">IR</span></div>
+            <h3>LLVM compilation</h3>
+            <p>LLVM IR is the broader code-generation path for features outside the native subset. A compatible Clang-style C++ toolchain is required.</p>
+            <div class="nexus-card-meta"><span>Feature coverage varies</span><span>Toolchain required</span></div>
+            <a href="backend-support-matrix/">Read the support matrix <span>↗</span></a>
+          </article>
+        </div>
+        <p class="nexus-caveat">Backend support is not identical. The parser accepting a construct does not mean both backends can emit it; check the current <a href="backend-support-matrix/">support matrix</a> before choosing a target.</p>
+      </div>
+    </section>
+
+    <section class="nexus-section nexus-work">
+      <div class="nexus-section-heading">
+        <div class="nexus-overline">02 / WHAT YOU CAN BUILD</div>
+        <h2>From a small tool<br><em>to a real desktop app.</em></h2>
+      </div>
+      <div class="nexus-work-grid">
+        <article class="nexus-work-card nexus-work-studio">
+          <div class="nexus-work-index">01 — DESKTOP WORKSPACE</div>
+          <div class="nexus-work-art nexus-studio-art" aria-hidden="true">
+            <div class="nexus-art-sidebar"><span></span><span></span><span></span><span></span></div>
+            <div class="nexus-art-editor">
+              <div class="nexus-art-tab">main.nx</div>
+              <div class="nexus-art-code"><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="nexus-art-terminal"><span>BUILD OUTPUT</span><b>Build completed</b></div>
+            </div>
+          </div>
+          <h3>NEXUS Studio</h3>
+          <p>A desktop workspace with a project explorer, NEXUS-aware editor, integrated terminal and direct Build/Run actions. The compiler is installed separately.</p>
+          <a href="studio/">Explore Studio <span>↗</span></a>
+        </article>
+        <article class="nexus-work-card">
+          <div class="nexus-work-index">02 — CREATIVE TOOL</div>
+          <div class="nexus-work-art nexus-paint-art" aria-hidden="true">
+            <div class="nexus-paint-toolbar"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="nexus-paint-canvas"><span></span><b></b><i></i></div>
+            <div class="nexus-paint-palette"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <h3>NEXUS Paint</h3>
+          <p>A native raster-painting example with brush, eraser, geometric tools, fill, undo/redo and BMP save/load.</p>
+          <a href="downloads/">Windows downloads <span>↗</span></a>
+        </article>
+        <article class="nexus-work-card">
+          <div class="nexus-work-index">03 — GAMES & GRAPHICS</div>
+          <div class="nexus-work-art nexus-game-art" aria-hidden="true">
+            <div class="nexus-game-grid"></div><span class="nexus-game-player"></span><i class="nexus-game-enemy"></i><b class="nexus-game-orbit"></b>
+          </div>
+          <h3>Games and experiments</h3>
+          <p>Playable prototypes cover vector movement, tilemaps, collision, cameras, particles, audio and an experimental 3D path.</p>
+          <a href="examples/overview/">Browse source examples <span>↗</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="nexus-section nexus-developer">
+      <div class="nexus-section-heading">
+        <div class="nexus-overline">03 / THE DAILY WORK</div>
+        <h2>A small, explicit<br><em>developer workflow.</em></h2>
+      </div>
+      <div class="nexus-developer-content">
+        <div class="nexus-terminal-card">
+          <div class="nexus-terminal-title"><span>TERMINAL</span><span>PROJECT ROOT</span></div>
+          <p><i>$</i> nexus check src/main.nx</p>
+          <p class="nexus-terminal-muted">Checking source and types…</p>
+          <p><i>$</i> nexus build src/main.nx --backend auto</p>
+          <p class="nexus-terminal-success">Build finished · executable written</p>
+          <p><i>$</i> nexus run src/main.nx</p>
+          <p class="nexus-terminal-muted">Program output appears here.</p>
+        </div>
+        <div class="nexus-developer-notes">
+          <article><b>01</b><div><h3>Language tooling</h3><p>Diagnostics, completion, hover, formatting, workspace symbols and quick fixes through the NEXUS language server.</p><a href="tooling/lsp/">Language server reference ↗</a></div></article>
+          <article><b>02</b><div><h3>Editor integration</h3><p>VS Code support for <code>.nx</code> files, syntax highlighting, snippets and LSP features.</p><a href="tooling/vscode-extension/">VS Code setup ↗</a></div></article>
+          <article><b>03</b><div><h3>Libraries and runtime</h3><p>Strings, files, JSON, networking, SQLite, memory helpers, 2D graphics and immediate-mode UI.</p><a href="std/">Browse the standard library ↗</a></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="nexus-bottom-cta">
+      <div><div class="nexus-overline">START WITH THE SOURCE</div><h2>Make the first build<br><em>your own.</em></h2></div>
+      <div class="nexus-bottom-copy"><p>Install the compiler, open a small example and learn the language by changing something that runs.</p><div class="nexus-hero-actions"><a class="nexus-button nexus-button-primary" href="downloads/">Get NEXUS <span>↗</span></a><a class="nexus-button nexus-button-dark" href="manual/">Read the manual</a></div></div>
+    </section>
+  </main>
+
+  <footer class="nexus-site-footer">
+    <a class="nexus-brand" href="./"><img src="assets/images/nexus-n-2026.svg" alt="" width="28" height="28"><span>NEXUS</span></a>
+    <span>Open-source language and toolchain · MIT License</span>
+    <div><a href="https://github.com/fanxcz/nexus-lang">Source repository ↗</a><a href="https://github.com/fanxcz/nexus-lang/blob/main/SECURITY.md">Security</a></div>
+  </footer>
 </div>
-
-<div class="nexus-kicker">Start here</div>
-
-## Build your first program
-
-Create `hello.nx`:
-
-```nx
-fn main() {
-    let name = "NEXUS"
-    print("Hello from " + name + "!")
-}
-```
-
-Run it from your terminal:
-
-```powershell
-nexus check hello.nx
-nexus run hello.nx
-```
-
-The compiler checks source code before building. Run `nexus doctor` if the compiler, toolchain or runtime is not available.
-
-## Explore NEXUS
-
-<div class="grid cards" markdown>
-
--   :material-rocket-launch-outline: **Get started**
-
-    Install the compiler, create a project, and learn the basic workflow.
-
-    [Quick Start](getting-started/quickstart.md)
-
--   :material-language-c: **Language reference**
-
-    Learn variables, types, functions, arrays, structs, enums, loops, imports and the current feature boundaries.
-
-    [Syntax and examples](language/syntax.md)
-
--   :material-package-variant-closed: **Standard library**
-
-    Explore files, strings, JSON, networking, math, collections, UI layout and runtime helpers.
-
-    [Library modules](std/index.md)
-
--   :material-desktop-classic: **Build native apps**
-
-    Create a windowed app or CLI utility, use immediate-mode widgets, and explore the current runtime and development workflow.
-
-    [Application development](applications.md)
-
--   :material-gamepad-variant-outline: **Game development**
-
-    Explore tilemaps, collision helpers, sprites, animation, cameras, and the experimental 3D API.
-
-    [Game development status](runtime/voxel-roadmap.md)
-
--   :material-download-box-outline: **Downloads**
-
-    Windows setup, portable compiler bundle, NEXUS Paint installer, VS Code extension and checksum files.
-
-    [Official downloads](downloads.md)
-
--   :material-bug-outline: **Compiler and tooling**
-
-    Check diagnostics, backend choice, formatter, linter, LSP, project templates and self-tests.
-
-    [Tooling reference](tooling/index.md)
-
-</div>
-
-## Featured projects
-
-<div class="grid cards" markdown>
-
--   **Vector Lab**
-
-    A small playable arena that demonstrates vector math, obstacle collision, delta-time movement and animation curves.
-
-    [Open the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/vector_lab.nx)
-
--   **NEXUS Paint**
-
-    A native raster-painting example built with the graphics and UI runtime.
-
-    [Open the source](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx)
-
-</div>
-
-## A practical development workflow
-
-Start with a small program, check it, then choose the compiler backend explicitly
-when you need to control which toolchain builds the executable.
-
-<div class="grid cards" markdown>
-
--   **Command-line utility**
-
-    Keep the first project simple and portable.
-
-    `nexus new MyTool --template cli`
-
--   **Native windowed app**
-
-    Try the current widget and layout layer.
-
-    `nexus new MyApp --template app`
-
--   **Interactive UI sample**
-
-    Explore panels, checkboxes, buttons, sliders and responsive layout helpers.
-
-    [Open UI Playground source](https://github.com/fanxcz/nexus-lang/blob/main/examples/ui_playground.nx)
-
-</div>
-
-## What is implemented today
-
-- **Compiler:** C++20 front end, fixed-width integer/floating-point types, checked read-only and mutable slices, LLVM/Clang compilation path, and a built-in x86-64 backend for a documented subset.
-- **Runtime:** console/file helpers, UTF-8 strings, SDL-backed 2D drawing, experimental compatibility-OpenGL 3D, optional audio, and immediate-mode UI widgets.
-- **Developer tools:** project templates, formatter/linter, diagnostics, language server, REPL, test suite and portable Windows packaging.
-- **Application and graphics libraries:** typed math helpers, UI layout/controls, file/network/database utilities, and modular tilemap/sprite/camera/audio helpers.
-
-For voxel-game development, the compiler now has useful language foundations, but NEXUS does not yet ship a production voxel engine. Chunk meshing/batching, GPU buffer management, modern shader support, job scheduling, procedural noise, and compressed chunk persistence remain roadmap work. See the [3D and voxel development status](runtime/voxel-roadmap.md).
-
-NEXUS is actively developed. The built-in native backend supports a documented subset of the language; broader programs may need LLVM/Clang. The UI module is immediate-mode rather than a full widget framework, and the 2D physics helpers are not a rigid-body engine. The [language overview](language/overview.md) and [platform support matrix](development/platform-support.md) describe current limits.
-
-## Documentation and community
-
-[Manual](manual.md) · [Examples](examples/overview.md) · [Roadmap](development/roadmap.md) · [GitHub Issues](https://github.com/fanxcz/nexus-lang/issues)

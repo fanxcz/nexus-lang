@@ -1,7 +1,7 @@
 {
   "name": "nexus-studio",
-  "version": "0.2.0",
-  "description": "A simple cross-platform IDE for the NEXUS programming language",
+  "version": "0.3.0",
+  "description": "A focused desktop workspace for NEXUS projects, source editing, compiler builds and integrated commands",
   "private": true,
   "main": "main.cjs",
   "scripts": {
@@ -69,11 +69,10 @@
     }
   },
   "author": {
-    "name": "NEXUS Project",
-    "email": "noreply@github.com",
+    "name": "fanxcz",
     "url": "https://github.com/fanxcz"
   },
-  "homepage": "https://github.com/fanxcz/nexus-lang",
+  "homepage": "https://fanxcz.github.io/nexus-lang/studio/",
   "license": "MIT",
   "desktopName": "nexus-studio",
   "repository": {

@@ -1,0 +1,121 @@
+name: Prepare NEXUS Studio desktop release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Studio version to publish as a draft (must match package.json)
+        required: true
+        default: '0.3.0'
+        type: string
+      prerelease:
+        description: Mark the draft as a prerelease
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-studio-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build desktop package (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            command: npm run dist:win
+          - os: ubuntu-latest
+            command: npm run dist:linux
+          - os: macos-latest
+            command: npm run dist:mac
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: .github/project-tools/nexus-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify requested release version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          node -e "const actual=require('./package.json').version; if (process.env.RELEASE_VERSION !== actual) { console.error('Requested '+process.env.RELEASE_VERSION+' does not match package.json '+actual); process.exit(1); }"
+      - name: Check source and path-guard tests
+        run: npm run check
+      - name: Install desktop build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Package desktop application
+        run: ${{ matrix.command }}
+      - name: Generate SHA-256 sidecars
+        run: |
+          node -e "const fs=require('node:fs'); const path=require('node:path'); const crypto=require('node:crypto'); const dir='release'; const names=fs.readdirSync(dir); if (!names.length) throw new Error('No desktop release files were produced'); for (const name of names) { const file=path.join(dir,name); if (!fs.statSync(file).isFile() || name.endsWith('.sha256.txt')) continue; const hash=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'); fs.writeFileSync(file+'.sha256.txt', hash+'  '+name+'\n'); }"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-studio-${{ runner.os }}
+          path: .github/project-tools/nexus-studio/release/*
+          if-no-files-found: error
+          retention-days: 30
+
+  draft-release:
+    name: Assemble reviewable draft release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Validate packages and checksums
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
+          shopt -s nullglob
+          files=(dist/*)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No Studio desktop packages were downloaded." >&2
+            exit 1
+          fi
+          for checksum in dist/*.sha256.txt; do
+            target="${checksum%.sha256.txt}"
+            test -s "$target"
+            expected="$(awk '{print $1}' "$checksum")"
+            actual="$(sha256sum "$target" | awk '{print $1}')"
+            if [[ "$expected" != "$actual" ]]; then
+              echo "SHA-256 mismatch: $target" >&2
+              exit 1
+            fi
+          done
+          package_count="$(find dist -maxdepth 1 -type f ! -name '*.sha256.txt' | wc -l)"
+          checksum_count="$(find dist -maxdepth 1 -type f -name '*.sha256.txt' | wc -l)"
+          if [ "$package_count" -lt 3 ] || [ "$checksum_count" -lt 3 ]; then
+            echo "Expected at least three platform packages and three checksum sidecars." >&2
+            exit 1
+          fi
+          printf 'Validated %s package files and %s checksum files.\n' "$package_count" "$checksum_count"
+      - name: Create draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--repo "$GITHUB_REPOSITORY" --title "NEXUS Studio $RELEASE_VERSION" --target "$GITHUB_SHA" --draft)
+          if [[ "$PRERELEASE" == "true" ]]; then args+=(--prerelease); fi
+          gh release create "studio-v$RELEASE_VERSION" dist/* "${args[@]}" \
+            --notes "NEXUS Studio $RELEASE_VERSION desktop packages. Windows, Linux and macOS artifacts are attached with SHA-256 sidecars. Review the binaries and notes before publishing this draft."

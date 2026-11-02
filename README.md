@@ -11,6 +11,7 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
+**NEXUS Studio:** https://fanxcz.github.io/nexus-lang/studio/  
 **Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 **One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 2.2.0 installer, verifies SHA-256, then launches setup.
 
@@ -187,7 +188,7 @@ Syntax highlighting, snippets and LSP integration for `.nx` files.
 
 Install without a marketplace account:
 
-1. Download [`NEXUS-Language-2.1.0.vsix`](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.1.0.vsix) from the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/).
+1. Download [`NEXUS-Language-2.2.0.vsix`](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.2.0.vsix) from the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/).
 2. VS Code → Extensions (`Ctrl+Shift+X`) → `...` → **Install from VSIX...** → select the file.
 
 ## Standard library and runtime

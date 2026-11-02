@@ -1,35 +1,59 @@
 # NEXUS Studio
 
-A small desktop IDE for the NEXUS programming language: project explorer, editor, terminal, compiler selection, and working Build/Run commands.
+NEXUS Studio is the desktop workspace for opening a project, editing NEXUS source and running the compiler without switching between separate tools.
 
 ## Features
-- Open a project folder, browse files, create and save .nx source files.
-- Build the current .nx file into a native program or compile and run it.
-- Select a compiler once; its path is remembered after restarting the IDE.
-- Integrated terminal with Clear, Stop and Hide/Show controls.
-- Shortcuts: Ctrl/Cmd+O (open folder), Ctrl/Cmd+S (save), Ctrl/Cmd+N (new file), F7 (build), F5 (run).
-- Windows, Linux and macOS packaging configuration.
+
+- Project explorer for folders and files inside the selected workspace.
+- Ace editor with NEXUS syntax highlighting and keyboard-first editing.
+- Integrated terminal with process output, Stop, Clear and collapse controls.
+- Compiler detection through `NEXUS_COMPILER`, PATH and common install locations. The selected compiler path is remembered between launches.
+- Direct Build and Run actions for the active `.nx` file.
+- Searchable command palette (`Ctrl/Cmd+Shift+P`) for opening projects, creating files, choosing a compiler, refreshing the explorer and running Build/Run.
+- Windows NSIS installer and portable executable; Linux AppImage/DEB; macOS DMG/ZIP packaging.
 
 ## Compiler setup
-The compiler is not bundled inside the IDE installer. Install the NEXUS distribution separately, then click **Compiler…** and select:
-- Windows: nexus.cmd from the full NEXUS installation/portable folder, or bin/nexus-core.exe inside that same folder.
-- Linux/macOS: the nexus executable.
 
-The official Windows distribution includes NEXUS-Windows.ps1 beside nexus.cmd. When this helper exists, the IDE uses it so the bundled toolchain and runtime DLLs are configured automatically. For a standalone CLI executable, the IDE invokes the documented nexus build or nexus run arguments. Automatic detection checks NEXUS_COMPILER, PATH, and common Windows install locations.
+The compiler is not bundled inside the Studio installer. Install NEXUS separately. Studio checks `NEXUS_COMPILER`, PATH and common per-user install locations; otherwise click **Compiler** and select the installed launcher:
+
+- Windows: `nexus.cmd` from the full installation/portable distribution, or `bin/nexus-core.exe` from the same distribution.
+- Linux/macOS: the `nexus` executable.
+
+The official Windows distribution includes `NEXUS-Windows.ps1` beside `nexus.cmd`. When this helper exists, Studio uses it so the bundled toolchain and runtime DLLs are configured automatically.
 
 ## Run from source
+
 Requires Node.js 20+ and npm.
 
-    npm install
-    npm start
+```sh
+npm install
+npm run check
+npm start
+```
 
 ## Build desktop packages
 
-    npm run dist:win
-    npm run dist:linux
-    npm run dist:mac
+Run on the matching host platform:
 
-Artifacts are written to release/. GitHub Actions builds native packages on Windows, Linux and macOS runners.
+```sh
+npm run dist:win
+npm run dist:linux
+npm run dist:mac
+```
 
-## Security
-The renderer uses context isolation and a limited preload API. File operations are restricted to the opened project folder. Terminal commands run with the current user's permissions; execute only commands you trust.
+Artifacts are written to `release/`. GitHub Actions also builds all three platform packages. To prepare a reviewable draft release with SHA-256 sidecars, run the [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml). The workflow deliberately creates a draft release rather than publishing unreviewed binaries.
+
+## Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| Ctrl/Cmd+O | Open project |
+| Ctrl/Cmd+N | New file |
+| Ctrl/Cmd+S | Save |
+| Ctrl/Cmd+Shift+P | Command palette |
+| F7 | Build |
+| F5 | Build and run |
+
+## Current boundaries
+
+Studio currently shows one active editor tab at a time. It does not include a debugger, Git client, LSP diagnostics panel or multi-file refactoring UI. The integrated terminal runs commands with the current OS user's permissions; only run commands you trust. File operations are restricted to the opened project folder, and files larger than 2 MB are not opened in the editor.

@@ -52,22 +52,22 @@ ace.define("ace/theme/nexus", [
   exports.isDark = true;
   exports.cssClass = "ace-nexus";
   exports.cssText = [
-    ".ace-nexus { color: #e8e8e2; background-color: #090a0b; }",
-    ".ace-nexus .ace_gutter { background: #0d0e0f; color: #777870; border-right: 1px solid #2a2b2c; }",
-    ".ace-nexus .ace_print-margin { width: 1px; background: #202122; }",
-    ".ace-nexus .ace_cursor { color: #f5c518; border-left: 2px solid #f5c518; }",
-    ".ace-nexus .ace_marker-layer .ace_active-line { background: #19180f; }",
-    ".ace-nexus .ace_gutter-active-line { background: #19180f; }",
-    ".ace-nexus .ace_marker-layer .ace_selection { background: #4b400e; }",
-    ".ace-nexus .ace_keyword, .ace-nexus .ace_storage { color: #f5c518; font-weight: 600; }",
-    ".ace-nexus .ace_constant.ace_numeric, .ace-nexus .ace_constant.ace_language { color: #e3cf72; }",
-    ".ace-nexus .ace_string { color: #d6d6c9; }",
-    ".ace-nexus .ace_comment { color: #7e8078; font-style: italic; }",
-    ".ace-nexus .ace_support.ace_function { color: #f0d66a; }",
-    ".ace-nexus .ace_support.ace_type, .ace-nexus .ace_storage.ace_type { color: #c8c8bd; }",
-    ".ace-nexus .ace_paren, .ace-nexus .ace_punctuation { color: #c2c2b8; }",
-    ".ace-nexus .ace_indent-guide { background: linear-gradient(to bottom, transparent, transparent 50%, #252619 50%, #252619); background-size: 1px 4px; }",
-    ".ace-nexus .ace_invisible { color: #3d3e38; }"
+    ".ace-nexus { color: #e8e9e1; background-color: #111411; }",
+    ".ace-nexus .ace_gutter { background: #171d18; color: #788477; border-right: 1px solid #2a342d; }",
+    ".ace-nexus .ace_print-margin { width: 1px; background: #28332a; }",
+    ".ace-nexus .ace_cursor { color: #d9ad55; border-left: 2px solid #d9ad55; }",
+    ".ace-nexus .ace_marker-layer .ace_active-line { background: #20271f; }",
+    ".ace-nexus .ace_gutter-active-line { background: #20271f; }",
+    ".ace-nexus .ace_marker-layer .ace_selection { background: #3c3b2b; }",
+    ".ace-nexus .ace_keyword, .ace-nexus .ace_storage { color: #d9ad55; font-weight: 600; }",
+    ".ace-nexus .ace_constant.ace_numeric, .ace-nexus .ace_constant.ace_language { color: #c7ab6c; }",
+    ".ace-nexus .ace_string { color: #a8c199; }",
+    ".ace-nexus .ace_comment { color: #798679; font-style: italic; }",
+    ".ace-nexus .ace_support.ace_function { color: #e0bd71; }",
+    ".ace-nexus .ace_support.ace_type, .ace-nexus .ace_storage.ace_type { color: #a4b5a4; }",
+    ".ace-nexus .ace_paren, .ace-nexus .ace_punctuation { color: #bdc8b9; }",
+    ".ace-nexus .ace_indent-guide { background: linear-gradient(to bottom, transparent, transparent 50%, #2c382d 50%, #252619); background-size: 1px 4px; }",
+    ".ace-nexus .ace_invisible { color: #566256; }"
   ].join("\n");
   const dom = require("ace/lib/dom");
   dom.importCssString(exports.cssText, exports.cssClass);

@@ -99,6 +99,10 @@
       root = project.root;
       currentPath = '';
       $('projectName').textContent = root.split(/[\\/]/).filter(Boolean).pop() || root;
+      $('projectNameSidebar').textContent = root.split(/[\\/]/).filter(Boolean).pop() || root;
+      $('breadcrumbRoot').textContent = root.split(/[\\/]/).filter(Boolean).pop() || 'NEXUS';
+      $('breadcrumbCurrent').textContent = 'Welcome';
+      $('editorLanguage').textContent = 'WORKSPACE';
       $('statusProject').textContent = root;
       treeEl.replaceChildren();
       renderTree(project.tree, treeEl);
@@ -122,6 +126,9 @@
       welcome.classList.add('hidden');
       editorWrap.classList.remove('hidden');
       $('tabName').textContent = rel.split('/').pop();
+      $('breadcrumbRoot').textContent = root.split(/[\\/]/).filter(Boolean).pop() || 'NEXUS';
+      $('breadcrumbCurrent').textContent = rel;
+      $('editorLanguage').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS SOURCE' : 'TEXT FILE';
       $('activeTab').title = rel;
       $('statusLang').textContent = rel.toLowerCase().endsWith('.nx') ? 'NEXUS' : 'TEXT';
       markDirty(false);
@@ -224,6 +231,110 @@
       setStatus('Failed');
     }
   }
+
+  const commandOverlay = $('commandOverlay');
+  const commandSearch = $('commandSearch');
+  const commandList = $('commandList');
+  const paletteCommands = [
+    { label: 'Open project folder', detail: 'Choose a workspace from your computer', icon: '⌂', shortcut: 'Ctrl O', action: openProject },
+    { label: 'Create a source file', detail: 'Add a new .nx file to the current workspace', icon: '＋', shortcut: 'Ctrl N', action: newFile },
+    { label: 'Save current file', detail: 'Write the active editor buffer to disk', icon: '↧', shortcut: 'Ctrl S', action: saveCurrent },
+    { label: 'Select NEXUS compiler', detail: 'Choose the compiler executable or launcher', icon: '⌘', shortcut: '', action: chooseCompiler },
+    { label: 'Build current file', detail: 'Compile the active NEXUS source file', icon: '↗', shortcut: 'F7', action: () => buildOrRun('build') },
+    { label: 'Build and run current file', detail: 'Compile, then launch the generated program', icon: '▶', shortcut: 'F5', action: () => buildOrRun('run') },
+    { label: 'Refresh project explorer', detail: 'Rescan files in the active workspace', icon: '↻', shortcut: '', action: refreshTree },
+    { label: 'Toggle terminal panel', detail: 'Show or hide the integrated terminal', icon: '›_', shortcut: '', action: toggleTerminalPanel }
+  ];
+  let visibleCommands = paletteCommands.slice();
+  let selectedCommandIndex = 0;
+
+  function renderCommandList() {
+    const query = commandSearch.value.trim().toLowerCase();
+    visibleCommands = paletteCommands.filter(command =>
+      (command.label + ' ' + command.detail).toLowerCase().includes(query)
+    );
+    selectedCommandIndex = Math.min(selectedCommandIndex, Math.max(0, visibleCommands.length - 1));
+    commandList.replaceChildren();
+    if (!visibleCommands.length) {
+      const empty = document.createElement('div');
+      empty.className = 'command-empty';
+      empty.textContent = 'No matching commands.';
+      commandList.appendChild(empty);
+      return;
+    }
+    visibleCommands.forEach((command, index) => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'command-option' + (index === selectedCommandIndex ? ' selected' : '');
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', index === selectedCommandIndex ? 'true' : 'false');
+      const icon = document.createElement('span');
+      icon.className = 'command-option-icon';
+      icon.textContent = command.icon;
+      const copy = document.createElement('span');
+      copy.className = 'command-option-copy';
+      const title = document.createElement('strong');
+      title.textContent = command.label;
+      const detail = document.createElement('small');
+      detail.textContent = command.detail;
+      copy.append(title, detail);
+      row.append(icon, copy);
+      if (command.shortcut) {
+        const shortcut = document.createElement('kbd');
+        shortcut.textContent = command.shortcut;
+        row.appendChild(shortcut);
+      }
+      row.addEventListener('mouseenter', () => {
+        selectedCommandIndex = index;
+        updateCommandSelection();
+      });
+      row.addEventListener('click', () => executePaletteCommand(index));
+      commandList.appendChild(row);
+    });
+  }
+
+  function updateCommandSelection() {
+    [...commandList.querySelectorAll('.command-option')].forEach((row, index) => {
+      const active = index === selectedCommandIndex;
+      row.classList.toggle('selected', active);
+      row.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    const active = commandList.querySelectorAll('.command-option')[selectedCommandIndex];
+    if (active) active.scrollIntoView({ block: 'nearest' });
+  }
+
+  function openCommandPalette() {
+    commandOverlay.classList.remove('hidden');
+    commandOverlay.setAttribute('aria-hidden', 'false');
+    $('openCommands').setAttribute('aria-expanded', 'true');
+    commandSearch.value = '';
+    selectedCommandIndex = 0;
+    renderCommandList();
+    commandSearch.focus();
+  }
+
+  function closeCommandPalette() {
+    commandOverlay.classList.add('hidden');
+    commandOverlay.setAttribute('aria-hidden', 'true');
+    $('openCommands').setAttribute('aria-expanded', 'false');
+    $('openCommands').focus();
+  }
+
+  function executePaletteCommand(index = selectedCommandIndex) {
+    const command = visibleCommands[index];
+    if (!command) return;
+    closeCommandPalette();
+    Promise.resolve().then(() => command.action()).catch(error => {
+      appendOutput(command.label + ' failed: ' + error.message, 'error');
+    });
+  }
+
+  function toggleTerminalPanel() {
+    const panel = document.querySelector('.terminal-panel');
+    const collapsed = panel.classList.toggle('collapsed');
+    $('toggleTerminal').textContent = collapsed ? 'Show' : 'Hide';
+  }
+
   async function runTerminalCommand(command) {
     if (!root) { appendOutput('Open a project folder first.', 'error'); return; }
     appendOutput('> ' + command, 'command');
@@ -259,10 +370,36 @@
       appendOutput(stopped ? 'Stop requested.' : 'No command is running.', 'system');
     } catch (error) { appendOutput('Stop failed: ' + error.message, 'error'); }
   });
-  $('toggleTerminal').addEventListener('click', () => {
-    const panel = document.querySelector('.terminal-panel');
-    const collapsed = panel.classList.toggle('collapsed');
-    $('toggleTerminal').textContent = collapsed ? 'Show' : 'Hide';
+  $('toggleTerminal').addEventListener('click', toggleTerminalPanel);
+  $('openCommands').addEventListener('click', openCommandPalette);
+  $('sidebarOpen').addEventListener('click', openProject);
+  $('sidebarCompiler').addEventListener('click', event => {
+    event.preventDefault();
+    chooseCompiler();
+  });
+  commandSearch.addEventListener('input', () => {
+    selectedCommandIndex = 0;
+    renderCommandList();
+  });
+  commandOverlay.addEventListener('mousedown', event => {
+    if (event.target === commandOverlay) closeCommandPalette();
+  });
+  commandSearch.addEventListener('keydown', event => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      selectedCommandIndex = Math.min(selectedCommandIndex + 1, visibleCommands.length - 1);
+      updateCommandSelection();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      selectedCommandIndex = Math.max(0, selectedCommandIndex - 1);
+      updateCommandSelection();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      executePaletteCommand();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      closeCommandPalette();
+    }
   });
   $('terminalForm').addEventListener('submit', async event => {
     event.preventDefault();
@@ -273,6 +410,15 @@
     await runTerminalCommand(command);
   });
   document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'p') {
+      event.preventDefault();
+      openCommandPalette();
+      return;
+    }
+    if (!commandOverlay.classList.contains('hidden')) {
+      if (event.key === 'Escape') { event.preventDefault(); closeCommandPalette(); }
+      return;
+    }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
       event.preventDefault();
       openProject();

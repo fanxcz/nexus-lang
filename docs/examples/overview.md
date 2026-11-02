@@ -38,7 +38,7 @@ The CLI accepts a source-file path directly; `nexus run --example NAME` is not a
 | `terminal_game.nx` | Minimal terminal-grid movement game |
 | `nexus_studio.nx` | Terminal menu demo containing calculator, guessing and mini-battle routines |
 
-The names describe individual sample programs, not claims that each is a complete production product or game framework.
+The file `examples/nexus_studio.nx` is a terminal menu demonstration; it is separate from the Electron desktop IDE documented in [NEXUS Studio](../studio.md). The names describe individual sample programs, not claims that each is a complete production product or game framework.
 
 ## Graphics and runtime
 

@@ -78,6 +78,7 @@ nav:
   - Home: index.md
   - Manual: manual.md
   - Downloads: downloads.md
+  - Studio: studio.md
   - Screenshots: screenshots.md
   - Getting Started:
       - Overview: getting-started/index.md

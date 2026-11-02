@@ -4,79 +4,180 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#111411">
   <title>NEXUS Studio</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">NEXUS <span>Studio</span></div>
+    <a class="brand" href="#" aria-label="NEXUS Studio workspace">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" role="presentation"><path d="M7 25V7h4l10 12V7h4v18h-4L11 13v12z" fill="currentColor"/></svg>
+      </span>
+      <span class="brand-copy"><strong>NEXUS</strong><small>STUDIO</small></span>
+      <span class="brand-divider"></span>
+      <span class="workspace-label" id="projectName">No folder opened</span>
+    </a>
+
     <div class="toolbar">
-      <button id="openProject" title="Open a project folder (Ctrl+O)">Open folder</button>
-      <button id="newFile" title="Create a source file (Ctrl+N)">New file</button>
-      <button id="saveFile" title="Save the current file (Ctrl+S)">Save</button>
-      <span class="toolbar-separator"></span>
-      <button id="selectCompiler" title="Select the installed NEXUS compiler">Compiler…</button>
-      <button id="buildFile" class="primary" title="Compile the current .nx file (F7)">Build</button>
-      <button id="runFile" class="run" title="Compile and run the current .nx file (F5)">Run</button>
+      <div class="toolbar-group">
+        <button id="openProject" class="toolbar-button" title="Open a project folder (Ctrl+O)">
+          <span class="button-glyph" aria-hidden="true">⌂</span><span>Open</span>
+        </button>
+        <button id="newFile" class="toolbar-button" title="Create a source file (Ctrl+N)">
+          <span class="button-glyph" aria-hidden="true">＋</span><span>New file</span>
+        </button>
+        <button id="saveFile" class="toolbar-button" title="Save the current file (Ctrl+S)">
+          <span class="button-glyph" aria-hidden="true">↧</span><span>Save</span>
+        </button>
+      </div>
+      <button id="openCommands" class="command-trigger" title="Open command palette (Ctrl+Shift+P)" aria-haspopup="dialog" aria-expanded="false">
+        <span class="command-trigger-icon" aria-hidden="true">⌘</span><span>Search commands</span><kbd>Ctrl ⇧ P</kbd>
+      </button>
+      <div class="toolbar-group toolbar-build-group">
+        <button id="selectCompiler" class="toolbar-button compiler-button" title="Select the installed NEXUS compiler">
+          <span class="button-glyph" aria-hidden="true">⌘</span><span>Compiler</span>
+        </button>
+        <button id="buildFile" class="toolbar-button build-button" title="Compile the current .nx file (F7)">
+          <span class="button-glyph" aria-hidden="true">↗</span><span>Build</span><kbd>F7</kbd>
+        </button>
+        <button id="runFile" class="toolbar-button run-button" title="Compile and run the current .nx file (F5)">
+          <span class="button-glyph" aria-hidden="true">▶</span><span>Run</span><kbd>F5</kbd>
+        </button>
+      </div>
     </div>
   </header>
 
   <div class="workspace">
     <aside class="sidebar">
-      <div class="section-heading"><span>EXPLORER</span><button id="refreshTree" title="Refresh file list">Refresh</button></div>
-      <div class="project-name"><span>▾</span><span id="projectName">No folder opened</span></div>
-      <div id="fileTree" class="file-tree"><div class="empty-state">Open a project folder to see its files.</div></div>
+      <div class="section-heading">
+        <div><span class="section-kicker">WORKSPACE</span><strong>Explorer</strong></div>
+        <button id="refreshTree" class="icon-button" title="Refresh file list" aria-label="Refresh file list">↻</button>
+      </div>
+      <div class="project-heading">
+        <span class="project-chevron">⌄</span>
+        <span class="project-folder-icon" aria-hidden="true">▰</span>
+        <span id="projectNameSidebar">No folder opened</span>
+      </div>
+      <div id="fileTree" class="file-tree">
+        <div class="empty-state"><span class="empty-icon">◇</span><strong>No workspace yet</strong><span>Open a project folder to browse its files.</span><button id="sidebarOpen">Open folder</button></div>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-section-label">GET STARTED</div>
+        <a class="sidebar-link" href="#" id="sidebarCompiler"><span>⌘</span> Configure compiler</a>
+        <div class="sidebar-shortcut"><span>Command palette</span><kbd>Ctrl ⇧ P</kbd></div>
+      </div>
     </aside>
 
     <main class="main">
-      <div class="tabs">
-        <div id="activeTab" class="tab"><span class="file-glyph">◇</span><span id="tabName">Welcome</span><span id="dirtyMark"></span></div>
-        <div class="tab-spacer"></div>
-        <div id="saveStatus" class="save-status">Ready</div>
+      <div class="editor-chrome">
+        <div class="tabs">
+          <div id="activeTab" class="tab">
+            <span class="file-glyph" aria-hidden="true">◇</span>
+            <span id="tabName">Welcome</span>
+            <span id="dirtyMark"></span>
+          </div>
+          <div class="tab-spacer"></div>
+          <div id="saveStatus" class="save-status"><span class="save-status-dot"></span> Ready</div>
+        </div>
+        <div class="editor-toolbar">
+          <span class="breadcrumb-root" id="breadcrumbRoot">NEXUS</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current" id="breadcrumbCurrent">Welcome</span>
+          <span class="editor-toolbar-spacer"></span>
+          <span class="editor-language" id="editorLanguage">WORKSPACE</span>
+          <span class="editor-more" aria-hidden="true">···</span>
+        </div>
       </div>
 
       <section id="welcome" class="welcome">
-        <h1>NEXUS Studio</h1>
-        <p>A simple editor for NEXUS projects.</p>
-        <div class="welcome-actions">
-          <button id="welcomeOpen">Open project folder</button>
-          <button id="welcomeNew">Create a .nx file</button>
+        <div class="welcome-content">
+          <div class="welcome-copy">
+            <div class="welcome-kicker"><span class="kicker-line"></span> YOUR DEVELOPMENT WORKSPACE</div>
+            <h1>Make it<br><em>work.</em></h1>
+            <p class="welcome-intro">A focused place to explore, write and run NEXUS programs. Open a project and keep the whole loop close at hand.</p>
+            <div class="welcome-actions">
+              <button id="welcomeOpen" class="welcome-primary"><span>Open project folder</span><span aria-hidden="true">↗</span></button>
+              <button id="welcomeNew" class="welcome-secondary">Create a source file</button>
+            </div>
+            <div class="welcome-footnote"><span class="footnote-dot"></span> The NEXUS compiler is detected automatically where possible.</div>
+          </div>
+          <div class="welcome-side">
+            <div class="starter-card">
+              <div class="starter-card-head"><span>START WITH A SMALL PROGRAM</span><span>01 / 01</span></div>
+              <div class="starter-file"><span class="starter-file-icon">◇</span><span>hello.nx</span><span class="starter-file-type">NEXUS</span></div>
+              <pre><code><span class="code-keyword">fn</span> main() {
+    <span class="code-keyword">let</span> message = <span class="code-string">"Hello from NEXUS"</span>
+    print(message)
+}</code></pre>
+              <div class="starter-card-foot">
+                <span>CHECK · BUILD · RUN</span>
+                <span class="starter-status">READY</span>
+              </div>
+            </div>
+            <div class="welcome-shortcuts">
+              <div><kbd>Ctrl O</kbd><span>Open workspace</span></div>
+              <div><kbd>Ctrl S</kbd><span>Save file</span></div>
+              <div><kbd>F7</kbd><span>Build</span></div>
+              <div><kbd>F5</kbd><span>Run</span></div>
+            </div>
+          </div>
         </div>
-        <div class="welcome-help">
-          <div><kbd>Ctrl+O</kbd><span>Open folder</span></div>
-          <div><kbd>Ctrl+N</kbd><span>New file</span></div>
-          <div><kbd>Ctrl+S</kbd><span>Save</span></div>
-          <div><kbd>F7</kbd><span>Build</span></div>
-          <div><kbd>F5</kbd><span>Run</span></div>
-        </div>
-        <p class="welcome-note">Select the NEXUS compiler once. Its path is saved for the next launch.</p>
       </section>
 
       <section id="editorWrap" class="editor-wrap hidden"><div id="editor"></div></section>
 
       <section class="terminal-panel">
         <div class="terminal-head">
-          <span class="terminal-title">OUTPUT / TERMINAL</span>
+          <div class="terminal-heading">
+            <span class="terminal-prompt-mark">›_</span>
+            <span class="terminal-title">TERMINAL</span>
+            <span class="terminal-subtitle">PROJECT OUTPUT</span>
+          </div>
           <div class="terminal-tools">
             <button id="clearTerminal" title="Clear output">Clear</button>
             <button id="stopTerminal" title="Stop the running command">Stop</button>
             <button id="toggleTerminal" title="Collapse or expand terminal">Hide</button>
           </div>
         </div>
-        <div id="terminalOutput" class="terminal-output"><div class="terminal-note">Open a project, then use Build or Run. Shell commands can also be entered below.</div></div>
+        <div id="terminalOutput" class="terminal-output"><div class="terminal-note">Open a project, then use Build or Run. Commands execute from the project folder.</div></div>
         <form id="terminalForm" class="terminal-input-row">
-          <span class="prompt">&gt;</span>
-          <input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Terminal command…">
-          <button class="terminal-submit" type="submit">Enter</button>
+          <span class="prompt">›</span>
+          <input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Enter a command…">
+          <button class="terminal-submit" type="submit">Run command <span>↗</span></button>
         </form>
       </section>
     </main>
   </div>
 
   <footer class="statusbar">
-    <div><span class="status-indicator"></span><span id="statusProject">No project open</span></div>
-    <div><span id="compilerStatus">Compiler not selected</span><span id="statusLang">NEXUS</span><span>UTF-8</span><span id="statusPlatform">Desktop</span></div>
+    <div class="statusbar-left">
+      <span class="status-indicator"></span>
+      <span id="statusProject">No project open</span>
+      <span class="status-branch">NEXUS</span>
+    </div>
+    <div class="statusbar-right">
+      <span id="compilerStatus" class="compiler-missing">Compiler not selected</span>
+      <span id="statusLang">NEXUS</span>
+      <span>UTF-8</span>
+      <span id="statusPlatform">Desktop</span>
+    </div>
   </footer>
+
+  <div id="commandOverlay" class="command-overlay hidden" aria-hidden="true">
+    <div class="command-dialog" role="dialog" aria-modal="true" aria-labelledby="commandDialogTitle">
+      <div class="command-search-row">
+        <span class="command-search-symbol" aria-hidden="true">⌘</span>
+        <label id="commandDialogTitle" class="visually-hidden" for="commandSearch">Search commands</label>
+        <input id="commandSearch" type="text" autocomplete="off" spellcheck="false" placeholder="Search for a command…">
+        <kbd>ESC</kbd>
+      </div>
+      <div class="command-list-heading">SUGGESTED ACTIONS</div>
+      <div id="commandList" class="command-list" role="listbox" aria-label="Available commands"></div>
+      <div class="command-dialog-foot"><span>↑ ↓ to navigate</span><span>Enter to run</span><span>Esc to close</span></div>
+    </div>
+  </div>
 
   <script src="./node_modules/ace-builds/src/ace.js"></script>
   <script src="./node_modules/ace-builds/src/mode-c_cpp.js"></script>

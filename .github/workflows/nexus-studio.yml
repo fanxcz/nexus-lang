@@ -23,6 +23,7 @@ jobs:
           - os: macos-latest
             command: npm run dist:mac
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: .github/project-tools/nexus-studio
@@ -39,4 +40,4 @@ jobs:
           name: nexus-studio-${{ runner.os }}
           path: .github/project-tools/nexus-studio/release/*
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30

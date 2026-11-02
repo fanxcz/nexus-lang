@@ -6,7 +6,7 @@ NEXUS is focused first on native desktop applications, command-line utilities, a
 
 - **Native windowed app template:** creates a small windowed program with an event loop, keyboard/mouse polling, and drawing primitives.
 - **CLI template:** a simple starting point for command-line utilities.
-- **Application examples:** [NEXUS Paint](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx), [the native app sample](https://github.com/fanxcz/nexus-lang/blob/main/examples/native_app.nx), and [NEXUS Studio's source](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio).
+- **Application examples:** [NEXUS Paint](https://github.com/fanxcz/nexus-lang/blob/main/examples/nexus_paint.nx), [the native app sample](https://github.com/fanxcz/nexus-lang/blob/main/examples/native_app.nx), and [NEXUS Studio](studio.md), a separately packaged desktop workspace.
 - **Core libraries:** file operations, filesystem helpers, string operations, networking helpers, JSON access, SQLite, hashing, and memory utilities. Each module has limits documented in the [standard-library reference](std/index.md).
 - **Immediate-mode UI:** panels, labels, buttons, checkboxes, sliders, progress bars, layout helpers and a basic UTF-8 text field. The field supports click focus, Backspace, and Enter/Tab to finish editing; caret/selection, full keyboard traversal and native dialogs are not available yet.
 - **Developer workflow:** project templates, checks, builds, run commands, formatting, linting, diagnostics, and editor/LSP support.

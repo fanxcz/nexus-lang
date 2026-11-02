@@ -1,14 +1,16 @@
 # NEXUS Language Support — VS Code extension
 
-This extension registers `.nx` files as the **NEXUS** language. It includes syntax highlighting, bracket/comment behavior, snippets, and a language client that starts `nexus lsp` for language-server features.
+NEXUS Language Support registers `.nx` files as the **NEXUS** language. It provides syntax highlighting, snippets and a language client that starts `nexus lsp`.
 
-## Features
+## Language features
 
-The current LSP implementation provides diagnostics, keyword/builtin completion, context-aware struct-field and enum-variant completion, signature help, hover, go-to-definition, references, rename, document outline, workspace symbol search, whole-document and range formatting, and quick-fix suggestions for common unknown-name errors. Workspace symbol search is capped at 500 results.
+The current language server provides diagnostics, keyword/builtin completion, context-aware struct-field and enum-variant completion, signature help, hover, go-to-definition, references, rename, document outline, workspace symbol search, whole-document/range formatting and quick fixes for common unknown-name errors. Workspace symbol search is capped at 500 results.
 
-Navigation and type-aware completion are best-effort rather than a full compiler-backed index. Imported aliases, complete type inference for arbitrary member-expression chains, debugging integration, and inlay hints are not implemented. See the [LSP guide](../../../docs/tooling/lsp.md) for details.
+Navigation and type-aware completion are best-effort rather than a full compiler-backed index. Imported aliases and complete type inference for arbitrary member-expression chains are not implemented. A debugger/debug adapter and inlay hints are not included.
 
-The compiler is not bundled inside the extension. Install NEXUS separately and make sure the `nexus` command is available on PATH, or configure `nexus.serverPath` to the full path of the executable/launcher.
+## Install NEXUS first
+
+The extension does not bundle the compiler. Install NEXUS separately and make sure the `nexus` command is available on PATH, or set `nexus.serverPath` to the full path of the executable/launcher.
 
 ## Build a VSIX
 
@@ -19,26 +21,30 @@ npm install
 npx --yes @vscode/vsce package
 ```
 
-This creates a `.vsix` file in this directory. The production dependency `vscode-languageclient` is included in the VSIX so users do not need to run npm after installing it.
+The current package version is **2.2.0**. The resulting VSIX includes its production language-client dependency; it does not bundle the compiler.
 
-## Install in VS Code
+## Install
 
 1. Open VS Code.
 2. Press **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**).
 3. Run **Extensions: Install from VSIX...**.
-4. Select the generated `fanxcz.nexus-language-2.1.0.vsix` file.
-5. Reload the window.
-6. Open a `.nx` file; the language selector should show **NEXUS**.
+4. Select `fanxcz.nexus-language-2.2.0.vsix`.
+5. Reload the window and open a `.nx` source file.
 
-Or install from a terminal:
+Or use:
 
 ```sh
-code --install-extension fanxcz.nexus-language-2.1.0.vsix
+code --install-extension fanxcz.nexus-language-2.2.0.vsix
 ```
 
-## Custom compiler path
+The extension is not yet published on the VS Code Marketplace; installing from VSIX is the available route.
 
-Add this to VS Code settings JSON if `nexus` is not on PATH:
+## Commands and settings
+
+- **NEXUS: Show Language Server Output** opens the NEXUS Language Server output channel.
+- `nexus.serverPath` configures a custom compiler executable/launcher when `nexus` is not on PATH.
+
+Example settings JSON:
 
 ```json
 {
@@ -46,4 +52,4 @@ Add this to VS Code settings JSON if `nexus` is not on PATH:
 }
 ```
 
-The extension is not yet published on the VS Code Marketplace.
+For startup failures, run `nexus lsp` in a terminal and inspect the **NEXUS Language Server** output channel.

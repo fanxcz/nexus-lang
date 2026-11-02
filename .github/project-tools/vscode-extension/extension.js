@@ -34,6 +34,9 @@ function activate(context) {
         clientOptions
     );
     context.subscriptions.push(outputChannel, client);
+    context.subscriptions.push(vscode.commands.registerCommand('nexus.showServerOutput', () => {
+        outputChannel.show(true);
+    }));
     return client.start();
 }
 

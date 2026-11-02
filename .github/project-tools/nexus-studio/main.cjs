@@ -14,8 +14,8 @@ async function assertProjectPath(target) {
 }
 function createWindow() {
   win = new BrowserWindow({
-    width: 1280, height: 820, minWidth: 820, minHeight: 560,
-    backgroundColor: '#1e1e1e',
+    width: 1360, height: 900, minWidth: 900, minHeight: 620,
+    backgroundColor: '#111411',
     title: 'NEXUS Studio',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),

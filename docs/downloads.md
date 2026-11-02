@@ -53,15 +53,19 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     Syntax highlighting and snippets for `.nx` files, with project LSP integration guidance.
 
-    [Download VSIX](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.1.0.vsix){ .md-button download="NEXUS-Language-2.1.0.vsix" }
+    [Download VSIX](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.2.0.vsix){ .md-button download="NEXUS-Language-2.2.0.vsix" }
 
-    [VSIX SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.1.0.vsix.sha256.txt){ download="NEXUS-Language-2.1.0.vsix.sha256.txt" }
+    [VSIX SHA-256 checksum](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.2.0.vsix.sha256.txt){ download="NEXUS-Language-2.2.0.vsix.sha256.txt" }
 
--   :material-monitor: **NEXUS Studio**
+-   :material-monitor: **NEXUS Studio · Desktop workspace**
 
-    Source-buildable Windows desktop editor with project explorer, source editor, compiler selection and Build/Run controls. Install the NEXUS compiler separately.
+    A focused desktop workspace with a project explorer, NEXUS-aware editor, integrated terminal, searchable command palette and Build/Run actions. The compiler is installed separately. Windows, Linux and macOS packages are produced by CI.
 
-    [Source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio){ .md-button }
+    [Studio overview and install instructions](https://fanxcz.github.io/nexus-lang/studio/){ .md-button .md-button--primary }
+
+    [Browse Studio releases](https://github.com/fanxcz/nexus-lang/releases?q=studio){ .md-button }
+
+    [Build desktop packages](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
 
 -   :material-laptop: **Linux and macOS**
 
