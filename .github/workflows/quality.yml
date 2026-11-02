@@ -59,7 +59,7 @@ jobs:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Build compiler and fuzz targets
-        run: cmake --build build --parallel 2 --target nexus nexus_fuzz_lexer nexus_fuzz_parser
+        run: cmake --build build --parallel 2 --target nexus nexus_frontend_fuzz_smoke nexus_fuzz_lexer nexus_fuzz_parser
 
       - name: Run clang-tidy on fuzz harnesses
         run: >-
@@ -81,7 +81,7 @@ jobs:
           -DNEXUS_BUILD_TESTS=ON
           -DNEXUS_BUILD_LIBFUZZER=ON
       - name: Build required targets
-        run: cmake --build build --parallel 2 --target nexus nexus_fuzz_lexer nexus_fuzz_parser
+        run: cmake --build build --parallel 2 --target nexus nexus_frontend_fuzz_smoke nexus_fuzz_lexer nexus_fuzz_parser
       - name: Run new quality tests and existing deterministic frontend smoke test
         run: >-
           ctest --test-dir build --output-on-failure

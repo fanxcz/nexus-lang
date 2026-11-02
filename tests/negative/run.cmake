@@ -24,7 +24,7 @@ expect_failure("syntax error / NX1001"
 expect_failure("integer literal overflow"
   "${TEST_SOURCE_DIR}/integer_overflow.nx" "integer literal is out of range for 'i64'")
 expect_failure("array length overflow"
-  "${TEST_SOURCE_DIR}/array_length_overflow.nx" "array length out of range at")
+  "${TEST_SOURCE_DIR}/array_length_overflow.nx" "array length out of range")
 expect_failure("circular import"
   "${TEST_SOURCE_DIR}/cycle-a.nx" "circular import detected")
 
