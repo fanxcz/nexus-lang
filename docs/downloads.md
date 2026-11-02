@@ -61,7 +61,7 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     A focused desktop workspace with a project explorer, NEXUS-aware editor, integrated terminal, searchable command palette and Build/Run actions. The compiler is installed separately. Windows, Linux and macOS packages are produced by CI.
 
-    [Studio overview and install instructions](https://fanxcz.github.io/nexus-lang/studio/){ .md-button .md-button--primary }
+    [Studio overview and install instructions](https://github.com/fanxcz/nexus-lang/blob/main/docs/studio.md){ .md-button .md-button--primary }
 
     [Browse Studio releases](https://github.com/fanxcz/nexus-lang/releases?q=studio){ .md-button }
 

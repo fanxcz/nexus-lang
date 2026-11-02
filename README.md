@@ -11,7 +11,7 @@
 
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
-**NEXUS Studio:** https://fanxcz.github.io/nexus-lang/studio/  
+**NEXUS Studio:** https://github.com/fanxcz/nexus-lang/blob/main/docs/studio.md  
 **Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 **One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 2.2.0 installer, verifies SHA-256, then launches setup.
 

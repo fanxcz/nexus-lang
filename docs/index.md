@@ -7,20 +7,20 @@ hide:
 
 <div class="nexus-home">
   <header class="nexus-site-header">
-    <a class="nexus-brand" href="./" aria-label="NEXUS home">
+    <a class="nexus-brand" href="https://fanxcz.github.io/nexus-lang/./" aria-label="NEXUS home">
       <img src="assets/images/nexus-n-2026.svg" alt="" width="34" height="34">
       <span>NEXUS</span>
       <span class="nexus-brand-divider"></span>
       <small>LANGUAGE & TOOLCHAIN</small>
     </a>
     <nav class="nexus-site-nav" aria-label="Main navigation">
-      <a href="manual/">Language</a>
-      <a href="applications/">Applications</a>
-      <a href="examples/overview/">Examples</a>
-      <a href="studio/">Studio</a>
-      <a href="downloads/">Downloads</a>
+      <a href="https://fanxcz.github.io/nexus-lang/manual/">Language</a>
+      <a href="https://fanxcz.github.io/nexus-lang/applications/">Applications</a>
+      <a href="https://fanxcz.github.io/nexus-lang/examples/overview/">Examples</a>
+      <a href="https://fanxcz.github.io/nexus-lang/studio/">Studio</a>
+      <a href="https://fanxcz.github.io/nexus-lang/downloads/">Downloads</a>
     </nav>
-    <a class="nexus-nav-cta" href="getting-started/quickstart/">Get started <span>↗</span></a>
+    <a class="nexus-nav-cta" href="https://fanxcz.github.io/nexus-lang/getting-started/quickstart/">Get started <span>↗</span></a>
   </header>
 
   <main>
@@ -30,8 +30,8 @@ hide:
         <h1>Native software.<br><em>Clear by design.</em></h1>
         <p class="nexus-hero-intro">NEXUS is a statically checked language and C++20 toolchain for desktop software, developer tools and small games. Start with a plain source file. Keep control of what gets built.</p>
         <div class="nexus-hero-actions">
-          <a class="nexus-button nexus-button-primary" href="getting-started/quickstart/">Write your first program <span>↗</span></a>
-          <a class="nexus-button nexus-button-quiet" href="downloads/">Download compiler</a>
+          <a class="nexus-button nexus-button-primary" href="https://fanxcz.github.io/nexus-lang/getting-started/quickstart/">Write your first program <span>↗</span></a>
+          <a class="nexus-button nexus-button-quiet" href="https://fanxcz.github.io/nexus-lang/downloads/">Download compiler</a>
         </div>
         <div class="nexus-hero-footnote">Compiler · Runtime · Standard library · Desktop tools</div>
       </div>
@@ -81,17 +81,17 @@ hide:
             <h3>Built-in native</h3>
             <p>Direct x86-64 code generation for a deliberately documented language subset. No separately installed LLVM compiler is needed for supported programs.</p>
             <div class="nexus-card-meta"><span>PE32+ / Windows</span><span>ELF64 / Linux</span></div>
-            <a href="tooling/native-backend/">Native backend notes <span>↗</span></a>
+            <a href="https://fanxcz.github.io/nexus-lang/tooling/native-backend/">Native backend notes <span>↗</span></a>
           </article>
           <article class="nexus-backend-card nexus-backend-card-light">
             <div class="nexus-card-topline"><span>BACKEND B</span><span class="nexus-card-mark">IR</span></div>
             <h3>LLVM compilation</h3>
             <p>LLVM IR is the broader code-generation path for features outside the native subset. A compatible Clang-style C++ toolchain is required.</p>
             <div class="nexus-card-meta"><span>Feature coverage varies</span><span>Toolchain required</span></div>
-            <a href="backend-support-matrix/">Read the support matrix <span>↗</span></a>
+            <a href="https://fanxcz.github.io/nexus-lang/backend-support-matrix/">Read the support matrix <span>↗</span></a>
           </article>
         </div>
-        <p class="nexus-caveat">Backend support is not identical. The parser accepting a construct does not mean both backends can emit it; check the current <a href="backend-support-matrix/">support matrix</a> before choosing a target.</p>
+        <p class="nexus-caveat">Backend support is not identical. The parser accepting a construct does not mean both backends can emit it; check the current <a href="https://fanxcz.github.io/nexus-lang/backend-support-matrix/">support matrix</a> before choosing a target.</p>
       </div>
     </section>
 
@@ -113,7 +113,7 @@ hide:
           </div>
           <h3>NEXUS Studio</h3>
           <p>A desktop workspace with a project explorer, NEXUS-aware editor, integrated terminal and direct Build/Run actions. The compiler is installed separately.</p>
-          <a href="studio/">Explore Studio <span>↗</span></a>
+          <a href="https://fanxcz.github.io/nexus-lang/studio/">Explore Studio <span>↗</span></a>
         </article>
         <article class="nexus-work-card">
           <div class="nexus-work-index">02 — CREATIVE TOOL</div>
@@ -124,7 +124,7 @@ hide:
           </div>
           <h3>NEXUS Paint</h3>
           <p>A native raster-painting example with brush, eraser, geometric tools, fill, undo/redo and BMP save/load.</p>
-          <a href="downloads/">Windows downloads <span>↗</span></a>
+          <a href="https://fanxcz.github.io/nexus-lang/downloads/">Windows downloads <span>↗</span></a>
         </article>
         <article class="nexus-work-card">
           <div class="nexus-work-index">03 — GAMES & GRAPHICS</div>
@@ -133,7 +133,7 @@ hide:
           </div>
           <h3>Games and experiments</h3>
           <p>Playable prototypes cover vector movement, tilemaps, collision, cameras, particles, audio and an experimental 3D path.</p>
-          <a href="examples/overview/">Browse source examples <span>↗</span></a>
+          <a href="https://fanxcz.github.io/nexus-lang/examples/overview/">Browse source examples <span>↗</span></a>
         </article>
       </div>
     </section>
@@ -154,21 +154,21 @@ hide:
           <p class="nexus-terminal-muted">Program output appears here.</p>
         </div>
         <div class="nexus-developer-notes">
-          <article><b>01</b><div><h3>Language tooling</h3><p>Diagnostics, completion, hover, formatting, workspace symbols and quick fixes through the NEXUS language server.</p><a href="tooling/lsp/">Language server reference ↗</a></div></article>
-          <article><b>02</b><div><h3>Editor integration</h3><p>VS Code support for <code>.nx</code> files, syntax highlighting, snippets and LSP features.</p><a href="tooling/vscode-extension/">VS Code setup ↗</a></div></article>
-          <article><b>03</b><div><h3>Libraries and runtime</h3><p>Strings, files, JSON, networking, SQLite, memory helpers, 2D graphics and immediate-mode UI.</p><a href="std/">Browse the standard library ↗</a></div></article>
+          <article><b>01</b><div><h3>Language tooling</h3><p>Diagnostics, completion, hover, formatting, workspace symbols and quick fixes through the NEXUS language server.</p><a href="https://fanxcz.github.io/nexus-lang/tooling/lsp/">Language server reference ↗</a></div></article>
+          <article><b>02</b><div><h3>Editor integration</h3><p>VS Code support for <code>.nx</code> files, syntax highlighting, snippets and LSP features.</p><a href="https://fanxcz.github.io/nexus-lang/tooling/vscode-extension/">VS Code setup ↗</a></div></article>
+          <article><b>03</b><div><h3>Libraries and runtime</h3><p>Strings, files, JSON, networking, SQLite, memory helpers, 2D graphics and immediate-mode UI.</p><a href="https://fanxcz.github.io/nexus-lang/std/">Browse the standard library ↗</a></div></article>
         </div>
       </div>
     </section>
 
     <section class="nexus-bottom-cta">
       <div><div class="nexus-overline">START WITH THE SOURCE</div><h2>Make the first build<br><em>your own.</em></h2></div>
-      <div class="nexus-bottom-copy"><p>Install the compiler, open a small example and learn the language by changing something that runs.</p><div class="nexus-hero-actions"><a class="nexus-button nexus-button-primary" href="downloads/">Get NEXUS <span>↗</span></a><a class="nexus-button nexus-button-dark" href="manual/">Read the manual</a></div></div>
+      <div class="nexus-bottom-copy"><p>Install the compiler, open a small example and learn the language by changing something that runs.</p><div class="nexus-hero-actions"><a class="nexus-button nexus-button-primary" href="https://fanxcz.github.io/nexus-lang/downloads/">Get NEXUS <span>↗</span></a><a class="nexus-button nexus-button-dark" href="https://fanxcz.github.io/nexus-lang/manual/">Read the manual</a></div></div>
     </section>
   </main>
 
   <footer class="nexus-site-footer">
-    <a class="nexus-brand" href="./"><img src="assets/images/nexus-n-2026.svg" alt="" width="28" height="28"><span>NEXUS</span></a>
+    <a class="nexus-brand" href="https://fanxcz.github.io/nexus-lang/./"><img src="assets/images/nexus-n-2026.svg" alt="" width="28" height="28"><span>NEXUS</span></a>
     <span>Open-source language and toolchain · MIT License</span>
     <div><a href="https://github.com/fanxcz/nexus-lang">Source repository ↗</a><a href="https://github.com/fanxcz/nexus-lang/blob/main/SECURITY.md">Security</a></div>
   </footer>
