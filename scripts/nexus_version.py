@@ -53,6 +53,9 @@ PROJECT_VERSION = re.compile(
 )
 SETUP_ASSET = re.compile(r"NEXUS-Setup-" + VERSION_PATTERN + r"\.exe")
 VSIX_ASSET = re.compile(r"NEXUS-Language-" + VERSION_PATTERN + r"\.vsix")
+STUDIO_SETUP_ASSET = re.compile(
+    r"NEXUS-Studio-" + VERSION_PATTERN + r"-Windows-x64\.exe"
+)
 
 SKIP_DIRS = {
     ".git", "build", "build-verify", "site", "dist", "node_modules", "target", ".venv",
@@ -161,6 +164,12 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
                 problems.append(
                     f"{path.relative_to(root)}: names NEXUS-Language-{match.group(1)}.vsix, "
                     f"but the extension version is {extension}"
+                )
+        for match in STUDIO_SETUP_ASSET.finditer(text):
+            if match.group(1) != studio:
+                problems.append(
+                    f"{path.relative_to(root)}: names NEXUS-Studio-{match.group(1)}-Windows-x64.exe, "
+                    f"but the Studio version is {studio}"
                 )
 
     pins = (
