@@ -43,7 +43,7 @@ npm run dist:linux
 npm run dist:mac
 ```
 
-Artifacts are written to `release/`. The [cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml) produces Windows, Linux and macOS packages. The [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml) creates a draft release with SHA-256 sidecars for review.
+Artifacts are written to `release/`. The [cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml) produces Windows, Linux and macOS packages. The [Studio release workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml) builds all three platform packages, verifies their SHA-256 sidecars and publishes the `studio-v3.0.0` GitHub Release on a push. A manual workflow dispatch creates a draft release for review. Add the repository Actions secret `NEXUS_RELEASE_TOKEN` with Contents: read/write permission if the default `GITHUB_TOKEN` cannot create releases; without it, packages remain available as temporary workflow artifacts.
 
 ## Shortcuts
 

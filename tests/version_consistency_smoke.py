@@ -3,7 +3,7 @@
 
 The checker is what keeps the workflows, installer and download lists on one
 version. This test proves it accepts an internally consistent tree and rejects
-the the failures it exists for: a bumped compiler version that leaves older
+the failures it exists for: a bumped compiler version that leaves older
 artifact names or installer pins behind, and an installer whose output name no
 longer derives from the version macro.
 """
