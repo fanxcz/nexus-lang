@@ -13,30 +13,35 @@ $Entries = @()
 if (-not [string]::IsNullOrWhiteSpace($CurrentPath)) {
     $Entries = @($CurrentPath -split ';' | ForEach-Object { $_.Trim().Trim('"') } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 }
-$Found = $false
+
+# Prioritize this installation. Appending it would leave an older compiler
+# earlier in PATH and Windows would continue launching that stale copy.
+# Preserve unrelated entries and their original relative order.
+$OtherEntries = @()
 foreach ($Entry in $Entries) {
     try {
         $NormalizedEntry = [System.IO.Path]::GetFullPath($Entry).TrimEnd($trimChars)
         if ([string]::Equals($NormalizedEntry, $NormalizedRoot, [StringComparison]::OrdinalIgnoreCase)) {
-            $Found = $true
-            break
+            continue
         }
     } catch {
         # Preserve unrelated PATH entries that are not plain file-system paths.
     }
+    $OtherEntries += $Entry
 }
-if (-not $Found) {
-    $Entries += $Root
-    [Environment]::SetEnvironmentVariable('Path', ($Entries -join ';'), 'User')
-    Write-Host '[NEXUS] Added this folder to your user PATH:' -ForegroundColor Green
+$NewPath = (@($Root) + $OtherEntries) -join ';'
+if (-not [string]::Equals($NewPath, $CurrentPath, [StringComparison]::OrdinalIgnoreCase)) {
+    [Environment]::SetEnvironmentVariable('Path', $NewPath, 'User')
+    Write-Host '[NEXUS] Moved this installation to the beginning of your user PATH:' -ForegroundColor Green
     Write-Host "        $Root"
 } else {
-    Write-Host '[NEXUS] This folder is already in your user PATH.' -ForegroundColor Green
+    Write-Host '[NEXUS] This installation is already first in your user PATH.' -ForegroundColor Green
 }
 
 Write-Host ''
 Write-Host 'Close this terminal and open a new PowerShell/CMD window.' -ForegroundColor Yellow
 Write-Host 'Then test:'
+Write-Host '  Get-Command nexus -All'
 Write-Host '  nexus --version'
 Write-Host '  nexus "C:\path\to\hello.nx"'
 Write-Host ''
