@@ -63,7 +63,7 @@ For most users, install NEXUS with the **NEXUS Setup** installer. For NEXUS Pain
 
     [Studio overview and install instructions](https://github.com/fanxcz/nexus-lang/blob/main/docs/studio.md){ .md-button .md-button--primary }
 
-    [Browse Studio releases](https://github.com/fanxcz/nexus-lang/releases?q=studio){ .md-button }
+    [Browse Studio releases](https://github.com/fanxcz/nexus-lang/releases/tag/studio-v3.0.0){ .md-button }
 
     [Build desktop packages](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
 
