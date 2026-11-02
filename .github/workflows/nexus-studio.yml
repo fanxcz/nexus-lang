@@ -35,6 +35,30 @@ jobs:
       - run: npm run check
       - run: npm install --no-audit --no-fund
       - run: ${{ matrix.command }}
+      - name: Verify Windows Studio EXE metadata and checksums
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json
+          $expectedVersion = [string]$manifest.version
+          if ($expectedVersion -notmatch '^\d+\.\d+\.\d+        with:
+          name: nexus-studio-${{ runner.os }}
+          path: .github/project-tools/nexus-studio/release/*
+          if-no-files-found: error
+          retention-days: 30
+) { throw "Invalid Studio package version: $expectedVersion" }
+          $installers = @(Get-ChildItem -LiteralPath 'release' -Filter '*.exe' -File)
+          if ($installers.Count -eq 0) { throw 'electron-builder did not produce any Windows EXE installers.' }
+          foreach ($installer in $installers) {
+            $metadata = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($installer.FullName)
+            if ($metadata.ProductVersion -notlike "$expectedVersion*") {
+              throw "Studio installer version mismatch in $($installer.Name): expected $expectedVersion, got '$($metadata.ProductVersion)'"
+            }
+            $digest = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$digest  $($installer.Name)" | Set-Content -LiteralPath ($installer.FullName + '.sha256.txt') -Encoding ASCII
+            Write-Host "Verified Studio installer $($installer.Name): $($metadata.ProductVersion) ($digest)"
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: nexus-studio-${{ runner.os }}
