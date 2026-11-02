@@ -190,11 +190,15 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
             problems.append(f"{relative}: pins {pinned}, but the compiler version is {compiler}")
 
     setup = root / SETUP_INSTALLER
+    setup_text = _read(setup) if setup.is_file() else ""
     if setup.is_file():
-        setup_text = _read(setup)
         if ' -Mode Check -ExpectedVersion "{#MyAppVersion}"' not in setup_text:
             problems.append(
                 f"{SETUP_INSTALLER}: post-install check must verify the compiler against MyAppVersion"
+            )
+        if "NewPath := AppPath;" not in setup_text:
+            problems.append(
+                f"{SETUP_INSTALLER}: the newly installed compiler must be first in the user PATH"
             )
     windows_helper = root / ".github/project-tools/repository-files/NEXUS-Windows.ps1"
     if not windows_helper.is_file():
@@ -204,7 +208,23 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
             f"{windows_helper.relative_to(root)}: Check mode must accept the installer's expected version"
         )
 
-    if setup.is_file() and "NEXUS-Setup-{#MyAppVersion}" not in _read(setup):
+    portable_path_helper = root / ".github/project-tools/repository-files/Install-NEXUS-Path.ps1"
+    if not portable_path_helper.is_file():
+        problems.append(f"{portable_path_helper.relative_to(root)}: file is missing")
+    elif "$NewPath = (@($Root) + $OtherEntries) -join ';'" not in _read(portable_path_helper):
+        problems.append(
+            f"{portable_path_helper.relative_to(root)}: selected installation must be first in user PATH"
+        )
+
+    bootstrap = root / "Install-NEXUS.ps1"
+    if bootstrap.is_file():
+        bootstrap_text = _read(bootstrap)
+        if "$installedLauncher" not in bootstrap_text or "$versionPattern" not in bootstrap_text:
+            problems.append(
+                "Install-NEXUS.ps1: bootstrap must verify the installed compiler version before reporting success"
+            )
+
+    if setup.is_file() and "NEXUS-Setup-{#MyAppVersion}" not in setup_text:
         problems.append(
             f"{SETUP_INSTALLER}: OutputBaseFilename must be NEXUS-Setup-{{#MyAppVersion}}"
         )
