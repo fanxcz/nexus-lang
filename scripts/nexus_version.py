@@ -41,6 +41,7 @@ PROJECT_FILE = "CMakeLists.txt"
 EXTENSION_PACKAGE = Path(".github/project-tools/vscode-extension/package.json")
 STUDIO_PACKAGE = Path(".github/project-tools/nexus-studio/package.json")
 SETUP_INSTALLER = Path(".github/project-tools/installer/NEXUS-Setup.iss")
+PAINT_INSTALLER = Path(".github/project-tools/installer/NEXUS-Paint-Setup.iss")
 PORTABLE_ARCHIVE = "NEXUS_Windows_Portable.zip"
 PAINT_EXECUTABLE = "NEXUS-Paint-Windows-x64.exe"
 PAINT_ARCHIVE = "NEXUS-Paint-Windows-x64.zip"
@@ -163,6 +164,10 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
 
     pins = (
         (SETUP_INSTALLER, r'#define\s+MyAppVersion\s+"(\d+\.\d+\.\d+)"'),
+        (PAINT_INSTALLER, r'#define\s+MyAppVersion\s+"(\d+\.\d+\.\d+)"'),
+        (PAINT_INSTALLER, r'VersionInfoVersion=(\d+\.\d+\.\d+)\.0'),
+        (PAINT_INSTALLER, r'VersionInfoProductVersion=(\d+\.\d+\.\d+)'),
+        (PAINT_INSTALLER, r'UninstallDisplayName=NEXUS Paint (\d+\.\d+\.\d+)'),
         (Path("Install-NEXUS.ps1"), r"\$version\s*=\s*'(\d+\.\d+\.\d+)'"),
         (Path("Install-NEXUS.bat"), r"title\s+NEXUS\s+(\d+\.\d+\.\d+)\s+Installer"),
         (Path("Install-NEXUS.bat"), r"echo\s+NEXUS\s+Setup\s+(\d+\.\d+\.\d+)"),

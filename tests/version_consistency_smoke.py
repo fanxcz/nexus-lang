@@ -148,7 +148,7 @@ def main() -> int:
         write(root / "CMakeLists.txt", project_file("9.9.10"))
         expect_rejected(
             script, "check", "--root", str(root),
-            contains=("Install-NEXUS.ps1", "downloads.md", "NEXUS-Setup.iss", "9.9.10"),
+            contains=("Install-NEXUS.ps1", "downloads.md", "NEXUS-Setup.iss", "NEXUS-Paint-Setup.iss", "9.9.10"),
         )
 
         write(root / "CMakeLists.txt", project_file(COMPILER))

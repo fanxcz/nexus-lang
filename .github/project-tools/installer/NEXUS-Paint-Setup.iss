@@ -1,5 +1,5 @@
 #define MyAppName "NEXUS Paint"
-#define MyAppVersion "2.1.0"
+#define MyAppVersion "3.0.0"
 #define MyAppPublisher "NEXUS Project"
 #ifndef SourceDir
   #define SourceDir "..\..\..\dist\NEXUS-Paint-Windows-x64"
@@ -30,12 +30,12 @@ ChangesEnvironment=no
 CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
-VersionInfoVersion=2.1.0.0
+VersionInfoVersion=3.0.0.0
 VersionInfoProductName=NEXUS Paint
-VersionInfoProductVersion=2.1.0
+VersionInfoProductVersion=3.0.0
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription=NEXUS Paint raster editor installer
-UninstallDisplayName=NEXUS Paint 2.1.0
+UninstallDisplayName=NEXUS Paint 3.0.0
 
 [Languages]
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
