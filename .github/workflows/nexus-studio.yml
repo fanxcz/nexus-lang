@@ -42,12 +42,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $manifest = Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json
           $expectedVersion = [string]$manifest.version
-          if ($expectedVersion -notmatch '^\d+\.\d+\.\d+        with:
-          name: nexus-studio-${{ runner.os }}
-          path: .github/project-tools/nexus-studio/release/*
-          if-no-files-found: error
-          retention-days: 30
-) { throw "Invalid Studio package version: $expectedVersion" }
+          if ($expectedVersion -notmatch '^[0-9]+[.][0-9]+[.][0-9]+$') { throw "Invalid Studio package version: $expectedVersion" }
           $installers = @(Get-ChildItem -LiteralPath 'release' -Filter '*.exe' -File)
           if ($installers.Count -eq 0) { throw 'electron-builder did not produce any Windows EXE installers.' }
           foreach ($installer in $installers) {
