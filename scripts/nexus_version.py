@@ -201,7 +201,7 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
     setup = root / SETUP_INSTALLER
     setup_text = _read(setup) if setup.is_file() else ""
     if setup.is_file():
-        if ' -Mode Check -ExpectedVersion "{#MyAppVersion}"' not in setup_text:
+        if re.search(r'-Mode\s+Check\s+-ExpectedVersion\s+"{#MyAppVersion}"', setup_text) is None:
             problems.append(
                 f"{SETUP_INSTALLER}: post-install check must verify the compiler against MyAppVersion"
             )
