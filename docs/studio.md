@@ -3,7 +3,7 @@
 NEXUS Studio is the desktop workspace for opening a project, editing one active source file, and running the NEXUS compiler without switching between separate tools.
 
 <figure>
-  <img src="../assets/images/nexus-n-2026.svg" alt="NEXUS mark" width="64">
+  <img src="assets/images/nexus-n-2026.svg" alt="NEXUS mark" width="64">
   <figcaption>Desktop workspace · preview release 0.3.0</figcaption>
 </figure>
 
