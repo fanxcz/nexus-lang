@@ -93,7 +93,7 @@ Do not silence a failing quality gate without documenting why. The [good first i
 
 ## Issues and Discussions
 
-Use Issues for reproducible defects, test failures and concrete implementation tasks. Use [GitHub Discussions](https://github.com/fanxcz/nexus-lang/discussions) for questions, ideas and early RFC exploration. The maintainer may request an RFC before substantial syntax, semantic, standard-library or backend-contract changes. Read [GOVERNANCE.md](GOVERNANCE.md) and [repository settings](docs/github-settings.md) for the proposal process and one-time Discussions setup.
+Use Issues for reproducible defects, test failures and concrete implementation tasks. Use Discussions for questions, ideas and early RFC exploration. Enable the feature using the [GitHub repository settings guide](docs/github-settings.md) if it is not available yet. The maintainer may request an RFC before substantial syntax, semantic, standard-library or backend-contract changes. Read [GOVERNANCE.md](GOVERNANCE.md) and [repository settings](docs/github-settings.md) for the proposal process and one-time Discussions setup.
 
 ## CI expectations
 

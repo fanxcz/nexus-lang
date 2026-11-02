@@ -58,4 +58,4 @@ Run `nexus explain-backend file.nx` and inspect the unsupported construct. Use `
 - Check relative paths from the process working directory.
 - Preserve the exact compiler version, host OS, backend, command and first diagnostic when reporting a bug.
 
-For usage questions, use [GitHub Discussions](https://github.com/fanxcz/nexus-lang/discussions). Reserve Issues for reproducible bugs and concrete work items.
+For usage questions, enable and use Discussions following the [GitHub repository settings guide](github-settings.md). Reserve Issues for reproducible bugs and concrete work items.
