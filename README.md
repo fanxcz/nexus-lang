@@ -29,7 +29,7 @@ The current development tree adds fixed-width `i8`/`i16`/`i32`, `u8`/`u16`/`u32`
 
 ## What's new in 3.0.0
 
-- Aligns the compiler, NEXUS Studio desktop app and VS Code extension on release version 3.0.0.
+- Aligns the compiler, NEXUS Studio desktop app, NEXUS Paint installer metadata and VS Code extension on release version 3.0.0.
 - Upgrades NEXUS Studio into a multi-file development workspace with editor tabs, project-file filtering, build diagnostics and a dedicated Problems view.
 - Keeps compiler distribution and VSIX artifact names versioned and validates the three release versions together in CI.
 
