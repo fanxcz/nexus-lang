@@ -231,7 +231,7 @@ Consult the template and current documentation for its supported features. For U
 
 ## Downloadable applications
 
-**NEXUS Studio** is a source-buildable desktop editor with a project explorer, `.nx` editor, compiler selection, and Build/Run controls. The prebuilt 89 MB installer has been removed from the source tree to keep repository downloads smaller; see the source build instructions. Install NEXUS separately, then select `nexus.cmd` in Studio.
+**NEXUS Studio 3.0.0** is a cross-platform desktop IDE with a project explorer, multi-file editor tabs, unsaved-buffer tracking, compiler Build/Run, Problems diagnostics, command palette and an integrated terminal. Install NEXUS separately, then select `nexus.cmd` in Studio. [Browse desktop packages and SHA-256 checksums](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml).
 
 - [NEXUS Studio source and build instructions](https://github.com/fanxcz/nexus-lang/tree/main/.github/project-tools/nexus-studio)
 

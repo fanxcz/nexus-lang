@@ -22,11 +22,11 @@ Studio is an Electron desktop application; file access and terminal commands run
 
 Studio's build workflow packages Windows (NSIS installer and portable executable), Linux (AppImage and DEB) and macOS (DMG and ZIP).
 
-- [Browse published Studio releases](https://github.com/fanxcz/nexus-lang/releases?q=studio)
+- [Browse Studio 3.0.0 package builds and checksums](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml)
 - [Run the cross-platform build workflow](https://github.com/fanxcz/nexus-lang/actions/workflows/nexus-studio.yml)
 - [Create a draft Studio release](https://github.com/fanxcz/nexus-lang/actions/workflows/studio-release.yml)
 
-The release workflow creates a **draft** release with SHA-256 sidecars so the maintainer can review the platform packages before publishing. Build workflow artifacts remain temporary CI downloads.
+The workflow publishes Windows, Linux and macOS build artifacts with SHA-256 sidecars. Open the latest run and download the matching platform artifact. GitHub Actions artifacts are temporary downloads; a permanent GitHub Release requires the repository Actions token to be allowed to create releases.
 
 ## Build from source
 
