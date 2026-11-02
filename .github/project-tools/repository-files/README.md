@@ -14,7 +14,7 @@
 
 ## What's new in 3.0.0
 
-- Aligns compiler, desktop Studio and VS Code extension release versions at 3.0.0.
+- Aligns compiler, desktop Studio, NEXUS Paint installer and VS Code extension release versions at 3.0.0.
 - Studio adds multi-file tabs, filtered project navigation and compiler diagnostics with a dedicated Problems panel.
 - Aligns the NEXUS Paint installer and executable version metadata with the 3.0.0 release.
 

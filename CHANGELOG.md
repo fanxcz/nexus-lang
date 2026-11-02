@@ -15,6 +15,7 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 - Expanded NEXUS Studio into a desktop IDE with multi-file tabs, saved/unsaved buffer tracking, filename filtering, cursor position, a compiler Problems panel and jump-to-source diagnostics.
 - Added IDE commands and shortcuts for saving all files, switching/closing tabs, filtering project files and opening compiler Problems.
 - Added NEXUS Studio as the third version source and require the compiler, extension and desktop app packages to share one release version.
+- Aligned NEXUS Paint Windows installer and executable version metadata with 3.0.0.
 
 - Added an implementation-backed compiler architecture map, troubleshooting guide, NEXUS source style guide, backend support matrix, versioning policy, reproducible-build guidance, governance policy, GitHub settings guide and good-first-issue list.
 - Added opt-in Clang/libFuzzer targets for the lexer and parser with seed corpora; normal builds remain unchanged unless `NEXUS_BUILD_LIBFUZZER=ON` is selected.

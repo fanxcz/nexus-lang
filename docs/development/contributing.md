@@ -62,7 +62,8 @@ The repository has three package versions, validated together by one tool:
 
 - the compiler and installer version is `project(nexus VERSION x.y.z)` in `CMakeLists.txt`;
 - the VS Code extension version is `version` in `.github/project-tools/vscode-extension/package.json`;
-- the NEXUS Studio desktop version is `version` in `.github/project-tools/nexus-studio/package.json`.
+- the NEXUS Studio desktop version is `version` in `.github/project-tools/nexus-studio/package.json`;
+- the NEXUS Paint installer version metadata is in `.github/project-tools/installer/NEXUS-Paint-Setup.iss` and must match the compiler release.
 
 ```bash
 python scripts/nexus_version.py compiler          # 3.0.0
@@ -76,7 +77,8 @@ Workflows and packaging scripts read these values instead of copying them. When
 you change any version source, run `check`; it fails on a stale artifact name in
 documentation, a bootstrap script that pins an older installer, an installer
 whose output name no longer derives from `{#MyAppVersion}`, or download lists
-that disagree with the sources. The same check runs as the
+that disagree with the sources, or NEXUS Paint installer metadata that drifts
+from the compiler release. The same check runs as the
 `nexus_version_consistency` CTest.
 
 ## 6. Test, commit and open a pull request
