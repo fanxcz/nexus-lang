@@ -12,7 +12,7 @@ This matrix records evidence in the source tree at the current baseline. "Suppor
 | Integer arithmetic, comparisons, boolean operators, calls, string concatenation/equality | Supported in documented subset | Supported | Native fixtures and parity test |
 | `print`, `input`, `str_i64` | Supported in documented signatures | Supported | Native emitter/runtime subset |
 | i64 bitwise and shift operators | Supported | Supported | Native and LLVM parity fixtures; 2.2.0 changelog |
-| Fixed-width integers (`i8/i16/i32`, `u8/u16/u32/u64`) and `f32` | Not supported | Supported for documented scalar lowering paths | Current Unreleased changelog; native subset excludes these types |
+| Fixed-width integers (`i8/i16/i32`, `u8/u16/u32/u64`) and `f32` | Not supported | Supported for documented scalar lowering paths | 3.0.0 changelog; native subset excludes these types |
 | `f64` and floating-point expressions | Not supported | Supported for documented builtins/expressions | Native subset excludes floating point; LLVM math tests exist |
 | Fixed arrays | Not supported | Supported for tested declarations, indexing and aggregate paths | Native subset excludes arrays; regression tests exist |
 | Read-only slices `[]T` | Not supported | Supported for tested slice expressions, indexing, parameters and returns | Unreleased changelog and `tests/slice_llvm_smoke.cmake` |
