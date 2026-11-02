@@ -45,6 +45,10 @@ def verify_checksum(installer: Path, checksum: Path, name: str) -> str | None:
     match = SHA256_LINE.fullmatch(recorded)
     if not match:
         return f"{name}.sha256.txt does not contain a SHA-256 digest"
+    if match.group(2):
+        recorded_name = Path(match.group(2).strip().lstrip("*")).name
+        if recorded_name != name:
+            return f"{name}.sha256.txt names {recorded_name!r}, expected {name!r}"
     actual = hashlib.sha256(installer.read_bytes()).hexdigest()
     if actual != match.group(1).lower():
         return f"{name} does not match {name}.sha256.txt"
