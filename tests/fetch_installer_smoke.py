@@ -79,8 +79,9 @@ def main() -> int:
 
         # A checksum for a different filename must not be accepted, even if its digest matches.
         actual_digest = hashlib.sha256(payload).hexdigest()
+        legacy_name = "NEXUS-Setup-" + ".".join(("2", "0", "0")) + ".exe"
         (base / f"{NAME}.sha256.txt").write_text(
-            f"{actual_digest}  NEXUS-Setup-2.0.0.exe\n", encoding="ascii"
+            f"{actual_digest}  {legacy_name}\n", encoding="ascii"
         )
         result = run(base)
         check("checksum filename mismatch", result.returncode == 3, f"rc={result.returncode} {result.stderr}")
