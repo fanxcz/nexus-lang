@@ -190,6 +190,20 @@ def check(root: Path = ROOT, nexus_bin: Path | None = None) -> list[str]:
             problems.append(f"{relative}: pins {pinned}, but the compiler version is {compiler}")
 
     setup = root / SETUP_INSTALLER
+    if setup.is_file():
+        setup_text = _read(setup)
+        if ' -Mode Check -ExpectedVersion "{#MyAppVersion}"' not in setup_text:
+            problems.append(
+                f"{SETUP_INSTALLER}: post-install check must verify the compiler against MyAppVersion"
+            )
+    windows_helper = root / ".github/project-tools/repository-files/NEXUS-Windows.ps1"
+    if not windows_helper.is_file():
+        problems.append(f"{windows_helper.relative_to(root)}: file is missing")
+    elif "$ExpectedVersion" not in _read(windows_helper):
+        problems.append(
+            f"{windows_helper.relative_to(root)}: Check mode must accept the installer's expected version"
+        )
+
     if setup.is_file() and "NEXUS-Setup-{#MyAppVersion}" not in _read(setup):
         problems.append(
             f"{SETUP_INSTALLER}: OutputBaseFilename must be NEXUS-Setup-{{#MyAppVersion}}"
