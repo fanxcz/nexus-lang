@@ -43,16 +43,68 @@ jobs:
       - name: Prepare EXE for repository
         shell: pwsh
         run: |
+          $manifest = Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json
+          $version = [string]$manifest.version
+          if ($version -notmatch '^[0-9]+[.][0-9]+[.][0-9]+
+      - name: Commit EXE into repository
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # The job already runs inside .github/project-tools/nexus-studio.
+          # Stage a relative path and fail loudly if any Git operation fails.
+          # The repository .gitignore excludes executable files globally;
+          # force-add this intentionally versioned release asset, then add its hash.
+          git add -f 'downloads/NEXUS-Studio-Windows-x64.exe'
+          if ($LASTEXITCODE -ne 0) { throw 'git add -f failed for the NEXUS Studio EXE.' }
+          git add 'downloads/NEXUS-Studio-Windows-x64.exe.sha256'
+          if ($LASTEXITCODE -ne 0) { throw 'git add failed for the NEXUS Studio SHA-256 file.' }
+
+          git diff --cached --quiet
+          $diffExitCode = $LASTEXITCODE
+          if ($diffExitCode -eq 0) {
+            Write-Host 'The repository already contains the current NEXUS Studio EXE; no commit is needed.'
+            exit 0
+          }
+          if ($diffExitCode -ne 1) { throw "git diff --cached failed with exit code $diffExitCode." }
+
+          git commit -m 'Add built NEXUS Studio Windows EXE'
+          if ($LASTEXITCODE -ne 0) { throw 'git commit failed for the built NEXUS Studio EXE.' }
+
+          # The binary build takes several minutes; docs or code may land on main
+          # while it runs. Rebase this asset-only commit on the latest branch first.
+          $branch = $env:GITHUB_REF_NAME
+          $refspec = "+refs/heads/{0}:refs/remotes/origin/{0}" -f $branch
+          git fetch origin $refspec
+          if ($LASTEXITCODE -ne 0) { throw "git fetch failed for branch $branch." }
+
+          git rebase "origin/$branch"
+          if ($LASTEXITCODE -ne 0) {
+            git rebase --abort
+            throw "Could not rebase the generated EXE commit on the latest $branch."
+          }
+
+          git push origin "HEAD:$branch"
+          if ($LASTEXITCODE -ne 0) { throw "git push failed for branch $branch." }
+) { throw "Invalid Studio version: $version" }
           $source = Get-ChildItem release -Filter '*.exe' -File |
             Sort-Object Length -Descending |
             Select-Object -First 1
           if (-not $source) { throw 'electron-builder did not produce an EXE installer.' }
           if ($source.Length -ge 100MB) { throw "EXE is $($source.Length) bytes; GitHub blocks regular Git files at 100 MB. Use the Actions artifact instead." }
+          $metadata = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($source.FullName)
+          if ($metadata.ProductVersion -notlike "$version*") {
+            throw "Studio installer version mismatch: expected $version, got '$($metadata.ProductVersion)'."
+          }
           New-Item -ItemType Directory -Force downloads | Out-Null
-          Copy-Item $source.FullName 'downloads/NEXUS-Studio-Windows-x64.exe' -Force
-          $hash = (Get-FileHash 'downloads/NEXUS-Studio-Windows-x64.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  NEXUS-Studio-Windows-x64.exe" | Set-Content 'downloads/NEXUS-Studio-Windows-x64.exe.sha256' -Encoding ASCII
-          Get-Item 'downloads/NEXUS-Studio-Windows-x64.exe','downloads/NEXUS-Studio-Windows-x64.exe.sha256' | Format-Table FullName,Length
+          $name = "NEXUS-Studio-$version-Windows-x64.exe"
+          $destination = Join-Path 'downloads' $name
+          Copy-Item $source.FullName $destination -Force
+          $hash = (Get-FileHash $destination -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $name" | Set-Content ($destination + '.sha256.txt') -Encoding ASCII
+          Get-Item $destination,($destination + '.sha256.txt') | Format-Table FullName,Length
 
       - name: Commit EXE into repository
         shell: pwsh
