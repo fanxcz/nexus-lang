@@ -371,6 +371,11 @@ jobs:
           & $iscc "/O$env:RUNNER_TEMP" "/DSourceDir=$paintDir" '.github/project-tools/installer/NEXUS-Paint-Setup.iss'
           if ($LASTEXITCODE -ne 0) { throw "NEXUS Paint installer compilation failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path -LiteralPath $paintInstaller)) { throw 'The NEXUS Paint installer EXE was not produced.' }
+          $paintVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($paintInstaller).ProductVersion
+          if ($paintVersion -notlike "$env:NEXUS_VERSION*") {
+            throw "Paint installer version mismatch: expected $env:NEXUS_VERSION, got '$paintVersion'."
+          }
+          Write-Host "Verified NEXUS Paint installer version: $paintVersion"
           Write-Host "Created NEXUS Paint installer: $paintInstaller"
 
       - name: Verify setup installs and launches NEXUS
