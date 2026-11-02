@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and usage help
+    url: https://github.com/fanxcz/nexus-lang/discussions/categories/q-a
+    about: Ask usage questions in Discussions rather than opening a bug report.
+  - name: Language ideas and RFC proposals
+    url: https://github.com/fanxcz/nexus-lang/discussions/categories/ideas
+    about: Discuss syntax, semantics and design proposals before implementation.
+  - name: Security vulnerability reporting
+    url: https://github.com/fanxcz/nexus-lang/security/policy
+    about: Report suspected vulnerabilities privately; do not post exploit details publicly.

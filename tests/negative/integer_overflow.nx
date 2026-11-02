@@ -1,0 +1,4 @@
+fn main() {
+    let overflow = 9223372036854775808
+    print(overflow)
+}

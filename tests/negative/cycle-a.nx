@@ -1,0 +1,2 @@
+import "cycle-b.nx"
+fn cycle_a() {}

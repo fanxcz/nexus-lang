@@ -70,6 +70,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 option(NEXUS_BUILD_TESTS "Build Nexus tests" ON)
+option(NEXUS_BUILD_LIBFUZZER "Build opt-in Clang/libFuzzer frontend targets" OFF)
 
 # ============================================================================
 # Find dependencies
@@ -201,6 +202,39 @@ set(NEXUS_SOURCES
     ${NEXUS_NATIVE_SOURCES}
     ${NEXUS_DRIVER_SOURCES}
 )
+
+if (NEXUS_BUILD_LIBFUZZER)
+  if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "NEXUS_BUILD_LIBFUZZER requires a Clang compiler with libFuzzer support")
+  endif()
+
+  add_executable(nexus_fuzz_lexer
+      tests/fuzz/lexer_fuzz.cpp
+      ${NEXUS_LEXER_SOURCES}
+  )
+  add_executable(nexus_fuzz_parser
+      tests/fuzz/parser_fuzz.cpp
+      ${NEXUS_LEXER_SOURCES}
+      ${NEXUS_PARSER_SOURCES}
+  )
+
+  foreach(target IN ITEMS nexus_fuzz_lexer nexus_fuzz_parser)
+    target_include_directories(${target} PRIVATE
+        src/compiler
+        src/compiler/frontend
+    )
+    target_compile_features(${target} PRIVATE cxx_std_20)
+    target_compile_options(${target} PRIVATE
+        -fsanitize=fuzzer,address,undefined
+        -fno-omit-frame-pointer
+        -g
+        ${NEXUS_COMPILE_OPTIONS}
+    )
+    target_link_options(${target} PRIVATE
+        -fsanitize=fuzzer,address,undefined
+    )
+  endforeach()
+endif()
 
 add_executable(nexus ${NEXUS_SOURCES})
 # The official Windows portable package must run without an installed
@@ -739,8 +773,40 @@ if (NEXUS_BUILD_TESTS)
               -P ${CMAKE_SOURCE_DIR}/tests/backend_parity.cmake)
       set_tests_properties(nexus_backend_parity PROPERTIES
           ENVIRONMENT "NEXUS_CXX=${NEXUS_PARITY_CXX}")
+      add_test(NAME nexus_differential_smoke
+          COMMAND ${CMAKE_COMMAND}
+              -DNEXUS_BIN=$<TARGET_FILE:nexus>
+              -DNEXUS_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+              -P ${CMAKE_SOURCE_DIR}/tests/differential/run.cmake)
+      set_tests_properties(nexus_differential_smoke PROPERTIES
+          ENVIRONMENT "NEXUS_CXX=${NEXUS_PARITY_CXX}"
+          TIMEOUT 180)
     endif()
   endif()
+
+  add_test(NAME nexus_negative_tests
+      COMMAND ${CMAKE_COMMAND}
+          -DNEXUS_BIN=$<TARGET_FILE:nexus>
+          -DTEST_SOURCE_DIR=${CMAKE_SOURCE_DIR}/tests/negative
+          -DTEST_BINARY_DIR=${CMAKE_BINARY_DIR}
+          -P ${CMAKE_SOURCE_DIR}/tests/negative/run.cmake)
+  set_tests_properties(nexus_negative_tests PROPERTIES TIMEOUT 30)
+
+  if (NEXUS_BUILD_LIBFUZZER)
+    file(COPY ${CMAKE_SOURCE_DIR}/tests/fuzz/corpus/lexer
+         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/fuzz-corpus)
+    file(COPY ${CMAKE_SOURCE_DIR}/tests/fuzz/corpus/parser
+         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/fuzz-corpus)
+    add_test(NAME nexus_fuzz_lexer_smoke
+        COMMAND $<TARGET_FILE:nexus_fuzz_lexer>
+            -runs=1000 -max_len=4096 ${CMAKE_CURRENT_BINARY_DIR}/fuzz-corpus/lexer)
+    add_test(NAME nexus_fuzz_parser_smoke
+        COMMAND $<TARGET_FILE:nexus_fuzz_parser>
+            -runs=1000 -max_len=4096 ${CMAKE_CURRENT_BINARY_DIR}/fuzz-corpus/parser)
+    set_tests_properties(nexus_fuzz_lexer_smoke nexus_fuzz_parser_smoke
+        PROPERTIES TIMEOUT 30)
+  endif()
+
 endif()
 
 # ============================================================================

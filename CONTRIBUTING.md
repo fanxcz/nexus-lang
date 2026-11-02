@@ -69,3 +69,33 @@ Open a pull request against `main` and include the problem, the approach, tests 
 ## Where to help
 
 Start with [open issues](https://github.com/fanxcz/nexus-lang/issues), or the [development documentation](docs/development/index.md). Bug reports should include a minimal source example, exact command, platform, expected behavior and actual output.
+
+## Project engineering guides
+
+Before changing language behavior, read the [compiler architecture](docs/architecture.md), [backend support matrix](docs/backend-support-matrix.md), and [NEXUS style guide](docs/style-guide-nx.md). Build and setup problems are collected in [Troubleshooting](docs/troubleshooting.md). Keep backend claims evidence-based; mark incomplete coverage as `Needs verification`.
+
+The normal build remains free of libFuzzer requirements. Clang users can enable the optional lexer/parser fuzz targets explicitly:
+
+```sh
+cmake -S . -B build-fuzz -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DNEXUS_BUILD_TESTS=ON -DNEXUS_BUILD_LIBFUZZER=ON
+cmake --build build-fuzz --target nexus nexus_fuzz_lexer nexus_fuzz_parser
+ctest --test-dir build-fuzz --output-on-failure
+```
+
+Run C++ format and static-analysis checks locally when tools are installed:
+
+```sh
+clang-format --dry-run --Werror <changed-cpp-files>
+clang-tidy -p build <changed-cpp-files>
+```
+
+Do not silence a failing quality gate without documenting why. The [good first issues](docs/good-first-issues.md) page lists scoped starter tasks; use the `good first issue` and `help wanted` labels only after a maintainer confirms scope and acceptance criteria.
+
+## Issues and Discussions
+
+Use Issues for reproducible defects, test failures and concrete implementation tasks. Use [GitHub Discussions](https://github.com/fanxcz/nexus-lang/discussions) for questions, ideas and early RFC exploration. The maintainer may request an RFC before substantial syntax, semantic, standard-library or backend-contract changes. Read [GOVERNANCE.md](GOVERNANCE.md) and [repository settings](docs/github-settings.md) for the proposal process and one-time Discussions setup.
+
+## CI expectations
+
+Pull requests are expected to pass the existing build/CTest workflow and applicable quality gates: C++ formatting, clang-tidy, gitleaks, dependency review, deterministic fuzz smoke, negative diagnostics and differential native/LLVM checks. Benchmarks are manual/advisory because shared CI runners are noisy. Release archives include SHA-256 sidecars; see [reproducible builds](docs/reproducible-builds.md).
+

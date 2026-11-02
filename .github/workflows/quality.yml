@@ -1,0 +1,118 @@
+name: Compiler quality gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cpp-static-analysis:
+    name: C++ format and clang-tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install LLVM and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang clang-format clang-tidy cmake ninja-build lld
+          clang --version
+          clang-format --version
+          clang-tidy --version
+
+      - name: Check formatting of changed C++ files
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${PR_BASE:-}"
+          if [[ -z "$base" ]]; then base="${PUSH_BASE:-}"; fi
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
+          fi
+          mapfile -t files < <(git diff --name-only "$base" "$GITHUB_SHA" -- '*.cpp' '*.hpp' '*.h' '*.c')
+          if (("${#files[@]}")); then
+            clang-format --dry-run --Werror "${files[@]}"
+          else
+            echo "No changed C++ files to format-check."
+          fi
+
+      - name: Configure compile database and optional fuzz targets
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DNEXUS_BUILD_TESTS=ON
+          -DNEXUS_BUILD_LIBFUZZER=ON
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Build compiler and fuzz targets
+        run: cmake --build build --parallel 2 --target nexus nexus_fuzz_lexer nexus_fuzz_parser
+
+      - name: Run clang-tidy on fuzz harnesses
+        run: >-
+          clang-tidy -p build --warnings-as-errors='*'
+          tests/fuzz/lexer_fuzz.cpp tests/fuzz/parser_fuzz.cpp
+
+  fuzz-and-regression:
+    name: Fuzz smoke, negative and differential tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build lld
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DNEXUS_BUILD_TESTS=ON
+          -DNEXUS_BUILD_LIBFUZZER=ON
+      - name: Build required targets
+        run: cmake --build build --parallel 2 --target nexus nexus_fuzz_lexer nexus_fuzz_parser
+      - name: Run new quality tests and existing deterministic frontend smoke test
+        run: >-
+          ctest --test-dir build --output-on-failure
+          -R 'nexus_(negative_tests|differential_smoke|fuzz_lexer_smoke|fuzz_parser_smoke|frontend_fuzz_smoke)'
+
+  secret-scanning:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Scan repository history and working tree
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-review:
+    name: Dependency vulnerability review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always

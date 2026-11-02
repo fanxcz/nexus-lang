@@ -1,0 +1,57 @@
+[
+  {
+    "name": "good first issue",
+    "color": "7057ff",
+    "description": "A scoped task suitable for a first contribution"
+  },
+  {
+    "name": "help wanted",
+    "color": "008672",
+    "description": "Maintainers welcome community help on this task"
+  },
+  {
+    "name": "bug",
+    "color": "d73a4a",
+    "description": "A reproducible defect in the compiler, runtime or tooling"
+  },
+  {
+    "name": "documentation",
+    "color": "0075ca",
+    "description": "Documentation, examples or onboarding improvement"
+  },
+  {
+    "name": "tests",
+    "color": "1d76db",
+    "description": "Test coverage, fuzzing or test infrastructure"
+  },
+  {
+    "name": "backend:native",
+    "color": "c2e0c6",
+    "description": "Builtin native code generation or support subset"
+  },
+  {
+    "name": "backend:llvm",
+    "color": "bfdadc",
+    "description": "LLVM IR generation or LLVM toolchain path"
+  },
+  {
+    "name": "security",
+    "color": "b60205",
+    "description": "Security-sensitive issue; use private reporting for vulnerabilities"
+  },
+  {
+    "name": "dependencies",
+    "color": "0366d6",
+    "description": "Dependency update or vulnerability review"
+  },
+  {
+    "name": "enhancement",
+    "color": "a2eeef",
+    "description": "A scoped improvement approved for implementation"
+  },
+  {
+    "name": "triage",
+    "color": "ededed",
+    "description": "Needs maintainer review and prioritization"
+  }
+]

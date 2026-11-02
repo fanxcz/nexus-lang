@@ -11,6 +11,14 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Added
 
+- Added an implementation-backed compiler architecture map, troubleshooting guide, NEXUS source style guide, backend support matrix, versioning policy, reproducible-build guidance, governance policy, GitHub settings guide and good-first-issue list.
+- Added opt-in Clang/libFuzzer targets for the lexer and parser with seed corpora; normal builds remain unchanged unless `NEXUS_BUILD_LIBFUZZER=ON` is selected.
+- Added CTest negative diagnostics for malformed syntax, integer and array-length overflow, circular imports, missing files and directory-as-source inputs.
+- Added a native-versus-LLVM differential runner over deterministic existing fixtures and a standard-library-only compile/runtime benchmark runner.
+- Added CI quality gates for C++ formatting, clang-tidy, secret scanning, dependency review, fuzz smoke and differential/negative tests; added a manual benchmark workflow and label synchronization workflow.
+- Added label definitions, issue routing configuration, GitHub Discussions setup instructions and a PR review checklist.
+- Documented SHA-256 release verification; the existing release workflow already publishes checksum sidecars for platform archives.
+
 - Added explicit exclusive mutable slices using `mut []T` and `mut array[start..end]`.
   Mutable slices support indexed writes (including compound assignment), function
   parameters and `len` on the LLVM backend. The semantic analyzer rejects immutable

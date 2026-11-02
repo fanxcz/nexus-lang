@@ -1,0 +1,48 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Number of repetitions for each measurement
+        required: false
+        default: '5'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Compile-time and runtime baselines (Ubuntu x86-64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build lld
+      - name: Configure and build compiler
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DNEXUS_BUILD_TESTS=ON
+          cmake --build build --parallel 2 --target nexus
+      - name: Run compile and runtime benchmarks
+        env:
+          NEXUS_CXX: clang++
+          BENCH_RUNS: ${{ inputs.runs || '5' }}
+        run: |
+          python3 benchmarks/run.py \
+            --nexus ./build/nexus \
+            --backends native llvm \
+            --runs "$BENCH_RUNS" \
+            --runtime-runs "$BENCH_RUNS" \
+            --json benchmark-results/results.json \
+            --csv benchmark-results/results.csv
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-benchmarks-${{ github.run_id }}
+          path: benchmark-results/
+          if-no-files-found: error
+          retention-days: 30

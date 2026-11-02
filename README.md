@@ -5,6 +5,7 @@
 **NEXUS is an open-source, statically checked language for native applications, developer tools, and game prototypes.** Its compiler is written in C++20 and combines a built-in x86-64 backend for a documented subset with an LLVM-based path for broader language support. The current development tree includes fixed-width numeric types and checked read-only/mutable slices. Graphics support includes SDL-based 2D helpers and an experimental compatibility-OpenGL 3D path; a production voxel engine is still roadmap work.
 
 [![CI](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/build.yml)
+[![Quality gates](https://github.com/fanxcz/nexus-lang/actions/workflows/quality.yml/badge.svg)](https://github.com/fanxcz/nexus-lang/actions/workflows/quality.yml) [![Version](https://img.shields.io/badge/version-2.2.0-informational.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 
@@ -282,3 +283,26 @@ Issues, bug reports, documentation improvements, tests, and focused pull request
 ## License
 
 NEXUS is distributed under the MIT License. See [LICENSE](https://github.com/fanxcz/nexus-lang/blob/main/LICENSE).
+
+## Engineering guides and quality infrastructure
+
+This repository keeps the NEXUS compiler and its MIT-licensed upstream source while adding focused documentation, optional fuzzing, negative diagnostics, native/LLVM differential checks and repeatable benchmarks.
+
+- [Quickstart](docs/getting-started/quickstart.md) · [Compiler architecture](docs/architecture.md) · [Troubleshooting](docs/troubleshooting.md)
+- [NEXUS source style guide](docs/style-guide-nx.md) · [Backend support matrix](docs/backend-support-matrix.md) · [Versioning policy](docs/versioning.md)
+- [Fuzz testing](tests/fuzz/README.md) · [Differential testing](tests/differential/README.md) · [Negative tests](tests/negative/README.md) · [Benchmarks](benchmarks/README.md)
+- [Reproducible builds and SHA-256](docs/reproducible-builds.md) · [Changelog](CHANGELOG.md) · [Governance](GOVERNANCE.md) · [Security](SECURITY.md)
+- [Contributing](CONTRIBUTING.md) · [Good first issues](docs/good-first-issues.md) · [GitHub settings and Discussions](docs/github-settings.md)
+
+### Backend support at a glance
+
+| Capability | Built-in native backend | LLVM backend |
+|---|---|---|
+| Core `i64` / `bool` / `string` / `void` subset | Supported on x86-64 Windows/Linux | Supported |
+| Wider numeric types and slices | Not supported | Supported for documented/tested paths |
+| Fixed arrays, structs, enums and `match` | Not supported | Supported for documented/tested paths |
+| FFI and less-tested runtime APIs | Not supported | Needs verification |
+| Non-x86-64 or non-Windows/Linux emitters | Not supported | Needs verification per toolchain/target |
+
+See the [full backend matrix](docs/backend-support-matrix.md). "Needs verification" is deliberate: parser support or the presence of a builtin declaration alone does not prove end-to-end code generation and runtime support. Coverage is not currently published as a badge because no coverage upload is configured.
+

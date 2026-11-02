@@ -65,3 +65,16 @@ Add screenshots or GIFs demonstrating the change, especially for:
 ## Additional Notes
 
 Any additional information, configuration, or data that might be necessary to reproduce or understand the change.
+
+## Engineering checks
+
+- [ ] I read the relevant architecture and backend-support documentation.
+- [ ] NEXUS examples and `stdlib/` changes follow [style-guide-nx.md](../docs/style-guide-nx.md).
+- [ ] I added/updated focused unit, negative, fuzz-seed or differential tests as appropriate.
+- [ ] I ran relevant CTest checks and `git diff --check`.
+- [ ] C++ changes pass `clang-format --dry-run --Werror` and applicable `clang-tidy` checks.
+- [ ] Backend and platform support claims are backed by tests; uncertain claims are marked `Needs verification`.
+- [ ] I did not include credentials, generated binaries, private logs or unrelated files.
+
+For language changes, link the related RFC/Discussion and explain compatibility impact. For security-sensitive changes, use the private reporting process instead of public issue details.
+
