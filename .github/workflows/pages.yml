@@ -33,7 +33,7 @@ concurrency:
   # Pull requests have independent groups. For main/dispatch, the newest source
   # must supersede stale packaging/deployment runs so a hung old run cannot block
   # publication of the latest site and installer.
-  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages' }}
+  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'pages-docs' }}
   cancel-in-progress: true
 
 jobs:
