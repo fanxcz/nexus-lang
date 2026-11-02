@@ -49,7 +49,20 @@ try {
         throw "The setup wizard returned exit code $($process.ExitCode)."
     }
 
-    Write-Host '[NEXUS] Setup completed.'
+    $installedLauncher = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS\nexus.cmd'
+    if (-not (Test-Path -LiteralPath $installedLauncher -PathType Leaf)) {
+        throw "Setup exited successfully, but the expected launcher was not installed: $installedLauncher"
+    }
+
+    $installedOutput = @(& $installedLauncher --version 2>&1)
+    $installedExitCode = $LASTEXITCODE
+    $installedText = $installedOutput -join "`n"
+    $versionPattern = '(?m)^Nexus\s+' + [regex]::Escape($version) + '\b'
+    if ($installedExitCode -ne 0 -or $installedText -notmatch $versionPattern) {
+        throw "The installer did not install the requested NEXUS $version compiler. Actual output: $installedText"
+    }
+
+    Write-Host "[NEXUS] Setup completed and verified: Nexus $version." -ForegroundColor Green
     Write-Host 'Open a new terminal and run: nexus --version'
     exit 0
 }
