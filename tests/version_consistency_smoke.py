@@ -98,7 +98,8 @@ def build_fixture(root: Path) -> None:
     write(
         root / "docs/downloads.md",
         f"[Setup](assets/downloads/NEXUS-Setup-{COMPILER}.exe)\n"
-        f"[Extension](assets/downloads/NEXUS-Language-{EXTENSION}.vsix)\n",
+        f"[Extension](assets/downloads/NEXUS-Language-{EXTENSION}.vsix)\n"
+        f"[Studio](https://github.com/fanxcz/nexus-lang/releases/download/studio-v{STUDIO}/NEXUS-Studio-{STUDIO}-Windows-x64.exe)\n",
     )
     write(root / "docs/manual.md", f"# NEXUS Language Manual\n\nVersion {COMPILER}\n")
 
@@ -164,6 +165,19 @@ def main() -> int:
         build_fixture(root)
         script = root / "scripts/nexus_version.py"
         expect_ok(script, "check", "--root", str(root))
+
+        write(
+            root / ".github/project-tools/nexus-studio/package.json",
+            json.dumps({"name": "nexus-studio", "version": "9.9.10"}),
+        )
+        expect_rejected(
+            script, "check", "--root", str(root),
+            contains=("Studio", "NEXUS-Studio-9.9.9-Windows-x64.exe"),
+        )
+        write(
+            root / ".github/project-tools/nexus-studio/package.json",
+            json.dumps({"name": "nexus-studio", "version": STUDIO}),
+        )
 
         write(root / "CMakeLists.txt", project_file("9.9.10"))
         expect_rejected(
