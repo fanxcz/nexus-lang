@@ -71,7 +71,7 @@ int main() {
         negativeSizeValid || nullRangeValid) {
         std::fprintf(stderr,
                      "runtime memory range validation failed: pointer=%lld whole=%d tail=%d "
-                     "partial=%d huge=%d negative=%d null=%d\\n",
+                     "partial=%d huge=%d negative=%d null=%d\n",
                      static_cast<long long>(buffer),
                      wholeRangeValid,
                      tailRangeValid,
