@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="NEXUS language reference: static types, functions, slices, control flow and compiler limits."><title>Language — NEXUS</title><link rel="icon" href="assets/mark.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script></head>
+<body>
+<header class="site-header"><div class="wrap header-row"><a class="brand" href="index.html"><img src="assets/mark.svg" alt=""><span class="brand-name">NEXUS</span><span class="brand-sub">Language / Toolchain</span></a><nav class="site-nav" data-site-nav aria-label="Main navigation"><a href="index.html">Overview</a><a href="language.html" aria-current="page">Language</a><a href="runtime.html">Runtime</a><a href="tooling.html">Tooling</a><a href="applications.html">Applications</a><a href="studio.html">Studio</a></nav><div class="header-actions"><a class="header-github" href="https://github.com/fanxcz/nexus-lang">GitHub ↗</a><a class="nav-cta" href="downloads.html">Get NEXUS ↗</a><button class="menu-toggle" data-menu-toggle aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button></div></div></header>
+<main><section class="page-hero"><div class="wrap"><div class="eyebrow">Language reference / 02</div><h1>Static types.<br><em>Explicit boundaries.</em></h1><p>NEXUS is an actively developed compiled language. The compiler implements functions, structs, enums, arrays, imports, control flow, pointers and a growing set of fixed-width numeric and slice types.</p></div></section>
+<div class="page-body"><div class="wrap content-grid"><aside class="side-index"><strong>Sections</strong><a href="#first">First program</a><a href="#types">Built-in types</a><a href="#functions">Functions</a><a href="#flow">Control flow</a><a href="#slices">Slices</a><a href="#limits">Current limits</a></aside>
+<div class="content">
+<section id="first"><div class="eyebrow">Syntax / Hello</div><h2>A program starts with main</h2><div class="codebox"><button class="copy-btn" data-copy="lang-hello">Copy</button><pre id="lang-hello">fn main() {
+    print("Hello from NEXUS!")
+}</pre></div><p>Functions use typed parameters and optional return types. Initialized bindings can infer their type; use <code>let mut</code> for a mutable binding.</p></section>
+<section id="types"><div class="eyebrow">Type system</div><h2>Primitive and compound types</h2><div class="table-wrap"><table><thead><tr><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>i8/i16/i32/i64</code></td><td>Signed fixed-width integers</td></tr><tr><td><code>u8/u16/u32/u64</code></td><td>Unsigned fixed-width integers</td></tr><tr><td><code>f32/f64</code></td><td>IEEE-754 floating-point numbers</td></tr><tr><td><code>bool</code></td><td><code>true</code> or <code>false</code></td></tr><tr><td><code>string</code></td><td>String value</td></tr><tr><td><code>void</code></td><td>No return value</td></tr><tr><td><code>*T</code></td><td>Pointer to a value</td></tr><tr><td><code>[T; N]</code></td><td>Fixed-size array</td></tr><tr><td><code>[]T</code></td><td>Read-only non-owning slice</td></tr><tr><td><code>mut []T</code></td><td>Exclusive mutable slice</td></tr></tbody></table><p>The aliases <code>int</code>, <code>isize</code> and <code>usize</code> still mean <code>i64</code>; <code>float</code> means <code>f64</code>. Numeric types do not implicitly convert between widths.</p></section>
+<section id="functions"><div class="eyebrow">Functions & data</div><h2>Typed functions, structs and enums</h2><div class="codebox"><button class="copy-btn" data-copy="lang-fn">Copy</button><pre id="lang-fn">fn add(a: i64, b: i64) -> i64 {
+    return a + b
+}
+
+fn main() {
+    let mut total: i64 = 0
+    for i in 0..3 {
+        total = total + add(i, 10)
+    }
+    print(total)
+}</pre></div><p>Structs and enums are supported, including unit variants and a bounded one-scalar enum payload. Imports resolve project-relative source modules.</p></section>
+<section id="flow"><div class="eyebrow">Control flow</div><h2>Branches, loops and match</h2><p>The parser supports <code>if / else</code>, <code>while</code>, <code>for ... in</code>, <code>break</code>, <code>continue</code> and statement-form <code>match</code>. Ranges are half-open: the end bound is excluded.</p><div class="codebox"><button class="copy-btn" data-copy="lang-flow">Copy</button><pre id="lang-flow">for value in 0..5 {
+    if value == 3 {
+        continue
+    }
+    print(value)
+}
+
+match ready {
+    true => { print("ready") }
+    false => { print("waiting") }
+}</pre></div></section>
+<section id="slices"><div class="eyebrow">Memory views</div><h2>Read-only and mutable slices</h2><p>A <code>[]T</code> slice is a non-owning pointer-plus-length view. A mutable slice requires an explicit exclusive borrow from a mutable array. The lexical borrow ends at its closing scope.</p><div class="codebox"><button class="copy-btn" data-copy="lang-slice">Copy</button><pre id="lang-slice">fn set_first(values: mut []i64) {
+    values[0] = 42
+}
+
+fn main() {
+    let mut data: [i64; 3] = [1, 2, 3]
+    {
+        let mut view: mut []i64 = mut data[1..3]
+        view[0] = 20
+    }
+    print(data[1])
+}</pre></div><div class="note"><strong>Backend note:</strong> slices and the wider fixed-width scalar set use the LLVM path. The built-in x86-64 backend intentionally supports a smaller documented subset; <code>--backend auto</code> can select LLVM for supported language features.</div></section>
+<section id="limits"><div class="eyebrow">Honest status</div><h2>What is not implemented</h2><p>Generic types, traits, closures, async, Rust-style <code>impl</code> blocks and a complete FFI model are not part of the current parser. There is no general-purpose generic <code>Option&lt;T&gt;</code> or <code>Result&lt;T,E&gt;</code> type system. Raw pointers and FFI are not protected by the slice borrow rules.</p><p>For the detailed language specification and exact restrictions, use the checked-in reference source. <a class="text-link" href="reference.html">Open the full reference index ↗</a></p></section>
+</div></div></div></main>
+<footer class="site-footer"><div class="wrap"><div class="footer-top"><div><h2 class="footer-title">NEXUS / Language reference.</h2><p class="footer-copy">The compiler is under active development. Backend support differs; the support matrix is the source of truth for emitted targets and features.</p></div><div class="footer-links"><a href="index.html">Overview</a><a href="start.html">Start</a><a href="runtime.html">Runtime</a><a href="tooling.html">Tooling</a><a href="reference.html">Full reference</a><a href="https://github.com/fanxcz/nexus-lang">GitHub ↗</a></div></div><div class="footer-bottom"><span>© 2026 NEXUS</span><span>Hand-authored HTML · CSS · JavaScript</span></div></div></footer></body></html>

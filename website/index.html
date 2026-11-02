@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1b211e">
+  <meta name="description" content="NEXUS is a statically checked programming language and native toolchain for desktop software, command-line utilities and game prototypes.">
+  <title>NEXUS — Native software, clearly built</title>
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brand" href="index.html"><img src="assets/mark.svg" alt=""><span class="brand-name">NEXUS</span><span class="brand-sub">Language / Toolchain</span></a>
+    <nav class="site-nav" data-site-nav aria-label="Main navigation">
+      <a href="index.html" aria-current="page">Overview</a><a href="language.html">Language</a><a href="runtime.html">Runtime</a><a href="tooling.html">Tooling</a><a href="applications.html">Applications</a><a href="studio.html">Studio</a>
+    </nav>
+    <div class="header-actions"><a class="header-github" href="https://github.com/fanxcz/nexus-lang">GitHub ↗</a><a class="nav-cta" href="downloads.html">Get NEXUS <span>↗</span></a><button class="menu-toggle" data-menu-toggle aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button></div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">Open source / Version 2.2.0</div>
+        <h1>Native software.<br><em>Own every layer.</em></h1>
+        <p class="hero-copy">NEXUS is a statically checked language and C++20 toolchain for desktop apps, developer utilities and game experiments. A small language, a native runtime and a compiler whose boundaries are documented.</p>
+        <div class="hero-actions"><a class="button button-acid" href="start.html">Start building <span>↗</span></a><a class="button button-outline" href="downloads.html">Download compiler</a></div>
+        <div class="hero-note">Compiler · Standard library · Runtime · Desktop workspace</div>
+      </div>
+      <div>
+        <div class="terminal">
+          <div class="terminal-inner">
+            <div class="terminal-top"><span class="terminal-dots"><i></i><i></i><i></i></span><span>hello.nx / local build</span><span>NX 2.2</span></div>
+            <div class="code-area" id="hero-code"><div><span class="ln">01</span><span class="kw">fn</span> <span class="fn">main</span>() {</div><div><span class="ln">02</span>  <span class="kw">let</span> language = <span class="str">"NEXUS"</span></div><div><span class="ln">03</span>  <span class="fn">print</span>(<span class="str">"Hello from "</span> + language)</div><div><span class="ln">04</span>}</div></div>
+            <div class="terminal-output"><div class="terminal-label"><span>Build sequence</span><span>Ready</span></div><div><strong>01</strong> &nbsp; nexus check hello.nx</div><div><strong>02</strong> &nbsp; nexus build hello.nx</div><div><strong>03</strong> &nbsp; nexus run hello.nx</div><div style="color:#7e8c7d;margin-top:8px">Process finished · exit code 0</div></div>
+          </div>
+        </div>
+        <div class="hero-side-caption"><span>One source file</span><span>Illustrative terminal view · not a screenshot</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stat-strip"><div class="wrap stat-grid">
+    <div class="stat"><strong>C++20</strong><span>Compiler implementation</span></div>
+    <div class="stat"><strong>2 paths</strong><span>Native emitter + LLVM</span></div>
+    <div class="stat"><strong>x86-64</strong><span>Built-in backend focus</span></div>
+    <div class="stat"><strong>SDL</strong><span>2D runtime foundation</span></div>
+  </div></section>
+
+  <section class="section"><div class="wrap">
+    <div class="section-head"><div class="section-index">01 / The idea</div><div><h2>One language.<br><em>Two compilation paths.</em></h2><p class="lead">The frontend checks your program once. The built-in x86-64 backend emits machine code for its documented subset; the LLVM path covers a broader set of language features.</p></div></div>
+    <div class="backend-grid">
+      <article class="backend-card"><div class="card-label"><span>Path A / Direct</span><span>PE32+ · ELF64</span></div><h3>Built-in native backend</h3><p>Direct x86-64 code generation for supported Windows and Linux programs. No separately installed compiler is needed for programs inside this subset.</p><div class="card-foot"><span>SMALL & DIRECT</span><span>Read the limits ↗</span></div></article>
+      <article class="backend-card"><div class="card-label"><span>Path B / LLVM</span><span>Broader coverage</span></div><h3>LLVM / Clang path</h3><p>LLVM IR is used for wider type and runtime support. A compatible Clang-style toolchain is required, and target availability depends on the active toolchain.</p><div class="card-foot"><span>EXTENSIBLE</span><span>Support matrix ↗</span></div></article>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="wrap">
+    <div class="section-head"><div class="section-index">02 / What it is for</div><div><h2>Small tools to<br><em>real desktop work.</em></h2><p class="lead">NEXUS is aimed at useful native software, not at promising a finished game engine or an all-purpose desktop framework. Here is what exists in the repository today.</p></div></div>
+    <div class="work-grid">
+      <article class="work-card"><div class="work-art"><div class="mini-window"><div class="mini-bar">NEXUS STUDIO / main.nx</div><div class="mini-pane"><div class="mini-sidebar"><i></i><i></i><i></i><i></i></div><div class="mini-code"><i></i><i></i><i></i><i></i></div></div></div></div><div class="work-body"><div class="work-kicker">01 / Desktop workspace</div><h3>NEXUS Studio</h3><p>A standalone desktop workspace with an explorer, Ace editor, integrated terminal and direct compiler actions. The compiler is installed separately.</p><a class="text-link" href="studio.html">Explore Studio ↗</a></div></article>
+      <article class="work-card"><div class="work-art"><div class="paint-board"></div></div><div class="work-body"><div class="work-kicker">02 / Native application</div><h3>NEXUS Paint</h3><p>A raster canvas example with brush, eraser, geometry tools, fill, undo/redo and BMP save/load.</p><a class="text-link" href="downloads.html">Get Windows build ↗</a></div></article>
+      <article class="work-card"><div class="work-art"><div class="game-board"></div></div><div class="work-body"><div class="work-kicker">03 / Graphics</div><h3>Games & experiments</h3><p>SDL-backed 2D helpers, tilemaps, collision routines, a few game prototypes and an experimental compatibility-OpenGL 3D path.</p><a class="text-link" href="applications.html">See examples ↗</a></div></article>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="wrap">
+    <div class="section-head"><div class="section-index">03 / Workflow</div><div><h2>Make the build<br><em>boringly clear.</em></h2><p class="lead">A straightforward CLI handles the everyday loop. Create a project, check it, build it, then run it. No generated web IDE or cloud account required.</p></div></div>
+    <div class="feature-grid">
+      <article class="feature-card"><span class="feature-no">01 — CREATE</span><h3>Start from a template</h3><p>Choose a CLI, native app, game, 3D, Paint, server or library scaffold.</p></article>
+      <article class="feature-card"><span class="feature-no">02 — CHECK</span><h3>Catch issues early</h3><p>Static typing, diagnostics, backend selection and compiler checks help expose unsupported features before packaging.</p></article>
+      <article class="feature-card"><span class="feature-no">03 — BUILD</span><h3>Ship a native binary</h3><p>Use the built-in machine-code subset or the LLVM path with its toolchain requirements.</p></article>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="wrap"><div class="callout"><div><h2>Try the language, not a mockup.</h2><p>Install the Windows bundle, write a small source file and run the compiler locally. The site illustrations above are original CSS artwork, not screenshots or claims about a finished IDE experience.</p></div><a class="button button-dark" href="start.html">Follow the quick start ↗</a></div></div></section>
+</main>
+
+<footer class="site-footer"><div class="wrap"><div class="footer-top"><div><h2 class="footer-title">NEXUS / Build close to the machine.</h2><p class="footer-copy">An open-source programming language, compiler and runtime for native applications and tools. The project is actively developed; use the support matrix and per-module documentation for current boundaries.</p></div><div class="footer-links"><a href="language.html">Language</a><a href="runtime.html">Runtime</a><a href="tooling.html">Tooling</a><a href="applications.html">Applications</a><a href="studio.html">Studio</a><a href="downloads.html">Downloads</a><a href="reference.html">Reference source</a><a href="https://github.com/fanxcz/nexus-lang">GitHub ↗</a></div></div><div class="footer-bottom"><span>© 2026 NEXUS / MIT License</span><span>Hand-authored HTML · CSS · JavaScript</span></div></div></footer>
+</body>
+</html>

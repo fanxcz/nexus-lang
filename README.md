@@ -12,7 +12,7 @@
 **Repository:** https://github.com/fanxcz/nexus-lang  
 **Documentation and downloads:** https://fanxcz.github.io/nexus-lang/  
 **NEXUS Studio:** https://github.com/fanxcz/nexus-lang/blob/main/docs/studio.md  
-**Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+**Windows installer:** download `NEXUS-Setup-2.2.0.exe` from the [project downloads page](https://fanxcz.github.io/nexus-lang/downloads.html) or from a successful [GitHub Actions Pages run](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 **One-click bootstrap:** run [`Install-NEXUS.bat`](Install-NEXUS.bat) from a checkout of this repository. Keep the companion `Install-NEXUS.ps1` beside it; it downloads the official 2.2.0 installer, verifies SHA-256, then launches setup.
 
 > The website URL above is the GitHub Pages project URL for this repository. Do not use the old `fanxcz.github.io/nexus/` address; that belongs to a different repository/site.
@@ -74,7 +74,7 @@ The built-in native backend supports a defined subset (including integer, boolea
 
 ## Install on Windows 11
 
-1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
+1. Open the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads.html) or the [Pages workflow runs](https://github.com/fanxcz/nexus-lang/actions/workflows/pages.yml).
 2. Download `NEXUS-Setup-2.2.0.exe` only from an official project artifact.
 3. Run the installer. It installs for the current user under `%LOCALAPPDATA%\Programs\NEXUS`; administrator rights are not required.
 4. Select the options you want: Start menu shortcuts, desktop shortcut, add NEXUS to the user PATH, and optional `.nx` context-menu integration.
@@ -180,7 +180,7 @@ nexus editor
 nexus lsp
 ```
 
-Exact options can vary by command and current implementation. Use `nexus <command> --help` where supported and consult the [command reference](https://fanxcz.github.io/nexus-lang/tooling/commands/).
+Exact options can vary by command and current implementation. Use `nexus <command> --help` where supported and consult the [command reference](https://fanxcz.github.io/nexus-lang/tooling.html).
 
 ## VS Code extension
 
@@ -188,7 +188,7 @@ Syntax highlighting, snippets and LSP integration for `.nx` files.
 
 Install without a marketplace account:
 
-1. Download [`NEXUS-Language-2.2.0.vsix`](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.2.0.vsix) from the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads/).
+1. Download [`NEXUS-Language-2.2.0.vsix`](https://fanxcz.github.io/nexus-lang/assets/downloads/NEXUS-Language-2.2.0.vsix) from the [NEXUS downloads page](https://fanxcz.github.io/nexus-lang/downloads.html).
 2. VS Code → Extensions (`Ctrl+Shift+X`) → `...` → **Install from VSIX...** → select the file.
 
 ## Standard library and runtime
@@ -279,7 +279,7 @@ Issues, bug reports, documentation improvements, tests, and focused pull request
 - [Open an issue](https://github.com/fanxcz/nexus-lang/issues)
 - [Pull requests](https://github.com/fanxcz/nexus-lang/pulls)
 - [Contributing guide](https://github.com/fanxcz/nexus-lang/blob/main/CONTRIBUTING.md)
-- [Development roadmap](https://fanxcz.github.io/nexus-lang/development/roadmap/)
+- [Development roadmap](https://github.com/fanxcz/nexus-lang/blob/main/docs/development/roadmap.md)
 
 ## License
 
