@@ -113,19 +113,33 @@ var
   ExistingPath: string;
   AppPath: string;
   NewPath: string;
+  StartAt: Integer;
+  EndAt: Integer;
+  Entry: string;
 begin
   AppPath := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
   ExistingPath := '';
   RegQueryStringValue(HKEY_CURRENT_USER, UserEnvironmentSubKey, 'Path', ExistingPath);
-  if not PathContains(ExistingPath, AppPath) then
+
+  { Put the newly installed compiler first so an older NEXUS copy later in
+    PATH cannot shadow it. Remove duplicate entries for this exact install,
+    while preserving every unrelated PATH entry and its relative order. }
+  NewPath := AppPath;
+  StartAt := 1;
+  while StartAt <= Length(ExistingPath) do
   begin
-    if Trim(ExistingPath) = '' then
-      NewPath := AppPath
-    else
-      NewPath := ExistingPath + ';' + AppPath;
-    if not RegWriteStringValue(HKEY_CURRENT_USER, UserEnvironmentSubKey, 'Path', NewPath) then
-      MsgBox('Не удалось изменить PATH пользователя. NEXUS всё равно установлен. Добавьте эту папку в PATH вручную:' + #13#10 + AppPath, mbError, MB_OK);
+    EndAt := StartAt;
+    while (EndAt <= Length(ExistingPath)) and (ExistingPath[EndAt] <> ';') do
+      EndAt := EndAt + 1;
+    Entry := Trim(Copy(ExistingPath, StartAt, EndAt - StartAt));
+    if (Entry <> '') and
+       (CompareText(NormalizePathEntry(Entry), NormalizePathEntry(AppPath)) <> 0) then
+      NewPath := NewPath + ';' + Entry;
+    StartAt := EndAt + 1;
   end;
+
+  if not RegWriteStringValue(HKEY_CURRENT_USER, UserEnvironmentSubKey, 'Path', NewPath) then
+    MsgBox('Не удалось изменить PATH пользователя. NEXUS всё равно установлен. Добавьте эту папку в начало PATH вручную:' + #13#10 + AppPath, mbError, MB_OK);
 end;
 
 procedure RemoveNexusFromUserPath;
