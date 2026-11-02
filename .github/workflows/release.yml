@@ -42,6 +42,14 @@ jobs:
         shell: bash
         run: python scripts/nexus_version.py github-env >> "$GITHUB_ENV"
 
+      - name: Verify release tag matches compiler version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$NEXUS_VERSION" ]]; then
+            echo "Release tag $GITHUB_REF_NAME does not match compiler version $NEXUS_VERSION." >&2
+            exit 1
+          fi
+
       - name: Install Linux toolchain
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang lld
