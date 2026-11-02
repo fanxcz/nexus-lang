@@ -17,6 +17,12 @@ execute_process(
 if(NOT build_rc EQUAL 0)
   message(FATAL_ERROR "Failed to compile fixed_width_types.nx with backend auto:\n${build_out}\n${build_err}")
 endif()
+set(NARROW_SOURCE "${SCRATCH}/native_narrow.nx")
+file(WRITE "${NARROW_SOURCE}" "fn main() { let value: i8 = 7; print(value) }\n")
+if(NOT DEFINED NEXUS_NATIVE_BACKEND_SUPPORTED)
+  set(NEXUS_NATIVE_BACKEND_SUPPORTED ON)
+endif()
+if(NEXUS_NATIVE_BACKEND_SUPPORTED)
 # The direct machine-code backend must reject the same feature set explicitly.
 execute_process(
   COMMAND "${NEXUS_BIN}" build "${SOURCE}" -o "${SCRATCH}/native_reject" --backend native
@@ -29,8 +35,6 @@ if(native_rc EQUAL 0 OR NOT native_combined MATCHES "outside the builtin native 
   message(FATAL_ERROR "native backend did not reject fixed-width types explicitly:\n${native_combined}")
 endif()
 
-set(NARROW_SOURCE "${SCRATCH}/native_narrow.nx")
-file(WRITE "${NARROW_SOURCE}" "fn main() { let value: i8 = 7; print(value) }\n")
 execute_process(
   COMMAND "${NEXUS_BIN}" build "${NARROW_SOURCE}" -o "${SCRATCH}/native_narrow" --backend native
   RESULT_VARIABLE narrow_rc
@@ -40,6 +44,8 @@ execute_process(
 set(narrow_combined "${narrow_out}\n${narrow_err}")
 if(narrow_rc EQUAL 0 OR NOT narrow_combined MATCHES "outside the builtin native v0 subset")
   message(FATAL_ERROR "native backend accepted i8 without other unsupported constructs:\n${narrow_combined}")
+endif()
+
 endif()
 
 set(NARROW_AUTO_EXE "${SCRATCH}/native_narrow_auto")

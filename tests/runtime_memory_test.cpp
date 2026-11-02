@@ -60,14 +60,22 @@ int main() {
     }
 
     const int64_t buffer = nexus_mem_alloc(16);
-    if (!buffer || !nexus_runtime_test_range_valid(buffer, 16) ||
-        !nexus_runtime_test_range_valid(buffer + 8, 8) ||
-        nexus_runtime_test_range_valid(buffer + 12, 8) ||
-        nexus_runtime_test_range_valid(buffer + 16, 1) ||
-        nexus_runtime_test_range_valid(buffer, std::numeric_limits<int64_t>::max()) ||
-        nexus_runtime_test_range_valid(buffer, -1) ||
-        nexus_runtime_test_range_valid(0, 8)) {
-        std::fprintf(stderr, "runtime memory range validation failed\n");
+    const bool wholeRangeValid = nexus_runtime_test_range_valid(buffer, 16) != 0;
+    const bool tailRangeValid = nexus_runtime_test_range_valid(buffer + 8, 8) != 0;
+    const bool partialOverflowValid = nexus_runtime_test_range_valid(buffer + 12, 8) != 0;
+    const bool endOverflowValid = nexus_runtime_test_range_valid(buffer + 16, 1) != 0;
+    const bool hugeRangeValid =
+        nexus_runtime_test_range_valid(buffer, std::numeric_limits<int64_t>::max()) != 0;
+    const bool negativeSizeValid = nexus_runtime_test_range_valid(buffer, -1) != 0;
+    const bool nullRangeValid = nexus_runtime_test_range_valid(0, 8) != 0;
+    if (!buffer || !wholeRangeValid || !tailRangeValid || partialOverflowValid ||
+        endOverflowValid || hugeRangeValid || negativeSizeValid || nullRangeValid) {
+        std::fprintf(stderr,
+                     "runtime memory range validation failed: pointer=%lld whole=%d tail=%d "
+                     "partial=%d end=%d huge=%d negative=%d null=%d\n",
+                     static_cast<long long>(buffer), wholeRangeValid, tailRangeValid,
+                     partialOverflowValid, endOverflowValid, hugeRangeValid,
+                     negativeSizeValid, nullRangeValid);
         return 6;
     }
     nexus_mem_set(buffer, 0x5A, 16);

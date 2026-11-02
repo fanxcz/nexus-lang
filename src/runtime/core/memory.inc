@@ -96,7 +96,7 @@
     // Callers that hold the registry mutex use the _locked variant so validation
     // and the ensuing memory operation cannot race with free or collection.
     static bool nx_managed_range_is_valid_locked(int64_t address, int64_t bytes) {
-        if (address <= 0 || bytes <= 0)
+        if (address == 0 || bytes <= 0)
             return false;
         const uint64_t rawAddress = static_cast<uint64_t>(address);
         const uint64_t rawSize = static_cast<uint64_t>(bytes);

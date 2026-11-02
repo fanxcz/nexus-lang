@@ -48,6 +48,10 @@ if(NOT auto_got STREQUAL expected)
   message(FATAL_ERROR "auto backend did not produce expected slice output: ${auto_got}")
 endif()
 
+if(NOT DEFINED NEXUS_NATIVE_BACKEND_SUPPORTED)
+  set(NEXUS_NATIVE_BACKEND_SUPPORTED ON)
+endif()
+if(NEXUS_NATIVE_BACKEND_SUPPORTED)
 # The explicit native backend must reject slices rather than emitting invalid code.
 execute_process(
   COMMAND "${NEXUS_BIN}" build "${PROGRAM_DIR}/basic.nx" -o "${SCRATCH}/basic-native${SUFFIX}" --backend native
@@ -57,7 +61,7 @@ if(native_rc EQUAL 0)
 endif()
 if(NOT "${native_out}${native_err}" MATCHES "outside the builtin native")
   message(FATAL_ERROR "native backend rejected slices without an actionable diagnostic: ${native_out}${native_err}")
-endif()
+endif()endif()
 
 foreach(case index_oob range_oob)
   set(EXE "${SCRATCH}/${case}${SUFFIX}")
