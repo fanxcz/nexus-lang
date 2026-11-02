@@ -172,7 +172,7 @@ def main() -> int:
         )
         expect_rejected(
             script, "check", "--root", str(root),
-            contains=("Studio", "NEXUS-Studio-9.9.9-Windows-x64.exe"),
+            contains=("Studio", f"NEXUS-Studio-{STUDIO}-Windows-x64.exe"),
         )
         write(
             root / ".github/project-tools/nexus-studio/package.json",
