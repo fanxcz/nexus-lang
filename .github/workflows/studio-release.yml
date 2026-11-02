@@ -60,6 +60,21 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Package desktop application
         run: ${{ matrix.command }}
+      - name: Verify Windows installer version metadata
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expectedVersion = [string](Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
+          $installers = @(Get-ChildItem -LiteralPath 'release' -Filter '*.exe' -File)
+          if ($installers.Count -eq 0) { throw 'Studio release did not produce a Windows installer.' }
+          foreach ($installer in $installers) {
+            $metadata = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($installer.FullName)
+            if ($metadata.ProductVersion -notlike "$expectedVersion*") {
+              throw "Studio installer version mismatch: $($installer.Name) reports '$($metadata.ProductVersion)', expected $expectedVersion."
+            }
+            Write-Host "Studio installer metadata passed: $($installer.Name) ($($metadata.ProductVersion))"
+          }
       - name: Generate SHA-256 sidecars
         run: |
           node -e "const fs=require('node:fs'); const path=require('node:path'); const crypto=require('node:crypto'); const dir='release'; const names=fs.readdirSync(dir); if (!names.length) throw new Error('No desktop release files were produced'); for (const name of names) { const file=path.join(dir,name); if (!fs.statSync(file).isFile() || name.endsWith('.sha256.txt')) continue; const hash=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'); fs.writeFileSync(file+'.sha256.txt', hash+'  '+name+'\\n'); }"
