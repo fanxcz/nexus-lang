@@ -77,6 +77,15 @@ def main() -> int:
         result = run(base)
         check("html checksum", result.returncode == 3, f"rc={result.returncode} {result.stderr}")
 
+        # A checksum for a different filename must not be accepted, even if its digest matches.
+        actual_digest = hashlib.sha256(payload).hexdigest()
+        (base / f"{NAME}.sha256.txt").write_text(
+            f"{actual_digest}  NEXUS-Setup-2.0.0.exe\n", encoding="ascii"
+        )
+        result = run(base)
+        check("checksum filename mismatch", result.returncode == 3, f"rc={result.returncode} {result.stderr}")
+        check("checksum filename message", "names" in result.stderr and "expected" in result.stderr, result.stderr)
+
         # A real PE image with a checksum that belongs to different bytes.
         (base / f"{NAME}.sha256.txt").write_text("0" * 64 + f"  {NAME}\n", encoding="ascii")
         result = run(base)
