@@ -77,6 +77,9 @@ def check_zip(path: Path, required: set[str]) -> None:
             bad_member = archive.testzip()
             if bad_member:
                 fail(f"{path.name} failed CRC validation at {bad_member}")
+            missing = sorted(required - names)
+            if missing:
+                fail(f"{path.name} is missing required content: {', '.join(missing)}")
             if path.name == _NAMES["portable"]:
                 try:
                     packaged_version = archive.read("VERSION.txt").decode("ascii").strip()
@@ -93,9 +96,6 @@ def check_zip(path: Path, required: set[str]) -> None:
                 )
                 if compiler_problem:
                     fail(compiler_problem)
-            missing = sorted(required - names)
-            if missing:
-                fail(f"{path.name} is missing required content: {', '.join(missing)}")
     except zipfile.BadZipFile as exc:
         fail(f"{path.name} is not a readable ZIP: {exc}")
 
