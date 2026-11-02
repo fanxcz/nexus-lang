@@ -470,7 +470,8 @@ jobs:
   build:
     name: Build documentation website
     runs-on: ubuntu-latest
-    needs: package-windows
+    # Publish docs as soon as the site is built. Windows packaging runs in
+    # parallel so a slow native compiler/installer build cannot hold the homepage.
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -481,11 +482,18 @@ jobs:
         shell: bash
         run: python scripts/nexus_version.py github-env >> "$GITHUB_ENV"
 
-      - name: Download freshly built Windows package
-        uses: actions/download-artifact@v4
-        with:
-          name: NEXUS_Windows_Packages
-          path: docs/assets/downloads
+      - name: Preserve the currently published Windows downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/assets/downloads
+          base="https://fanxcz.github.io/nexus-lang/assets/downloads"
+          for asset in "$NEXUS_SETUP_ASSET" NEXUS_Windows_Portable.zip NEXUS-Paint-Windows-x64.exe NEXUS-Paint-Windows-x64.zip; do
+            echo "Reusing published download: $asset"
+            curl --fail --location --retry 3 --retry-all-errors --silent --show-error \
+              "$base/$asset" --output "docs/assets/downloads/$asset"
+            test -s "docs/assets/downloads/$asset"
+          done
 
       - name: Package VS Code extension
         shell: bash

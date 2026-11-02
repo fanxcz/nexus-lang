@@ -4,7 +4,7 @@ NEXUS Studio is the desktop workspace for opening a project, editing one active 
 
 ![NEXUS mark](assets/images/nexus-n-2026.svg){ width="64" }
 
-<text>Desktop workspace · preview release 0.3.0</text>
+*Desktop workspace · preview release 0.3.0*
 
 ## What is included
 
