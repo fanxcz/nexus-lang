@@ -112,6 +112,10 @@ def build(source: Path, output: Path, downloads: Path, pdf: Path) -> None:
     shutil.copytree(source, output, dirs_exist_ok=True)
 
     download_output = output / "assets" / "downloads"
+    # Remove old artifacts first. Without this, a local rebuild can retain an
+    # obsolete installer beside the newly copied file set and accidentally publish it.
+    if download_output.exists():
+        shutil.rmtree(download_output)
     download_output.mkdir(parents=True, exist_ok=True)
     for item in downloads.iterdir():
         if item.is_file():
