@@ -52,6 +52,15 @@ If `nexus` is not recognized, reopen the terminal first. If it still is not reco
 & "$env:LOCALAPPDATA\Programs\NEXUS\nexus.cmd" --version
 ```
 
+When more than one installation exists, inspect the launch order before changing PATH:
+
+```powershell
+Get-Command nexus -All | Format-Table CommandType, Source, Definition
+where.exe nexus
+```
+
+The first matching launcher is the one selected by Windows. The direct command above checks the normal per-user installation independently of PATH.
+
 The Windows installer is unsigned, so Windows SmartScreen may show a warning. Verify that the file came from this repository's official GitHub Actions/Pages output before deciding whether to run it. Never download installers from third-party mirrors.
 
 ### Portable Windows package
