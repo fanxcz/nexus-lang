@@ -206,7 +206,7 @@ begin
   begin
     PowerShell := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
     Parameters := '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' +
-      ExpandConstant('{app}\NEXUS-Windows.ps1') + '" -Mode Check';
+      ExpandConstant('{app}\NEXUS-Windows.ps1') + '" -Mode Check -ExpectedVersion "{#MyAppVersion}"';
 
     WizardForm.StatusLabel.Caption := 'Проверка встроенного компилятора NEXUS...';
     WizardForm.Refresh;
