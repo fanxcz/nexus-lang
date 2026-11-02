@@ -61,7 +61,8 @@ def build_fixture(root: Path) -> None:
         "[Setup]\n"
         "OutputBaseFilename=NEXUS-Setup-{#MyAppVersion}\n"
         "VersionInfoVersion={#MyAppVersion}.0\n"
-        "Parameters := '-Mode Check -ExpectedVersion \"{#MyAppVersion}\"';\n",
+        "Parameters := '-Mode Check -ExpectedVersion \"{#MyAppVersion}\"';\n"
+        "NewPath := AppPath;\n",
     )
     write(
         root / ".github/project-tools/repository-files/NEXUS-Windows.ps1",
@@ -74,7 +75,14 @@ def build_fixture(root: Path) -> None:
         f'VersionInfoProductVersion={COMPILER}\n'
         f'UninstallDisplayName=NEXUS Paint {COMPILER}\n',
     )
-    write(root / "Install-NEXUS.ps1", f"$version = '{COMPILER}'\n")
+    write(
+        root / "Install-NEXUS.ps1",
+        f"$version = '{COMPILER}'\n$installedLauncher = 'nexus.cmd'\n$versionPattern = '{COMPILER}'\n",
+    )
+    write(
+        root / ".github/project-tools/repository-files/Install-NEXUS-Path.ps1",
+        "$NewPath = (@($Root) + $OtherEntries) -join ';'\n",
+    )
     write(
         root / "Install-NEXUS.bat",
         f"title NEXUS {COMPILER} Installer\necho NEXUS Setup {COMPILER}\n",
