@@ -69,6 +69,7 @@ if(NOT narrow_run_rc EQUAL 0 OR NOT narrow_run_out STREQUAL "7")
   message(FATAL_ERROR "backend auto produced an incorrect i8 result:\n${narrow_run_out}\n${narrow_run_err}")
 endif()
 
+if(NEXUS_NATIVE_BACKEND_SUPPORTED)
 set(FLOAT_SOURCE "${SCRATCH}/native_float.nx")
 file(WRITE "${FLOAT_SOURCE}" "fn main() { let value: f32 = 1.5; print(value) }\n")
 execute_process(
@@ -82,6 +83,7 @@ if(float_rc EQUAL 0 OR NOT float_combined MATCHES "outside the builtin native v0
   message(FATAL_ERROR "native backend accepted f32 without other unsupported constructs:\n${float_combined}")
 endif()
 
+endif()
 execute_process(
   COMMAND "${EXE}"
   RESULT_VARIABLE run_rc
