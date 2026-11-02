@@ -192,7 +192,7 @@ def main() -> int:
         )
         expect_rejected(
             script, "check", "--root", str(root),
-            contains=("NEXUS-Windows.ps1", "ExpectedVersion"),
+            contains=("NEXUS-Windows.ps1", "Check mode must accept the installer's expected version"),
         )
         write(
             root / ".github/project-tools/repository-files/NEXUS-Windows.ps1",
