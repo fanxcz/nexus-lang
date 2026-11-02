@@ -93,6 +93,19 @@ If the command is not found, reopen the terminal. You can test the launcher dire
 & "$env:LOCALAPPDATA\Programs\NEXUS\nexus.cmd" --version
 ```
 
+### When Windows launches an older NEXUS copy
+
+Windows may have more than one NEXUS installation. PowerShell runs the first matching command on PATH, so inspect every match before removing or moving anything:
+
+```powershell
+Get-Command nexus -All | Format-Table CommandType, Source, Definition
+where.exe nexus
+& "$env:LOCALAPPDATA\Programs\NEXUS\nexus.cmd" --version
+```
+
+The first two commands list the launchers Windows can resolve; the final command checks the normal per-user installation independently of PATH. The launcher from the selected installation should report the same version as its installer. Keep project folders and source files when cleaning up an older installation.
+
+
 The installers are currently unsigned. Download them only from this official website or the project's GitHub Actions output; Windows may show an unsigned-app warning.
 
 ## Verify a download before running it
