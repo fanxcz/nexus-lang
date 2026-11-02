@@ -190,6 +190,18 @@ jobs:
             Copy-Item $sourceFile -Destination $package -Force
           }
 
+          # Record the release version next to the executable and fail before
+          # packaging if either the build output or copied payload is stale.
+          Set-Content -LiteralPath (Join-Path $package 'VERSION.txt') -Value $env:NEXUS_VERSION -Encoding ASCII
+          $expectedVersion = '^Nexus\s+' + [regex]::Escape($env:NEXUS_VERSION) + '\b'
+          foreach ($compilerPath in @((Join-Path $env:GITHUB_WORKSPACE 'build/nexus.exe'), (Join-Path $package 'bin/nexus-core.exe'))) {
+            $compilerOutput = @(& $compilerPath --version 2>&1)
+            if ($LASTEXITCODE -ne 0 -or (($compilerOutput -join "`n") -notmatch $expectedVersion)) {
+              throw "Compiler version mismatch in $compilerPath; expected $env:NEXUS_VERSION, got: $($compilerOutput -join "`n")"
+            }
+            Write-Host "Verified compiler payload $compilerPath: $($compilerOutput -join ' ')"
+          }
+
           $zip = Join-Path $env:RUNNER_TEMP 'NEXUS_Windows_Portable.zip'
           if (Test-Path $zip) { Remove-Item $zip -Force }
           Compress-Archive -Path (Join-Path $package '*') -DestinationPath $zip -CompressionLevel Optimal
@@ -215,19 +227,22 @@ jobs:
             if (-not (Test-Path -LiteralPath $required)) { throw "Portable package is missing embedded toolchain component: $required" }
           }
 
-          # Run the actual one-click installer and verify it appends only the
-          # package root to the current user's PATH. Restore the runner profile
-          # afterward so this test leaves no environment changes behind.
+          # Run the actual one-click installer and verify that the selected
+          # package root is FIRST in the current user's PATH. Restore the runner
+          # profile afterward so this test leaves no environment changes behind.
           $oldUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
           try {
             $env:NEXUS_INSTALLER_NO_PAUSE = '1'
             & $oneClickInstaller
             if ($LASTEXITCODE -ne 0) { throw "Install-NEXUS.bat failed with exit code $LASTEXITCODE." }
             $installedUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-            $hasInstallRoot = @($installedUserPath -split ';' | ForEach-Object { $_.Trim().Trim([char]34) } |
-              Where-Object { [string]::Equals($_.TrimEnd([char]92,[char]47), $package.TrimEnd([char]92,[char]47), [StringComparison]::OrdinalIgnoreCase) }).Count -gt 0
-            if (-not $hasInstallRoot) { throw 'Install-NEXUS.bat did not add the package root to the user PATH.' }
-            Write-Host 'One-click installer check passed; package root was added to user PATH.'
+            $pathEntries = @($installedUserPath -split ';' | ForEach-Object { $_.Trim().Trim([char]34) })
+            $firstUserPath = if ($pathEntries.Count -gt 0) { $pathEntries[0].TrimEnd([char]92,[char]47) } else { '' }
+            $expectedUserPath = $package.TrimEnd([char]92,[char]47)
+            if (-not [string]::Equals($firstUserPath, $expectedUserPath, [StringComparison]::OrdinalIgnoreCase)) {
+              throw "Install-NEXUS.bat did not put the package root first in user PATH. First entry: $firstUserPath"
+            }
+            Write-Host 'One-click installer check passed; package root is first in user PATH.'
           } finally {
             [Environment]::SetEnvironmentVariable('Path', $oldUserPath, 'User')
             Remove-Item Env:NEXUS_INSTALLER_NO_PAUSE -ErrorAction SilentlyContinue
@@ -389,8 +404,9 @@ jobs:
             }
             $installedUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
             $pathEntries = @($installedUserPath -split ';' | ForEach-Object { $_.Trim().Trim([char]34) })
-            if (-not ($pathEntries | Where-Object { [string]::Equals($_.TrimEnd([char]92,[char]47), $installRoot.TrimEnd([char]92,[char]47), [StringComparison]::OrdinalIgnoreCase) })) {
-              throw 'Setup was requested to add PATH but the installed folder was not added.'
+            $firstUserPath = if ($pathEntries.Count -gt 0) { $pathEntries[0].TrimEnd([char]92,[char]47) } else { '' }
+            if (-not [string]::Equals($firstUserPath, $installRoot.TrimEnd([char]92,[char]47), [StringComparison]::OrdinalIgnoreCase)) {
+              throw "Setup was requested to add PATH but did not put the installation first. First entry: $firstUserPath"
             }
 
             $smokeDir = Join-Path $env:RUNNER_TEMP 'NEXUS installer smoke with spaces'
@@ -586,6 +602,12 @@ jobs:
         shell: bash
         run: python scripts/nexus_version.py github-env >> "$GITHUB_ENV"
 
+      - name: Download freshly built Windows artifacts for deployment verification
+        uses: actions/download-artifact@v4
+        with:
+          name: NEXUS_Windows_Packages
+          path: expected-windows-artifacts
+
       - name: Verify every published documentation page and downloadable asset
         shell: bash
         env:
@@ -643,6 +665,46 @@ jobs:
           for asset in "${assets[@]}"; do
             check_url "assets/downloads/$asset"
           done
+
+          # Check bytes, not only HTTP status: a stale 3.0.0-named installer
+          # must never pass deployment verification when CI built different bytes.
+          compare_published_asset() {
+            local filename="$1"
+            local expected_file="$2"
+            local remote_file
+            local remote_checksum
+            local expected_digest
+            local actual_digest
+            local published_digest
+            local url="${base}assets/downloads/${filename}"
+            expected_digest="$(sha256sum "$expected_file" | awk '{print $1}')"
+            remote_file="$(mktemp)"
+            remote_checksum="$(mktemp)"
+            for attempt in 1 2 3 4 5 6; do
+              if curl --silent --show-error --fail --location "$url" --output "$remote_file" &&
+                 curl --silent --show-error --fail --location "${url}.sha256.txt" --output "$remote_checksum"; then
+                actual_digest="$(sha256sum "$remote_file" | awk '{print $1}')"
+                published_digest="$(awk 'NR == 1 {print $1}' "$remote_checksum")"
+                if [[ "$actual_digest" == "$expected_digest" && "$published_digest" == "$expected_digest" ]]; then
+                  echo "PASS published bytes and SHA-256: $filename ($actual_digest)"
+                  rm -f "$remote_file" "$remote_checksum"
+                  return 0
+                fi
+                echo "WAIT $filename is not yet the exact current build (attempt $attempt/6)"
+              else
+                echo "WAIT $filename is not downloadable yet (attempt $attempt/6)"
+              fi
+              sleep 5
+            done
+            echo "FAIL published $filename does not match this workflow's Windows build" >&2
+            rm -f "$remote_file" "$remote_checksum"
+            return 1
+          }
+
+          compare_published_asset "$NEXUS_SETUP_ASSET" "expected-windows-artifacts/$NEXUS_SETUP_ASSET"
+          compare_published_asset 'NEXUS_Windows_Portable.zip' 'expected-windows-artifacts/NEXUS_Windows_Portable.zip'
+          compare_published_asset 'NEXUS-Paint-Windows-x64.exe' 'expected-windows-artifacts/NEXUS-Paint-Windows-x64.exe'
+          compare_published_asset 'NEXUS-Paint-Windows-x64.zip' 'expected-windows-artifacts/NEXUS-Paint-Windows-x64.zip'
 
           # The manual PDF is published at /pdf/, not in the download artifacts folder.
           check_url "pdf/NEXUS-Documentation.pdf"
