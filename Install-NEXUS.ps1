@@ -49,9 +49,25 @@ try {
         throw "The setup wizard returned exit code $($process.ExitCode)."
     }
 
-    $installedLauncher = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS\nexus.cmd'
+    # Inno Setup records the selected installation folder in its per-user
+    # uninstall registry entry. Read it so a user-selected custom folder is
+    # verified too; fall back to the documented default if the value is absent.
+    $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{B41A4B2E-5DF0-4BDE-9B1B-4D2E90B5B1A1}_is1'
+    $installRoot = $null
+    if (Test-Path -LiteralPath $uninstallKey) {
+        $uninstallInfo = Get-ItemProperty -LiteralPath $uninstallKey -ErrorAction SilentlyContinue
+        if ($uninstallInfo.InstallLocation) {
+            $installRoot = [string]$uninstallInfo.InstallLocation
+        } elseif ($uninstallInfo.'Inno Setup: App Path') {
+            $installRoot = [string]$uninstallInfo.'Inno Setup: App Path'
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($installRoot)) {
+        $installRoot = Join-Path $env:LOCALAPPDATA 'Programs\NEXUS'
+    }
+    $installedLauncher = Join-Path $installRoot 'nexus.cmd'
     if (-not (Test-Path -LiteralPath $installedLauncher -PathType Leaf)) {
-        throw "Setup exited successfully, but the expected launcher was not installed: $installedLauncher"
+        throw "Setup exited successfully, but the installed launcher was not found in '$installRoot'."
     }
 
     $installedOutput = @(& $installedLauncher --version 2>&1)
