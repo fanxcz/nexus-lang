@@ -566,7 +566,7 @@ jobs:
           test -s site/index.html
           test -s site/assets/site.css
           test -s site/assets/site.js
-          echo "PASS standalone HTML website assembled without MkDocs, Material or a template renderer."
+          echo "PASS hand-authored HTML, CSS and JavaScript assembled as static files."
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
