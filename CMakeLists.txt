@@ -22,9 +22,9 @@ if (NEXUS_CXX_COMPILER)
   set(CMAKE_CXX_COMPILER ${NEXUS_CXX_COMPILER} CACHE STRING "C++ compiler" FORCE)
 endif()
 
-# Auto-detect Clang on Windows if not explicitly set
-if (WIN32 AND NEXUS_USE_CLANG AND NOT NEXUS_C_COMPILER)
-  # Try common LLVM install locations
+# Auto-detect Clang on Windows independently for C and C++, while
+# preserving every compiler path explicitly supplied by the user.
+if (WIN32 AND NEXUS_USE_CLANG)
   set(LLVM_PATHS
     "C:/Program Files/LLVM"
     "C:/Program Files (x86)/LLVM"
@@ -33,10 +33,18 @@ if (WIN32 AND NEXUS_USE_CLANG AND NOT NEXUS_C_COMPILER)
     "$ENV{LOCALAPPDATA}/Programs/LLVM"
   )
   foreach(path ${LLVM_PATHS})
-    if (EXISTS "${path}/bin/clang.exe")
-      set(CMAKE_C_COMPILER   "${path}/bin/clang.exe"   CACHE STRING "C compiler" FORCE)
+    if (NOT NEXUS_C_COMPILER AND EXISTS "${path}/bin/clang.exe")
+      set(CMAKE_C_COMPILER "${path}/bin/clang.exe" CACHE STRING "C compiler" FORCE)
+      set(NEXUS_C_COMPILER "${path}/bin/clang.exe")
+      message(STATUS "Found Clang C compiler at: ${path}")
+    endif()
+    if (NOT NEXUS_CXX_COMPILER AND EXISTS "${path}/bin/clang++.exe")
       set(CMAKE_CXX_COMPILER "${path}/bin/clang++.exe" CACHE STRING "C++ compiler" FORCE)
-      message(STATUS "Found LLVM at: ${path}")
+      set(NEXUS_CXX_COMPILER "${path}/bin/clang++.exe")
+      message(STATUS "Found Clang C++ compiler at: ${path}")
+    endif()
+    if ((NEXUS_C_COMPILER OR CMAKE_C_COMPILER) AND
+        (NEXUS_CXX_COMPILER OR CMAKE_CXX_COMPILER))
       break()
     endif()
   endforeach()
