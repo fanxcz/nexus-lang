@@ -211,6 +211,30 @@ int main() {
     }
 
 
+    // Block comments nest, so an inner closing delimiter must not end the outer comment.
+    try {
+        const auto tokens =
+            nexus::Lexer("/* outer /* inner /* deepest */ tail */ done */ 42").tokenize();
+        if (tokens.size() != 2 || tokens[0].kind != nexus::TokenKind::Integer ||
+            tokens[0].text != "42" || tokens[1].kind != nexus::TokenKind::End) {
+            std::cerr << "nested block comments were not skipped as one comment\n";
+            return 26;
+        }
+    } catch (const std::exception& error) {
+        std::cerr << "valid nested block comment was rejected: " << error.what() << "\n";
+        return 27;
+    }
+    bool unterminatedNestedCommentRejected = false;
+    try {
+        (void)nexus::Lexer("/* outer /* inner */").tokenize();
+    } catch (const std::exception&) {
+        unterminatedNestedCommentRejected = true;
+    }
+    if (!unterminatedNestedCommentRejected) {
+        std::cerr << "unterminated nested block comment was accepted\n";
+        return 28;
+    }
+
     if (rejects("fn main(){ print((((1 + 2)))) }")) {
         std::cerr << "ordinary nested expression was rejected\n";
         return 3;
