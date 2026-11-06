@@ -56,7 +56,7 @@ namespace nexus {
         if (cur().kind == TokenKind::Integer) {
             const Token literal = expect(TokenKind::Integer);
             try {
-                return std::make_unique<IntExpr>(std::stoull(removeNumericSeparators(literal.text)));
+                return std::make_unique<IntExpr>(parseUnsignedIntegerLiteral(literal.text));
             } catch (const std::exception&) {
                 throw std::runtime_error("integer literal out of range at " +
                                          std::to_string(literal.pos.line) + ":" +
@@ -242,10 +242,15 @@ namespace nexus {
         if (accept(TokenKind::Minus)) {
             // The positive magnitude of INT64_MIN is one larger than INT64_MAX,
             // so recognize it before parsePrimary() attempts std::stoll().
-            if (cur().kind == TokenKind::Integer &&
-                removeNumericSeparators(cur().text) == "9223372036854775808") {
-                ++i_;
-                return std::make_unique<IntExpr>(std::uint64_t{1} << 63, true);
+            if (cur().kind == TokenKind::Integer) {
+                try {
+                    if (parseUnsignedIntegerLiteral(cur().text) == (std::uint64_t{1} << 63)) {
+                        ++i_;
+                        return std::make_unique<IntExpr>(std::uint64_t{1} << 63, true);
+                    }
+                } catch (const std::exception&) {
+                    // Let parsePrimary() issue the normal source-located range diagnostic.
+                }
             }
             return std::make_unique<UnaryExpr>(TokenKind::Minus, parseUnary());
         }
