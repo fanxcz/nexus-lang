@@ -918,6 +918,27 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
         }
         {
             const std::string input = "fn main(){\n"
+                                      "let small:f64=2.5E-4\n"
+                                      "let large:f64=1E+3\n"
+                                      "let grouped:f64=12_345.6_7e-2\n"
+                                      "}\n";
+            const std::string expected =
+                "fn main() {\n"
+                "    let small: f64 = 2.5E-4\n"
+                "    let large: f64 = 1E+3\n"
+                "    let grouped: f64 = 12_345.6_7e-2\n"
+                "}\n";
+            const auto actual = nexus::formatNexusSource(input);
+            if (actual != expected) {
+                std::cerr << "formatter scientific-notation regression\n"
+                          << "Expected:\n"
+                          << expected << "Actual:\n"
+                          << actual;
+                return 23;
+            }
+        }
+        {
+            const std::string input = "fn main(){\n"
                                       "/* outer\n"
                                       "/* inner */ tail\n"
                                       "*/ print(42)\n"
