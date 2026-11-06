@@ -28,7 +28,7 @@ int main() {
 
             if (program.structs.size() != 1 || program.structs[0].fields.size() != 2 ||
                 program.functions.size() != 2 || program.functions[0].params.size() != 2) {
-                std::cerr << "trailing commas in declarations or parameter lists failed\\n";
+                std::cerr << "trailing commas in declarations or parameter lists failed\n";
                 return 150;
             }
 
@@ -54,7 +54,7 @@ int main() {
                                    : nullptr;
             if (!array || array->elements.size() != 2 || !structure ||
                 structure->fields.size() != 2 || !call || call->args.size() != 2) {
-                std::cerr << "trailing commas in arrays, struct initializers, or calls failed\\n";
+                std::cerr << "trailing commas in arrays, struct initializers, or calls failed\n";
                 return 151;
             }
         }
