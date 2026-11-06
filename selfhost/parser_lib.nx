@@ -428,6 +428,14 @@ fn parse_stmt(t: i64, p: i64) -> string {
         }
         if cur_kind(t, p) == "KwElse" {
             bump(t, p)
+            if cur_kind(t, p) == "KwIf" {
+                let nested = parse_stmt(t, p)
+                if string.slice(nested, 0, 5) == "error" {
+                    return nested
+                }
+                let els = "(block\n  " + nested + ")"
+                return "(if " + cond + "\n  " + then + "\n  " + els + ")"
+            }
             let els = parse_block(t, p)
             if string.slice(els, 0, 5) == "error" {
                 return els
