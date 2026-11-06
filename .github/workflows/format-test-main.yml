@@ -1,0 +1,33 @@
+name: Format test_main.cpp (one-off)
+
+on:
+  push:
+    branches:
+      - automation/format-test-main
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+      - name: Format and push the test source
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang-format -i tests/test_main.cpp
+          if git diff --quiet -- tests/test_main.cpp; then
+            echo "test_main.cpp already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/test_main.cpp
+          git commit -m "style(test): apply clang-format to test_main.cpp"
+          git push origin HEAD:automation/format-test-main
