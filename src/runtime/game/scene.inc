@@ -11,15 +11,48 @@ void nexus_scene_add(int64_t scene, int64_t entity) {
 }
 bool nexus_scene_save(int64_t scene, const char* path) {
     auto sit = gScenes.find(scene);
-    if (sit == gScenes.end() || !path)
+    if (sit == gScenes.end() || !path || path[0] == '\0')
         return false;
-    std::ofstream f(path);
+
+    // Stage the complete file beside the destination. A failed write must not
+    // truncate a previously saved scene.
+    static std::atomic<uint64_t> temporarySequence{0};
+    const auto sequence = temporarySequence.fetch_add(1, std::memory_order_relaxed);
+    const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path destination(path);
+    std::filesystem::path temporary = destination;
+    temporary += ".nexus-tmp-" + std::to_string(stamp) + "-" + std::to_string(sequence);
+
+    std::ofstream f(temporary, std::ios::out | std::ios::trunc);
     if (!f)
         return false;
     f << "NEXUS_SCENE 1\n" << sit->second.entities.size() << "\n";
     for (const auto& e : sit->second.entities) {
         f << e.x << ' ' << e.y << ' ' << e.vx << ' ' << e.vy << ' ' << e.w << ' ' << e.h << ' '
           << e.r << ' ' << e.g << ' ' << e.b << ' ' << e.a << ' ' << e.texture << "\n";
+    }
+    f.flush();
+    const bool written = f.good();
+    f.close();
+    if (!written || f.fail()) {
+        std::error_code cleanupError;
+        std::filesystem::remove(temporary, cleanupError);
+        return false;
+    }
+
+#if defined(_WIN32)
+    const bool replaced =
+        MoveFileExW(temporary.c_str(), destination.c_str(),
+                    MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+#else
+    std::error_code renameError;
+    std::filesystem::rename(temporary, destination, renameError);
+    const bool replaced = !renameError;
+#endif
+    if (!replaced) {
+        std::error_code cleanupError;
+        std::filesystem::remove(temporary, cleanupError);
+        return false;
     }
     return true;
 }
