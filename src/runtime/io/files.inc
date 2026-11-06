@@ -1,25 +1,8 @@
+bool nexus_file_read_checked(const char* p, char** out);
+
 char* nexus_file_read(const char* p) {
-    if (!p)
-        return nullptr;
-    std::FILE* f = std::fopen(p, "rb");
-    if (!f)
-        return nullptr;
-    std::fseek(f, 0, SEEK_END);
-    long n = std::ftell(f);
-    std::rewind(f);
-    if (n < 0) {
-        std::fclose(f);
-        return nullptr;
-    }
-    char* o = (char*)nx_managed_alloc(size_t(n) + 1);
-    if (!o) {
-        std::fclose(f);
-        return nullptr;
-    }
-    size_t got = std::fread(o, 1, size_t(n), f);
-    std::fclose(f);
-    o[got] = 0;
-    return o;
+    char* data = nullptr;
+    return nexus_file_read_checked(p, &data) ? data : nullptr;
 }
 // Checked file read: success is independent of the returned text length, so an
 // existing empty file is distinct from an open/read/allocation failure.
@@ -74,9 +57,11 @@ int64_t nexus_file_write(const char* p, const char* d) {
     if (!f)
         return -1;
     const char* s = d ? d : "";
-    size_t n = std::strlen(s), w = std::fwrite(s, 1, n, f);
-    int ok = w == n && std::fclose(f) == 0;
-    return ok ? 0 : -1;
+    const size_t n = std::strlen(s);
+    const size_t written = std::fwrite(s, 1, n, f);
+    const bool writeOk = written == n;
+    const bool closeOk = std::fclose(f) == 0;
+    return writeOk && closeOk ? 0 : -1;
 }
 bool nexus_file_exists(const char* p) {
     if (!p)
