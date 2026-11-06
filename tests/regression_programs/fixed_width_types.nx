@@ -130,4 +130,16 @@ fn main() {
         255 => { print("narrow integer pattern") }
         _ => { print("narrow pattern failed") }
     }
+
+    // Radix-prefixed integer literals are equivalent to their decimal values.
+    let hexadecimal: u8 = 0x2A
+    let binary: u8 = 0b10_1010
+    let octal: u8 = 0o52
+    let radix_values: [i16; 0x2] = [31, 0o40]
+    let signed_radix_minimum: i64 = -0x8000_0000_0000_0000
+    print(hexadecimal)
+    print(binary)
+    print(octal)
+    print(radix_values[1])
+    print(signed_radix_minimum)
 }
