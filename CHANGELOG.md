@@ -12,6 +12,14 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 
 ### Added
 
+- Extended integer literal syntax with hexadecimal (`0x`), binary (`0b`) and
+  octal (`0o`) forms. Digit separators are supported within each radix, with
+  malformed digits and overflow rejected.
+- Added trailing commas to function parameter lists, calls, array literals and
+  struct initializers for cleaner multi-line source.
+- Added nested block comments; the C++ and self-hosted lexers now track comment
+  depth and reject unterminated nested comments.
+
 - Expanded NEXUS Studio into a desktop IDE with multi-file tabs, saved/unsaved buffer tracking, filename filtering, cursor position, a compiler Problems panel and jump-to-source diagnostics.
 - Added IDE commands and shortcuts for saving all files, switching/closing tabs, filtering project files and opening compiler Problems.
 - Added NEXUS Studio as the third version source and require the compiler, extension and desktop app packages to share one release version.
