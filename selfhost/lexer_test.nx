@@ -77,6 +77,11 @@ fn main() {
     "error 1:2 invalid Unicode scalar value\n")
 
     failed = failed + check(
+    "nested block comments are skipped",
+    "/* outer /* inner */ tail */\nlet x = 1",
+    "2:1 KwLet let\n2:5 Identifier x\n2:7 Equal =\n2:9 Integer 1\n2:10 End \n")
+
+    failed = failed + check(
     "comments are skipped",
     "// line\nlet x = 1 /* mid\ncomment */ + 2",
     "2:1 KwLet let\n2:5 Identifier x\n2:7 Equal =\n2:9 Integer 1\n3:12 Plus +\n3:14 Integer 2\n3:15 End \n")
