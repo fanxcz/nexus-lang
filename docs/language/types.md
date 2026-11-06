@@ -84,20 +84,27 @@ are correctly synchronized.
 
 ## Numeric literals
 
-Integer and floating-point literals may use underscores between digits to make
-large values easier to read. Decimal floating-point literals also support
-scientific notation; the exponent may include a sign.
+Integer literals are decimal by default and also support hexadecimal
+(`0x`), binary (`0b`), and octal (`0o`) prefixes. Integer and floating-point
+literals may use underscores between digits to make large values easier to
+read. Decimal floating-point literals also support scientific notation; the
+exponent may include a sign.
 
 ```nx
 const population: i64 = 1_000_000
+const permissions: u16 = 0o755
+const mask: u32 = 0xFF00_00FF
+const flags: u8 = 0b1100_0011
 let distance: f64 = 1.25e3
 let tiny: f64 = 2.5E-4
 let ratio: f64 = 12_345.6_7e-2
 ```
 
-An underscore must appear between digits; repeated, leading, and trailing
-separators are rejected. Scientific notation requires at least one exponent
-digit, so `1e` and `2E+` are invalid literals.
+An underscore must appear between digits of the same literal; repeated,
+leading, and trailing separators are rejected. Each radix prefix requires at
+least one valid digit, and digits outside the selected base are errors.
+Scientific notation requires at least one exponent digit, so `1e` and `2E+`
+are invalid literals.
 
 ## Numeric conversions and random integers
 
