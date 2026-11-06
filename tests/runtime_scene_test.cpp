@@ -1,6 +1,6 @@
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -26,8 +26,8 @@ static std::string readAll(const fs::path& path) {
 
 int main() {
     const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
-    const fs::path directory = fs::temp_directory_path() /
-                               ("nexus-scene-save-test-" + std::to_string(stamp));
+    const fs::path directory =
+        fs::temp_directory_path() / ("nexus-scene-save-test-" + std::to_string(stamp));
     std::error_code ec;
     fs::create_directories(directory, ec);
     if (ec)
