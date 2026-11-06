@@ -18,13 +18,13 @@ int main() {
     try {
 
         {
-            const auto program = parse(
-                "struct Point { x: i64, y: i64, } enum Color { Red(i64), Green(i64), } "
-                "fn sum(left: i64, right: i64,) -> i64 { return left + right } "
-                "fn main() { "
-                "let values = [10, 20,]; "
-                "let point = Point { x: values[0], y: sum(1, 2,), }; "
-                "}");
+            const auto program =
+                parse("struct Point { x: i64, y: i64, } enum Color { Red(i64), Green(i64), } "
+                      "fn sum(left: i64, right: i64,) -> i64 { return left + right } "
+                      "fn main() { "
+                      "let values = [10, 20,]; "
+                      "let point = Point { x: values[0], y: sum(1, 2,), }; "
+                      "}");
 
             if (program.structs.size() != 1 || program.structs[0].fields.size() != 2 ||
                 program.enums.size() != 1 || program.enums[0].variants.size() != 2 ||
@@ -36,25 +36,22 @@ int main() {
             }
 
             const auto* mainBody = program.functions[1].body.get();
-            const auto* values = mainBody && mainBody->statements.size() == 2
-                                     ? dynamic_cast<const nexus::LetStmt*>(
-                                           mainBody->statements[0].get())
-                                     : nullptr;
-            const auto* array = values
-                                    ? dynamic_cast<const nexus::ArrayExpr*>(values->init.get())
-                                    : nullptr;
-            const auto* point = mainBody && mainBody->statements.size() == 2
-                                    ? dynamic_cast<const nexus::LetStmt*>(
-                                          mainBody->statements[1].get())
-                                    : nullptr;
-            const auto* structure = point
-                                        ? dynamic_cast<const nexus::StructInitExpr*>(
-                                              point->init.get())
-                                        : nullptr;
-            const auto* call = structure && structure->fields.size() == 2
-                                   ? dynamic_cast<const nexus::CallExpr*>(
-                                         structure->fields[1].second.get())
-                                   : nullptr;
+            const auto* values =
+                mainBody && mainBody->statements.size() == 2
+                    ? dynamic_cast<const nexus::LetStmt*>(mainBody->statements[0].get())
+                    : nullptr;
+            const auto* array =
+                values ? dynamic_cast<const nexus::ArrayExpr*>(values->init.get()) : nullptr;
+            const auto* point =
+                mainBody && mainBody->statements.size() == 2
+                    ? dynamic_cast<const nexus::LetStmt*>(mainBody->statements[1].get())
+                    : nullptr;
+            const auto* structure =
+                point ? dynamic_cast<const nexus::StructInitExpr*>(point->init.get()) : nullptr;
+            const auto* call =
+                structure && structure->fields.size() == 2
+                    ? dynamic_cast<const nexus::CallExpr*>(structure->fields[1].second.get())
+                    : nullptr;
             if (!array || array->elements.size() != 2 || !structure ||
                 structure->fields.size() != 2 || !call || call->args.size() != 2) {
                 std::cerr << "trailing commas in arrays, struct initializers, or calls failed\n";
@@ -105,25 +102,24 @@ int main() {
             }
             const auto* binding =
                 dynamic_cast<const nexus::LetStmt*>(p.functions[0].body->statements[1].get());
-            const auto* slice = binding ? dynamic_cast<const nexus::SliceExpr*>(binding->init.get())
-                                        : nullptr;
+            const auto* slice =
+                binding ? dynamic_cast<const nexus::SliceExpr*>(binding->init.get()) : nullptr;
             if (!slice || !dynamic_cast<const nexus::VarExpr*>(slice->object.get()) ||
                 !dynamic_cast<const nexus::BinaryExpr*>(slice->start.get()) ||
-                !dynamic_cast<const nexus::BinaryExpr*>(slice->end.get()) ||
-                !slice->span.valid || !slice->object->span.valid ||
-                !slice->start->span.valid || !slice->end->span.valid) {
+                !dynamic_cast<const nexus::BinaryExpr*>(slice->end.get()) || !slice->span.valid ||
+                !slice->object->span.valid || !slice->start->span.valid ||
+                !slice->end->span.valid) {
                 std::cerr << "slice expression AST shape or source spans are incorrect\n";
                 return 78;
             }
 
-            auto chained = parse(
-                "fn main(){ let values = [10, 20, 30, 40]; let item = values[1..3][0]; }");
-            const auto* chainedBinding = dynamic_cast<const nexus::LetStmt*>(
-                chained.functions[0].body->statements[1].get());
-            const auto* index = chainedBinding
-                                    ? dynamic_cast<const nexus::IndexExpr*>(
-                                          chainedBinding->init.get())
-                                    : nullptr;
+            auto chained =
+                parse("fn main(){ let values = [10, 20, 30, 40]; let item = values[1..3][0]; }");
+            const auto* chainedBinding =
+                dynamic_cast<const nexus::LetStmt*>(chained.functions[0].body->statements[1].get());
+            const auto* index =
+                chainedBinding ? dynamic_cast<const nexus::IndexExpr*>(chainedBinding->init.get())
+                               : nullptr;
             if (!index || !dynamic_cast<const nexus::SliceExpr*>(index->object.get())) {
                 std::cerr << "postfix indexing after slicing did not parse\n";
                 return 79;
@@ -172,12 +168,11 @@ int main() {
                 return std::string{};
             };
 
-            const auto valid = analyzeError(
-                "fn main(){ let values = [10, 20, 30, 40]; "
-                "let middle = values[1 + 0..3 - 0]; let item = middle[0]; "
-                "let nested = values[1..4][0..2]; let empty = values[4..4]; }");
-            if (!valid.empty() ||
-                valid.find("slice start bound") != std::string::npos ||
+            const auto valid =
+                analyzeError("fn main(){ let values = [10, 20, 30, 40]; "
+                             "let middle = values[1 + 0..3 - 0]; let item = middle[0]; "
+                             "let nested = values[1..4][0..2]; let empty = values[4..4]; }");
+            if (!valid.empty() || valid.find("slice start bound") != std::string::npos ||
                 valid.find("slice end bound") != std::string::npos ||
                 valid.find("indexing requires") != std::string::npos) {
                 std::cerr << "valid slice expressions failed semantic type checking: " << valid
@@ -185,9 +180,9 @@ int main() {
                 return 82;
             }
 
-            const auto dynamicBounds = analyzeError(
-                "fn main(){ let values = [10,20,30,40]; let start: i64 = 1; "
-                "let end: i64 = 3; let view = values[start..end]; }");
+            const auto dynamicBounds =
+                analyzeError("fn main(){ let values = [10,20,30,40]; let start: i64 = 1; "
+                             "let end: i64 = 3; let view = values[start..end]; }");
             if (!dynamicBounds.empty() ||
                 dynamicBounds.find("slice start bound") != std::string::npos ||
                 dynamicBounds.find("slice end bound") != std::string::npos) {
@@ -201,18 +196,24 @@ int main() {
                 const char* label;
             } invalidRanges[] = {
                 {"fn main(){ let values = [1,2]; let s = values[-1..2]; }",
-                 "slice start bound is out of bounds", "negative start"},
+                 "slice start bound is out of bounds",
+                 "negative start"},
                 {"fn main(){ let values = [1,2]; let s = values[0..3]; }",
-                 "slice end bound is out of bounds", "end beyond array"},
+                 "slice end bound is out of bounds",
+                 "end beyond array"},
                 {"fn main(){ let values = [1,2]; let s = values[2..1]; }",
-                 "slice start bound exceeds end bound", "reversed range"},
+                 "slice start bound exceeds end bound",
+                 "reversed range"},
                 {"fn main(){ let values = [1,2]; let s = values[1.0..2]; }",
-                 "slice start bound must be i64", "non-integer start"},
+                 "slice start bound must be i64",
+                 "non-integer start"},
                 {"fn main(){ let value = 7; let s = value[0..1]; }",
-                 "slice expression requires an array or slice", "non-array source"},
+                 "slice expression requires an array or slice",
+                 "non-array source"},
                 {"fn make() -> [i64; 2] { return [1,2]; } "
                  "fn main(){ let s = make()[0..1]; }",
-                 "slice source must be a named array or slice binding", "temporary source"},
+                 "slice source must be a named array or slice binding",
+                 "temporary source"},
             };
             for (const auto& test : invalidRanges) {
                 const auto error = analyzeError(test.source);
@@ -232,9 +233,9 @@ int main() {
                 return 84;
             }
 
-            const auto aliasedLocalEscape = analyzeError(
-                "fn escape() -> []i64 { let values = [10, 20]; "
-                "let view = values[0..2]; return view; }");
+            const auto aliasedLocalEscape =
+                analyzeError("fn escape() -> []i64 { let values = [10, 20]; "
+                             "let view = values[0..2]; return view; }");
             if (aliasedLocalEscape.find("cannot return a pointer to local storage 'values'") ==
                 std::string::npos) {
                 std::cerr << "slice alias lost the origin of its local array: "
@@ -251,10 +252,10 @@ int main() {
                 return 85;
             }
 
-            const auto lenChecks = analyzeError(
-                "fn main(){ let values = [10,20,30]; let view = values[1..3]; "
-                "let count: i64 = len(view); let total: i64 = len(values); "
-                "let text: string = \"hello\"; let chars: i64 = len(text); }");
+            const auto lenChecks =
+                analyzeError("fn main(){ let values = [10,20,30]; let view = values[1..3]; "
+                             "let count: i64 = len(view); let total: i64 = len(values); "
+                             "let text: string = \"hello\"; let chars: i64 = len(text); }");
             if (!lenChecks.empty()) {
                 std::cerr << "len should accept arrays and slices: " << lenChecks << "\n";
                 return 88;
@@ -266,10 +267,12 @@ int main() {
             }
             const auto mutableSliceWrite = analyzeError(
                 "fn main(){ let mut values = [1,2,3]; let mut view = values[0..2]; view[0] = 9; }");
-            if (mutableSliceWrite.find("index assignment requires a mutable array or mutable slice") ==
+            if (mutableSliceWrite.find(
+                    "index assignment requires a mutable array or mutable slice") ==
                 std::string::npos) {
-                std::cerr << "slice write should remain unsupported until mutable-slice rules exist: "
-                          << mutableSliceWrite << "\n";
+                std::cerr
+                    << "slice write should remain unsupported until mutable-slice rules exist: "
+                    << mutableSliceWrite << "\n";
                 return 90;
             }
         }
@@ -289,9 +292,9 @@ int main() {
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
-            auto p = parse(
-                "fn set_value(out: *i64, value: i64) { *out = value } "
-                "fn main(){ let mut value: i64 = 0; set_value(&value, 42); print(value) }");
+            auto p =
+                parse("fn set_value(out: *i64, value: i64) { *out = value } "
+                      "fn main(){ let mut value: i64 = 0; set_value(&value, 42); print(value) }");
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
@@ -299,7 +302,8 @@ int main() {
             // Reject immutable roots to prevent mutation through an alias.
             const char* invalidSources[] = {
                 "fn main(){ let value: i64 = 10; let ptr = &value; *ptr = 11 }",
-                "struct Data { value: i64 } fn main(){ let data = Data{value: 10}; let ptr = &data.value }",
+                "struct Data { value: i64 } fn main(){ let data = Data{value: 10}; let ptr = "
+                "&data.value }",
                 "fn main(){ let values = [1, 2, 3]; let ptr = &values[0] }",
             };
             for (const auto* source : invalidSources) {
@@ -308,97 +312,97 @@ int main() {
                     auto p = parse(source);
                     nexus::SemanticAnalyzer().analyze(p);
                 } catch (const std::exception& error) {
-                    rejected = std::string(error.what()).find(
-                                   "'&' requires mutable storage") != std::string::npos;
+                    rejected = std::string(error.what()).find("'&' requires mutable storage") !=
+                               std::string::npos;
                 }
                 if (!rejected) {
-                    std::cerr << "address-of immutable storage was not rejected: "
-                              << source << "\\n";
+                    std::cerr << "address-of immutable storage was not rejected: " << source
+                              << "\\n";
                     return 48;
                 }
             }
         }
         {
 
-                    {
-            const char* invalidNestedAssignments[] = {
-                "struct Inner { value: i64 } struct Outer { inner: Inner } "
-                "fn main(){ let outer = Outer{inner: Inner{value: 10}}; outer.inner.value = 11 }",
-                "struct Data { values: [i64; 3] } "
-                "fn main(){ let data = Data{values: [1, 2, 3]}; data.values[0] = 99 }"
-            };
-            for (const auto* source : invalidNestedAssignments) {
-                bool rejected = false;
+            {
+                const char* invalidNestedAssignments[] = {
+                    "struct Inner { value: i64 } struct Outer { inner: Inner } "
+                    "fn main(){ let outer = Outer{inner: Inner{value: 10}}; outer.inner.value = 11 "
+                    "}",
+                    "struct Data { values: [i64; 3] } "
+                    "fn main(){ let data = Data{values: [1, 2, 3]}; data.values[0] = 99 }"};
+                for (const auto* source : invalidNestedAssignments) {
+                    bool rejected = false;
+                    try {
+                        auto p = parse(source);
+                        nexus::SemanticAnalyzer().analyze(p);
+                    } catch (const std::exception& error) {
+                        rejected = std::string(error.what()).find("immutable variable") !=
+                                   std::string::npos;
+                    }
+                    if (!rejected)
+                        return 55;
+                }
+                auto mutableNested =
+                    parse("struct Inner { value: i64 } struct Outer { inner: Inner } "
+                          "fn main(){ let mut outer = Outer{inner: Inner{value: 10}}; "
+                          "outer.inner.value = 11 }");
+                nexus::SemanticAnalyzer().analyze(mutableNested);
+            }
+            {
+                const char* invalidVoidSources[] = {
+                    "fn main(){ let result = print(\"not a value\") }",
+                    "fn consume(value: void) {} fn main() {}",
+                    "struct Bad { value: void } fn main() {}",
+                    "fn bad() -> *void {} fn main() {}",
+                    "fn bad() -> [void; 1] {} fn main() {}",
+                    "enum Bad { Empty(void) } fn main() {}",
+                };
+                for (const auto* source : invalidVoidSources) {
+                    bool rejected = false;
+                    try {
+                        auto p = parse(source);
+                        nexus::SemanticAnalyzer().analyze(p);
+                    } catch (const std::exception& error) {
+                        rejected = std::string(error.what()).find("void") != std::string::npos;
+                    }
+                    if (!rejected) {
+                        std::cerr << "invalid void value/type was accepted: " << source << "\\n";
+                        return 56;
+                    }
+                }
+                auto validVoid = parse("fn helper() -> void { return } fn main(){ helper() }");
+                nexus::SemanticAnalyzer().analyze(validVoid);
+            }
+            {
+                bool sourcePathPreserved = false;
                 try {
-                    auto p = parse(source);
+                    auto p = parse("fn main(){ let result: i64 = \"bad\" }",
+                                   "/virtual/modules/library.nx");
                     nexus::SemanticAnalyzer().analyze(p);
                 } catch (const std::exception& error) {
-                    rejected = std::string(error.what()).find("immutable variable") !=
-                               std::string::npos;
+                    sourcePathPreserved =
+                        std::string(error.what()).find("/virtual/modules/library.nx:") !=
+                        std::string::npos;
                 }
-                if (!rejected)
-                    return 55;
+                if (!sourcePathPreserved)
+                    return 57;
             }
-            auto mutableNested = parse(
-                "struct Inner { value: i64 } struct Outer { inner: Inner } "
-                "fn main(){ let mut outer = Outer{inner: Inner{value: 10}}; "
-                "outer.inner.value = 11 }");
-            nexus::SemanticAnalyzer().analyze(mutableNested);
-        }
-        {
-            const char* invalidVoidSources[] = {
-                "fn main(){ let result = print(\"not a value\") }",
-                "fn consume(value: void) {} fn main() {}",
-                "struct Bad { value: void } fn main() {}",
-                "fn bad() -> *void {} fn main() {}",
-                "fn bad() -> [void; 1] {} fn main() {}",
-                "enum Bad { Empty(void) } fn main() {}",
-            };
-            for (const auto* source : invalidVoidSources) {
-                bool rejected = false;
+            {
+                bool rejectedAbi = false;
                 try {
-                    auto p = parse(source);
-                    nexus::SemanticAnalyzer().analyze(p);
+                    auto p = parse("extern \"stdcall\" fn puts(value: string); fn main() {}");
+                    (void)p;
                 } catch (const std::exception& error) {
-                    rejected = std::string(error.what()).find("void") != std::string::npos;
+                    rejectedAbi = std::string(error.what()).find("unsupported extern ABI") !=
+                                  std::string::npos;
                 }
-                if (!rejected) {
-                    std::cerr << "invalid void value/type was accepted: " << source << "\\n";
-                    return 56;
-                }
+                if (!rejectedAbi)
+                    return 58;
+                auto cAbi = parse("extern \"C\" fn puts(value: string); fn main() {}");
+                nexus::SemanticAnalyzer().analyze(cAbi);
             }
-            auto validVoid = parse("fn helper() -> void { return } fn main(){ helper() }");
-            nexus::SemanticAnalyzer().analyze(validVoid);
-        }
-        {
-            bool sourcePathPreserved = false;
-            try {
-                auto p = parse("fn main(){ let result: i64 = \"bad\" }",
-                               "/virtual/modules/library.nx");
-                nexus::SemanticAnalyzer().analyze(p);
-            } catch (const std::exception& error) {
-                sourcePathPreserved =
-                    std::string(error.what()).find("/virtual/modules/library.nx:") !=
-                    std::string::npos;
-            }
-            if (!sourcePathPreserved)
-                return 57;
-        }
-        {
-            bool rejectedAbi = false;
-            try {
-                auto p = parse("extern \"stdcall\" fn puts(value: string); fn main() {}");
-                (void)p;
-            } catch (const std::exception& error) {
-                rejectedAbi = std::string(error.what()).find("unsupported extern ABI") !=
-                              std::string::npos;
-            }
-            if (!rejectedAbi)
-                return 58;
-            auto cAbi = parse("extern \"C\" fn puts(value: string); fn main() {}");
-            nexus::SemanticAnalyzer().analyze(cAbi);
-        }
-auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }");
+            auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }");
 
             nexus::SemanticAnalyzer().analyze(p);
         }
@@ -418,31 +422,27 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
-            auto p = parse(
-                "fn main(){ let n: i64 = 42; match n { 1..10 => { print(1) } "
-                "value if value > 100 => { print(value) } _ => { print(0) } } }");
+            auto p = parse("fn main(){ let n: i64 = 42; match n { 1..10 => { print(1) } "
+                           "value if value > 100 => { print(value) } _ => { print(0) } } }");
 
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
-            auto p = parse(
-                "fn main(){ let values = [1, 2, 3]; let mut total = 0; "
-                "for value in values { total = total + value } print(total) }");
+            auto p = parse("fn main(){ let values = [1, 2, 3]; let mut total = 0; "
+                           "for value in values { total = total + value } print(total) }");
 
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
-            auto p = parse(
-                "fn main(){ let text = \"nexus\"; print(string.len(text)); "
-                "print(string.chars(text)); print(string.char_at(text, 0)); "
-                "print(string.from_char(65)); print(string.valid_utf8(text)) }");
+            auto p = parse("fn main(){ let text = \"nexus\"; print(string.len(text)); "
+                           "print(string.chars(text)); print(string.char_at(text, 0)); "
+                           "print(string.from_char(65)); print(string.valid_utf8(text)) }");
 
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
-            auto p = parse(
-                "fn main(){ let text = \"A\\u{00E9}\\u{1F642}\"; "
-                "for codepoint in text { print(string.from_char(codepoint)) } }");
+            auto p = parse("fn main(){ let text = \"A\\u{00E9}\\u{1F642}\"; "
+                           "for codepoint in text { print(string.from_char(codepoint)) } }");
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
@@ -459,9 +459,9 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
         {
             bool failed = false;
             try {
-                auto p = parse(
-                    "fn main(){ let values = [1, 2]; for value in values { print(value) } "
-                    "print(value) }");
+                auto p =
+                    parse("fn main(){ let values = [1, 2]; for value in values { print(value) } "
+                          "print(value) }");
                 nexus::SemanticAnalyzer().analyze(p);
             } catch (const std::exception&) {
                 failed = true;
@@ -472,8 +472,9 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
         {
             bool failed = false;
             try {
-                auto p = parse("fn main(){ let n = 1; match n { _ => { print(1) } 1 => { print(2) } "
-                               "} }");
+                auto p =
+                    parse("fn main(){ let n = 1; match n { _ => { print(1) } 1 => { print(2) } "
+                          "} }");
                 nexus::SemanticAnalyzer().analyze(p);
             } catch (const std::exception&) {
                 failed = true;
@@ -639,25 +640,24 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
             // A payload binding matches only its enum variant; it is not a catch-all.
             bool failed = false;
             try {
-                auto p = parse(
-                    "enum Maybe { Some(i64), None } "
-                    "fn choose(value: Maybe) -> i64 { "
-                    "match value { Maybe::Some(number) => { return number } } } "
-                    "fn main(){ print(choose(Maybe::Some(3))) }");
+                auto p = parse("enum Maybe { Some(i64), None } "
+                               "fn choose(value: Maybe) -> i64 { "
+                               "match value { Maybe::Some(number) => { return number } } } "
+                               "fn main(){ print(choose(Maybe::Some(3))) }");
                 nexus::SemanticAnalyzer().analyze(p);
             } catch (const std::exception& e) {
-                failed = std::string(e.what()).find(
-                    "function may exit without returning a value: choose") != std::string::npos;
+                failed =
+                    std::string(e.what()).find(
+                        "function may exit without returning a value: choose") != std::string::npos;
             }
             if (!failed)
                 return 45;
         }
         {
             // A binding pattern without an explicit value pattern does cover all values.
-            auto p = parse(
-                "fn identity(value: i64) -> i64 { "
-                "match value { item => { return item } } } "
-                "fn main(){ print(identity(7)) }");
+            auto p = parse("fn identity(value: i64) -> i64 { "
+                           "match value { item => { return item } } } "
+                           "fn main(){ print(identity(7)) }");
             nexus::SemanticAnalyzer().analyze(p);
         }
         {
@@ -723,8 +723,8 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                                "fn main(){ let value = Payload::Number(\"bad\") }");
                 nexus::SemanticAnalyzer().analyze(p);
             } catch (const std::exception& e) {
-                failed = std::string(e.what()).find(
-                    "expects payload 'i64' but got 'string'") != std::string::npos;
+                failed = std::string(e.what()).find("expects payload 'i64' but got 'string'") !=
+                         std::string::npos;
             }
             if (!failed)
                 return 41;
@@ -747,7 +747,8 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                 auto p = parse("enum Payload { Empty } fn main(){ let value = Payload::Empty(3) }");
                 nexus::SemanticAnalyzer().analyze(p);
             } catch (const std::exception& e) {
-                failed = std::string(e.what()).find("does not accept a payload") != std::string::npos;
+                failed =
+                    std::string(e.what()).find("does not accept a payload") != std::string::npos;
             }
             if (!failed)
                 return 43;
@@ -781,8 +782,8 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                     auto p = parse(source);
                     nexus::SemanticAnalyzer().analyze(p);
                 } catch (const std::exception& error) {
-                    rejected = std::string(error.what()).find("division by zero") !=
-                               std::string::npos;
+                    rejected =
+                        std::string(error.what()).find("division by zero") != std::string::npos;
                 }
                 if (!rejected) {
                     std::cerr << "constant division by zero was not diagnosed: " << source << "\n";
@@ -794,8 +795,10 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
             // Compound assignment must reject a constant zero divisor for
             // fields, array elements and pointer targets before code generation.
             const char* invalidSources[] = {
-                "struct Counter { value: i64 } fn main(){ let mut c = Counter{value: 10}; c.value /= 0 }",
-                "struct Counter { value: i64 } fn main(){ let mut c = Counter{value: 10}; c.value %= -0 }",
+                "struct Counter { value: i64 } fn main(){ let mut c = Counter{value: 10}; c.value "
+                "/= 0 }",
+                "struct Counter { value: i64 } fn main(){ let mut c = Counter{value: 10}; c.value "
+                "%= -0 }",
                 "fn main(){ let mut values = [10, 20]; values[0] /= 0 }",
                 "fn main(){ let mut values = [10, 20]; values[0] %= -0 }",
                 "fn main(){ let mut value: i64 = 10; let ptr = &value; *ptr /= 0 }",
@@ -806,8 +809,8 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                     auto p = parse(source);
                     nexus::SemanticAnalyzer().analyze(p);
                 } catch (const std::exception& error) {
-                    rejected = std::string(error.what()).find("division by zero") !=
-                               std::string::npos;
+                    rejected =
+                        std::string(error.what()).find("division by zero") != std::string::npos;
                 }
                 if (!rejected) {
                     std::cerr << "compound assignment division by zero was not diagnosed: "
@@ -861,23 +864,23 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                 return 9;
         }
         {
-                    {
-            // The native entry stub calls main without arguments and forwards RAX/EAX
-            // to the operating-system exit API, so validate its signature.
-            auto withArguments = parse("fn main(value: i64) {}");
-            nexus::SemanticAnalyzer().analyze(withArguments);
-            std::string entryReason;
-            if (nexus::native::supports(withArguments, entryReason) ||
-                entryReason.find("must not take parameters") == std::string::npos)
-                return 59;
+            {
+                // The native entry stub calls main without arguments and forwards RAX/EAX
+                // to the operating-system exit API, so validate its signature.
+                auto withArguments = parse("fn main(value: i64) {}");
+                nexus::SemanticAnalyzer().analyze(withArguments);
+                std::string entryReason;
+                if (nexus::native::supports(withArguments, entryReason) ||
+                    entryReason.find("must not take parameters") == std::string::npos)
+                    return 59;
 
-            auto stringResult = parse("fn main() -> string { return \"bad\" }");
-            nexus::SemanticAnalyzer().analyze(stringResult);
-            if (nexus::native::supports(stringResult, entryReason) ||
-                entryReason.find("must return") == std::string::npos)
-                return 60;
-        }
-// Builtin native backend: non-subset programs rejected precisely.
+                auto stringResult = parse("fn main() -> string { return \"bad\" }");
+                nexus::SemanticAnalyzer().analyze(stringResult);
+                if (nexus::native::supports(stringResult, entryReason) ||
+                    entryReason.find("must return") == std::string::npos)
+                    return 60;
+            }
+            // Builtin native backend: non-subset programs rejected precisely.
             auto p = parse("struct P { x: i64 } fn main(){ let v = P { x: 1 }; print(v.x) }");
             nexus::SemanticAnalyzer().analyze(p);
             std::string reason;
@@ -924,12 +927,11 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                                       "let flags:u8=0b1000_0001;\n"
                                       "let mode:u16=0o755\n"
                                       "}\n";
-            const std::string expected =
-                "fn main() {\n"
-                "    let mask: u32 = 0xFF00_00FF;\n"
-                "    let flags: u8 = 0b1000_0001;\n"
-                "    let mode: u16 = 0o755\n"
-                "}\n";
+            const std::string expected = "fn main() {\n"
+                                         "    let mask: u32 = 0xFF00_00FF;\n"
+                                         "    let flags: u8 = 0b1000_0001;\n"
+                                         "    let mode: u16 = 0o755\n"
+                                         "}\n";
             const auto actual = nexus::formatNexusSource(input);
             if (actual != expected) {
                 std::cerr << "formatter radix-integer regression\n"
@@ -945,12 +947,11 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
                                       "let large:f64=1E+3\n"
                                       "let grouped:f64=12_345.6_7e-2\n"
                                       "}\n";
-            const std::string expected =
-                "fn main() {\n"
-                "    let small: f64 = 2.5E-4\n"
-                "    let large: f64 = 1E+3\n"
-                "    let grouped: f64 = 12_345.6_7e-2\n"
-                "}\n";
+            const std::string expected = "fn main() {\n"
+                                         "    let small: f64 = 2.5E-4\n"
+                                         "    let large: f64 = 1E+3\n"
+                                         "    let grouped: f64 = 12_345.6_7e-2\n"
+                                         "}\n";
             const auto actual = nexus::formatNexusSource(input);
             if (actual != expected) {
                 std::cerr << "formatter scientific-notation regression\n"
@@ -1071,8 +1072,7 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
         {
             // Unicode scalar escapes decode to UTF-8, while source spans still
             // refer to the raw source bytes, not the decoded string length.
-            const std::string unicodeSource =
-                "fn main() { let value = \"A\\u{1F642}Z\"; }";
+            const std::string unicodeSource = "fn main() { let value = \"A\\u{1F642}Z\"; }";
             const auto program = parse(unicodeSource.c_str());
             const auto* binding = dynamic_cast<const nexus::LetStmt*>(
                 program.functions.front().body->statements.front().get());
@@ -1081,8 +1081,7 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
             const std::string expected = std::string("A") + "\xF0\x9F\x99\x82" + "Z";
             const auto literalStart = unicodeSource.find("\"A\\u{1F642}Z\"");
             if (!literal || literal->value != expected || !literal->span.valid ||
-                literalStart == std::string::npos ||
-                literal->span.start.offset != literalStart ||
+                literalStart == std::string::npos || literal->span.start.offset != literalStart ||
                 literal->span.end.offset != literalStart + 13) {
                 std::cerr << "Unicode string escape decoding/span regression\n";
                 return 28;

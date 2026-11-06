@@ -42,9 +42,9 @@ bool nexus_scene_save(int64_t scene, const char* path) {
     }
 
 #if defined(_WIN32)
-    const bool replaced =
-        MoveFileExW(temporary.c_str(), destination.c_str(),
-                    MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+    const bool replaced = MoveFileExW(temporary.c_str(),
+                                      destination.c_str(),
+                                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
 #else
     std::error_code renameError;
     std::filesystem::rename(temporary, destination, renameError);

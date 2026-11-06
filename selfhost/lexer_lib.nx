@@ -146,7 +146,7 @@ fn tokenize(src: string) -> string {
         if b == 48 && i + 1 < len {
             let prefix = string.byte_at(src, i + 1)
             if prefix == 120 || prefix == 88 || prefix == 98 || prefix == 66 ||
-               prefix == 111 || prefix == 79 {
+            prefix == 111 || prefix == 79 {
                 let mut base = 16
                 if prefix == 98 || prefix == 66 {
                     base = 2
@@ -161,10 +161,10 @@ fn tokenize(src: string) -> string {
                 }
                 let mut consumed = false
                 let mut previous_digit = false
-                while i < len && (radix_digit(b, base) || b == 95) {
+                while i < len &&(radix_digit(b, base) || b == 95) {
                     if b == 95 {
-                        if !previous_digit || i + 1 >= len ||
-                           !radix_digit(string.byte_at(src, i + 1), base) {
+                        if ! previous_digit || i + 1 >= len ||
+                        !radix_digit(string.byte_at(src, i + 1), base) {
                             return out + "error " + line + ":" + col + " misplaced numeric separator\n"
                         }
                         previous_digit = false
@@ -179,7 +179,7 @@ fn tokenize(src: string) -> string {
                         b = string.byte_at(src, i)
                     }
                 }
-                if !consumed || (i < len && (is_alpha(b) || is_digit(b))) {
+                if ! consumed ||(i < len &&(is_alpha(b) || is_digit(b))) {
                     return out + "error " + line + ":" + col + " invalid base-" + base + " integer literal\n"
                 }
                 out = out + tl + ":" + tc + " Integer " + num + "\n"

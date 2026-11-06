@@ -53,7 +53,8 @@ namespace nexus {
                    prev == "const" || prev == "mut";
         }
 
-        void consumeBlockComment(const std::string& line, std::size_t& i,
+        void consumeBlockComment(const std::string& line,
+                                 std::size_t& i,
                                  std::size_t& blockCommentDepth) {
             while (i < line.size() && blockCommentDepth > 0) {
                 if (line[i] == '/' && i + 1 < line.size() && line[i + 1] == '*') {
@@ -126,15 +127,15 @@ namespace nexus {
                          line[i + 1] == 'B' || line[i + 1] == 'o' || line[i + 1] == 'O');
                     if (radixPrefix) {
                         i += 2;
-                        while (i < line.size() &&
-                               (std::isalnum(static_cast<unsigned char>(line[i])) ||
-                                line[i] == '_')) {
+                        while (
+                            i < line.size() &&
+                            (std::isalnum(static_cast<unsigned char>(line[i])) || line[i] == '_')) {
                             ++i;
                         }
                     } else if (numeric) {
-                        while (i < line.size() &&
-                               (std::isdigit(static_cast<unsigned char>(line[i])) ||
-                                line[i] == '_')) {
+                        while (
+                            i < line.size() &&
+                            (std::isdigit(static_cast<unsigned char>(line[i])) || line[i] == '_')) {
                             ++i;
                         }
 
