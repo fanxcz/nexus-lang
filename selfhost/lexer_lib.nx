@@ -20,6 +20,11 @@ fn unicode_hex_digit(b: i64) -> i64 {
     return-1
 }
 
+fn radix_digit(b: i64, base: i64) -> bool {
+    let value = unicode_hex_digit(b)
+    return value >= 0 && value < base
+}
+
 fn keyword_kind(name: string) -> string {
     if name == "fn" { return "KwFn" }
     if name == "let" { return "KwLet" }
@@ -128,6 +133,53 @@ fn tokenize(src: string) -> string {
             }
             out = out + tl + ":" + tc + " " + keyword_kind(name) + " " + name + "\n"
             continue
+        }
+
+        // hexadecimal, binary, and octal integer literals.
+        // This branch precedes decimal scanning so the leading zero is not
+        // emitted as a separate token.
+        if b == 48 && i + 1 < len {
+            let prefix = string.byte_at(src, i + 1)
+            if prefix == 120 || prefix == 88 || prefix == 98 || prefix == 66 ||
+               prefix == 111 || prefix == 79 {
+                let mut base = 16
+                if prefix == 98 || prefix == 66 {
+                    base = 2
+                } else if prefix == 111 || prefix == 79 {
+                    base = 8
+                }
+                let mut num = string.slice(src, i, i + 2)
+                i = i + 2
+                col = col + 2
+                if i < len {
+                    b = string.byte_at(src, i)
+                }
+                let mut consumed = false
+                let mut previous_digit = false
+                while i < len && (radix_digit(b, base) || b == 95) {
+                    if b == 95 {
+                        if !previous_digit || i + 1 >= len ||
+                           !radix_digit(string.byte_at(src, i + 1), base) {
+                            return out + "error " + line + ":" + col + " misplaced numeric separator\n"
+                        }
+                        previous_digit = false
+                    } else {
+                        consumed = true
+                        previous_digit = true
+                    }
+                    num = num + string.slice(src, i, i + 1)
+                    i = i + 1
+                    col = col + 1
+                    if i < len {
+                        b = string.byte_at(src, i)
+                    }
+                }
+                if !consumed || (i < len && (is_alpha(b) || is_digit(b))) {
+                    return out + "error " + line + ":" + col + " invalid base-" + base + " integer literal\n"
+                }
+                out = out + tl + ":" + tc + " Integer " + num + "\n"
+                continue
+            }
         }
 
         // integer, decimal, and scientific-notation numeric literals.
