@@ -917,9 +917,11 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
             }
         }
         {
-            const std::string input =
-                "fn main(){ let mask:u32=0xFF00_00FF; let flags:u8=0b1000_0001; "
-                "let mode:u16=0o755 }";
+            const std::string input = "fn main(){\n"
+                                      "let mask:u32=0xFF00_00FF;\n"
+                                      "let flags:u8=0b1000_0001;\n"
+                                      "let mode:u16=0o755\n"
+                                      "}\n";
             const std::string expected =
                 "fn main() {\n"
                 "    let mask: u32 = 0xFF00_00FF;\n"
