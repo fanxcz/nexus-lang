@@ -53,7 +53,22 @@ namespace nexus {
                    prev == "const" || prev == "mut";
         }
 
-        std::vector<Lexeme> tokenizeLine(const std::string& line, bool& inBlockComment) {
+        void consumeBlockComment(const std::string& line, std::size_t& i,
+                                 std::size_t& blockCommentDepth) {
+            while (i < line.size() && blockCommentDepth > 0) {
+                if (line[i] == '/' && i + 1 < line.size() && line[i + 1] == '*') {
+                    ++blockCommentDepth;
+                    i += 2;
+                } else if (line[i] == '*' && i + 1 < line.size() && line[i + 1] == '/') {
+                    --blockCommentDepth;
+                    i += 2;
+                } else {
+                    ++i;
+                }
+            }
+        }
+
+        std::vector<Lexeme> tokenizeLine(const std::string& line, std::size_t& blockCommentDepth) {
             std::vector<Lexeme> tokens;
             std::size_t i = 0;
 
@@ -64,15 +79,11 @@ namespace nexus {
                     continue;
                 }
 
-                if (inBlockComment) {
-                    const auto close = line.find("*/", i);
-                    if (close == std::string::npos) {
-                        tokens.push_back({line.substr(i), LexemeKind::Comment});
-                        return tokens;
-                    }
-                    i = close + 2;
+                if (blockCommentDepth > 0) {
+                    consumeBlockComment(line, i, blockCommentDepth);
                     tokens.push_back({line.substr(start, i - start), LexemeKind::Comment});
-                    inBlockComment = false;
+                    if (blockCommentDepth > 0)
+                        return tokens;
                     continue;
                 }
 
@@ -82,14 +93,11 @@ namespace nexus {
                 }
 
                 if (line[i] == '/' && i + 1 < line.size() && line[i + 1] == '*') {
-                    const auto close = line.find("*/", i + 2);
-                    if (close == std::string::npos) {
-                        tokens.push_back({line.substr(i), LexemeKind::Comment});
-                        inBlockComment = true;
-                        break;
-                    }
-                    i = close + 2;
+                    blockCommentDepth = 1;
+                    consumeBlockComment(line, i, blockCommentDepth);
                     tokens.push_back({line.substr(start, i - start), LexemeKind::Comment});
+                    if (blockCommentDepth > 0)
+                        return tokens;
                     continue;
                 }
 
@@ -278,7 +286,7 @@ namespace nexus {
         std::ostringstream output;
         std::string line;
         std::size_t depth = 0;
-        bool inBlockComment = false;
+        std::size_t blockCommentDepth = 0;
 
         while (std::getline(input, line)) {
             if (!line.empty() && line.back() == '\r')
@@ -290,7 +298,7 @@ namespace nexus {
                 continue;
             }
 
-            const auto tokens = tokenizeLine(line, inBlockComment);
+            const auto tokens = tokenizeLine(line, blockCommentDepth);
             const std::size_t closers = leadingClosingBraces(tokens);
             const std::size_t indent = closers > depth ? 0 : depth - closers;
             const std::string formatted = joinTokens(tokens);
