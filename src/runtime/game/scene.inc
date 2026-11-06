@@ -23,7 +23,8 @@ bool nexus_scene_save(int64_t scene, const char* path) {
     std::filesystem::path temporary = destination;
     temporary += ".nexus-tmp-" + std::to_string(stamp) + "-" + std::to_string(sequence);
 
-    std::ofstream f(temporary, std::ios::out | std::ios::trunc);
+    // Scene files use stable LF line endings on every host platform.
+    std::ofstream f(temporary, std::ios::binary | std::ios::out | std::ios::trunc);
     if (!f)
         return false;
     f << "NEXUS_SCENE 1\n" << sit->second.entities.size() << "\n";
