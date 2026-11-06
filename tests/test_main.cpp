@@ -19,7 +19,7 @@ int main() {
 
         {
             const auto program = parse(
-                "struct Point { x: i64, y: i64, } enum Color { Red, Green, } "
+                "struct Point { x: i64, y: i64, } enum Color { Red(i64), Green(i64), } "
                 "fn sum(left: i64, right: i64,) -> i64 { return left + right } "
                 "fn main() { "
                 "let values = [10, 20,]; "
@@ -28,6 +28,8 @@ int main() {
 
             if (program.structs.size() != 1 || program.structs[0].fields.size() != 2 ||
                 program.enums.size() != 1 || program.enums[0].variants.size() != 2 ||
+                !program.enums[0].variants[0].payload ||
+                program.enums[0].variants[0].payload->kind != nexus::TypeKind::I64 ||
                 program.functions.size() != 2 || program.functions[0].params.size() != 2) {
                 std::cerr << "trailing commas in declarations or parameter lists failed\n";
                 return 150;
