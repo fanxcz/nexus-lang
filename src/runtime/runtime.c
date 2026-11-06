@@ -298,18 +298,23 @@ char* nexus_file_read(const char* path) {
         return NULL;
     }
     long n = ftell(f);
-    if (n < 0) {
+    if (n < 0 || (uintmax_t)n >= (uintmax_t)SIZE_MAX ||
+        fseek(f, 0, SEEK_SET) != 0) {
         fclose(f);
         return NULL;
     }
-    rewind(f);
     char* out = (char*)malloc((size_t)n + 1);
     if (!out) {
         fclose(f);
         return NULL;
     }
     size_t got = fread(out, 1, (size_t)n, f);
-    fclose(f);
+    int read_error = ferror(f);
+    int close_error = fclose(f);
+    if (got != (size_t)n || read_error || close_error != 0) {
+        free(out);
+        return NULL;
+    }
     out[got] = 0;
     return out;
 }
@@ -322,8 +327,9 @@ int64_t nexus_file_write(const char* path, const char* data) {
     const char* src = data ? data : "";
     size_t n = strlen(src);
     size_t wrote = fwrite(src, 1, n, f);
-    int ok = (wrote == n && fclose(f) == 0);
-    return ok ? 0 : -1;
+    int write_ok = wrote == n;
+    int close_ok = fclose(f) == 0;
+    return write_ok && close_ok ? 0 : -1;
 }
 bool nexus_file_exists(const char* path) {
     if (!path)
