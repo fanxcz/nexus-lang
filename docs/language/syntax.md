@@ -77,6 +77,10 @@ fn main() {
         add(10, 20,),
         add(30, 40,),
     ]
+    struct Point {
+        health: i64
+        speed: f64
+    }
     let point = Point {
         health: values[0],
         speed: 3.5,
