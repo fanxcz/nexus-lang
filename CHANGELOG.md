@@ -20,6 +20,10 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
 - Added nested block comments; the C++ and self-hosted lexers now track comment
   depth and reject unterminated nested comments.
 
+- Improved the source formatter so nested comments, radix-prefixed integers
+  and signed scientific-notation exponents remain single, semantics-preserving
+  tokens during formatting.
+
 - Expanded NEXUS Studio into a desktop IDE with multi-file tabs, saved/unsaved buffer tracking, filename filtering, cursor position, a compiler Problems panel and jump-to-source diagnostics.
 - Added IDE commands and shortcuts for saving all files, switching/closing tabs, filtering project files and opening compiler Problems.
 - Added NEXUS Studio as the third version source and require the compiler, extension and desktop app packages to share one release version.
@@ -75,6 +79,9 @@ live in [`repository-files/CHANGELOG.md`](.github/project-tools/repository-files
   longer describes itself as "NEXUS 2.1".
 
 ### Fixed
+
+- Scene saves now use stable LF line endings on Windows and POSIX, so serialized
+  scene files have identical text representation across platforms.
 
 - `nexus_gfx_audio_available()` now reports whether an audio device is open, not merely whether the SDL shared library can be loaded. Headless systems no longer report audio as available before a device exists.
 - Passing a directory as a source file now reports `cannot open <path>: is a
