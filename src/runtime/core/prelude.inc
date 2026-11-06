@@ -15,6 +15,7 @@
 #include <cstring>
 #include <ctime>
 #include <fstream>
+#include <filesystem>
 #include <limits>
 #include <memory>
 #include <mutex>
