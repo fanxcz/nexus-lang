@@ -107,7 +107,7 @@ namespace nexus {
                     auto f = expectIdentifier();
                     expect(TokenKind::Colon);
                     s->fields.push_back({f, parseExpr()});
-                    if (!accept(TokenKind::Comma))
+                    if (!accept(TokenKind::Comma) || cur().kind == TokenKind::RBrace)
                         break;
                 }
                 expect(TokenKind::RBrace);
@@ -121,7 +121,7 @@ namespace nexus {
             if (cur().kind != TokenKind::RBracket) {
                 for (;;) {
                     a->elements.push_back(parseExpr());
-                    if (!accept(TokenKind::Comma))
+                    if (!accept(TokenKind::Comma) || cur().kind == TokenKind::RBracket)
                         break;
                 }
             }
@@ -191,7 +191,7 @@ namespace nexus {
                 if (cur().kind != TokenKind::RParen) {
                     for (;;) {
                         a.push_back(parseExpr());
-                        if (!accept(TokenKind::Comma))
+                        if (!accept(TokenKind::Comma) || cur().kind == TokenKind::RParen)
                             break;
                     }
                 }
