@@ -14,6 +14,22 @@ counter = counter + 1
 
 Bindings declared with `let` are immutable unless `mut` is specified.
 
+## Comments
+
+Line comments start with `//`. Block comments use `/* ... */` and may be
+nested; every opening `/*` must have a matching `*/`.
+
+```nx
+// A line comment
+let value = 42
+
+/*
+  A block comment can contain another comment:
+  /* temporarily disabled code */
+*/
+print(value)
+```
+
 ### Discard binding `_`
 
 `_` is a special name for "value not needed": every `let _ = ...` creates a
