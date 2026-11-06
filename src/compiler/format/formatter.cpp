@@ -119,16 +119,52 @@ namespace nexus {
                 }
 
                 if (isWordStart(line[i])) {
-                    ++i;
-                    while (i < line.size() && isWordContinue(line[i]))
-                        ++i;
+                    const bool numeric = std::isdigit(static_cast<unsigned char>(line[i]));
+                    const bool radixPrefix =
+                        numeric && line[i] == '0' && i + 1 < line.size() &&
+                        (line[i + 1] == 'x' || line[i + 1] == 'X' || line[i + 1] == 'b' ||
+                         line[i + 1] == 'B' || line[i + 1] == 'o' || line[i + 1] == 'O');
+                    if (radixPrefix) {
+                        i += 2;
+                        while (i < line.size() &&
+                               (std::isalnum(static_cast<unsigned char>(line[i])) ||
+                                line[i] == '_')) {
+                            ++i;
+                        }
+                    } else if (numeric) {
+                        while (i < line.size() &&
+                               (std::isdigit(static_cast<unsigned char>(line[i])) ||
+                                line[i] == '_')) {
+                            ++i;
+                        }
 
-                    // Keep decimal literals as one token so spacing never changes them.
-                    if (std::isdigit(static_cast<unsigned char>(line[start])) &&
-                        i + 1 < line.size() && line[i] == '.' &&
-                        std::isdigit(static_cast<unsigned char>(line[i + 1]))) {
+                        // Keep decimal fractions and scientific notation in one
+                        // lexeme, including signed exponents such as 1.25E-4.
+                        if (i + 1 < line.size() && line[i] == '.' &&
+                            std::isdigit(static_cast<unsigned char>(line[i + 1]))) {
+                            ++i;
+                            while (i < line.size() &&
+                                   (std::isdigit(static_cast<unsigned char>(line[i])) ||
+                                    line[i] == '_')) {
+                                ++i;
+                            }
+                        }
+                        if (i < line.size() && (line[i] == 'e' || line[i] == 'E')) {
+                            const auto exponent = i++;
+                            if (i < line.size() && (line[i] == '+' || line[i] == '-'))
+                                ++i;
+                            const auto exponentDigits = i;
+                            while (i < line.size() &&
+                                   (std::isdigit(static_cast<unsigned char>(line[i])) ||
+                                    line[i] == '_')) {
+                                ++i;
+                            }
+                            if (i == exponentDigits)
+                                i = exponent;
+                        }
+                    } else {
                         ++i;
-                        while (i < line.size() && std::isdigit(static_cast<unsigned char>(line[i])))
+                        while (i < line.size() && isWordContinue(line[i]))
                             ++i;
                     }
 
