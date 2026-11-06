@@ -158,6 +158,58 @@ int main() {
         std::cerr << "out-of-range array length was accepted\n";
         return 2;
     }
+    // Integer literals support explicit hexadecimal, binary, and octal bases.
+    const std::vector<std::string> validRadixLiterals = {
+        "0x2A", "0X2a", "0b101010", "0B10_1010", "0o52", "0O5_2",
+        "0xFFFF_FFFF_FFFF_FFFF"
+    };
+    for (const auto& literal : validRadixLiterals) {
+        try {
+            const auto tokens = nexus::Lexer(literal).tokenize();
+            if (tokens.size() != 2 || tokens[0].kind != nexus::TokenKind::Integer ||
+                tokens[0].text != literal || tokens[1].kind != nexus::TokenKind::End) {
+                std::cerr << "radix integer tokenization failed for: " << literal << "\n";
+                return 21;
+            }
+        } catch (const std::exception& error) {
+            std::cerr << "valid radix integer rejected: " << literal << ": "
+                      << error.what() << "\n";
+            return 22;
+        }
+    }
+    const std::vector<std::string> invalidRadixLiterals = {
+        "0x", "0b", "0o", "0b102", "0o89", "0x_FF", "0xFF_", "0x1__F"
+    };
+    for (const auto& literal : invalidRadixLiterals) {
+        try {
+            (void)nexus::Lexer(literal).tokenize();
+            std::cerr << "malformed radix integer was accepted: " << literal << "\n";
+            return 23;
+        } catch (const std::exception&) {
+            // Invalid digits and separators must be rejected by the lexer.
+        }
+    }
+    const std::vector<std::string> validRadixPrograms = {
+        "fn main(){ let value: u64 = 0xFFFF_FFFF_FFFF_FFFF }",
+        "fn main(){ let value: u32 = 0b1111_0000 }",
+        "fn main(){ let value: u16 = 0o17 }",
+        "fn main(value: [u8; 0x10]) {}",
+        "fn main(){ let value = -0x8000_0000_0000_0000 }"
+    };
+    for (const auto& source : validRadixPrograms) {
+        try {
+            (void)nexus::Parser(nexus::Lexer(source).tokenize()).parseProgram();
+        } catch (const std::exception& error) {
+            std::cerr << "valid radix integer source rejected: " << error.what() << "\n";
+            return 24;
+        }
+    }
+    if (!rejects("fn main(){ let value = 0x1_0000_0000_0000_0000 }") ||
+        !rejects("fn main(value: [u8; 0x10000000000000000]) {}")) {
+        std::cerr << "out-of-range radix integer or array length was accepted\n";
+        return 25;
+    }
+
 
     if (rejects("fn main(){ print((((1 + 2)))) }")) {
         std::cerr << "ordinary nested expression was rejected\n";
