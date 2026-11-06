@@ -38,12 +38,12 @@ fn main() {
     failed = failed + check(
     "error: invalid digit in radix literal",
     "0b102",
-    "error 1:5 invalid base-2 integer literal\\n")
+    "error 1:5 invalid base-2 integer literal\n")
 
     failed = failed + check(
     "error: radix prefix requires digits",
     "0x",
-    "error 1:3 invalid base-16 integer literal\\n")
+    "error 1:3 invalid base-16 integer literal\n")
 
 
     failed = failed + check(
