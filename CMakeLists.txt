@@ -380,6 +380,15 @@ if (NEXUS_BUILD_TESTS)
   add_test(NAME nexus_runtime_scene_test COMMAND nexus_runtime_scene_test)
   set_tests_properties(nexus_runtime_scene_test PROPERTIES TIMEOUT 30)
 
+  add_executable(nexus_runtime_files_test
+      tests/runtime_files_test.cpp
+      src/runtime/runtime.cpp
+  )
+  target_compile_features(nexus_runtime_files_test PRIVATE cxx_std_20)
+  target_link_libraries(nexus_runtime_files_test PRIVATE ${CMAKE_DL_LIBS} Threads::Threads)
+  add_test(NAME nexus_runtime_files_test COMMAND nexus_runtime_files_test)
+  set_tests_properties(nexus_runtime_files_test PROPERTIES TIMEOUT 30)
+
   add_executable(nexus_runtime_backend_state_test
       tests/runtime_backend_state_test.cpp
       src/runtime/runtime.cpp
