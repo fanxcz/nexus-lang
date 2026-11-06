@@ -9,7 +9,7 @@ mirrored against it feature by feature and must not diverge.
 | Component | File | Status |
 |---|---|---|
 | Lexer | `lexer_lib.nx` | Works; covers the full token set of `src/compiler/frontend/lexer/lexer.cpp` |
-| Lexer tests | `lexer_test.nx` | 18 cases: keywords, decimal/radix numbers, operators, escapes, comments, and lexical errors |
+| Lexer tests | `lexer_test.nx` | 19 cases: keywords, decimal/radix numbers, operators, escapes, nested comments, and lexical errors |
 | Self-lexing smoke | `lex_self.nx` | The NEXUS lexer tokenizes its own sources plus real stdlib/example files |
 | Parser (subset) | `parser_lib.nx` | Works; recursive descent with correct precedence for expressions plus `let`/assignment/`print`/`if`/`else`/`while`/blocks/`fn`/`return` |
 | Parser tests | `parser_test.nx` | 13 cases: precedence, associativity, calls, trailing commas, blocks, 3 error cases |
