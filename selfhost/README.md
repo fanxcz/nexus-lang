@@ -12,7 +12,7 @@ mirrored against it feature by feature and must not diverge.
 | Lexer tests | `lexer_test.nx` | 19 cases: keywords, decimal/radix numbers, operators, escapes, nested comments, and lexical errors |
 | Self-lexing smoke | `lex_self.nx` | The NEXUS lexer tokenizes its own sources plus real stdlib/example files |
 | Parser (subset) | `parser_lib.nx` | Works; recursive descent with correct precedence for expressions plus `let`/assignment/`print`/`if`/`else`/`while`/blocks/`fn`/`return` |
-| Parser tests | `parser_test.nx` | 13 cases: precedence, associativity, calls, trailing commas, blocks, 3 error cases |
+| Parser tests | `parser_test.nx` | 14 cases: precedence, associativity, calls, trailing commas, else-if chains, blocks, 3 error cases |
 | Type checker (subset) | `typecheck_lib.nx` | Works; variable environment, numeric/string/bool rules, bool conditions for `if`/`while`, assignment type stability |
 | Type checker tests | `typecheck_test.nx` | 13 cases: 3 valid programs, 10 diagnostics |
 | Code generator (subset) | `codegen_lib.nx` | Works; emits a complete LLVM IR module (alloca/load/store SSA, branches, loops) for the i64/f64 statement subset, plus function declarations/calls, string literals and f64 arithmetic/print |
