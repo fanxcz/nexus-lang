@@ -72,15 +72,16 @@ fn add(left: i64, right: i64,) -> i64 {
     return left + right
 }
 
+struct Point {
+    health: i64
+    speed: f64
+}
+
 fn main() {
     let values = [
         add(10, 20,),
         add(30, 40,),
     ]
-    struct Point {
-        health: i64
-        speed: f64
-    }
     let point = Point {
         health: values[0],
         speed: 3.5,
