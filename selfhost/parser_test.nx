@@ -67,6 +67,11 @@ fn main() {
     "(if (ident a)\n  (block\n  (print (int 1)))\n  (block\n  (print (int 2))))\n(while (< (ident a) (int 10))\n  (block\n  (assign a (+ (ident a) (int 1)))))\n")
 
     failed = failed + check(
+    "else-if chain",
+    "if a { print(1) } else if b { print(2) } else { print(3) }",
+    "(if (ident a)\n  (block\n  (print (int 1)))\n  (block\n  (if (ident b)\n  (block\n  (print (int 2)))\n  (block\n  (print (int 3))))))\n")
+
+    failed = failed + check(
     "error: missing operand",
     "print(1 +)",
     "error expected expression, got RParen")
