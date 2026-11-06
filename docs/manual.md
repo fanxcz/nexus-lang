@@ -134,12 +134,16 @@ struct enum import extern unsafe as match true false print
 
 ### 5.4 Literals
 
-Integer literals are written in decimal form:
+Integer literals are decimal by default. Hexadecimal, binary, and octal values
+use the `0x`, `0b`, and `0o` prefixes. Underscores may separate digits:
 
 ```nx
 0
 42
 -7
+0x2A
+0b1010_1010
+0o755
 ```
 
 Floating point literals contain a decimal point:
