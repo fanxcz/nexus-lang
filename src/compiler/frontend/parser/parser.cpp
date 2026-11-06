@@ -167,7 +167,7 @@ namespace nexus {
                 Param param{n, std::move(type)};
                 param.span = spanForTokens(paramStart, i_);
                 ps.push_back(std::move(param));
-                if (!accept(TokenKind::Comma))
+                if (!accept(TokenKind::Comma) || cur().kind == TokenKind::RParen)
                     break;
             }
         }
