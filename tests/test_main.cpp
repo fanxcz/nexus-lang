@@ -26,8 +26,9 @@ int main() {
                 "let point = Point { x: values[0], y: sum(1, 2,), }; "
                 "}");
 
-            if (program.structs.size() != 1 || program.structs[0].fields.size() != 2 || program.enums.size() != 1 ||
-                program.enums[0].variants.size() != 2 || program.functions.size() != 2 || program.functions[0].params.size() != 2) {
+            if (program.structs.size() != 1 || program.structs[0].fields.size() != 2 ||
+                program.enums.size() != 1 || program.enums[0].variants.size() != 2 ||
+                program.functions.size() != 2 || program.functions[0].params.size() != 2) {
                 std::cerr << "trailing commas in declarations or parameter lists failed\n";
                 return 150;
             }
