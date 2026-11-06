@@ -63,6 +63,28 @@ fn main() {
 
 The entry point of a native program is `fn main()`.
 
+Trailing commas are accepted in function parameter lists, function calls,
+array literals, and struct initializers. They are especially useful when
+values are written one per line:
+
+```nx
+fn add(left: i64, right: i64,) -> i64 {
+    return left + right
+}
+
+fn main() {
+    let values = [
+        add(10, 20,),
+        add(30, 40,),
+    ]
+    let point = Point {
+        health: values[0],
+        speed: 3.5,
+    }
+    print(point.health)
+}
+```
+
 ## Conditions and loops
 
 ```nx
