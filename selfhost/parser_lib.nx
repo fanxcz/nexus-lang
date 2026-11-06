@@ -145,6 +145,9 @@ fn parse_call(t: i64, p: i64) -> string {
             }
             args = args + " " + a
             while eat(t, p, "Comma") {
+                if cur_kind(t, p) == "RParen" {
+                    break
+                }
                 let b = parse_or(t, p)
                 if string.slice(b, 0, 5) == "error" {
                     return b
@@ -312,6 +315,9 @@ fn parse_fn(t: i64, p: i64) -> string {
         }
         params = params + " " + first
         while eat(t, p, "Comma") {
+            if cur_kind(t, p) == "RParen" {
+                break
+            }
             let nxt = parse_param(t, p)
             if string.slice(nxt, 0, 5) == "error" {
                 return nxt
