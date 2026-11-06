@@ -137,6 +137,8 @@ fn main() {
     let octal: u8 = 0o52
     let radix_values: [i16; 0x2] = [31, 0o40]
     let signed_radix_minimum: i64 = -0x8000_0000_0000_0000
+    let radix_u64_max: u64 = 0xFFFF_FFFF_FFFF_FFFF
+    print(radix_u64_max == max_u64)
     print(hexadecimal)
     print(binary)
     print(octal)
