@@ -55,6 +55,8 @@ int main() {
     const std::string saved = readAll(destination);
     if (result == 0 && saved.find("NEXUS_SCENE 1\n1\n") != 0)
         result = 4;
+    if (result == 0 && saved.find("\r\n") != std::string::npos)
+        result = 14;
 
     // A directory cannot be replaced by a scene file. The failed save must
     // leave the directory intact and clean up its temporary sibling.
