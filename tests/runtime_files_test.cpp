@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <string>
 
 extern "C" char* nexus_file_read(const char* path);
 extern "C" bool nexus_file_read_checked(const char* path, char** output);
@@ -51,7 +52,8 @@ int main() {
     if (ordinary)
         nexus_free(ordinary);
 
-    char* absent = reinterpret_cast<char*>(1);
+    char sentinel[] = "x";
+    char* absent = sentinel;
     if (result == 0 && nexus_file_read_checked(missing.string().c_str(), &absent))
         result = 9;
     if (result == 0 && absent != nullptr)
