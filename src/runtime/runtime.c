@@ -298,8 +298,7 @@ char* nexus_file_read(const char* path) {
         return NULL;
     }
     long n = ftell(f);
-    if (n < 0 || (uintmax_t)n >= (uintmax_t)SIZE_MAX ||
-        fseek(f, 0, SEEK_SET) != 0) {
+    if (n < 0 || (uintmax_t)n >= (uintmax_t)SIZE_MAX || fseek(f, 0, SEEK_SET) != 0) {
         fclose(f);
         return NULL;
     }
