@@ -917,6 +917,29 @@ auto p = parse("fn inc(x: i64)->i64 { return x + 1 } fn main(){ print(inc(41)) }
             }
         }
         {
+            const std::string input = "fn main(){\n"
+                                      "/* outer\n"
+                                      "/* inner */ tail\n"
+                                      "*/ print(42)\n"
+                                      "}\n";
+            const auto originalTokens = nexus::Lexer(input).tokenize();
+            const auto formatted = nexus::formatNexusSource(input);
+            const auto formattedTokens = nexus::Lexer(formatted).tokenize();
+            bool sameTokens = originalTokens.size() == formattedTokens.size();
+            for (std::size_t i = 0; sameTokens && i < originalTokens.size(); ++i) {
+                sameTokens = originalTokens[i].kind == formattedTokens[i].kind &&
+                             originalTokens[i].text == formattedTokens[i].text;
+            }
+            if (formatted == input || !sameTokens ||
+                formatted.find("/* inner */") == std::string::npos ||
+                formatted.find("print(42)") == std::string::npos) {
+                std::cerr << "formatter nested block-comment regression\n"
+                          << "Actual:\n"
+                          << formatted;
+                return 22;
+            }
+        }
+        {
             const std::string input = "fn sum(a:i64,b:i64)->i64{\n"
                                       "return a+b\n"
                                       "}\n";
