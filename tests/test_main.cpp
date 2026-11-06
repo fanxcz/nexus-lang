@@ -18,6 +18,48 @@ int main() {
     try {
 
         {
+            const auto program = parse(
+                "struct Point { x: i64, y: i64 } "
+                "fn sum(left: i64, right: i64,) -> i64 { return left + right } "
+                "fn main() { "
+                "let values = [10, 20,]; "
+                "let point = Point { x: values[0], y: sum(1, 2,), }; "
+                "}");
+
+            if (program.structs.size() != 1 || program.structs[0].fields.size() != 2 ||
+                program.functions.size() != 2 || program.functions[0].params.size() != 2) {
+                std::cerr << "trailing commas in declarations or parameter lists failed\\n";
+                return 150;
+            }
+
+            const auto* mainBody = program.functions[1].body.get();
+            const auto* values = mainBody && mainBody->statements.size() == 2
+                                     ? dynamic_cast<const nexus::LetStmt*>(
+                                           mainBody->statements[0].get())
+                                     : nullptr;
+            const auto* array = values
+                                    ? dynamic_cast<const nexus::ArrayExpr*>(values->init.get())
+                                    : nullptr;
+            const auto* point = mainBody && mainBody->statements.size() == 2
+                                    ? dynamic_cast<const nexus::LetStmt*>(
+                                          mainBody->statements[1].get())
+                                    : nullptr;
+            const auto* structure = point
+                                        ? dynamic_cast<const nexus::StructInitExpr*>(
+                                              point->init.get())
+                                        : nullptr;
+            const auto* call = structure && structure->fields.size() == 2
+                                   ? dynamic_cast<const nexus::CallExpr*>(
+                                         structure->fields[1].second.get())
+                                   : nullptr;
+            if (!array || array->elements.size() != 2 || !structure ||
+                structure->fields.size() != 2 || !call || call->args.size() != 2) {
+                std::cerr << "trailing commas in arrays, struct initializers, or calls failed\\n";
+                return 151;
+            }
+        }
+
+        {
             auto p = parse("fn inspect(values: []i32) -> []i32 { return values } fn main() {}");
             if (p.functions.size() != 2 || p.functions[0].params.size() != 1 ||
                 p.functions[0].params[0].type.kind != nexus::TypeKind::Slice ||
