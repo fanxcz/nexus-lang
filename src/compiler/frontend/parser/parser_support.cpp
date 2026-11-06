@@ -81,7 +81,7 @@ namespace nexus {
             const Token lengthToken = expect(TokenKind::Integer);
             std::size_t length = 0;
             try {
-                const auto parsed = std::stoull(removeNumericSeparators(lengthToken.text));
+                const auto parsed = parseUnsignedIntegerLiteral(lengthToken.text);
                 if (parsed > std::numeric_limits<std::size_t>::max()) {
                     throw std::out_of_range("array length");
                 }
