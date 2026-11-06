@@ -13,46 +13,6 @@ namespace nexus {
         auto p = pos_;
         std::string s;
 
-        // Integer radix prefixes: hexadecimal (0x), binary (0b), octal (0o).
-        // Separators remain valid only between digits of the selected radix.
-        if (peek() == '0' && (peek(1) == 'x' || peek(1) == 'X' ||
-                              peek(1) == 'b' || peek(1) == 'B' ||
-                              peek(1) == 'o' || peek(1) == 'O')) {
-            s += take();
-            const char prefix = take();
-            s += prefix;
-            const int base = (prefix == 'x' || prefix == 'X') ? 16 :
-                             (prefix == 'b' || prefix == 'B') ? 2 : 8;
-            const auto validDigit = [base](char ch) {
-                const int digit = hexDigit(ch);
-                return digit >= 0 && digit < base;
-            };
-
-            bool consumedDigit = false;
-            bool previousWasDigit = false;
-            while (validDigit(peek()) || peek() == '_') {
-                if (peek() == '_') {
-                    if (!previousWasDigit || !validDigit(peek(1))) {
-                        throw std::runtime_error("misplaced '_' in numeric literal at " +
-                                                 std::to_string(pos_.line) + ":" +
-                                                 std::to_string(pos_.column));
-                    }
-                    s += take();
-                    previousWasDigit = false;
-                } else {
-                    s += take();
-                    consumedDigit = true;
-                    previousWasDigit = true;
-                }
-            }
-            if (!consumedDigit || std::isalnum(static_cast<unsigned char>(peek()))) {
-                throw std::runtime_error("invalid base-" + std::to_string(base) +
-                                         " integer literal at " + std::to_string(pos_.line) +
-                                         ":" + std::to_string(pos_.column));
-            }
-            return {TokenKind::Integer, s, p, pos_, true};
-        }
-
         while (std::isalnum(static_cast<unsigned char>(peek())) || peek() == '_')
             s += take();
         TokenKind k = TokenKind::Identifier;
@@ -107,6 +67,46 @@ namespace nexus {
     Token Lexer::number() {
         const auto p = pos_;
         std::string s;
+
+        // Integer radix prefixes: hexadecimal (0x), binary (0b), octal (0o).
+        // Separators remain valid only between digits of the selected radix.
+        if (peek() == '0' && (peek(1) == 'x' || peek(1) == 'X' ||
+                              peek(1) == 'b' || peek(1) == 'B' ||
+                              peek(1) == 'o' || peek(1) == 'O')) {
+            s += take();
+            const char prefix = take();
+            s += prefix;
+            const int base = (prefix == 'x' || prefix == 'X') ? 16 :
+                             (prefix == 'b' || prefix == 'B') ? 2 : 8;
+            const auto validDigit = [base](char ch) {
+                const int digit = hexDigit(ch);
+                return digit >= 0 && digit < base;
+            };
+
+            bool consumedDigit = false;
+            bool previousWasDigit = false;
+            while (validDigit(peek()) || peek() == '_') {
+                if (peek() == '_') {
+                    if (!previousWasDigit || !validDigit(peek(1))) {
+                        throw std::runtime_error("misplaced '_' in numeric literal at " +
+                                                 std::to_string(pos_.line) + ":" +
+                                                 std::to_string(pos_.column));
+                    }
+                    s += take();
+                    previousWasDigit = false;
+                } else {
+                    s += take();
+                    consumedDigit = true;
+                    previousWasDigit = true;
+                }
+            }
+            if (!consumedDigit || std::isalnum(static_cast<unsigned char>(peek()))) {
+                throw std::runtime_error("invalid base-" + std::to_string(base) +
+                                         " integer literal at " + std::to_string(pos_.line) +
+                                         ":" + std::to_string(pos_.column));
+            }
+            return {TokenKind::Integer, s, p, pos_, true};
+        }
 
         // Separators improve readability in large constants, but must occur
         // strictly between digits (for example, 1'000 is not this language's
