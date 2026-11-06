@@ -132,7 +132,12 @@ true
 18446744073709551615
 signed narrow range
 unsigned wide range
-narrow integer pattern]=])
+narrow integer pattern
+42
+42
+42
+32
+-9223372036854775808]=])
 if(NOT run_out STREQUAL EXPECTED)
   message(FATAL_ERROR "Unexpected fixed-width type output:\n[${run_out}]\nExpected:\n[${EXPECTED}]\n${run_err}")
 endif()
@@ -161,5 +166,7 @@ expect_rejected(unsigned_negative "fn main() { let value: u8 = -1 }" "cannot ini
 expect_rejected(implicit_width_conversion "fn main() { let wide: i64 = 1; let narrow: i8 = wide }" "cannot initialize 'narrow'")
 expect_rejected(f32_overflow "fn main() { let value: f32 = 1e39 }" "cannot initialize 'value'")
 expect_rejected(u64_overflow "fn main() { let value: u64 = 18446744073709551616 }" "integer literal out of range")
+expect_rejected(radix_u8_overflow "fn main() { let value: u8 = 0x100 }" "cannot initialize 'value'")
+expect_rejected(radix_u64_overflow "fn main() { let value: u64 = 0x1_0000_0000_0000_0000 }" "integer literal out of range")
 
 message(STATUS "NEXUS fixed-width numeric types smoke test: PASS")
