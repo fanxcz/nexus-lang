@@ -37,14 +37,24 @@ namespace nexus {
             if (peek() == '/' && peek(1) == '*') {
                 take();
                 take();
-                while (peek() && !(peek() == '*' && peek(1) == '/'))
-                    take();
-                if (!peek())
+                std::size_t depth = 1;
+                while (peek() && depth > 0) {
+                    if (peek() == '/' && peek(1) == '*') {
+                        take();
+                        take();
+                        ++depth;
+                    } else if (peek() == '*' && peek(1) == '/') {
+                        take();
+                        take();
+                        --depth;
+                    } else {
+                        take();
+                    }
+                }
+                if (depth != 0)
                     throw std::runtime_error("unterminated block comment at " +
                                              std::to_string(pos_.line) + ":" +
                                              std::to_string(pos_.column));
-                take();
-                take();
                 continue;
             }
             break;
