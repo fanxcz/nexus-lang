@@ -133,6 +133,7 @@ true
 signed narrow range
 unsigned wide range
 narrow integer pattern
+true
 42
 42
 42
